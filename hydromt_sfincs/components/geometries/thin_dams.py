@@ -43,6 +43,32 @@ class SfincsThinDams(ModelComponent):
             self._initialize()
         return self._data
 
+    @property
+    def gdf(self) -> gpd.GeoDataFrame:
+        """Alias for data."""
+        if self._data is None:
+            self._initialize()
+        return self.data
+
+    @property
+    def nr_lines(self) -> int:
+        """
+        Return the number of line locations currently stored.
+        """
+        if hasattr(self.data, "index"):
+            return len(self.data.index)
+        return 0
+
+    @property
+    def list_names(self):
+        """Give list of names of thin dams."""
+        if self.data.empty:
+            return []
+        # The thin dams do not really have names,
+        # but we can use the index and turn into strings
+        names = [f"Thin Dam {i + 1}" for i in self.data.index]
+        return names
+
     # %% core HydroMT-SFINCS functions:
     # _initialize
     # read
@@ -252,7 +278,6 @@ class SfincsThinDams(ModelComponent):
 
     # %% DDB GUI focused additional functions:
     # snap_to_grid
-    # list_names
 
     def snap_to_grid(self):
         """Returns GeoDataFrame with thin dams snapped to model grid."""
@@ -262,12 +287,3 @@ class SfincsThinDams(ModelComponent):
             )
         snap_gdf = self.model.quadtree_grid.snap_to_grid(self.data)
         return snap_gdf
-
-    def list_names(self):
-        """Give list of names of thin dams."""
-        if self.data.empty:
-            return []
-        # The thin dams do not really have names,
-        # but we can use the index and turn into strings
-        names = [str(i + 1) for i in self.data.index]
-        return names

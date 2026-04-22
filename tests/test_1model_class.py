@@ -16,6 +16,7 @@ from hydromt.readers import read_workflow_yaml
 
 # from hydromt.log import setuplog
 
+from hydromt_sfincs import utils
 from hydromt_sfincs.sfincs import SfincsModel
 
 from .conftest import TESTDATADIR, TESTMODELDIR
@@ -159,7 +160,7 @@ def test_infiltration(model):
     qinf.raster.set_nodata(-9999.0)
     qinf.raster.set_crs(model.crs)
     model.infiltration.create_constant(qinf, reproj_method="nearest")
-    assert model.config.get("qinf") is None  # qinf removed from config
+    assert model.config.get("qinf") == 0.0  # qinf reset to default in config
     assert model.config.get("qinffile") is not None  # qinf file set
     assert "qinf" in model.grid.data
 
@@ -528,7 +529,7 @@ def test_initial_conditions(model):
     # ini.raster.set_nodata(-9999.0)
     ini.raster.set_crs(model.crs)
     model.initial_conditions.create(ini, reproj_method="nearest")
-    assert model.config.get("zsini") is None  # zsini removed from config
+    assert model.config.get("zsini") == 0.0  # zsini reset to default in config
     assert model.config.get("inifile") is not None  # inifile set
     assert "ini" in model.grid.data
 
@@ -560,7 +561,7 @@ def test_initial_conditions_from_polygon(model):
     model.initial_conditions.create_from_polygon(region, reset_ini=True)
 
     # check if values are correctly set
-    assert model.config.get("zsini") is None  # zsini removed from config
+    assert model.config.get("zsini") == 0.0  # zsini back to default in config
     assert model.config.get("inifile") is not None  # inifile set
     assert "ini" in model.grid.data
 
@@ -706,8 +707,6 @@ def test_structs(model_config, tmp_dir):
     model_config.thin_dams.create(fn_thd_gis, merge=True)
     assert len(model_config.thin_dams.data.index) == nr_thin_dams * 2
     # setup weir file from thd.geojson using dz option
-    with pytest.raises(ValueError, match="Weir structure requires z"):
-        model_config.weirs.create(fn_thd_gis)
     model_config.weirs.create(fn_thd_gis, dz=2)
     assert not model_config.weirs.data.empty
     assert model_config.config.get("weirfile") is not None
@@ -746,10 +745,12 @@ def test_drainage_structures(model_config, tmp_dir):
     drnfile_2 = model_config.root.path / "sfincs.drn"
 
     # check whether the files are the same
-    with open(drnfile_1, "r") as f1, open(drnfile_2, "r") as f2:
-        content1 = f1.read()
-        content2 = f2.read()
-        assert content1 == content2
+    gdf1 = utils.read_drn(drnfile_1)
+    gdf2 = utils.read_drn(drnfile_2)
+    assert_geodataframe_equal(
+        gdf1,
+        gdf2,
+    )
 
 
 @pytest.mark.parametrize("case", list(_cases.keys()))

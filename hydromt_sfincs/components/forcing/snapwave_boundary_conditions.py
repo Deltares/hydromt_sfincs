@@ -36,6 +36,16 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
     def __init__(self, model: "SfincsModel"):
         super().__init__(model)
 
+    @property
+    def list_names(self):
+        """Give list of names of SnapWave boundary points."""
+        if self.nr_points == 0:
+            return []
+        # The SnapWave boundary points do not really have names,
+        # but we can use the index and turn into strings
+        names = [f"Point {str(i + 1)}" for i in range(self.nr_points)]
+        return names
+
     def read(self, format: str = None):
         """Read SFINCS-SnapWave wave boundary conditions (snapwave*.bnd, *.bhs/btp/bwd/bds, files) or netcdf file.
 
@@ -95,7 +105,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             )
 
         # Read bnd file
-        gdf = utils.read_xyn(abs_file_path, crs=self.model.crs)
+        gdf = utils.read_xy(abs_file_path, crs=self.model.crs)
 
         return gdf
 
@@ -133,7 +143,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         # Check that read mode is on
         self.root._assert_read_mode()
 
-        # Get absolute file name and set it in config if crsfile is not None
+        # Get absolute file name and set it in config if boundary conditions file is not None
         abs_file_path = self.model.config.get_set_file_variable(varname, value=filename)
 
         # Check if abs_file_path is None
@@ -254,7 +264,14 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 
         gdf = self.data.vector.to_gdf()
 
-        utils.write_xyn(abs_file_path, gdf, fmt=fmt)
+        utils.write_xy(abs_file_path, gdf, fmt=fmt)
+
+    def write_boundary_conditions_timeseries_all(self, filename: str | Path = None):
+        """Write SnapWave boundary condition timeseries (*.bhs, *.btp, *.bwd, *.bds) files for all variables"""
+
+        for var in ["hs", "tp", "wd", "ds"]:
+            varname = f"snapwave_b{var}file"
+            self.write_boundary_conditions_timeseries(var=var, varname=varname)
 
     def write_boundary_conditions_timeseries(
         self, var: str, varname: str, filename: str | Path = None
@@ -729,126 +746,33 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         self.set_timeseries(df_wd, varname="wd")
         self.set_timeseries(df_ds, varname="ds")
 
-    def create_boundary_points_from_mask(self, min_dist=None, bnd_dist=5000.0):
-        """Get boundary points from mask in quadtree grid.
-        #FIXME Should make utils function as sfincs_water_level uses nearly same code
-        Also, regular grid has similar code. Maybe that is more efficient or better.
+    def create_boundary_points_from_mask(self, bnd_dist=5000.0):
+        """Get boundary points from snapwave boundary cells of mask in quadtree grid.
+
+        Parameters
+        ----------
+        bnd_dist : float, optional
+            Distance [m] between boundary points, by default 5000.0.
         """
+
         if not self.model.grid_type == "quadtree":
             raise ValueError("SnapWave is not supported for regular grid models!")
-        else:
-            if min_dist is None:
-                # Set minimum distance between to grid boundary points on polyline to 2 * dx
-                min_dist = self.model.quadtree_grid.data.attrs["dx"] * 2
 
-            mask = self.model.quadtree_grid.data["snapwave_mask"]
-            ibnd = np.where(mask == 2)
-            xz, yz = self.model.quadtree_grid.face_coordinates
-            xp = xz[ibnd]
-            yp = yz[ibnd]
+        # Get snapwave mask from model grid
+        mask = self.model.quadtree_grid.data["snapwave_mask"]
 
-            # Make boolean array for points that are include in a polyline
-            used = np.full(xp.shape, False, dtype=bool)
+        # get boundary vector based on mask
+        gdf_msk = utils.get_bounds_vector(mask)
+        gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
 
-            # Make list of polylines. Each polyline is a list of indices of boundary points.
-            polylines = []
+        # convert to meters if CRS is geographic
+        if self.model.crs.is_geographic:
+            bnd_dist = bnd_dist / 111111.0
 
-            while True:
-                if np.all(used):
-                    # All boundary grid points have been used. We can stop now.
-                    break
+        # create boundary points from mask boundary vector
+        gdf_points = utils.create_boundary_points(
+            gdf_msk2, bnd_dist=bnd_dist, crs=self.model.crs
+        )
 
-                # Find first the unused points
-                i1 = np.where(~used)[0][0]
-
-                # Set this point to used
-                used[i1] = True
-
-                # Start new polyline with index i1
-                polyline = [i1]
-
-                while True:
-                    # Compute distances to all points that have not been used
-                    xpunused = xp[~used]
-                    ypunused = yp[~used]
-                    # Get all indices of unused points
-                    unused_indices = np.where(~used)[0]
-
-                    dst = np.sqrt((xpunused - xp[i1]) ** 2 + (ypunused - yp[i1]) ** 2)
-                    if np.all(np.isnan(dst)):
-                        break
-                    inear = np.nanargmin(dst)
-                    inearall = unused_indices[inear]
-                    if dst[inear] < min_dist:
-                        # Found next point along polyline
-                        polyline.append(inearall)
-                        used[inearall] = True
-                        i1 = inearall
-                    else:
-                        # Last point found
-                        break
-
-                # Now work the other way
-                # Start with first point of polyline
-                i1 = polyline[0]
-                while True:
-                    if np.all(used):
-                        # All boundary grid points have been used. We can stop now.
-                        break
-                    # Now we go in the other direction
-                    xpunused = xp[~used]
-                    ypunused = yp[~used]
-                    unused_indices = np.where(~used)[0]
-                    dst = np.sqrt((xpunused - xp[i1]) ** 2 + (ypunused - yp[i1]) ** 2)
-                    inear = np.nanargmin(dst)
-                    inearall = unused_indices[inear]
-                    if dst[inear] < min_dist:
-                        # Found next point along polyline
-                        polyline.insert(0, inearall)
-                        used[inearall] = True
-                        # Set index of next point
-                        i1 = inearall
-                    else:
-                        # Last nearby point found
-                        break
-
-                if len(polyline) > 1:
-                    polylines.append(polyline)
-
-            gdf_list = []
-            ip = 0
-            # Transform to web mercator to get distance in metres
-            if self.model.crs.is_geographic:
-                transformer = Transformer.from_crs(self.model.crs, 3857, always_xy=True)
-            # Loop through polylines
-            for polyline in polylines:
-                x = xp[polyline]
-                y = yp[polyline]
-                points = [(x, y) for x, y in zip(x.ravel(), y.ravel())]
-                line = shapely.geometry.LineString(points)
-                if self.model.crs.is_geographic:
-                    # Line in web mercator (to get length in metres)
-                    xm, ym = transformer.transform(x, y)
-                    pointsm = [(xm, ym) for xm, ym in zip(xm.ravel(), ym.ravel())]
-                    linem = shapely.geometry.LineString(pointsm)
-                    num_points = int(linem.length / bnd_dist) + 2
-                else:
-                    num_points = int(line.length / bnd_dist) + 2
-                # Interpolate to new points
-                new_points = [
-                    line.interpolate(i / float(num_points - 1), normalized=True)
-                    for i in range(num_points)
-                ]
-                # Loop through points in polyline
-                for point in new_points:
-                    name = str(ip + 1).zfill(4)
-                    d = {
-                        "name": name,
-                        "geometry": point,
-                    }
-                    gdf_list.append(d)
-                    ip += 1
-
-            gdf = gpd.GeoDataFrame(gdf_list, crs=self.model.crs)
-
-        self.set_locations(gdf, merge=False)
+        # set locations
+        self.set_locations(gdf_points, merge=False)

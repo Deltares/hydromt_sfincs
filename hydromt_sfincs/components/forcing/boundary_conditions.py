@@ -85,6 +85,18 @@ class SfincsBoundaryBase(ModelComponent):
             return self.data.vector.to_gdf()
         return gpd.GeoDataFrame()
 
+    @property
+    def list_names(self):
+        """Give list of names of all the points in the dataset, for display purposes.
+        If no "name" column is present, a default name based on index is returned."""
+        if self.nr_points > 0:
+            # Ensure "name" column exists for display purposes (not saved to file, just for display in list)
+            g = self.gdf.copy()
+            if "name" not in g.columns:
+                g["name"] = [f"Point {i+1:03d}" for i in g.index]
+            return g["name"].tolist()
+        return []
+
     def set(
         self,
         df: pd.DataFrame = None,
@@ -178,7 +190,7 @@ class SfincsBoundaryBase(ModelComponent):
                 gdf0 = gdf0_dedup
             # Create dataset with dummy values for new points and combine with existing dataset
             ds_new = self._create_dummy_dataset(gdf, ds0.time, value)
-            gds_new = GeoDataset.from_gdf(gdf, ds_new, keep_cols=False)
+            gds_new = GeoDataset.from_gdf(gdf, ds_new, keep_cols=True)
 
             # Ensure new dataset has same variable names and ordering as existing dataset
             varnames = (
@@ -186,7 +198,7 @@ class SfincsBoundaryBase(ModelComponent):
                 if isinstance(self._default_varname, str)
                 else self._default_varname
             )
-            gds_combined = xr.concat([ds0[varnames], gds_new], dim="index")
+            gds_combined = _safe_concat([ds0[varnames], gds_new], dim="index")
             gds_combined = gds_combined.assign_coords(
                 index=np.arange(gds_combined.sizes["index"])
             )
@@ -198,7 +210,7 @@ class SfincsBoundaryBase(ModelComponent):
             time = pd.date_range(*self.model.get_model_time(), periods=2)
             ds_new = self._create_dummy_dataset(gdf, time, value)
             # Combine geometry and dataset into a GeoDataset, assign new integer index and store
-            gds_new = GeoDataset.from_gdf(gdf, ds_new, keep_cols=False)
+            gds_new = GeoDataset.from_gdf(gdf, ds_new, keep_cols=True)
             gds_new = gds_new.assign_coords(index=np.arange(gds_new.sizes["index"]))
             # Return the new indices which will be 0..N-1 since we are replacing all data
             new_indices = gds_new.index
@@ -271,20 +283,20 @@ class SfincsBoundaryBase(ModelComponent):
         x, y : float
             Coordinates of the point.
         name : str, optional
-            Optional point name.
+            Optional point name. This is recommended to use for discharge points.
         value : float or list, optional
             Default timeseries value(s) assigned to the new point. Can be a single float or a list of floats for multiple variables.
         drop_duplicates : bool, optional
             If True, drop duplicate points in gdf based on 'name' column or geometry.
         """
-        new_index = self.nr_points + 1
-        if name is None:
-            name = f"point_{new_index}"
 
         gdf = gpd.GeoDataFrame(
             geometry=gpd.points_from_xy([x], [y]), crs=self.model.crs
         )
-        gdf["name"] = name
+
+        if name is not None:
+            gdf["name"] = [name]
+
         self.set_locations(
             gdf=gdf, value=value, merge=True, drop_duplicates=drop_duplicates
         )
@@ -304,7 +316,10 @@ class SfincsBoundaryBase(ModelComponent):
             index = [index]
         if any(x > (self.nr_points - 1) for x in index):
             raise ValueError("One of the indices exceeds length of index range!")
-        self._data = self.data.drop_isel(index=index)
+        # Drop the points from the dataset and reassign a new integer index
+        self._data = self.data.drop_isel(index=index).assign_coords(
+            index=np.arange(self.nr_points - len(index))
+        )
 
     def clear(self):
         """
@@ -417,3 +432,17 @@ class SfincsBoundaryBase(ModelComponent):
             )
 
         return xr.merge(da_list)
+
+
+def _safe_concat(ds_list, dim):
+    """Concatenate datasets along a dimension while preserving all coordinates. If some datasets are missing certain coordinates,
+    those coordinates will be retained with NaN values for the missing entries instead of being dropped.
+    """
+    coord_sets = [set(ds.coords) for ds in ds_list]
+    common = set.intersection(*coord_sets)
+    all_coords = set.union(*coord_sets)
+    problem = all_coords - common
+
+    fixed = [ds.reset_coords(problem & set(ds.coords)) for ds in ds_list]
+
+    return xr.concat(fixed, dim=dim, join="outer", compat="no_conflicts")

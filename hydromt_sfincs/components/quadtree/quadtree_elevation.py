@@ -11,7 +11,10 @@ import xugrid as xu
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs.workflows.merge import merge_multi_dataarrays
+from hydromt_sfincs.workflows.map_overlay import ElevationOverlay
+from hydromt_sfincs.workflows.merge import (
+    merge_multi_dataarrays,
+)
 from hydromt_sfincs.components.quadtree import SfincsQuadtreeMixin
 
 if TYPE_CHECKING:
@@ -25,10 +28,12 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
         self,
         model: "SfincsModel",
     ):
-        # The data for the elevation is stored in the model.quadtree_grid.data["z"]
+        # The elevation data lives on model.quadtree_grid.data["z"];
+        # the renderer holds the only local state.
         super().__init__(
             model=model,
         )
+        self._overlay = ElevationOverlay()
 
     @property
     def data(self):
@@ -57,7 +62,6 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
         interp_method: str = "linear",
         zmin: float = -1.0e9,
         zmax: float = 1.0e9,
-        bathymetry_database: object = None,
     ):
         """Interpolate topobathy (z) data to the model grid.
 
@@ -78,7 +82,6 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
         """
 
         nlev = self.data.attrs["nr_levels"]
-        xy = self.data.grid.face_coordinates
         n_cells = self.data.grid.n_face
         zz = np.full(n_cells, np.nan)
         dx = self.data.attrs["dx"]
@@ -88,86 +91,38 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
         if self.model.crs.is_geographic:
             res *= 111111.0  # convert to meters
 
-        # get 0-based level
-        level = self.data["level"].values - 1
-
         # Precompute elevation sets per level
+        # Add try statement here for compatibility with cht_bathymetry approach
         elevation_list_per_level = [
             self.model._parse_datasets_elevation(elevation_list, res=res / (2**ilev))
             for ilev in range(nlev)
         ]
 
-        if bathymetry_database is None:
-            # Generic workflow using compute_quadtree
-            def compute_elevation(da_like, ilev=None):
-                da_dep = merge_multi_dataarrays(
-                    da_list=elevation_list_per_level[ilev],
-                    da_like=da_like,
-                    buffer_cells=buffer_cells,
-                    interp_method=interp_method,
-                    logger=logger,
-                )
-
-                # check if no nan data is present in the bed levels
-                nmissing = int(np.sum(np.isnan(da_dep.values)))
-                if nmissing > 0:
-                    logger.warning(f"Interpolate elevation at {nmissing} cells")
-                    da_dep = da_dep.raster.interpolate_na(
-                        method="rio_idw", extrapolate=True
-                    )
-                return da_dep
-
-            self.compute_quadtree(
-                compute_elevation,
-                zz,
-                nrmax=nrmax,
-                clip=(zmin, zmax),
+        # Generic workflow using compute_quadtree
+        def compute_elevation(da_like, ilev=None):
+            da_dep = merge_multi_dataarrays(
+                da_list=elevation_list_per_level[ilev],
+                da_like=da_like,
+                buffer_cells=buffer_cells,
+                interp_method=interp_method,
+                logger=logger,
             )
-        else:
-            # TODO remove code when ddb also works with data_catalog
-            level_indices = [np.where(level == ilev)[0] for ilev in range(nlev)]
-            for ilev in range(nlev):
-                idx = level_indices[ilev]
-                xz, yz = xy[idx, 0], xy[idx, 1]
-                dxmin, dymin = dx / 2**ilev, dy / 2**ilev
 
-                # Determine chunking
-                x_min, x_max = xz.min() - dxmin, xz.max() + dxmin
-                y_min, y_max = yz.min() - dymin, yz.max() + dymin
-                x_chunks = np.arange(x_min, x_max, nrmax * dxmin)
-                y_chunks = np.arange(y_min, y_max, nrmax * dymin)
+            # check if no nan data is present in the bed levels
+            nmissing = int(np.sum(np.isnan(da_dep.values)))
+            if nmissing > 0:
+                logger.warning(f"Interpolate elevation at {nmissing} cells")
+                da_dep = da_dep.raster.interpolate_na(
+                    method="rio_idw", extrapolate=True
+                )
+            return da_dep
 
-                zgl = np.full(len(idx), np.nan)
-
-                def process_chunk(ix, iy):
-                    if ix < len(x_chunks) - 1:
-                        x0, x1 = x_chunks[ix], x_chunks[ix + 1]
-                    else:
-                        x0, x1 = x_chunks[ix], x_max
-                    if iy < len(y_chunks) - 1:
-                        y0, y1 = y_chunks[iy], y_chunks[iy + 1]
-                    else:
-                        y0, y1 = y_chunks[iy], y_max
-
-                    in_chunk = np.where(
-                        (xz >= x0) & (xz < x1) & (yz >= y0) & (yz < y1)
-                    )[0]
-                    if len(in_chunk) == 0:
-                        return
-
-                    zgl[in_chunk] = bathymetry_database.get_bathymetry_on_points(
-                        xz[in_chunk],
-                        yz[in_chunk],
-                        min(dxmin, dymin),
-                        self.model.crs,
-                        elevation_list,
-                    )
-
-                for ix in range(len(x_chunks)):
-                    for iy in range(len(y_chunks)):
-                        process_chunk(ix, iy)
-
-                zz[idx] = zgl
+        self.compute_quadtree(
+            compute_elevation,
+            zz,
+            nrmax=nrmax,
+            clip=(zmin, zmax),
+        )
 
         # Convert elevation to ugrid-dataarray and set in self.data
         da = xr.DataArray(zz, dims=[self.data.grid.face_dimension])
@@ -188,6 +143,49 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
         ugrid2d = self.data.grid
         self.data["z"] = xu.UgridDataArray(
             xr.DataArray(data=zz, dims=[ugrid2d.face_dimension]), ugrid2d
+        )
+
+    # ------------------------------------------------------------------
+    # Map overlay (delegates to ElevationOverlay in workflows.map_overlay)
+    # ------------------------------------------------------------------
+
+    def clear_overlay(self) -> None:
+        """Invalidate the cached elevation-overlay trimesh."""
+        self._overlay.invalidate()
+
+    def map_overlay(
+        self,
+        file_name,
+        xlim=None,
+        ylim=None,
+        cmap="gist_earth",
+        cmin=None,
+        cmax=None,
+        width: int = 800,
+        **kwargs,
+    ) -> bool:
+        """Render a PNG elevation overlay.
+
+        One-line wrapper around
+        :py:class:`hydromt_sfincs.workflows.map_overlay.ElevationOverlay`.
+        """
+        if self.data is None or "z" not in self.data:
+            return False
+        return self._overlay.render(
+            face_xy=self.data.grid.face_coordinates,
+            z=self.data["z"].values[:],
+            level=self.data["level"].values[:],
+            dx0=self.data.attrs["dx"],
+            dy0=self.data.attrs["dy"],
+            rotation=self.data.attrs["rotation"],
+            source_crs=self.model.crs,
+            file_name=file_name,
+            xlim=xlim,
+            ylim=ylim,
+            cmap=cmap,
+            cmin=cmin,
+            cmax=cmax,
+            width=width,
         )
 
 

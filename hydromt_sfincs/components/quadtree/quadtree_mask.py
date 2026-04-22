@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 import warnings
 from typing import TYPE_CHECKING, Union
@@ -11,25 +10,14 @@ import shapely
 import xarray as xr
 import xugrid as xu
 from matplotlib import path
-from pyproj import Transformer
 
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
 from hydromt_sfincs import utils
+from hydromt_sfincs.workflows.map_overlay import MaskOverlay
 
 np.warnings = warnings
-
-# optional dependency
-try:
-    import datashader as ds
-    import datashader.transfer_functions as tf
-    from datashader.utils import export_image
-
-    HAS_DATASHADER = True
-
-except ImportError:
-    HAS_DATASHADER = False
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -39,6 +27,10 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 class SfincsQuadtreeMask(ModelComponent):
+    # Variable name (in model.quadtree_grid.data) that the overlay renderer
+    # samples. Subclasses (e.g. SnapWaveQuadtreeMask) override this.
+    _mask_variable: str = "mask"
+
     def __init__(
         self,
         model: "SfincsModel",
@@ -47,8 +39,9 @@ class SfincsQuadtreeMask(ModelComponent):
         super().__init__(
             model=model,
         )
-        # For plotting map overlay (This is the only data that is stored in the object! All other data is stored in the model.grid.data["mask"])
-        self.datashader_dataframe = pd.DataFrame()
+        # Lazy mask-overlay renderer (holds the only internal state; all
+        # mask data itself lives on model.quadtree_grid.data["mask"]).
+        self._overlay = MaskOverlay()
 
     @property
     def data(self):
@@ -62,6 +55,15 @@ class SfincsQuadtreeMask(ModelComponent):
     @property
     def face_coordinates(self):
         return self.model.quadtree_grid.face_coordinates
+
+    @property
+    def has_open_boundaries(self):
+        """Returns True if mask contains open boundaries (mask = 2)"""
+        if "mask" not in self.data:
+            return False
+
+        mask = self.data["mask"]
+        return (mask == 2).any().item()
 
     def read(self):
         # The mask values are read when the quadtree grid is read
@@ -96,7 +98,6 @@ class SfincsQuadtreeMask(ModelComponent):
         downstream_boundary_zmin: float = None,
         downstream_boundary_zmax: float = None,
         all_touched: bool = False,
-        update_datashader_dataframe=False,
     ):
         """Setup active model mask and add boundaries. Note that boundary types can only be set when polygons are provided.
 
@@ -125,6 +126,39 @@ class SfincsQuadtreeMask(ModelComponent):
 
         """
 
+        # We first make sure that any polygons that are a geodataframe but are empty, are set to None
+        if isinstance(include_polygon, gpd.GeoDataFrame) and include_polygon.empty:
+            include_polygon = None
+        if isinstance(exclude_polygon, gpd.GeoDataFrame) and exclude_polygon.empty:
+            exclude_polygon = None
+        if (
+            isinstance(open_boundary_polygon, gpd.GeoDataFrame)
+            and open_boundary_polygon.empty
+        ):
+            open_boundary_polygon = None
+        if (
+            isinstance(outflow_boundary_polygon, gpd.GeoDataFrame)
+            and outflow_boundary_polygon.empty
+        ):
+            outflow_boundary_polygon = None
+        if (
+            isinstance(neumann_boundary_polygon, gpd.GeoDataFrame)
+            and neumann_boundary_polygon.empty
+        ):
+            neumann_boundary_polygon = None
+        if (
+            isinstance(downstream_boundary_polygon, gpd.GeoDataFrame)
+            and downstream_boundary_polygon.empty
+        ):
+            downstream_boundary_polygon = None
+
+        if model == "sfincs":
+            open_btype = "waterlevel"
+        elif model == "snapwave":
+            open_btype = "waves"
+        else:
+            raise ValueError("Model must be either 'sfincs' or 'snapwave'!")
+
         # Create active model cells
         self.create_active(
             model=model,
@@ -143,7 +177,7 @@ class SfincsQuadtreeMask(ModelComponent):
         if open_boundary_polygon is not None:
             self.create_boundary(
                 model=model,
-                btype="waterlevel",
+                btype=open_btype,
                 include_polygon=open_boundary_polygon,
                 include_zmin=open_boundary_zmin,
                 include_zmax=open_boundary_zmax,
@@ -180,9 +214,7 @@ class SfincsQuadtreeMask(ModelComponent):
                 all_touched=all_touched,
             )
 
-        if update_datashader_dataframe:
-            # For use in DelftDashboard
-            self.get_datashader_dataframe()
+        self._overlay.invalidate()
 
     @hydromt_step
     def create_active(
@@ -259,7 +291,7 @@ class SfincsQuadtreeMask(ModelComponent):
         gdf_include, gdf_exclude = None, None
         bbox = self.model.region.to_crs(4326).total_bounds
 
-        # FIXME do we still want to support .pol files?
+        # FIXME do we still want to support .pol files? MvO: No!
         if include_polygon is not None:
             if not isinstance(include_polygon, gpd.GeoDataFrame) and str(
                 include_polygon
@@ -582,7 +614,9 @@ class SfincsQuadtreeMask(ModelComponent):
                     uda_include = np.logical_and(uda_include, uda_dep <= include_zmax)
             bounds = np.logical_and(bounds, uda_include)
             if not bounds.any():
-                raise ValueError("No mask boundary cells found within include polygon!")
+                # This should not be an error. Better to just give a warning.
+                # raise ValueError("No mask boundary cells found within include polygon!")
+                logger.warning("No mask boundary cells found within polygon!")
 
         if gdf_exclude is not None:
             uda_exclude = (
@@ -668,161 +702,49 @@ class SfincsQuadtreeMask(ModelComponent):
 
         return gdf
 
-    def has_open_boundaries(self):
-        """Returns True if mask contains open boundaries (mask = 2)"""
-        mask = self.model.quadtree_grid.data["mask"]
-        if mask is None:
-            return False
-        if np.any(mask == 2):
-            return True
-        else:
-            return False
+    def clear_overlay(self) -> None:
+        """Invalidate the cached mask-overlay dataframe.
 
-    def get_datashader_dataframe(self):
-        """Sets the datashader dataframe for plotting"""
-        # Create a dataframe with points elements
-        # Coordinates of cell centers
-        x = self.face_coordinates[:, 0]
-        y = self.face_coordinates[:, 1]
-        # Check if grid crosses the dateline
-        cross_dateline = False
-        if self.model.crs.is_geographic:
-            if np.max(x) > 180.0:
-                cross_dateline = True
-        mask = self.model.quadtree_grid.data["mask"].values[:]
-        # Get rid of cells with mask = 0
-        iok = np.where(mask > 0)
-        x = x[iok]
-        y = y[iok]
-        mask = mask[iok]
-        if np.size(x) == 0:
-            # Return empty dataframe
-            self.datashader_dataframe = pd.DataFrame()
-            return
-        # Transform all to 3857 (web mercator)
-        transformer = Transformer.from_crs(self.model.crs, 3857, always_xy=True)
-        x, y = transformer.transform(x, y)
-        if cross_dateline:
-            x[x < 0] += 40075016.68557849
-
-        self.datashader_dataframe = pd.DataFrame(dict(x=x, y=y, mask=mask))
-
-    def clear_datashader_dataframe(self):
-        """Clears the datashader dataframe"""
-        # Called in model.grid.build method
-        self.datashader_dataframe = pd.DataFrame()
+        Call this whenever the grid or mask is rebuilt so the next
+        :py:meth:`map_overlay` render picks up fresh values.
+        """
+        self._overlay.invalidate()
 
     def map_overlay(
         self,
         file_name,
         xlim=None,
         ylim=None,
-        active_color="yellow",
-        boundary_color="red",
-        downstream_color="blue",
-        neumann_color="purple",
-        outflow_color="green",
-        px=2,
-        width=800,
-    ):
-        """Creates a map overlay image of the mask
+        colors=None,
+        px: int = 2,
+        width: int = 800,
+        **kwargs,
+    ) -> bool:
+        """Render a PNG mask overlay.
 
-        Parameters
-        ----------
-        file_name : str
-            The file name of the image
-        xlim : list, optional
-            The x limits of the image
-        ylim : list, optional
-            The y limits of the image
-        active_color : str, optional
-            The color of the active cells
-        boundary_color : str, optional
-            The color of the boundary cells
-        outflow_color : str, optional
-            The color of the outflow cells
-        px : int, optional
-            The marker size in pixels
-        width : int, optional
-            The width of the image in pixels
-
-        Returns
-        -------
-        bool
-            True if the image was created successfully, False otherwise
+        One-line wrapper around
+        :py:class:`hydromt_sfincs.workflows.map_overlay.MaskOverlay`.
         """
-
-        # check if datashader is available
-        if not HAS_DATASHADER:
-            logger.warning("Datashader is not available. Please install datashader.")
-            return False
-
         if self.model.quadtree_grid.data is None:
-            # No grid or mask points
             return False
-
-        try:
-            # Check if datashader dataframe is empty (maybe it was not made yet, or it was cleared)
-            if self.datashader_dataframe.empty:
-                self.get_datashader_dataframe()
-
-            # If it is still empty (because there are no active cells), return False
-            if self.datashader_dataframe.empty:
-                return False
-
-            transformer = Transformer.from_crs(4326, 3857, always_xy=True)
-            xl0, yl0 = transformer.transform(xlim[0], ylim[0])
-            xl1, yl1 = transformer.transform(xlim[1], ylim[1])
-            if xl0 > xl1:
-                xl1 += 40075016.68557849
-            xlim = [xl0, xl1]
-            ylim = [yl0, yl1]
-            ratio = (ylim[1] - ylim[0]) / (xlim[1] - xlim[0])
-            height = int(width * ratio)
-
-            cvs = ds.Canvas(
-                x_range=xlim, y_range=ylim, plot_height=height, plot_width=width
-            )
-
-            # Instead, we can create separate images for each mask and stack them
-            dfact = self.datashader_dataframe[self.datashader_dataframe["mask"] == 1]
-            dfbnd = self.datashader_dataframe[self.datashader_dataframe["mask"] == 2]
-            dfout = self.datashader_dataframe[self.datashader_dataframe["mask"] == 3]
-            dfneu = self.datashader_dataframe[self.datashader_dataframe["mask"] == 5]
-            dfdwn = self.datashader_dataframe[self.datashader_dataframe["mask"] == 6]
-            img_a = tf.shade(
-                tf.spread(cvs.points(dfact, "x", "y", ds.any()), px=px),
-                cmap=active_color,
-            )
-            img_b = tf.shade(
-                tf.spread(cvs.points(dfbnd, "x", "y", ds.any()), px=px),
-                cmap=boundary_color,
-            )
-            img_o = tf.shade(
-                tf.spread(cvs.points(dfout, "x", "y", ds.any()), px=px),
-                cmap=outflow_color,
-            )
-            img_n = tf.shade(
-                tf.spread(cvs.points(dfneu, "x", "y", ds.any()), px=px),
-                cmap=neumann_color,
-            )
-            img_d = tf.shade(
-                tf.spread(cvs.points(dfdwn, "x", "y", ds.any()), px=px),
-                cmap=downstream_color,
-            )
-            img = tf.stack(img_a, img_b, img_o, img_n, img_d)
-
-            path = os.path.dirname(file_name)
-            if not path:
-                path = os.getcwd()
-            name = os.path.basename(file_name)
-            name = os.path.splitext(name)[0]
-            export_image(img, name, export_path=path)
-            return True
-
-        except Exception as e:
-            print(e)
+        if len(self.model.quadtree_grid.data.data_vars) == 0:
             return False
+        # Skip when the mask variable this subclass renders isn't built
+        # yet (e.g. SnapWave mask before ``create`` has run).
+        if self._mask_variable not in self.model.quadtree_grid.data:
+            return False
+        return self._overlay.render(
+            x=self.face_coordinates[0][:],
+            y=self.face_coordinates[1][:],
+            mask=self.model.quadtree_grid.data[self._mask_variable].values[:],
+            source_crs=self.model.crs,
+            file_name=file_name,
+            xlim=xlim,
+            ylim=ylim,
+            colors=colors,
+            px=px,
+            width=width,
+        )
 
     def _find_boundary_cells(self, varname):
         mu = self.data["mu"].values[:]

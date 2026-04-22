@@ -20,7 +20,7 @@ from hydromt.model.components import GridComponent
 from hydromt.model.processes.grid import create_grid_from_region
 
 from hydromt_sfincs import utils
-from hydromt_sfincs.workflows.tiling import int2png, tile_window
+from hydromt_sfincs.workflows.tiling import int2png, tile_window, write_html
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -77,7 +77,6 @@ class SfincsGrid(GridComponent):
         )
         # initialize data attribute
         self._data = None
-        self.datashader_dataframe = pd.DataFrame()
 
     @property
     def transform(self):
@@ -635,37 +634,10 @@ class SfincsGrid(GridComponent):
         lines = [LineString([(x1[i], y1[i]), (x2[i], y2[i])]) for i in range(len(x1))]
         return gpd.GeoDataFrame(geometry=lines, crs=self.model.crs)
 
-    def get_datashader_dataframe(self):
-        """Create a datashader-friendly DataFrame for the regular grid."""
-        x1, y1, x2, y2 = self._get_grid_lines()
-
-        # Check if the grid crosses the dateline
-        cross_dateline = False
-        if self.model.crs.is_geographic:
-            if np.max(x1) > 180.0 or np.max(x2) > 180.0:
-                cross_dateline = True
-
-        # Transform to Web Mercator for Datashader
-        transformer = Transformer.from_crs(self.model.crs, 3857, always_xy=True)
-        x1, y1 = transformer.transform(x1, y1)
-        x2, y2 = transformer.transform(x2, y2)
-
-        # Handle dateline wrapping
-        if cross_dateline:
-            x1[x1 < 0] += 40075016.68557849
-            x2[x2 < 0] += 40075016.68557849
-
-        self.datashader_dataframe = pd.DataFrame(dict(x1=x1, y1=y1, x2=x2, y2=y2))
-
-    def clear_datashader_dataframe(self):
-        """Clears the datashader dataframe"""
-        self.datashader_dataframe = pd.DataFrame()
-
     # %% DDB GUI focused additional functions:
     # create_index_tiles > FIXME - TL: still needed?
     # map_overlay
     # snap_to_grid
-    # _get_datashader_dataframe
 
     # TODO - missing as in cht_sfincs:
     # Many...
@@ -676,6 +648,7 @@ class SfincsGrid(GridComponent):
         region: gpd.GeoDataFrame,
         zoom_range: Union[int, List[int]] = [0, 13],
         fmt: str = "bin",
+        write_html_viewer: bool = True,
         logger: logging.Logger = logger,
     ):
         """Create index tiles for a region. Index tiles are used to quickly map webmercator tiles to the corresponding SFINCS cell.
@@ -690,6 +663,9 @@ class SfincsGrid(GridComponent):
             Range of zoom levels for which tiles are created, by default [0,13]
         fmt : str, optional
             Format of index tiles, either "bin" (binary, default) or "png"
+        write_html_viewer : bool, optional
+            If True (default), also write an ``index.html`` Leaflet viewer
+            alongside the tiles so they can be previewed in a browser.
         """
 
         index_path = os.path.join(root, "indices")
@@ -779,6 +755,15 @@ class SfincsGrid(GridComponent):
                         # for png, change nodata -999 nodata into 0
                         ind[ind == -999] = 0
                         int2png(ind, file_name)
+
+        if write_html_viewer and fmt == "png":
+            os.makedirs(index_path, exist_ok=True)
+            write_html(
+                os.path.join(index_path, "index.html"),
+                title="Index tiles",
+                legend_title="Cell indices",
+                max_native_zoom=zoom_range[1],
+            )
 
     def get_indices_at_points(self, x, y):
         # x and y are 2D arrays of coordinates (x, y) in the same projection as the model

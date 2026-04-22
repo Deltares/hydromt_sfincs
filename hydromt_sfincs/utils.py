@@ -45,6 +45,7 @@ __all__ = [
     "read_timeseries",
     "write_timeseries",
     "get_bounds_vector",
+    "create_boundary_points",
     "mask2gdf",
     "read_xy",
     "write_xy",  # defined in hydromt.io
@@ -240,13 +241,14 @@ def read_xy(fn: Union[str, Path], crs: Union[int, CRS] = None) -> gpd.GeoDataFra
 
 
 def read_xyn(fn: str, crs: int = None):
-    df = pd.read_csv(fn, index_col=False, header=None, sep="\s+").rename(
+    """Read xyn files, for example observation points with names. When name column is not present, it will be generated as "point001", "point002", etc."""
+    df = pd.read_csv(fn, index_col=False, header=None, sep=r"\s+").rename(
         columns={0: "x", 1: "y"}
     )
     if len(df.columns) > 2:
         df = df.rename(columns={2: "name"})
     else:
-        df["name"] = df.index
+        df["name"] = [f"point{i:03d}" for i in range(1, len(df) + 1)]
 
     points = gpd.points_from_xy(df["x"], df["y"])
     gdf = gpd.GeoDataFrame(df.drop(columns=["x", "y"]), geometry=points)
@@ -256,17 +258,22 @@ def read_xyn(fn: str, crs: int = None):
 
 
 def write_xyn(fn: str = "sfincs.obs", gdf: gpd.GeoDataFrame = None, fmt: str = "%.1f"):
+    """Write xyn files, for example observation points with names. When name column is not present, it will be generated as "point001", "point002", etc."""
     # strip %-sign of fmt if present
     fmt = fmt.replace("%", "")
 
     with open(fn, "w") as fid:
         for point in gdf.iterfeatures():
             x, y = point["geometry"]["coordinates"]
-            try:
+            if "properties" in point and "name" in point["properties"]:
                 name = point["properties"]["name"]
-            except:
-                name = "point" + str(point["id"])
-            string = f'{x:{fmt}} {y:{fmt}} "{name}"\n'
+            else:
+                name = None
+                # name = "point" + str(point["id"])
+            if name is not None:
+                string = f'{x:{fmt}} {y:{fmt}} "{name}"\n'
+            else:
+                string = f"{x:{fmt}} {y:{fmt}}\n"
             fid.write(string)
 
 
@@ -300,7 +307,7 @@ def read_timeseries(fn: Union[str, Path], tref: Union[str, datetime]) -> pd.Data
         Dataframe of timeseries with parsed time index.
     """
     tref = parse_datetime(tref)
-    df = pd.read_csv(fn, index_col=0, header=None, sep="\s+")
+    df = pd.read_csv(fn, index_col=0, header=None, sep=r"\s+")
     df.index = pd.to_datetime(df.index.values, unit="s", origin=tref)
     df.columns = df.columns.values.astype(int) - 1  # convert to zero-based index
     df.index.name = "time"
@@ -364,6 +371,12 @@ def get_bounds_vector(
     gdf_msk: gpd.GeoDataFrame
         GeoDataFrame with line geometries of mask boundaries.
     """
+    # check if da_msk has values greater than 1, if not raise error
+    if da_msk.max() <= 1:
+        raise ValueError(
+            "The mask should have values greater than 1 to determine boundary cells."
+        )
+
     if isinstance(da_msk, xr.DataArray):
         gdf_msk = da_msk.raster.vectorize()
         # small buffer for rounding errors
@@ -476,6 +489,51 @@ def get_bounds_vector(
     return gdf_msk
 
 
+def create_boundary_points(gdf_lines, bnd_dist, method="normalized", crs=None):
+    """
+    Generate points along line geometries in a GeoDataFrame.
+
+    Parameters
+    ----------
+    gdf_lines : GeoDataFrame
+        GeoDataFrame containing line geometries.
+    bnd_dist : float
+        Distance between points (for 'absolute') or approximate segment length (for 'normalized').
+    method : str, optional
+        'absolute' for fixed-distance spacing,
+        'normalized' for equal fraction spacing along each line.
+    crs : CRS, optional
+        Coordinate reference system for the output GeoDataFrame.
+
+    Returns
+    -------
+    GeoDataFrame
+        Points along the input line geometries.
+    """
+    points = []
+
+    for _, row in gdf_lines.iterrows():
+        line = row.geometry
+
+        if method == "absolute":
+            distances = np.arange(0, line.length + bnd_dist, bnd_dist)
+            for d in distances:
+                d = min(d, line.length)
+                pt = line.interpolate(d)
+                points.append((pt.x, pt.y))
+        elif method == "normalized":
+            num_points = int(line.length / bnd_dist) + 2
+            for i in range(num_points):
+                t = i / float(num_points - 1)
+                pt = line.interpolate(t, normalized=True)
+                points.append((pt.x, pt.y))
+        else:
+            raise ValueError(f"Unknown method: {method}")
+
+    gdf_points = gpd.GeoDataFrame(geometry=gpd.points_from_xy(*zip(*points)), crs=crs)
+    return gdf_points
+
+
 def mask2gdf(
     da_mask: xr.DataArray,
     option: str = "all",
@@ -526,7 +584,7 @@ def gdf2linestring(gdf: gpd.GeoDataFrame) -> List[Dict]:
     """Convert GeoDataFrame[LineString] to list of structure dictionaries
 
     The x,y are taken from the geometry.
-    For weir structures to additional paramters are required, a "z" (elevation) and
+    For weir structures to additional paramters are required, a "elevation" (elevation) and
     "par1" (Cd coefficient in weir formula) are required which should be supplied
     as columns (or z-coordinate) of the GeoDataFrame. These columns should either
     contain a float or 1D-array of floats with same length as the LineString.
@@ -553,7 +611,7 @@ def gdf2linestring(gdf: gpd.GeoDataFrame) -> List[Dict]:
         xyz = tuple(zip(*line.coords[:]))
         feat["x"], feat["y"] = list(xyz[0]), list(xyz[1])
         if len(xyz) == 3:
-            feat["z"] = list(xyz[2])
+            feat["elevation"] = list(xyz[2])
         feats.append(feat)
     return feats
 
@@ -607,8 +665,8 @@ def linestring2gdf(feats: List[Dict], crs: Union[int, CRS] = None) -> gpd.GeoDat
     for f in feats:
         feat = copy.deepcopy(f)
         xyz = [feat.pop("x"), feat.pop("y")]
-        if "z" in feat and np.atleast_1d(feat["z"]).size == len(xyz[0]):
-            xyz.append(feat.pop("z"))
+        if "elevation" in feat and np.atleast_1d(feat["elevation"]).size == len(xyz[0]):
+            xyz.append(feat.pop("elevation"))
         feat.update({"geometry": LineString(list(zip(*xyz)))})
         records.append(feat)
     gdf = gpd.GeoDataFrame.from_records(records)
@@ -685,14 +743,14 @@ def write_geoms(
                 "name": 'WEIR01',
                 "x": [0, 10, 20],
                 "y": [100, 100, 100],
-                "z": 5.0,
+                "elevation": 5.0,
                 "par1": 0.6,
             },
             {
                 "name": 'WEIR02',
                 "x": [100, 110, 120],
                 "y": [100, 100, 100],
-                "z": [5.0, 5.1, 5.0],
+                "elevation": [5.0, 5.1, 5.0],
                 "par1": 0.6,
             },
         ]
@@ -701,8 +759,8 @@ def write_geoms(
     cols = {"pli": 2, "pol": 2, "thd": 2, "weir": 4, "crs": 2, "wvm": 2}[stype.lower()]
 
     fmt = [fmt, fmt] + [fmt_z for _ in range(cols - 2)]
-    if stype.lower() == "weir" and np.any(["z" not in f for f in feats]):
-        raise ValueError('"z" value missing for weir files.')
+    if stype.lower() == "weir" and np.any(["elevation" not in f for f in feats]):
+        raise ValueError('"elevation" value missing for weir files.')
     with open(fn, "w") as f:
         for i, feat in enumerate(feats):
             name = feat.get("name", i + 1)
@@ -713,7 +771,7 @@ def write_geoms(
             a[:, 0] = np.asarray(feat["x"])
             a[:, 1] = np.asarray(feat["y"])
             if stype.lower() == "weir":
-                a[:, 2] = feat["z"]
+                a[:, 2] = feat["elevation"]
                 a[:, 3] = feat.get("par1", 0.6)
             s = io.BytesIO()
             np.savetxt(s, a, fmt=fmt)
@@ -736,7 +794,7 @@ def read_geoms(fn: Union[str, Path]) -> List[Dict]:
         List of dictionaries describing structures.
     """
     feats = []
-    col_names = ["x", "y", "z", "par1"]
+    col_names = ["x", "y", "elevation", "par1"]
     with open(fn, "r") as f:
         while True:
             name = f.readline().strip()
@@ -749,10 +807,11 @@ def read_geoms(fn: Union[str, Path]) -> List[Dict]:
             for r in range(rows):
                 for c, v in enumerate(f.readline().strip().split(maxsplit=cols)):
                     feat[col_names[c]][r] = float(v)
-            if cols > 2:
-                for c in col_names[2:]:
-                    if np.unique(feat[c]).size == 1:
-                        feat[c] = feat[c][0]
+            # Always create a list
+            # if cols > 2:
+            #     for c in col_names[2:]:
+            #         if np.unique(feat[c]).size == 1:
+            #             feat[c] = feat[c][0]
             feats.append(feat)
     return feats
 
@@ -782,9 +841,11 @@ def write_drn(fn: Union[str, Path], gdf_drainage: gpd.GeoDataFrame, fmt="%.1f") 
         "par3",
         "par4",
         "par5",
+        "par6",
     ]
 
     gdf = copy.deepcopy(gdf_drainage)
+
     # get geometry linestring and convert to xsnk, ysnk, xsrc, ysrc
     endpoints = gdf.boundary.explode(index_parts=True).unstack()
     gdf["xsnk"] = endpoints[0].x
@@ -802,7 +863,16 @@ def write_drn(fn: Union[str, Path], gdf_drainage: gpd.GeoDataFrame, fmt="%.1f") 
         gdf[col] = gdf[col].round(int(precision))
 
     # write to file
-    gdf.to_csv(fn, sep=" ", index=False, header=False)
+    if fmt[0] == "%":
+        fmt = fmt[1:]
+    with open(fn, "w") as f:
+        for _, row in gdf.iterrows():
+            f.write(
+                f"{row.xsnk:{fmt}} {row.ysnk:{fmt}} {row.xsrc:{fmt}} {row.ysrc:{fmt}} "
+                f"{row.type:2.0f} {row.par1:10.3f} {row.par2:10.3f} "
+                f"{row.par3:10.3f} {row.par4:10.3f} {row.par5:10.3f} {row.par6:10.3f}\n"
+            )
+    # gdf.to_csv(fn, sep=" ", index=False, header=False)
 
 
 def read_drn(fn: Union[str, Path], crs: int = None) -> gpd.GeoDataFrame:
@@ -833,10 +903,25 @@ def read_drn(fn: Union[str, Path], crs: int = None) -> gpd.GeoDataFrame:
         "par3",
         "par4",
         "par5",
+        "par6",
     ]
 
     # read structure file
-    df = pd.read_csv(fn, sep="\\s+", names=col_names)
+    df = pd.read_csv(fn, sep="\\s+", header=None, dtype=float)
+
+    # trim or expand columns to expected size
+    n_expected = len(col_names)
+
+    if df.shape[1] < n_expected:
+        # add missing columns
+        for i in range(df.shape[1], n_expected):
+            df[i] = 0.0
+    elif df.shape[1] > n_expected:
+        # drop extra columns
+        df = df.iloc[:, :n_expected]
+
+    # assign names
+    df.columns = col_names
 
     # get geometry linestring
     geom = [
@@ -846,6 +931,86 @@ def read_drn(fn: Union[str, Path], crs: int = None) -> gpd.GeoDataFrame:
         )
     ]
     df.drop(["xsnk", "ysnk", "xsrc", "ysrc"], axis=1, inplace=True)
+
+    # convert to geodataframe
+    gdf = gpd.GeoDataFrame(df, geometry=geom)
+    if crs is not None:
+        gdf.set_crs(crs, inplace=True)
+    return gdf
+
+
+def write_bdr_points(
+    fn: Union[str, Path], gdf_bdr: gpd.GeoDataFrame, fmt="%.1f"
+) -> None:
+    """Write SFINCS downstream river boundary points file (.bdr).
+
+    Each row:
+    xbdr ybdr xbdr_in ybdr_in slope distance
+
+    NOTE: This version expects geometry to be LineString with 2 vertices:
+    - first vertex: boundary point
+    - second vertex: inland control point
+    """
+    # expected columns for river boundary structures
+    gdf = copy.deepcopy(gdf_bdr)
+    # get geometry linestring and convert to xsnk, ysnk, xsrc, ysrc
+    endpoints = gdf.boundary.explode(index_parts=True).unstack()
+    gdf["xbdr"] = endpoints[0].x
+    gdf["ybdr"] = endpoints[0].y
+    gdf["x_bdr_in"] = endpoints[1].x
+    gdf["y_bdr_in"] = endpoints[1].y
+    gdf.drop(["geometry"], axis=1, inplace=True)
+
+    # required columns
+    required = ["slope", "distance"]
+    missing = [c for c in required if c not in gdf.columns]
+    if missing:
+        raise ValueError(f"Missing required columns in gdf_bdr: {missing}")
+
+    # order columns as SFINCS expects
+    gdf = gdf[["xbdr", "ybdr", "x_bdr_in", "y_bdr_in", "slope", "distance"]]
+
+    # format coords
+    for col in ["xbdr", "ybdr", "x_bdr_in", "y_bdr_in"]:
+        gdf[col] = gdf[col].apply(lambda x: fmt % float(x))
+
+    gdf["slope"] = gdf["slope"].apply(lambda x: f"{float(x):.6f}")
+    gdf["distance"] = gdf["distance"].apply(lambda x: f"{float(x):.3f}")
+
+    Path(fn).parent.mkdir(parents=True, exist_ok=True)
+    gdf.to_csv(fn, sep=" ", index=False, header=False)
+
+
+def read_bdr(fn: Union[str, Path], crs: int = None) -> gpd.GeoDataFrame:
+    """Read river boundary file to geodataframe.
+
+    Parameters
+    ----------
+    fn : str, Path
+        Path to river boundary file.
+    crs : int
+        EPSG code for coordinate reference system.
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+        Dataframe with river boundary parameters and geometry.
+    """
+
+    # expected columns for river boundary structures
+    col_names = ["xbdr", "ybdr", "x_bdr_in", "y_bdr_in", "slope", "distance"]
+
+    # read structure file
+    df = pd.read_csv(fn, sep="\\s+", names=col_names)
+
+    # get geometry linestring
+    geom = [
+        LineString([(xbdr, ybdr), (x_bdr_in, y_bdr_in)])
+        for xbdr, ybdr, x_bdr_in, y_bdr_in in zip(
+            df["xbdr"], df["ybdr"], df["x_bdr_in"], df["y_bdr_in"]
+        )
+    ]
+    df.drop(["xbdr", "ybdr", "x_bdr_in", "y_bdr_in"], axis=1, inplace=True)
 
     # convert to geodataframe
     gdf = gpd.GeoDataFrame(df, geometry=geom)
@@ -1202,6 +1367,94 @@ def build_overviews(
         src.update_tags(ns="rio_overview", resampling=resample_method)
 
 
+def _downscale_floodmap_da(
+    zsmax: Union[xr.DataArray, xu.UgridDataArray],
+    dep: xr.DataArray,
+    indices: xr.DataArray = None,
+    hmin: float = 0.05,
+    gdf_mask: gpd.GeoDataFrame = None,
+    reproj_method: str = "nearest",
+) -> xr.DataArray:
+    """Create a downscaled floodmap for (model) region.
+
+    Parameters
+    ----------
+    zsmax : xr.DataArray
+        Maximum water level (m). When multiple timesteps provided, maximum over all timesteps is used.
+    dep : Path, str, xr.DataArray
+        High-resolution DEM (m) of model region:
+    hmin : float, optional
+        Minimum water depth (m) to be considered as "flooded", by default 0.05
+    gdf_mask : gpd.GeoDataFrame, optional
+        Geodataframe with polygons to mask floodmap, example containing the landarea, by default None
+        Note that the area outside the polygons is set to nodata.
+    """
+
+    if indices is None:
+        # interpolate zsmax to dep grid
+        if isinstance(zsmax, xr.DataArray):
+            zsmax = zsmax.raster.reproject_like(dep, method=reproj_method)
+        elif isinstance(zsmax, xu.UgridDataArray):
+            # if non-rotated grid, use xugrid rasterize_like
+            if dep.raster.transform[1] == 0 and dep.raster.transform[3] == 0:
+                zsmax = zsmax.ugrid.rasterize_like(dep)
+            # if rotated grid, use xugrid regridder
+            else:
+                # need to convert dep to unstructured to enable xugrid regridder
+                uda_dep = xu.UgridDataArray.from_structured2d(dep, "xc", "yc")
+                regridder = xu.CentroidLocatorRegridder(source=zsmax, target=uda_dep)
+                result = regridder.regrid(zsmax)
+                # map back to structured
+                zsmax = dep.copy(data=result.values.reshape(dep.shape))
+
+        zsmax = zsmax.raster.mask_nodata()  # make sure nodata is nan
+
+        # get flood depth
+        hmax = (zsmax - dep).astype("float32")
+        hmax.raster.set_nodata(np.nan)
+    else:
+        # make sure index is same shape as dep
+        if indices.shape != dep.shape:
+            raise ValueError(
+                "Indices shape {} does not match dep shape {}.".format(
+                    indices.shape, dep.shape
+                )
+            )
+
+        # Get the no_data value from the indices array
+        nan_val_indices = indices.raster.nodata  # indices.attrs["_FillValue"]
+        # Set the no_data mask
+        no_data_mask = indices == nan_val_indices
+
+        # Turn indices into numpy array and set no_data values to 0
+        indices = np.squeeze(indices.values[:])
+        indices[np.where(indices == nan_val_indices)] = 0
+
+        zsmax = zsmax.raster.mask_nodata()  # make sure nodata is nan
+
+        # Compute water depth
+        zs_numpy = zsmax.values[:].flatten()
+        h = zs_numpy[indices] - dep.values[:]
+
+        # Set water depth to NaN where indices are no data
+        h[no_data_mask] = np.nan
+
+        # Turn h into a DataArray with the same dimensions as zb
+        # ds = xr.Dataset()
+        hmax = xr.DataArray(h, dims=["y", "x"], coords={"y": dep.y, "x": dep.x})
+        hmax.raster.set_nodata(np.nan)
+        hmax.raster.set_crs(dep.raster.crs)
+
+    # mask floodmap
+    hmax = hmax.where(hmax > hmin)
+
+    if gdf_mask is not None:
+        mask = hmax.raster.geometry_mask(gdf_mask, all_touched=True)
+        hmax = hmax.where(mask)
+
+    return hmax
+
+
 def find_uv_indices(mask: xr.DataArray):
     """The subgrid tables for a regular SFINCS grid are organized as flattened arrays, meaning
     2D arrays (y,x) are transformed into 1D arrays, only containing values for active cells.
@@ -1397,9 +1650,9 @@ def make_regular_grid(
     # CRS/Ugrid handling
     if make_ugrid:
         if rotation != 0.0:
-            da = UgridDataArray.from_structured(da, "xc", "yc")
+            da = UgridDataArray.from_structured2d(da, "xc", "yc")
         else:
-            da = UgridDataArray.from_structured(da)
+            da = UgridDataArray.from_structured2d(da)
         if crs is not None:
             da.grid.set_crs(crs)
     else:

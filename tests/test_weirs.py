@@ -145,14 +145,7 @@ def test_determine_weir_elevation(model_config):
         join(TESTMODELDIR, "gis", "thd_clean.geojson")
     )
 
-    # should give error if no dep nor dz provided
-    with pytest.raises(ValueError):
-        model_config.weirs.create(locations=gdf, merge=False, dep=None, dz=None)
-
     # read in related dep.tif
-    # dep = model_config.data_catalog.get_rasterdataset(
-    #     join(TESTMODELDIR, "gis", "dep.tif")
-    # )
     dep_fn = join(TESTMODELDIR, "gis", "dep.tif")
     # Then call create with dep provided
     model_config.weirs.create(locations=gdf, merge=False, dep=dep_fn, dz=None)

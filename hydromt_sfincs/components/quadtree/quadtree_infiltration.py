@@ -9,7 +9,6 @@ import xugrid as xu
 
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
-from hydromt.model.processes.mesh import mesh2d_from_rasterdataset
 
 from hydromt_sfincs import DATADIR, workflows
 from hydromt_sfincs.infiltration import (
@@ -32,8 +31,10 @@ if TYPE_CHECKING:
 logger = logging.getLogger(f"hydromt.{__name__}")
 
 
-class SfincsQuadtreeInfiltration(ModelComponent):
-    """SFINCS infiltration component for quadtree grids."""
+class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
+    """SFINCS infiltration component for quadtree grids. Note that the infiltration component
+    can contain multiple variables, depending on the infiltration type. The variables are stored
+    in the model.quadtree_grid.data with names specified in _ATTRS."""
 
     def __init__(self, model: "SfincsModel"):
         super().__init__(model=model)
@@ -246,6 +247,7 @@ class SfincsQuadtreeInfiltration(ModelComponent):
         lulc_modifiers=None,
         factor_ksat=3.6,
         reproj_method="mean",
+        nrmax=2000,
     ):
         """Setup spatially varying constant infiltration for quadtree grids."""
         if qinf is not None:

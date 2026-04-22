@@ -171,7 +171,7 @@ def interp_along_line_to_grid(
     # interpolate z values per line
     def _interp(cc0, gdf_zb=gdf_zb, column_names=column_names):
         kwargs = dict(kind="linear", fill_value="extrapolate")
-        idx0 = cc0["idx0"].values[0]  # iterpolate per line with ID idx0
+        idx0 = cc0.name  # iterpolate per line with ID idx0
         for name in column_names:
             x0 = np.atleast_1d(gdf_zb.loc[idx0, "x"])
             z0 = np.atleast_1d(gdf_zb.loc[idx0, name]).astype(np.float32)

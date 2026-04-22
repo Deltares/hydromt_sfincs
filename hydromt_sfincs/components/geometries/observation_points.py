@@ -44,6 +44,11 @@ class SfincsObservationPoints(ModelComponent):
         return self._data
 
     @property
+    def gdf(self) -> gpd.GeoDataFrame:
+        """Observation point data, returned as a GeoDataFrame. Same as data property."""
+        return self.data
+
+    @property
     def nr_points(self) -> int:
         """
         Return the number of point locations currently stored.
@@ -51,6 +56,16 @@ class SfincsObservationPoints(ModelComponent):
         if hasattr(self.data, "index"):
             return len(self.data.index)
         return 0
+
+    @property
+    def list_names(self) -> list:
+        """
+        Return list of names of observation points.
+        """
+        if self.data.empty:
+            return []
+        names = list(self.data["name"])
+        return names
 
     # %% core HydroMT-SFINCS functions:
     # _initialize
@@ -296,10 +311,3 @@ class SfincsObservationPoints(ModelComponent):
 
         self.delete(index)
         return
-
-    def list_names(self):
-        """Give list of names of observation points."""
-        if self.data.empty:
-            return []
-        names = list(self.data["name"])
-        return names
