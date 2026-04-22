@@ -60,6 +60,12 @@ class SfincsConfig(ModelComponent):
 
         self.root._assert_read_mode
 
+        # Lock the read root and filename to the current root path so that later
+        # root changes (e.g. when cloning a model) do not affect path resolution.
+        self._read_root = self.model.root.path.resolve()
+        if not Path(self._filename).is_absolute():
+            self._filename = self._read_root / "sfincs.inp"
+
         if not exists(self.filename):
             raise FileNotFoundError(
                 f"SFINCS input file '{self.filename}' does not exist."
@@ -214,7 +220,16 @@ class SfincsConfig(ModelComponent):
         if abs_path and isinstance(value, (str, Path)):
             value = Path(value)
             if not isabs(value):
-                value = Path(abspath(join(self.root.path, value)))
+                # Use the root that was active when the config was read so that
+                # a later root change (e.g. cloning the model) does not redirect
+                # reads to the new, empty root.  Fall back to the current root
+                # when no read root is recorded (write-only mode) or when the
+                # caller did not supply a fallback (write context).
+                read_root = getattr(self, "_read_root", None)
+                if read_root is not None and fallback is not None:
+                    value = (read_root / value).resolve()
+                else:
+                    value = Path(abspath(join(self.root.path, value)))
 
         return value
 
@@ -377,8 +392,15 @@ class SfincsConfig(ModelComponent):
         else:
             return None  # Nothing to return
 
-        # Make sure the value is an absolute path
+        # Make sure the value is an absolute path.
+        # When the caller did not supply an explicit value or a write-mode
+        # default, the path came from the original sfincs.inp and should be
+        # resolved against the root that was active at read time so that a
+        # later root change does not redirect reads to the wrong directory.
         if not value_path.is_absolute():
+            read_root = getattr(self, "_read_root", None)
+            if read_root is not None and value is None and default is None:
+                return (read_root / value_path).resolve()
             return (root_path / value_path).resolve()
         else:
             return value_path
