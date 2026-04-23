@@ -11,6 +11,7 @@ from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
 from hydromt_sfincs import DATADIR, workflows
+from hydromt_sfincs.components.quadtree import SfincsQuadtreeMixin
 from hydromt_sfincs.infiltration import (
     BUCKET_VARS,
     DEFAULT_BUCKETFILE,
