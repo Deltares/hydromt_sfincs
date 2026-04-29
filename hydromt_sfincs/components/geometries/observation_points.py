@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Union
 import geopandas as gpd
 import pandas as pd
 import shapely
+
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
@@ -157,6 +158,7 @@ class SfincsObservationPoints(ModelComponent):
             if within.all() == False:
                 # keep points that fall within region
                 gdf = gdf[within]
+                
                 # write away the names of points that are removed
                 gdf_name = gdf.name[~within]
                 logger.info(
