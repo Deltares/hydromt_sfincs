@@ -158,7 +158,7 @@ class SfincsObservationPoints(ModelComponent):
             if within.all() == False:
                 # keep points that fall within region
                 gdf = gdf[within]
-                
+
                 # write away the names of points that are removed
                 gdf_name = gdf.name[~within]
                 logger.info(
