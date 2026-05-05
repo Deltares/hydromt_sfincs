@@ -5,6 +5,7 @@ from .cog import *
 from .curvenumber import *
 from .discharge import *
 from .flwdir import *
+from .infiltration import *
 from .landuse import *
 from .map_overlay import *
 from .merge import *

@@ -695,11 +695,28 @@ class SfincsConfigVariables(BaseSettings):
     amprfile: str | None = Field(None, description="Precipitation file")
     z0lfile: str | None = Field(None, description="Wind reduction over land file")
     wvmfile: str | None = Field(None, description="Wave maker input points file")
-    qinffile: str | None = Field(None, description="Infiltration file")
-    infiltration_file: str | None = Field(
-        None, description="Infiltration file (alternative)"
+    infiltrationfile: str | None = Field(
+        None,
+        description="Name of the Netcdf infiltration input file for SFINCS infiltration flavors",
     )
-    infiltration_type: str | None = Field(None, description="Infiltration type")
+    infiltrationtype: str | None = Field(
+        None,
+        description="SFINCS infiltration flavor used with infiltrationfile (c2d, cna, cnb, gai, hor, or bkt)",
+    )
+    bucketfile: str | None = Field(
+        None,
+        description="Name of the bucket-model Netcdf input file",
+    )
+    bucket_loss_frac: float | None = Field(
+        None,
+        ge=0.0,
+        le=1.0,
+        description="Uniform bucket loss fraction used when no bucket_loss field is provided (-)",
+    )
+    qinffile: str | None = Field(
+        None,
+        description="Name of the spatially-varying, constant in time infiltration file",
+    )
 
     # ================================================================
     # Curve Number / Green-Ampt / Horton files

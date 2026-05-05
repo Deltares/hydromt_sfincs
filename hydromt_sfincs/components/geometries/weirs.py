@@ -142,7 +142,7 @@ class SfincsWeirs(ModelComponent):
         struct = utils.gdf2linestring(self.data)
 
         # Write to weirfile
-        utils.write_geoms(abs_file_path, struct, stype="weir", fmt=fmt)
+        utils.write_geoms(abs_file_path, struct, stype="weir", fmt=fmt, fmt_z="%.3f")
 
         # write also as geojson:
         if self.model.write_gis:

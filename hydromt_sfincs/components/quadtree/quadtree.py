@@ -251,7 +251,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             for var in variables:
                 if var["variable"] == "infiltration":
                     # determine which infiltration variables to write based on the infiltration type
-                    inftype = self.model.config.get("infiltration_type")
+                    inftype = self.model.config.get("infiltrationtype")
                     (
                         write_vars,
                         remove_vars,

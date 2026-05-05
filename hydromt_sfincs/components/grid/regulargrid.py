@@ -27,7 +27,23 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 
-_MAPS = ["mask", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol", "ini"]
+_MAPS = [
+    "mask",
+    "dep",
+    "scs",
+    "manning",
+    "qinf",
+    "smax",
+    "seff",
+    "ks",
+    "psi",
+    "sigma",
+    "f0",
+    "fc",
+    "kd",
+    "vol",
+    "ini",
+]
 
 
 class SfincsGrid(GridComponent):
