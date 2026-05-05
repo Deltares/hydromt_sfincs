@@ -250,22 +250,17 @@ class SfincsQuadtreeGrid(MeshComponent):
         if len(variables) > 0:
             for var in variables:
                 if var["variable"] == "infiltration":
-                    # determine which infiltration variables to write based on the infiltration type
-                    inftype = self.model.config.get("infiltrationtype")
-                    (
-                        write_vars,
-                        remove_vars,
-                    ) = self.model.quadtree_infiltration.get_vars_by_infiltration_type(
-                        inftype
-                    )
+                    from hydromt_sfincs.infiltration import ALL_VARS, flavor_variables
 
-                    # Log what is being removed (only if anything to remove)
+                    inftype = self.model.config.get("infiltrationtype")
+                    write_vars = list(flavor_variables(inftype))
+                    remove_vars = [
+                        v for v in ALL_VARS if v not in write_vars and v in ds.data_vars
+                    ]
                     if remove_vars:
                         logger.info(
                             f"Removing unused infiltration variables not matching type '{inftype}': {remove_vars}"
                         )
-
-                    # Drop unwanted variables from dataset BEFORE writing
                     ds = ds.drop_vars(remove_vars, errors="ignore")
                 else:
                     write_vars = [var["variable"]]
