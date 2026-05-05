@@ -315,6 +315,142 @@ class SfincsWeirs(ModelComponent):
         # Set config
         self.model.config.set("weirfile", "sfincs.weir")
 
+    @hydromt_step
+    def create_from_dem(
+        self,
+        dep: Union[str, Path, xr.DataArray] = None,
+        method: str = "frangi",
+        buffer: float = 5.0,
+        dz: float = None,
+        par1: float = 0.6,
+        merge: bool = True,
+        method_kwargs: dict = None,
+    ):
+        """Create weir (and, for Steger, thin-dam) geometries directly from a DEM.
+
+        Runs one of the ridge-detection flavors in
+        :py:mod:`hydromt_sfincs.workflows.ridge_detection` on a high-resolution
+        DEM, splits the result by ``stype`` column, and routes the
+        ``"weir"`` subset through :py:meth:`create` and the ``"thd"`` subset
+        through :py:meth:`SfincsThinDams.create` — reusing the existing
+        elevation-sampling and merge logic.
+
+        Parameters
+        ----------
+        dep : str, Path, xr.DataArray, optional
+            DEM used both for detection and for crest-elevation sampling.
+            If ``None``, the model's active dep (``self.model.grid.data["dep"]``)
+            is used. Must be in a projected CRS (meters).
+        method : {"frangi", "whitebox", "steger", "rea", "lcp", "river_banks"}
+            Detection flavor. ``"frangi"`` is the general-purpose default;
+            ``"steger"`` additionally classifies narrow features as ``"thd"``
+            (thin dams) and broader features as ``"weir"``; ``"lcp"`` traces
+            one longest-geodesic-path per skeleton component (max continuity);
+            ``"river_banks"`` uses pyflwdir to extract streams from the DEM
+            and traces bank-crest polylines along them — guaranteed to find
+            river banks that other methods may miss.
+        buffer : float, optional
+            Window radius (m) for sampling the DEM around each polyline
+            vertex to get crest elevation; passed to :py:meth:`create`.
+            Default 5.0 (samples a 11x11 window on a 1 m DEM, taking the max).
+        dz : float, optional
+            Vertical offset added to sampled crest elevations. Default None.
+        par1 : float, optional
+            Broad-crested discharge coefficient. Default 0.6. Use ~1.1 for
+            sharp-crested walls.
+        merge : bool, optional
+            If True (default), merge new structures with existing ones.
+        method_kwargs : dict, optional
+            Keyword arguments forwarded to the flavor function. See the
+            ``detect_ridges_*`` functions for available parameters.
+        """
+        from hydromt_sfincs.workflows import ridge_detection
+
+        dispatch = {
+            "rea": ridge_detection.detect_ridges_rea,
+            "frangi": ridge_detection.detect_ridges_frangi,
+            "whitebox": ridge_detection.detect_ridges_whitebox,
+            "steger": ridge_detection.detect_ridges_steger,
+            "lcp": ridge_detection.detect_ridges_lcp,
+            "river_banks": ridge_detection.detect_river_banks,
+        }
+        if method not in dispatch:
+            raise ValueError(
+                f"Unknown method {method!r}; pick from {sorted(dispatch)}."
+            )
+
+        # Resolve DEM DataArray (same logic as determine_weir_elevation)
+        if dep is None:
+            assert "dep" in self.model.grid.data, (
+                "dep layer not found in model grid; pass dep= explicitly."
+            )
+            da_dem = self.model.grid.data["dep"]
+        elif isinstance(dep, xr.DataArray):
+            da_dem = dep
+        else:
+            da_dem = self.data_catalog.get_rasterdataset(
+                dep, geom=self.model.region, buffer=5, variables=["elevation"]
+            )
+        da_dem = da_dem.raster.mask_nodata()
+
+        mk = dict(method_kwargs or {})
+
+        # For REA, default to morphological-reconstruction mode (longer
+        # connected components). User can override via method_kwargs.
+        if method == "rea" and "use_reconstruction" not in mk:
+            mk["use_reconstruction"] = True
+            logger.info(
+                "REA: defaulting to use_reconstruction=True for longer "
+                "connected lines (override via method_kwargs)."
+            )
+
+        # For Steger, couple width threshold to the SFINCS grid spacing
+        if method == "steger" and "width_thd_thresh_m" not in mk:
+            try:
+                sfincs_dx = float(self.model.config.get("dx"))
+                mk["width_thd_thresh_m"] = 0.5 * sfincs_dx
+                logger.info(
+                    f"Steger width threshold set to 0.5 * SFINCS dx = "
+                    f"{mk['width_thd_thresh_m']:.2f} m"
+                )
+            except (KeyError, TypeError, ValueError):
+                logger.info(
+                    "Could not read SFINCS dx from config; Steger will "
+                    "fall back to 0.5 * DEM dx for width threshold."
+                )
+
+        logger.info(f"ridge_detection: running flavor {method!r} on DEM")
+        gdf = dispatch[method](da_dem, **mk)
+
+        if gdf.empty:
+            logger.warning("ridge_detection returned 0 structures; nothing to add.")
+            return
+
+        # Align CRS with model (detection returns DEM CRS)
+        if gdf.crs != self.model.crs:
+            gdf = gdf.to_crs(self.model.crs)
+
+        # Split by stype and route
+        weir_rows = gdf[gdf["stype"] == "weir"].drop(columns=["stype"])
+        thd_rows = gdf[gdf["stype"] == "thd"].drop(columns=["stype"])
+
+        if not weir_rows.empty:
+            logger.info(f"Adding {len(weir_rows)} detected weir lines.")
+            self.create(
+                locations=weir_rows,
+                par1=par1,
+                dep=dep,
+                buffer=buffer,
+                dz=dz,
+                merge=merge,
+            )
+        if not thd_rows.empty:
+            logger.info(f"Adding {len(thd_rows)} detected thin dam lines.")
+            self.model.thin_dams.create(
+                locations=thd_rows,
+                merge=merge,
+            )
+
     def delete(
         self,
         index: Union[list, int],
@@ -387,9 +523,11 @@ class SfincsWeirs(ModelComponent):
         structs = utils.gdf2linestring(gdf)  # check if it parsed correct
 
         # get elevation data either from model itself, or separate input
-        if dep is None or dep == "dep":
+        if dep is None or (isinstance(dep, str) and dep == "dep"):
             assert "dep" in self.model.grid.data, "dep layer not found"
             elv = self.model.grid.data["dep"]
+        elif isinstance(dep, xr.DataArray):
+            elv = dep
         else:
             elv = self.data_catalog.get_rasterdataset(
                 dep, geom=self.model.region, buffer=5, variables=["elevation"]
