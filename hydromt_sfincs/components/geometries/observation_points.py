@@ -145,7 +145,9 @@ class SfincsObservationPoints(ModelComponent):
                 logger=logger,
             )
 
-    def set(self, gdf: gpd.GeoDataFrame, merge: bool = True, skip_validation: bool = False):
+    def set(
+        self, gdf: gpd.GeoDataFrame, merge: bool = True, skip_validation: bool = False
+    ):
         """Set SFINCS observation points.
 
         Parameters
