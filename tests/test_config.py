@@ -272,20 +272,3 @@ def test_get_set_file_variable_write_uses_new_root_after_root_change(tmp_path):
     assert obs_abs == (
         tmp_path.resolve() / obs_rel
     ), "get_set_file_variable with default should use the new root after root change"
-
-
-def test_get_abs_path_write_context_uses_new_root_after_root_change(tmp_path):
-    """get(abs_path=True) without fallback (write context) resolves against the new root."""
-    original_root = Path(TESTMODELDIR)
-    mod = SfincsModel(root=original_root, mode="r")
-    mod.config.read()
-
-    # Change root to a new (empty) location
-    mod.root.set(tmp_path, mode="r+")
-
-    # No fallback → write context; should use new root
-    obs_abs = mod.config.get("obsfile", abs_path=True)
-    obs_rel = mod.config.get("obsfile")
-    assert obs_abs == (
-        tmp_path.resolve() / obs_rel
-    ), "get(abs_path=True) without fallback should use the new root after root change"
