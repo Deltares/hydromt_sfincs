@@ -106,6 +106,8 @@ class SfincsConfig(ModelComponent):
 
             if name == "crs":
                 name = "epsg"
+            elif name == "dtout":
+                name = "dtmapout"
 
             inp_dict[name] = val
 
