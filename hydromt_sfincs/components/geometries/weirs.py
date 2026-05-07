@@ -341,14 +341,18 @@ class SfincsWeirs(ModelComponent):
             DEM used both for detection and for crest-elevation sampling.
             If ``None``, the model's active dep (``self.model.grid.data["dep"]``)
             is used. Must be in a projected CRS (meters).
-        method : {"frangi", "whitebox", "steger", "rea", "lcp", "river_banks"}
+        method : {"frangi", "whitebox", "steger", "rea", "lcp", "river_banks", "breach"}
             Detection flavor. ``"frangi"`` is the general-purpose default;
             ``"steger"`` additionally classifies narrow features as ``"thd"``
             (thin dams) and broader features as ``"weir"``; ``"lcp"`` traces
             one longest-geodesic-path per skeleton component (max continuity);
             ``"river_banks"`` uses pyflwdir to extract streams from the DEM
             and traces bank-crest polylines along them — guaranteed to find
-            river banks that other methods may miss.
+            river banks that other methods may miss; ``"breach"`` finds
+            levees as watershed boundaries of DEM depressions
+            (Pronk et al. 2026; Python port of Breach.jl) — produces
+            closed-ring features, best for embankments around polders,
+            ring levees, and dams.
         buffer : float, optional
             Window radius (m) for sampling the DEM around each polyline
             vertex to get crest elevation; passed to :py:meth:`create`.
@@ -373,6 +377,7 @@ class SfincsWeirs(ModelComponent):
             "steger": ridge_detection.detect_ridges_steger,
             "lcp": ridge_detection.detect_ridges_lcp,
             "river_banks": ridge_detection.detect_river_banks,
+            "breach": ridge_detection.detect_levees_breach,
         }
         if method not in dispatch:
             raise ValueError(
