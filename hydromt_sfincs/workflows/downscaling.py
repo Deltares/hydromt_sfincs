@@ -22,7 +22,6 @@ from hydromt.gis.gis_utils import zoom_to_overview_level
 
 from hydromt_sfincs.utils import build_overviews, read_xy
 
-
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
 
@@ -101,7 +100,7 @@ def _dilate_zsmax_quadtree(
 
     grid = zsmax.ugrid.grid
     face_x, face_y = grid.face_coordinates.T
-    fb = grid.face_bounds                     # (n, 4): xmin, ymin, xmax, ymax
+    fb = grid.face_bounds  # (n, 4): xmin, ymin, xmax, ymax
     dx_cell = fb[:, 2] - fb[:, 0]
     dy_cell = fb[:, 3] - fb[:, 1]
     dcell = np.maximum(dx_cell, dy_cell)
@@ -118,7 +117,8 @@ def _dilate_zsmax_quadtree(
     radii = dcell * (0.5 + factor)
 
     nbr_lists = tree.query_ball_point(
-        np.column_stack([face_x, face_y]), r=radii,
+        np.column_stack([face_x, face_y]),
+        r=radii,
     )
 
     dilated = vals.copy()
@@ -168,7 +168,7 @@ def _dilate_zsmax_regular(
     # Disk footprint in pixel units (Euclidean radius 0.5 + factor)
     R = 0.5 + float(factor)
     r = int(np.ceil(R))
-    yy, xx = np.mgrid[-r:r + 1, -r:r + 1]
+    yy, xx = np.mgrid[-r : r + 1, -r : r + 1]
     footprint = (xx * xx + yy * yy) <= (R * R)
 
     # Fill NaN with -inf so the max ignores dry cells
@@ -199,6 +199,8 @@ def _check_dilation_invariants(vals, dilated, wet_before):
     )
     if not np.all(raised >= -1e-9):
         raise RuntimeError("dilation lowered zsmax on some cell")
+
+
 def apply_energy_head(
     zsmax: Union[xr.DataArray, xu.UgridDataArray],
     qmax: Union[xr.DataArray, xu.UgridDataArray],
@@ -288,6 +290,7 @@ def apply_energy_head(
     out = zsmax.copy()
     out.values = zs_new.astype(zsmax.dtype)
     return out
+
 
 def downscale_floodmap(
     zsmax: Union[xr.DataArray, xu.UgridDataArray],
@@ -446,7 +449,11 @@ def downscale_floodmap(
         else:
             logger.info("Applying velocity-head pre-step.")
             zsmax = apply_energy_head(
-                zsmax, qmax=qmax, zb=zb, hmin=hmin, q_threshold=q_threshold,
+                zsmax,
+                qmax=qmax,
+                zb=zb,
+                hmin=hmin,
+                q_threshold=q_threshold,
             )
             qmax = None
     else:
@@ -463,18 +470,31 @@ def downscale_floodmap(
             floodmap_fn = str(floodmap_fn)
         if indices is not None:
             if isinstance(indices, (str, Path)) and not isinstance(dep, (str, Path)):
-                raise ValueError("index should be xr.DataArray when dep is xr.DataArray.")
-            elif isinstance(indices, xr.DataArray) and not isinstance(dep, xr.DataArray):
+                raise ValueError(
+                    "index should be xr.DataArray when dep is xr.DataArray."
+                )
+            elif isinstance(indices, xr.DataArray) and not isinstance(
+                dep, xr.DataArray
+            ):
                 raise ValueError("index should be str/Path when dep is str/Path.")
         hmax = _downscale_floodmap_da(
-            zsmax=zsmax, dep=dep, indices=indices, hmin=hmin,
-            gdf_mask=gdf_mask, reproj_method=reproj_method,
+            zsmax=zsmax,
+            dep=dep,
+            indices=indices,
+            hmin=hmin,
+            gdf_mask=gdf_mask,
+            reproj_method=reproj_method,
         )
         if floodmap_fn is not None:
             if not kwargs:
                 kwargs = dict(
-                    driver="GTiff", tiled=True, blockxsize=256, blockysize=256,
-                    compress="deflate", predictor=2, profile="COG",
+                    driver="GTiff",
+                    tiled=True,
+                    blockxsize=256,
+                    blockysize=256,
+                    compress="deflate",
+                    predictor=2,
+                    profile="COG",
                 )
             hmax.raster.to_raster(floodmap_fn, **kwargs)
             build_overviews(fn=floodmap_fn, resample_method="nearest", logger=logger)
@@ -493,25 +513,49 @@ def downscale_floodmap(
     # Dispatch to the appropriate file-based implementation
     if method == "constant":
         _downscale_constant(
-            zsmax=zsmax, dep=dep, indices=indices, hmin=hmin, gdf_mask=gdf_mask,
-            floodmap_fn=floodmap_fn, zsmap_fn=zsmap_fn, reproj_method=reproj_method,
-            zoom_level=zoom_level, nrmax=nrmax, logger=logger,
+            zsmax=zsmax,
+            dep=dep,
+            indices=indices,
+            hmin=hmin,
+            gdf_mask=gdf_mask,
+            floodmap_fn=floodmap_fn,
+            zsmap_fn=zsmap_fn,
+            reproj_method=reproj_method,
+            zoom_level=zoom_level,
+            nrmax=nrmax,
+            logger=logger,
         )
     elif method == "raw":
         _downscale_raw(
-            zsmax=zsmax, dep=dep, zsmap_fn=zsmap_fn, gdf_mask=gdf_mask,
-            nrmax=nrmax, logger=logger, indices=indices,
+            zsmax=zsmax,
+            dep=dep,
+            zsmap_fn=zsmap_fn,
+            gdf_mask=gdf_mask,
+            nrmax=nrmax,
+            logger=logger,
+            indices=indices,
         )
     elif method == "bilinear":
         _downscale_bilinear(
-            zsmax=zsmax, dep=dep, hmin=hmin, gdf_mask=gdf_mask,
-            floodmap_fn=floodmap_fn, zsmap_fn=zsmap_fn, nrmax=nrmax, logger=logger,
-            indices=indices, qmax=qmax, zb=zb, q_threshold=q_threshold, q_scale=q_scale,
+            zsmax=zsmax,
+            dep=dep,
+            hmin=hmin,
+            gdf_mask=gdf_mask,
+            floodmap_fn=floodmap_fn,
+            zsmap_fn=zsmap_fn,
+            nrmax=nrmax,
+            logger=logger,
+            indices=indices,
+            qmax=qmax,
+            zb=zb,
+            q_threshold=q_threshold,
+            q_scale=q_scale,
         )
 
 
 # =============================================================================
 # =============================================================================
+
 
 def _open_dem_geometry(dep):
     """Read only grid geometry (no elevation values) from a DEM GeoTIFF."""
@@ -529,11 +573,21 @@ def _open_dem_geometry(dep):
 def _make_output_profile(geo):
     """Standard COG profile for float32 output rasters."""
     return dict(
-        driver="GTiff", width=geo["width"], height=geo["height"],
-        count=1, dtype=np.float32, crs=geo["crs"], transform=geo["transform"],
-        tiled=True, blockxsize=256, blockysize=256,
-        compress="deflate", predictor=2, profile="COG",
-        nodata=np.nan, BIGTIFF="YES",
+        driver="GTiff",
+        width=geo["width"],
+        height=geo["height"],
+        count=1,
+        dtype=np.float32,
+        crs=geo["crs"],
+        transform=geo["transform"],
+        tiled=True,
+        blockxsize=256,
+        blockysize=256,
+        compress="deflate",
+        predictor=2,
+        profile="COG",
+        nodata=np.nan,
+        BIGTIFF="YES",
     )
 
 
@@ -548,17 +602,23 @@ def _create_output_rasters(profile, floodmap_fn=None, zsmap_fn=None):
 
 
 def _apply_mask_and_overviews(
-    floodmap_fn, zsmap_fn, gdf_mask, geo, logger,
+    floodmap_fn,
+    zsmap_fn,
+    gdf_mask,
+    geo,
+    logger,
 ):
     """Apply polygon mask and build overviews on output raster(s)."""
     if gdf_mask is not None:
         logger.info("Applying polygon mask...")
         from rasterio.features import geometry_mask
+
         mask = geometry_mask(
             gdf_mask.geometry,
             out_shape=(geo["height"], geo["width"]),
             transform=geo["transform"],
-            invert=True, all_touched=True,
+            invert=True,
+            all_touched=True,
         )
         for fn in [floodmap_fn, zsmap_fn]:
             if fn is None:
@@ -576,11 +636,13 @@ def _apply_mask_and_overviews(
 # =============================================================================
 #  Method: raw  (nearest-neighbor WSE, no DEM subtraction)
 
+
 def _downscale_raw(zsmax, dep, zsmap_fn, gdf_mask, nrmax, logger, indices=None):
     vals = zsmax.values
     wet = ~np.isnan(vals)
     if np.sum(wet) < 1:
-        logger.warning("No wet cells found."); return
+        logger.warning("No wet cells found.")
+        return
 
     geo = _open_dem_geometry(dep)
     profile = _make_output_profile(geo)
@@ -599,9 +661,11 @@ def _downscale_raw(zsmax, dep, zsmap_fn, gdf_mask, nrmax, logger, indices=None):
         indices_src = rasterio.open(str(indices))
 
         for ii in range(nrbm):
-            bm0 = ii * nrcb; bm1 = min(bm0 + nrcb, geo["width"])
+            bm0 = ii * nrcb
+            bm1 = min(bm0 + nrcb, geo["width"])
             for jj in range(nrbn):
-                bn0 = jj * nrcb; bn1 = min(bn0 + nrcb, geo["height"])
+                bn0 = jj * nrcb
+                bn1 = min(bn0 + nrcb, geo["height"])
                 window = Window(bm0, bn0, bm1 - bm0, bn1 - bn0)
 
                 idx_block = indices_src.read(1, window=window)
@@ -624,23 +688,28 @@ def _downscale_raw(zsmax, dep, zsmap_fn, gdf_mask, nrmax, logger, indices=None):
         grid = zsmax.ugrid.grid
         face_x, face_y = grid.face_coordinates.T
         interpolator = NearestNDInterpolator(
-            np.column_stack([face_x[wet], face_y[wet]]), vals[wet],
+            np.column_stack([face_x[wet], face_y[wet]]),
+            vals[wet],
         )
         logger.info(f"Raw quadtree (nearest-interp fallback): {np.sum(wet)} wet cells")
 
         for ii in range(nrbm):
-            bm0 = ii * nrcb; bm1 = min(bm0 + nrcb, geo["width"])
+            bm0 = ii * nrcb
+            bm1 = min(bm0 + nrcb, geo["width"])
             for jj in range(nrbn):
-                bn0 = jj * nrcb; bn1 = min(bn0 + nrcb, geo["height"])
+                bn0 = jj * nrcb
+                bn1 = min(bn0 + nrcb, geo["height"])
                 window = Window(bm0, bn0, bm1 - bm0, bn1 - bn0)
 
                 xx, yy = np.meshgrid(
                     geo["transform"][2] + (np.arange(bm0, bm1) + 0.5) * geo["dx"],
                     geo["transform"][5] + (np.arange(bn0, bn1) + 0.5) * geo["dy"],
                 )
-                zs_block = interpolator(
-                    np.column_stack([xx.ravel(), yy.ravel()])
-                ).reshape(xx.shape).astype(np.float32)
+                zs_block = (
+                    interpolator(np.column_stack([xx.ravel(), yy.ravel()]))
+                    .reshape(xx.shape)
+                    .astype(np.float32)
+                )
 
                 with rasterio.open(str(zsmap_fn), "r+") as dst:
                     dst.write(zs_block, window=window, indexes=1)
@@ -657,8 +726,17 @@ def _downscale_raw(zsmax, dep, zsmap_fn, gdf_mask, nrmax, logger, indices=None):
 #  Method: constant  (index-COG based, file path)
 # =============================================================================
 def _downscale_constant(
-    zsmax, dep, indices, hmin, gdf_mask,
-    floodmap_fn, zsmap_fn, reproj_method, zoom_level, nrmax, logger,
+    zsmax,
+    dep,
+    indices,
+    hmin,
+    gdf_mask,
+    floodmap_fn,
+    zsmap_fn,
+    reproj_method,
+    zoom_level,
+    nrmax,
+    logger,
 ):
     """File-based constant (bathtub) downscaling via _downscale_floodmap_da."""
     if isinstance(floodmap_fn, Path):
@@ -672,7 +750,9 @@ def _downscale_constant(
     if zoom_level is not None:
         zls_dict, crs = RasterioDriver._get_zoom_levels_and_crs(dep)
         overview_level = zoom_to_overview_level(
-            zoom=zoom_level, zls_dict=zls_dict, source_crs=crs,
+            zoom=zoom_level,
+            zls_dict=zls_dict,
+            source_crs=crs,
         )
         if overview_level:
             overview_level -= 1
@@ -681,7 +761,9 @@ def _downscale_constant(
     else:
         overview_level = None
 
-    _open_kwargs = {"overview_level": overview_level} if overview_level is not None else {}
+    _open_kwargs = (
+        {"overview_level": overview_level} if overview_level is not None else {}
+    )
     with rasterio.open(dep, **_open_kwargs) as src:
         if indices is not None:
             indices_src = rasterio.open(indices, **_open_kwargs)
@@ -699,11 +781,21 @@ def _downscale_constant(
             nrbn -= 1
 
         profile = dict(
-            driver="GTiff", width=src.width, height=src.height,
-            count=1, dtype=np.float32, crs=src.crs, transform=src.transform,
-            tiled=True, blockxsize=256, blockysize=256,
-            compress="deflate", predictor=2, profile="COG",
-            nodata=np.nan, BIGTIFF="YES",
+            driver="GTiff",
+            width=src.width,
+            height=src.height,
+            count=1,
+            dtype=np.float32,
+            crs=src.crs,
+            transform=src.transform,
+            tiled=True,
+            blockxsize=256,
+            blockysize=256,
+            compress="deflate",
+            predictor=2,
+            profile="COG",
+            nodata=np.nan,
+            BIGTIFF="YES",
         )
         with rasterio.open(floodmap_fn, "w", **profile):
             pass
@@ -747,27 +839,37 @@ def _downscale_constant(
                     continue
 
                 if src.transform[1] == 0 and src.transform[3] == 0:
-                    x_coords = src.transform[2] + (np.arange(bm0, bm1) + 0.5) * src.transform[0]
-                    y_coords = src.transform[5] + (np.arange(bn0, bn1) + 0.5) * src.transform[4]
+                    x_coords = (
+                        src.transform[2]
+                        + (np.arange(bm0, bm1) + 0.5) * src.transform[0]
+                    )
+                    y_coords = (
+                        src.transform[5]
+                        + (np.arange(bn0, bn1) + 0.5) * src.transform[4]
+                    )
                     block_dep = xr.DataArray(
-                        block_data.squeeze(), dims=("y", "x"),
+                        block_data.squeeze(),
+                        dims=("y", "x"),
                         coords={"y": ("y", y_coords), "x": ("x", x_coords)},
                     )
                     if indices is not None:
                         block_idx = xr.DataArray(
-                            block_idx.squeeze(), dims=("y", "x"),
+                            block_idx.squeeze(),
+                            dims=("y", "x"),
                             coords={"y": ("y", y_coords), "x": ("x", x_coords)},
                         )
                 else:
                     cols, rows = np.meshgrid(np.arange(bm0, bm1), np.arange(bn0, bn1))
                     xc, yc = src.transform * (cols + 0.5, rows + 0.5)
                     block_dep = xr.DataArray(
-                        block_data.squeeze(), dims=("y", "x"),
+                        block_data.squeeze(),
+                        dims=("y", "x"),
                         coords={"yc": (("y", "x"), yc), "xc": (("y", "x"), xc)},
                     )
                     if indices is not None:
                         block_idx = xr.DataArray(
-                            block_idx.squeeze(), dims=("y", "x"),
+                            block_idx.squeeze(),
+                            dims=("y", "x"),
                             coords={"yc": (("y", "x"), yc), "xc": (("y", "x"), xc)},
                         )
 
@@ -777,9 +879,12 @@ def _downscale_constant(
                     block_idx.raster.set_crs(indices_src.crs.to_epsg())
 
                 block_hmax = _downscale_floodmap_da(
-                    zsmax=zsmax, dep=block_dep,
+                    zsmax=zsmax,
+                    dep=block_dep,
                     indices=block_idx if indices is not None else None,
-                    hmin=hmin, gdf_mask=gdf_mask, reproj_method=reproj_method,
+                    hmin=hmin,
+                    gdf_mask=gdf_mask,
+                    reproj_method=reproj_method,
                 )
 
                 with rasterio.open(floodmap_fn, "r+") as fm:
@@ -805,22 +910,40 @@ def _downscale_constant(
 # =============================================================================
 #  Method: bilinear  (LinearNDInterpolator, block-based)
 # =============================================================================
-def _downscale_bilinear(zsmax, dep, hmin, gdf_mask, floodmap_fn, zsmap_fn, nrmax, logger,
-                         indices=None, qmax=None, zb=None, q_threshold=0.01, q_scale=0.5):
+def _downscale_bilinear(
+    zsmax,
+    dep,
+    hmin,
+    gdf_mask,
+    floodmap_fn,
+    zsmap_fn,
+    nrmax,
+    logger,
+    indices=None,
+    qmax=None,
+    zb=None,
+    q_threshold=0.01,
+    q_scale=0.5,
+):
     from scipy.interpolate import LinearNDInterpolator
 
     grid = zsmax.ugrid.grid
     face_x, face_y = grid.face_coordinates.T
     vals = zsmax.values
     if np.sum(~np.isnan(vals)) < 3:
-        logger.warning("Fewer than 3 wet cells; cannot interpolate."); return
+        logger.warning("Fewer than 3 wet cells; cannot interpolate.")
+        return
 
     if qmax is not None:
         # qmax is face-based (one value per cell, same shape as zsmax)
         q_cell_max = np.abs(qmax.values).astype(np.float64)  # (n_faces,)
 
         # Step 2 — local Bernoulli: H_local = zsmax + (q/h)²/2g
-        h_cell = np.maximum(vals - zb.values, hmin) if zb is not None else np.full(len(vals), hmin)
+        h_cell = (
+            np.maximum(vals - zb.values, hmin)
+            if zb is not None
+            else np.full(len(vals), hmin)
+        )
         vel_head = q_cell_max**2 / (h_cell**2 * 2.0 * 9.81)
         H_local = np.where(~np.isnan(vals), vals + vel_head, np.nan)
 
@@ -837,26 +960,34 @@ def _downscale_bilinear(zsmax, dep, hmin, gdf_mask, floodmap_fn, zsmap_fn, nrmax
             both_valid = (ef[:, 0] >= 0) & (ef[:, 1] >= 0)
             f0_safe = np.where(ef[:, 0] >= 0, ef[:, 0], 0)
             f1_safe = np.where(ef[:, 1] >= 0, ef[:, 1], 0)
-            edge_q = np.where(both_valid, np.maximum(q_cell_max[f0_safe], q_cell_max[f1_safe]), 0.0)
+            edge_q = np.where(
+                both_valid, np.maximum(q_cell_max[f0_safe], q_cell_max[f1_safe]), 0.0
+            )
             active = (edge_q > q_threshold) & both_valid
             ef_f0 = ef[active, 0]
             ef_f1 = ef[active, 1]
         else:
             # Malformed connectivity — rebuild face pairs spatially via KD-tree
             from scipy.spatial import cKDTree as _cKDTree
-            fb = grid.face_bounds          # (n_face, 4): xmin, ymin, xmax, ymax
+
+            fb = grid.face_bounds  # (n_face, 4): xmin, ymin, xmax, ymax
             _dx = fb[:, 2] - fb[:, 0]
             _dy = fb[:, 3] - fb[:, 1]
             _n_face = len(face_x)
             _max_cell = max(_dx.max(), _dy.max())
             _tree = _cKDTree(np.column_stack([face_x, face_y]))
             _offsets = np.array([[1, 0], [-1, 0], [0, 1], [0, -1]], dtype=np.float64)
-            _probes = np.vstack([
-                np.column_stack([face_x + _dx * _offsets[d, 0],
-                                 face_y + _dy * _offsets[d, 1]])
-                for d in range(4)
-            ])
-            _dists, _idxs = _tree.query(_probes, k=1, distance_upper_bound=_max_cell + 1.0)
+            _probes = np.vstack(
+                [
+                    np.column_stack(
+                        [face_x + _dx * _offsets[d, 0], face_y + _dy * _offsets[d, 1]]
+                    )
+                    for d in range(4)
+                ]
+            )
+            _dists, _idxs = _tree.query(
+                _probes, k=1, distance_upper_bound=_max_cell + 1.0
+            )
             _src = np.tile(np.arange(_n_face), 4)
             _valid = (_dists < _max_cell + 0.5) & (_src != _idxs)
             _src, _idxs = _src[_valid], _idxs[_valid]
@@ -882,21 +1013,28 @@ def _downscale_bilinear(zsmax, dep, hmin, gdf_mask, floodmap_fn, zsmap_fn, nrmax
         blend = np.minimum(1.0, q_cell_max / q_scale)
         H_eff = H_local.copy()
         boosted = ~np.isnan(upstream_H) & ~np.isnan(H_local)
-        H_eff[boosted] += blend[boosted] * np.maximum(0.0, upstream_H[boosted] - H_local[boosted])
+        H_eff[boosted] += blend[boosted] * np.maximum(
+            0.0, upstream_H[boosted] - H_local[boosted]
+        )
 
         # Also extend to truly dry cells that receive upstream energy (transitional cells)
         dry_with_upstream = np.isnan(vals) & ~np.isnan(upstream_H)
-        H_eff[dry_with_upstream] = upstream_H[dry_with_upstream] * blend[dry_with_upstream]
+        H_eff[dry_with_upstream] = (
+            upstream_H[dry_with_upstream] * blend[dry_with_upstream]
+        )
 
         n_boost = int(np.sum(boosted & (upstream_H > H_local)))
         n_trans = int(np.sum(dry_with_upstream))
-        logger.info(f"Bilinear WSE: Bernoulli + upstream energy applied ({n_boost} boosted, {n_trans} transitional cells)")
+        logger.info(
+            f"Bilinear WSE: Bernoulli + upstream energy applied ({n_boost} boosted, {n_trans} transitional cells)"
+        )
     else:
         H_eff = vals.copy()
 
     wet_ext = ~np.isnan(H_eff)
     interpolator = LinearNDInterpolator(
-        np.column_stack([face_x[wet_ext], face_y[wet_ext]]), H_eff[wet_ext],
+        np.column_stack([face_x[wet_ext], face_y[wet_ext]]),
+        H_eff[wet_ext],
     )
     logger.info(f"Bilinear WSE: interpolant from {np.sum(wet_ext)} cells")
 
@@ -921,9 +1059,11 @@ def _downscale_bilinear(zsmax, dep, hmin, gdf_mask, floodmap_fn, zsmap_fn, nrmax
     done = 0
 
     for ii in range(nrbm):
-        bm0 = ii * nrcb; bm1 = min(bm0 + nrcb, geo["width"])
+        bm0 = ii * nrcb
+        bm1 = min(bm0 + nrcb, geo["width"])
         for jj in range(nrbn):
-            bn0 = jj * nrcb; bn1 = min(bn0 + nrcb, geo["height"])
+            bn0 = jj * nrcb
+            bn1 = min(bn0 + nrcb, geo["height"])
             window = Window(bm0, bn0, bm1 - bm0, bn1 - bn0)
 
             with rasterio.open(str(dep)) as src:
@@ -933,20 +1073,22 @@ def _downscale_bilinear(zsmax, dep, hmin, gdf_mask, floodmap_fn, zsmap_fn, nrmax
                 geo["transform"][2] + (np.arange(bm0, bm1) + 0.5) * geo["dx"],
                 geo["transform"][5] + (np.arange(bn0, bn1) + 0.5) * geo["dy"],
             )
-            zs_interp = interpolator(
-                np.column_stack([xx.ravel(), yy.ravel()])
-            ).reshape(dem_block.shape).astype(np.float32)
+            zs_interp = (
+                interpolator(np.column_stack([xx.ravel(), yy.ravel()]))
+                .reshape(dem_block.shape)
+                .astype(np.float32)
+            )
 
             # Mask pixels outside any wet SFINCS cell
             if indices_src is not None:
                 idx_block = indices_src.read(1, window=window)
-                outside = (idx_block == idx_nodata)
+                outside = idx_block == idx_nodata
                 # Also mask pixels whose parent cell is dry (NaN zsmax)
                 inside = ~outside
                 if inside.any():
                     pidx = idx_block[inside].astype(int)
                     parent_zs = vals[pidx]
-                    parent_H  = H_eff[pidx]
+                    parent_H = H_eff[pidx]
                     dry_parent = np.isnan(parent_zs) & np.isnan(parent_H)
                     mask_arr = np.zeros_like(outside)
                     mask_arr[inside] = dry_parent
@@ -1000,8 +1142,8 @@ def _cell_to_pixel_window(cxmin, cxmax, cymin, cymax, transform, width, height):
         Pixel index window [col0:col1, row0:row1).  Returns None when the
         window is empty.
     """
-    dx = transform[0]   # positive
-    dy = transform[4]   # negative (north-up)
+    dx = transform[0]  # positive
+    dy = transform[4]  # negative (north-up)
 
     # Pixel whose center is at: x = origin_x + (col + 0.5) * dx
     # Include pixel if center_x >= cxmin  =>  col >= (cxmin - origin_x) / dx - 0.5
@@ -1025,6 +1167,7 @@ def _cell_to_pixel_window(cxmin, cxmax, cymin, cymax, transform, width, height):
     if col1 <= col0 or row1 <= row0:
         return None
     return col0, col1, row0, row1
+
 
 def _downscale_floodmap_da(
     zsmax: Union[xr.DataArray, xu.UgridDataArray],
@@ -1245,6 +1388,7 @@ def compute_flow_connected_mask(
 
     return reachable
 
+
 def remove_disconnected_flooding(
     depth_fn: Union[Path, str],
     bnd_fn: Union[Path, str],
@@ -1304,8 +1448,7 @@ def remove_disconnected_flooding(
 
     n_wet = int(np.sum(wet))
     logger.info(
-        f"Disconnected-flooding removal: {n_wet} wet pixels "
-        f"(hmin={hmin} m)"
+        f"Disconnected-flooding removal: {n_wet} wet pixels " f"(hmin={hmin} m)"
     )
 
     # --- 3. Read boundary points and map to pixel coordinates ----------------
@@ -1340,9 +1483,7 @@ def remove_disconnected_flooding(
     )
 
     # Vectorised level-set BFS: expand frontier one ring at a time using numpy
-    _neighbors = [(-1, -1), (-1, 0), (-1, 1),
-                  (0, -1),           (0, 1),
-                  (1, -1),  (1, 0),  (1, 1)]
+    _neighbors = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
 
     wet_flat = wet.ravel()
     conn_flat = connected.ravel()
@@ -1445,15 +1586,13 @@ def remove_disconnected_flooding(
                         conn_blk = connected[
                             r0 : r0 + window.height, c0 : c0 + window.width
                         ]
-                        masked_block = np.where(
-                            conn_blk, var_block, np.nan
-                        ).astype(np.float32)
+                        masked_block = np.where(conn_blk, var_block, np.nan).astype(
+                            np.float32
+                        )
                         dst.write(masked_block, 1, window=window)
             logger.info(f"  Masked raster written: {output_fn}")
 
     return None
-
-
 
 
 # =============================================================================

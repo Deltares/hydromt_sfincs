@@ -34,7 +34,6 @@ from hydromt.data_catalog.drivers import RasterioDriver
 from hydromt.gis.gis_utils import zoom_to_overview_level
 from hydromt.gis.vector import GeoDataset
 
-
 __all__ = [
     "read_binary_map",
     "write_binary_map",
@@ -1249,6 +1248,7 @@ def write_raster(
 
 #  Shared helpers
 # =============================================================================
+
 
 def rotated_grid(
     pol: Polygon, res: float, dec_origin=0, dec_rotation=3
