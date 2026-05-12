@@ -528,8 +528,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-04-22 11:50:17,320 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0rc2).
-2026-04-22 11:50:17,321 - hydromt.model.model - model - WARNING - No region component found in components.
+2026-05-12 14:55:32,018 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0rc2).
+2026-05-12 14:55:32,019 - hydromt.model.model - model - WARNING - No region component found in components.
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -546,16 +546,16 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-04-22 11:50:17,700 - hydromt.hydromt_sfincs.components.output - output - WARNING - Replacing result: inp
-2026-04-22 11:50:17,701 - hydromt.hydromt_sfincs.components.output - output - WARNING - Replacing result: msk
-2026-04-22 11:50:17,702 - hydromt.hydromt_sfincs.components.output - output - WARNING - Replacing result: zb
-2026-04-22 11:50:17,702 - hydromt.hydromt_sfincs.components.output - output - WARNING - Replacing result: zs
-2026-04-22 11:50:17,702 - hydromt.hydromt_sfincs.components.output - output - WARNING - Replacing result: h
-2026-04-22 11:50:17,703 - hydromt.hydromt_sfincs.components.output - output - WARNING - Replacing result: zsmax
-2026-04-22 11:50:17,703 - hydromt.hydromt_sfincs.components.output - output - WARNING - Replacing result: hmax
-2026-04-22 11:50:17,704 - hydromt.hydromt_sfincs.components.output - output - WARNING - Replacing result: total_runtime
-2026-04-22 11:50:17,705 - hydromt.hydromt_sfincs.components.output - output - WARNING - Replacing result: average_dt
-2026-04-22 11:50:17,705 - hydromt.hydromt_sfincs.components.output - output - WARNING - Replacing result: status
+2026-05-12 14:55:32,413 - hydromt.hydromt_sfincs.components.output - output - WARNING - Replacing result: inp
+2026-05-12 14:55:32,413 - hydromt.hydromt_sfincs.components.output - output - WARNING - Replacing result: msk
+2026-05-12 14:55:32,414 - hydromt.hydromt_sfincs.components.output - output - WARNING - Replacing result: zb
+2026-05-12 14:55:32,415 - hydromt.hydromt_sfincs.components.output - output - WARNING - Replacing result: zs
+2026-05-12 14:55:32,416 - hydromt.hydromt_sfincs.components.output - output - WARNING - Replacing result: h
+2026-05-12 14:55:32,416 - hydromt.hydromt_sfincs.components.output - output - WARNING - Replacing result: zsmax
+2026-05-12 14:55:32,416 - hydromt.hydromt_sfincs.components.output - output - WARNING - Replacing result: hmax
+2026-05-12 14:55:32,417 - hydromt.hydromt_sfincs.components.output - output - WARNING - Replacing result: total_runtime
+2026-05-12 14:55:32,418 - hydromt.hydromt_sfincs.components.output - output - WARNING - Replacing result: average_dt
+2026-05-12 14:55:32,418 - hydromt.hydromt_sfincs.components.output - output - WARNING - Replacing result: status
 </pre></div></div>
 </div>
 </section>
@@ -579,7 +579,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;xarray.plot.facetgrid.FacetGrid at 0x7f4d80c759d0&gt;
+&lt;xarray.plot.facetgrid.FacetGrid at 0x7feb9c712990&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -689,27 +689,21 @@
 <span class="ansi-red-fg">---------------------------------------------------------------------------</span>
 <span class="ansi-red-fg">AttributeError</span>                            Traceback (most recent call last)
 <span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[7]</span><span class="ansi-green-fg">, line 16</span>
-<span class="ansi-green-fg">     12</span>     ax.set_title(<span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">SFINCS water depth </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>t<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg">&#34;</span>)
+<span class="ansi-green-fg">     12</span>     ax.set_title(<span class="ansi-yellow-fg">f&#34;SFINCS water depth {t}&#34;</span>)
 <span class="ansi-green-fg">     13</span>     cax_h.set_array(da_hi.values.ravel())
-<span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">16</span> fig, ax = <span class="ansi-yellow-bg">mod</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">plot_basemap</span><span class="ansi-yellow-bg">(</span>
-<span class="ansi-green-fg">     17</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">fn_out</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">None</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">     18</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">variable</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-fg ansi-yellow-bg">&#34;</span><span class="ansi-yellow-fg ansi-yellow-bg">&#34;</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">     19</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">bmap</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-fg ansi-yellow-bg">&#34;</span><span class="ansi-yellow-fg ansi-yellow-bg">sat</span><span class="ansi-yellow-fg ansi-yellow-bg">&#34;</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">     20</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">plot_bounds</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">False</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">     21</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">figsize</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">(</span><span class="ansi-green-fg ansi-yellow-bg">11</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-green-fg ansi-yellow-bg">7</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">     22</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">zoomlevel</span><span class="ansi-yellow-bg">=</span><span class="ansi-green-fg ansi-yellow-bg">12</span><span class="ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">     23</span> <span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-fg">     24</span> cax_h = da_h.isel(time=<span class="ansi-green-fg">0</span>).plot(
-<span class="ansi-green-fg">     25</span>     x=<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">xc</span><span class="ansi-yellow-fg">&#34;</span>, y=<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">yc</span><span class="ansi-yellow-fg">&#34;</span>, ax=ax, vmin=<span class="ansi-green-fg">0</span>, vmax=<span class="ansi-green-fg">3</span>, cmap=plt.cm.viridis, cbar_kwargs=cbar_kwargs
-<span class="ansi-green-fg">     26</span> )
-<span class="ansi-green-fg">     27</span> plt.close()  <span style="color: rgb(95,135,135)"># to prevent double plot</span>
+<span class="ansi-green-fg">     14</span>
+<span class="ansi-green-fg">     15</span>
+<span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">16</span> fig, ax = mod.plot_basemap(
+<span class="ansi-green-fg">     17</span>     fn_out=<span class="ansi-bold" style="color: rgb(0,135,0)">None</span>,
+<span class="ansi-green-fg">     18</span>     variable=<span class="ansi-yellow-fg">&#34;&#34;</span>,
+<span class="ansi-green-fg">     19</span>     bmap=<span class="ansi-yellow-fg">&#34;sat&#34;</span>,
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/sfincs.py:569</span>, in <span class="ansi-cyan-fg">SfincsModel.plot_basemap</span><span class="ansi-blue-fg">(self, fn_out, variable, shaded, plot_bounds, plot_region, plot_geoms, bmap, zoomlevel, figsize, geom_names, geom_kwargs, grid_kwargs, legend_kwargs, **kwargs)</span>
-<span class="ansi-green-fg">    567</span> comp = <span style="color: rgb(0,135,0)">self</span>.components[component]
-<span class="ansi-green-fg">    568</span> <span style="color: rgb(95,135,135)"># vector geometries have data as gpd.GeoDataFrame</span>
-<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">569</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">isinstance</span>(<span class="ansi-yellow-bg">comp</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">data</span>, gpd.GeoDataFrame):
-<span class="ansi-green-fg">    570</span>     gdf = comp.data
-<span class="ansi-green-fg">    571</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> gdf.empty:
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/sfincs.py:579</span>, in <span class="ansi-cyan-fg">SfincsModel.plot_basemap</span><span class="ansi-blue-fg">(self, fn_out, variable, shaded, plot_bounds, plot_region, plot_geoms, bmap, zoomlevel, figsize, geom_names, geom_kwargs, grid_kwargs, legend_kwargs, **kwargs)</span>
+<span class="ansi-green-fg">    577</span> comp = <span style="color: rgb(0,135,0)">self</span>.components[component]
+<span class="ansi-green-fg">    578</span> <span style="color: rgb(95,135,135)"># vector geometries have data as gpd.GeoDataFrame</span>
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">579</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">isinstance</span>(<span class="ansi-black-fg ansi-yellow-bg">comp</span><span class="ansi-black-fg ansi-yellow-bg">.</span><span class="ansi-black-fg ansi-yellow-bg">data</span>, gpd.GeoDataFrame):
+<span class="ansi-green-fg">    580</span>     gdf = comp.data
+<span class="ansi-green-fg">    581</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> gdf.empty:
 
 <span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/components/forcing/boundary_conditions.py:53</span>, in <span class="ansi-cyan-fg">SfincsBoundaryBase.data</span><span class="ansi-blue-fg">(self)</span>
 <span class="ansi-green-fg">     48</span> <span class="ansi-yellow-fg">&#34;&#34;&#34;</span>
@@ -717,19 +711,19 @@
 <span class="ansi-green-fg">     50</span> <span class="ansi-yellow-fg">and geometry information. If not yet initialized, `_initialize()` is called.</span>
 <span class="ansi-green-fg">     51</span> <span class="ansi-yellow-fg">&#34;&#34;&#34;</span>
 <span class="ansi-green-fg">     52</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">self</span>._data <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
-<span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">53</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">_initialize</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">53</span>     <span class="ansi-black-fg ansi-yellow-bg">self</span><span class="ansi-black-fg ansi-yellow-bg">.</span><span class="ansi-black-fg ansi-yellow-bg">_initialize</span><span class="ansi-black-fg ansi-yellow-bg">(</span><span class="ansi-black-fg ansi-yellow-bg">)</span>
 <span class="ansi-green-fg">     54</span> <span class="ansi-bold" style="color: rgb(0,135,0)">assert</span> <span style="color: rgb(0,135,0)">self</span>._data <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>
 <span class="ansi-green-fg">     55</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span style="color: rgb(0,135,0)">self</span>._data
 
 <span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/components/forcing/boundary_conditions.py:67</span>, in <span class="ansi-cyan-fg">SfincsBoundaryBase._initialize</span><span class="ansi-blue-fg">(self, skip_read)</span>
 <span class="ansi-green-fg">     65</span> <span style="color: rgb(0,135,0)">self</span>._data = xr.Dataset()
 <span class="ansi-green-fg">     66</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">self</span>.root.is_reading_mode() <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> skip_read:
-<span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">67</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">read</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">67</span>     <span class="ansi-black-fg ansi-yellow-bg">self</span><span class="ansi-black-fg ansi-yellow-bg">.</span><span class="ansi-black-fg ansi-yellow-bg">read</span><span class="ansi-black-fg ansi-yellow-bg">(</span><span class="ansi-black-fg ansi-yellow-bg">)</span>
 
 <span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/components/forcing/water_level.py:58</span>, in <span class="ansi-cyan-fg">SfincsWaterLevel.read</span><span class="ansi-blue-fg">(self, format)</span>
 <span class="ansi-green-fg">     55</span>         <span style="color: rgb(0,135,0)">format</span> = <span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">asc</span><span class="ansi-yellow-fg">&#34;</span>
 <span class="ansi-green-fg">     57</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">format</span> == <span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">asc</span><span class="ansi-yellow-fg">&#34;</span>:
-<span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">58</span>     gdf = <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">read_boundary_points</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">58</span>     gdf = <span class="ansi-black-fg ansi-yellow-bg">self</span><span class="ansi-black-fg ansi-yellow-bg">.</span><span class="ansi-black-fg ansi-yellow-bg">read_boundary_points</span><span class="ansi-black-fg ansi-yellow-bg">(</span><span class="ansi-black-fg ansi-yellow-bg">)</span>
 <span class="ansi-green-fg">     59</span>     <span style="color: rgb(95,135,135)"># Check if there are any points</span>
 <span class="ansi-green-fg">     60</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> gdf.empty:
 
@@ -738,7 +732,7 @@
 <span class="ansi-green-fg">     90</span>         <span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">Water level boundary points file not found: </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>abs_file_path<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg">&#34;</span>
 <span class="ansi-green-fg">     91</span>     )
 <span class="ansi-green-fg">     93</span> <span style="color: rgb(95,135,135)"># Read bnd file</span>
-<span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">94</span> gdf = <span class="ansi-yellow-bg">utils</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">read_xy</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">abs_file_path</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">crs</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">model</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">crs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">94</span> gdf = <span class="ansi-black-fg ansi-yellow-bg">utils</span><span class="ansi-black-fg ansi-yellow-bg">.</span><span class="ansi-black-fg ansi-yellow-bg">read_xy</span><span class="ansi-black-fg ansi-yellow-bg">(</span><span class="ansi-black-fg ansi-yellow-bg">abs_file_path</span><span class="ansi-black-fg ansi-yellow-bg">,</span><span class="ansi-black-fg ansi-yellow-bg"> </span><span class="ansi-black-fg ansi-yellow-bg">crs</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">self</span><span class="ansi-black-fg ansi-yellow-bg">.</span><span class="ansi-black-fg ansi-yellow-bg">model</span><span class="ansi-black-fg ansi-yellow-bg">.</span><span class="ansi-black-fg ansi-yellow-bg">crs</span><span class="ansi-black-fg ansi-yellow-bg">)</span>
 <span class="ansi-green-fg">     95</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> gdf
 
 <span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/utils.py:233</span>, in <span class="ansi-cyan-fg">read_xy</span><span class="ansi-blue-fg">(fn, crs)</span>
@@ -748,14 +742,14 @@
 <span class="ansi-green-fg">    221</span> <span class="ansi-yellow-fg">    Parameters</span>
 <span class="ansi-green-fg">   (...)</span><span class="ansi-green-fg">    231</span> <span class="ansi-yellow-fg">        GeoDataFrame with point geomtries</span>
 <span class="ansi-green-fg">    232</span> <span class="ansi-yellow-fg">    &#34;&#34;&#34;</span>
-<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">233</span>     gdf = <span class="ansi-yellow-bg">open_vector</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">fn</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">crs</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">crs</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">driver</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-fg ansi-yellow-bg">&#34;</span><span class="ansi-yellow-fg ansi-yellow-bg">xy</span><span class="ansi-yellow-fg ansi-yellow-bg">&#34;</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">233</span>     gdf = <span class="ansi-black-fg ansi-yellow-bg">open_vector</span><span class="ansi-black-fg ansi-yellow-bg">(</span><span class="ansi-black-fg ansi-yellow-bg">fn</span><span class="ansi-black-fg ansi-yellow-bg">,</span><span class="ansi-black-fg ansi-yellow-bg"> </span><span class="ansi-black-fg ansi-yellow-bg">crs</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">crs</span><span class="ansi-black-fg ansi-yellow-bg">,</span><span class="ansi-black-fg ansi-yellow-bg"> </span><span class="ansi-black-fg ansi-yellow-bg">driver</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">&#34;</span><span class="ansi-black-fg ansi-yellow-bg">xy</span><span class="ansi-black-fg ansi-yellow-bg">&#34;</span><span class="ansi-black-fg ansi-yellow-bg">)</span>
 <span class="ansi-green-fg">    234</span>     gdf.index = np.arange(<span class="ansi-green-fg">1</span>, gdf.index.size + <span class="ansi-green-fg">1</span>, dtype=<span style="color: rgb(0,135,0)">int</span>)  <span style="color: rgb(95,135,135)"># index starts at 1</span>
 <span class="ansi-green-fg">    235</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> gdf
 
 <span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/readers.py:663</span>, in <span class="ansi-cyan-fg">open_vector</span><span class="ansi-blue-fg">(path, driver, crs, dst_crs, bbox, geom, assert_gtype, predicate, **kwargs)</span>
 <span class="ansi-green-fg">    661</span> driver = driver <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> driver <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span> <span style="color: rgb(0,135,0)">str</span>(path).split(<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">.</span><span class="ansi-yellow-fg">&#34;</span>)[-<span class="ansi-green-fg">1</span>].lower()
 <span class="ansi-green-fg">    662</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> driver <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> [<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">csv</span><span class="ansi-yellow-fg">&#34;</span>, <span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">parquet</span><span class="ansi-yellow-fg">&#34;</span>, <span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">xls</span><span class="ansi-yellow-fg">&#34;</span>, <span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">xlsx</span><span class="ansi-yellow-fg">&#34;</span>, <span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">xy</span><span class="ansi-yellow-fg">&#34;</span>]:
-<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">663</span>     gdf = <span class="ansi-yellow-bg">open_vector_from_table</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">path</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">driver</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">driver</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">663</span>     gdf = <span class="ansi-black-fg ansi-yellow-bg">open_vector_from_table</span><span class="ansi-black-fg ansi-yellow-bg">(</span><span class="ansi-black-fg ansi-yellow-bg">path</span><span class="ansi-black-fg ansi-yellow-bg">,</span><span class="ansi-black-fg ansi-yellow-bg"> </span><span class="ansi-black-fg ansi-yellow-bg">driver</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">driver</span><span class="ansi-black-fg ansi-yellow-bg">,</span><span class="ansi-black-fg ansi-yellow-bg"> </span><span class="ansi-black-fg ansi-yellow-bg">*</span><span class="ansi-black-fg ansi-yellow-bg">*</span><span class="ansi-black-fg ansi-yellow-bg">kwargs</span><span class="ansi-black-fg ansi-yellow-bg">)</span>
 <span class="ansi-green-fg">    664</span> <span style="color: rgb(95,135,135)"># drivers with multiple relevant files cannot be opened directly, we should pass the uri only</span>
 <span class="ansi-green-fg">    665</span>
 <span class="ansi-green-fg">    666</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
@@ -764,14 +758,14 @@
 <span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/readers.py:760</span>, in <span class="ansi-cyan-fg">open_vector_from_table</span><span class="ansi-blue-fg">(path, driver, x_dim, y_dim, crs, **kwargs)</span>
 <span class="ansi-green-fg">    758</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">IOError</span>(<span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">Driver or extension </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>driver<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg"> unknown for vector table.</span><span class="ansi-yellow-fg">&#34;</span>)
 <span class="ansi-green-fg">    759</span> <span style="color: rgb(95,135,135)"># infer points from table</span>
-<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">760</span> df.columns = <span class="ansi-yellow-bg">[</span><span class="ansi-yellow-bg">c</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">lower</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">for</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">c</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(175,0,255)">in</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">df</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">columns</span><span class="ansi-yellow-bg">]</span>
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">760</span> df.columns = <span class="ansi-black-fg ansi-yellow-bg">[</span><span class="ansi-black-fg ansi-yellow-bg">c</span><span class="ansi-black-fg ansi-yellow-bg">.</span><span class="ansi-black-fg ansi-yellow-bg">lower</span><span class="ansi-black-fg ansi-yellow-bg">(</span><span class="ansi-black-fg ansi-yellow-bg">)</span><span class="ansi-black-fg ansi-yellow-bg"> </span><span class="ansi-black-intense-fg ansi-yellow-bg ansi-bold">for</span><span class="ansi-black-fg ansi-yellow-bg"> </span><span class="ansi-black-fg ansi-yellow-bg">c</span><span class="ansi-black-fg ansi-yellow-bg"> </span><span class="ansi-black-intense-fg ansi-yellow-bg ansi-bold">in</span><span class="ansi-black-fg ansi-yellow-bg"> </span><span class="ansi-black-fg ansi-yellow-bg">df</span><span class="ansi-black-fg ansi-yellow-bg">.</span><span class="ansi-black-fg ansi-yellow-bg">columns</span><span class="ansi-black-fg ansi-yellow-bg">]</span>
 <span class="ansi-green-fg">    762</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> x_dim <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
 <span class="ansi-green-fg">    763</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> dim <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> raster.XDIMS:
 
 <span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/usr/share/miniconda3/envs/hydromt-sfincs/lib/python3.11/site-packages/hydromt/readers.py:760</span>, in <span class="ansi-cyan-fg">&lt;listcomp&gt;</span><span class="ansi-blue-fg">(.0)</span>
 <span class="ansi-green-fg">    758</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">IOError</span>(<span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">Driver or extension </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>driver<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg"> unknown for vector table.</span><span class="ansi-yellow-fg">&#34;</span>)
 <span class="ansi-green-fg">    759</span> <span style="color: rgb(95,135,135)"># infer points from table</span>
-<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">760</span> df.columns = [<span class="ansi-yellow-bg">c</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">lower</span>() <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> c <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> df.columns]
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">760</span> df.columns = [<span class="ansi-black-fg ansi-yellow-bg">c</span><span class="ansi-black-fg ansi-yellow-bg">.</span><span class="ansi-black-fg ansi-yellow-bg">lower</span>() <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> c <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> df.columns]
 <span class="ansi-green-fg">    762</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> x_dim <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
 <span class="ansi-green-fg">    763</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> dim <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> raster.XDIMS:
 
