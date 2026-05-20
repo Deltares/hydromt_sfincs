@@ -164,9 +164,13 @@ class SfincsQuadtreeGrid(MeshComponent):
             raise FileNotFoundError(f"Quadtree grid file not found: {abs_file_path}")
 
         # load dataset and set CRS
+        # xugrid reads mesh2d_crs automatically and sets grid.crs from crs_wkt.
+        # For older files, fall back progressively.
         ds = xu.load_dataset(abs_file_path)
         ds.close()
-        ds.grid.set_crs(CRS.from_wkt(ds["crs"].crs_wkt))
+        if ds.grid.crs is None:
+            with xr.open_dataset(abs_file_path) as raw:
+                ds.grid.set_crs(CRS.from_wkt(raw["crs"].attrs["crs_wkt"]))
 
         # rename variables to match Python conventions
         # ds = ds.rename({"z": "dep"}) if "z" in ds else ds
@@ -229,16 +233,12 @@ class SfincsQuadtreeGrid(MeshComponent):
 
         attrs = self.data.attrs
         ds = self.data.ugrid.to_dataset()
-        # FIXME set the CRS manually, since when is this needed?
+        # xugrid writes a 'mesh2d_crs' variable with full CF metadata from
+        # pyproj. Add epsg/epsg_code so MDAL can auto-detect the CRS in QGIS.
         epsg = self.crs.to_epsg()
-        ds["crs"] = epsg
-        # Keep full CF CRS metadata from to_cf() for compliance, and add
-        # epsg/epsg_code which MDAL requires for CRS auto-detection in QGIS.
-        ds["crs"].attrs = {
-            **self.crs.to_cf(),
-            "epsg": epsg,
-            "epsg_code": f"EPSG:{epsg}",
-        }
+        if "mesh2d_crs" in ds:
+            ds["mesh2d_crs"].attrs["epsg"] = epsg
+            ds["mesh2d_crs"].attrs["epsg_code"] = f"EPSG:{epsg}"
 
         # certain variables are stored as individual netcdfs because they might change between scnearios;
         # in Python we keep everything in the same object so they are splitted here
@@ -314,15 +314,19 @@ class SfincsQuadtreeGrid(MeshComponent):
             if ds[var].dtype in _small_int:
                 ds[var] = ds[var].astype(np.int32)
 
-        # xugrid's to_dataset() omits units and grid_mapping on node coordinates;
-        # MDAL needs units to interpret the coordinate system and grid_mapping
-        # to locate the crs variable for CRS auto-detection in QGIS.
-        crs_units = "degrees" if self.model.crs.is_geographic else "m"
-        for coord in ("mesh2d_node_x", "mesh2d_node_y"):
+        # xugrid's to_dataset() omits units on node coordinates; add them so
+        # MDAL can interpret the coordinate system correctly in QGIS.
+        geo = self.model.crs.is_geographic
+        coord_units = {
+            "mesh2d_node_x": "degrees_east" if geo else "m",
+            "mesh2d_node_y": "degrees_north" if geo else "m",
+        }
+        crs_var_name = "mesh2d_crs" if "mesh2d_crs" in ds else "crs"
+        for coord, units in coord_units.items():
             if coord in ds:
                 if "units" not in ds[coord].attrs:
-                    ds[coord].attrs["units"] = crs_units
-                ds[coord].attrs["grid_mapping"] = "crs"
+                    ds[coord].attrs["units"] = units
+                ds[coord].attrs["grid_mapping"] = crs_var_name
 
         ds.to_netcdf(abs_file_path)
         ds.close()
@@ -416,7 +420,8 @@ class SfincsQuadtreeGrid(MeshComponent):
         )
         # add nFaces coordinates to grid
         ds = xu.UgridDataset(ds.ugrid.to_dataset())
-        ds.grid.set_crs(CRS.from_wkt(ds["crs"].crs_wkt))
+        crs_var = ds["mesh2d_crs"] if "mesh2d_crs" in ds else ds["crs"]
+        ds.grid.set_crs(CRS.from_wkt(crs_var.crs_wkt))
         self._data = ds
 
         # Make sure epsg is stored in the config as well
