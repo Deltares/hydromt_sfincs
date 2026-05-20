@@ -230,8 +230,15 @@ class SfincsQuadtreeGrid(MeshComponent):
         attrs = self.data.attrs
         ds = self.data.ugrid.to_dataset()
         # FIXME set the CRS manually, since when is this needed?
-        ds["crs"] = self.crs.to_epsg()
-        ds["crs"].attrs = self.crs.to_cf()
+        epsg = self.crs.to_epsg()
+        ds["crs"] = epsg
+        # Keep full CF CRS metadata from to_cf() for compliance, and add
+        # epsg/epsg_code which MDAL requires for CRS auto-detection in QGIS.
+        ds["crs"].attrs = {
+            **self.crs.to_cf(),
+            "epsg": epsg,
+            "epsg_code": f"EPSG:{epsg}",
+        }
 
         # certain variables are stored as individual netcdfs because they might change between scnearios;
         # in Python we keep everything in the same object so they are splitted here
@@ -295,7 +302,28 @@ class SfincsQuadtreeGrid(MeshComponent):
         self.model.config.set("epsg", self.model.crs.to_epsg())
 
         # And write the file
+        attrs["Conventions"] = "CF-1.8 UGRID-1.0 Deltares-0.10"
         ds.attrs = attrs
+
+        # Cast all int8/uint8 variables to int32 — MDAL rejects the entire mesh
+        # when it encounters these small integer types on the face dimension.
+        # The SFINCS Fortran kernel reads them into integer*1 arrays via
+        # nf90_get_var; NetCDF auto-conversion handles int32→int8 transparently.
+        _small_int = (np.int8, np.uint8)
+        for var in list(ds.data_vars):
+            if ds[var].dtype in _small_int:
+                ds[var] = ds[var].astype(np.int32)
+
+        # xugrid's to_dataset() omits units and grid_mapping on node coordinates;
+        # MDAL needs units to interpret the coordinate system and grid_mapping
+        # to locate the crs variable for CRS auto-detection in QGIS.
+        crs_units = "degrees" if self.model.crs.is_geographic else "m"
+        for coord in ("mesh2d_node_x", "mesh2d_node_y"):
+            if coord in ds:
+                if "units" not in ds[coord].attrs:
+                    ds[coord].attrs["units"] = crs_units
+                ds[coord].attrs["grid_mapping"] = "crs"
+
         ds.to_netcdf(abs_file_path)
         ds.close()
 
