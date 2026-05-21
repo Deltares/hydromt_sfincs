@@ -33,7 +33,13 @@ class SfincsConfig(ModelComponent):
     def __init__(self, model: "SfincsModel"):
         self._filename = "sfincs.inp"
         self._data: SfincsConfigVariables = None
+        self._read_root: Path = None
         super().__init__(model=model)
+        # Lock the read root and filename at init time so that lazy reads
+        # triggered after a root change still find the original files.
+        if self.root.is_reading_mode():
+            self._read_root = model.root.path.resolve()
+            self._filename = self._read_root / "sfincs.inp"
 
     @property
     def data(self):
@@ -45,13 +51,11 @@ class SfincsConfig(ModelComponent):
         return self._data
 
     @property
-    def filename(self) -> str:
-        """Return the filename of the SFINCS input file."""
+    def filename(self) -> Path:
+        """Return the absolute filename of the SFINCS input file."""
         if not Path(self._filename).is_absolute():
-            # If not absolute, join with the model root path
-            root_path = self.model.root.path.resolve()
-            self._filename = root_path / "sfincs.inp"
-        return self._filename
+            self._filename = self.model.root.path.resolve() / "sfincs.inp"
+        return Path(self._filename)
 
     def read(self) -> None:
         """Read a text file with the sfincs configuration from the root folder and populate
@@ -59,12 +63,6 @@ class SfincsConfig(ModelComponent):
         the grid properties of the SfincsModel (e.g. crs and extent)."""
 
         self.root._assert_read_mode
-
-        # Lock the read root and filename to the current root path so that later
-        # root changes (e.g. when cloning a model) do not affect path resolution.
-        self._read_root = self.model.root.path.resolve()
-        if not Path(self._filename).is_absolute():
-            self._filename = self._read_root / "sfincs.inp"
 
         if not exists(self.filename):
             raise FileNotFoundError(
