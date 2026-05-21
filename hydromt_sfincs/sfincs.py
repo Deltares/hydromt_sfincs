@@ -342,13 +342,18 @@ class SfincsModel(Model):
         For more information, see specific component write methods.
         """
 
+        # Resolve grid_type before iteration: accessing it may trigger config.read()
+        # which pops unused grid components from self.components, mutating the
+        # dict mid-loop and causing a RuntimeError.
+        grid_type = self.grid_type
+
         # TODO make sure that all components are in the config (in their individual write functions?)
         for name, comp in self.components.items():
             if name == "config":
                 continue
-            elif self.grid_type == "regular" and name in self._QUADTREE_GRID_NAMES:
+            elif grid_type == "regular" and name in self._QUADTREE_GRID_NAMES:
                 continue
-            elif self.grid_type == "quadtree" and name in self._REGULAR_GRID_NAMES:
+            elif grid_type == "quadtree" and name in self._REGULAR_GRID_NAMES:
                 continue
             comp.write()
 
