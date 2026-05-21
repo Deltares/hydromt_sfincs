@@ -231,7 +231,7 @@ def read_xy(fn: Union[str, Path], crs: Union[int, CRS] = None) -> gpd.GeoDataFra
         GeoDataFrame with point geomtries
     """
     gdf = open_vector(fn, crs=crs, driver="xy")
-    gdf.index = np.arange(1, gdf.index.size + 1, dtype=int)  # index starts at 1
+    gdf.index = np.arange(0, gdf.index.size, dtype=int)  # index starts at 0
     return gdf
 
 
