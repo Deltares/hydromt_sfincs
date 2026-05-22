@@ -1,0 +1,969 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" data-theme="light">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>hydromt_sfincs.components.forcing.rivers &#8212; HydroMT SFINCS  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=0790524f97105ba85085" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=0790524f97105ba85085" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/autodoc_pydantic.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/theme-deltares.css?v=a3fd7a5a" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../../_static/scripts/fontawesome.js?digest=0790524f97105ba85085"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=0790524f97105ba85085" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=0790524f97105ba85085" />
+
+    <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/hydromt_sfincs/components/forcing/rivers';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.18.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0-r';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="icon" href="../../../../_static/hydromt-icon.svg"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="2.0.0-rc3" />
+  
+    
+    <script src="../../../../_static/searchtools.js"></script>
+    <script src="../../../../_static/language_data.js"></script>
+    <script src="../../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="light">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+    
+    <img src="../../../../_static/hydromt-icon.svg" class="logo__image only-light" alt=""/>
+    <img src="../../../../_static/hydromt-icon.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">HydroMT SFINCS</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../getting_started/intro.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../user_guide/intro.html">
+    User guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../api/api.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../dev_guide/intro.html">
+    Developments
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/latest/index.html">
+    HydroMT core
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../../../_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../../../_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../getting_started/intro.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../user_guide/intro.html">
+    User guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../api/api.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../dev_guide/intro.html">
+    Developments
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/latest/index.html">
+    HydroMT core
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../../../_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../../../_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">hydromt_sfincs.components.forcing.rivers</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for hydromt_sfincs.components.forcing.rivers</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="kn">import</span> <span class="n">join</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">shapely</span><span class="w"> </span><span class="kn">import</span> <span class="n">Point</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt</span><span class="w"> </span><span class="kn">import</span> <span class="n">hydromt_step</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelComponent</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span><span class="p">,</span> <span class="n">workflows</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SfincsRivers">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsRivers.html#hydromt_sfincs.components.forcing.SfincsRivers">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SfincsRivers</span><span class="p">(</span><span class="n">ModelComponent</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;This class contains functions to create and manage river inflow/outflow points in the SFINCS model.</span>
+<span class="sd">    The methods in this class change the model mask and add discharge points where rivers enter the model domain.</span>
+<span class="sd">    The rivers themselves are not used by the SFINCS model, but useful for visualization.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SfincsRivers.__init__">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsRivers.html#hydromt_sfincs.components.forcing.SfincsRivers.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;SfincsModel&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;River geometry data.</span>
+
+<span class="sd">        Return gpd.GeoDataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_initialize</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the SfincsRivers component.&quot;&quot;&quot;</span>
+        <span class="c1"># get the data from the model</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">()</span>
+            <span class="c1"># self._data[&quot;downstream_boundary_points&quot;] = gpd.GeoDataFrame()</span>
+
+    <span class="c1"># Original HydroMT-SFINCS setup_ functions:</span>
+    <span class="c1"># setup_river_inflow</span>
+    <span class="c1"># setup_river_outflow</span>
+    <span class="c1"># FIXME - also functions like burn in river???</span>
+    <span class="c1"># FIXME - also new functions to read/process/burn in river cross-section data???</span>
+
+<div class="viewcode-block" id="SfincsRivers.read">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsRivers.read.html#hydromt_sfincs.components.forcing.SfincsRivers.read">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="SfincsRivers.write">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsRivers.write.html#hydromt_sfincs.components.forcing.SfincsRivers.write">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write the river inflow data to a gis-file. Note: this is not used by SFINCS, but useful for model visualization.&quot;&quot;&quot;</span>
+
+        <span class="c1"># bdrpts = self.data[&quot;downstream_boundary_points&quot;]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># write also as geojson:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">write_gis</span><span class="p">:</span>
+            <span class="n">utils</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;river_centerlines&quot;</span><span class="p">,</span>
+                <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;gis&quot;</span><span class="p">),</span>
+                <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SfincsRivers.create_river_inflow">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsRivers.create_river_inflow.html#hydromt_sfincs.components.forcing.SfincsRivers.create_river_inflow">[docs]</a>
+    <span class="nd">@hydromt_step</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_river_inflow</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">rivers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">hydrography</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">buffer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
+        <span class="n">river_upa</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span>
+        <span class="n">river_len</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e3</span><span class="p">,</span>
+        <span class="n">river_width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+        <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">first_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">keep_rivers_geom</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">reverse_river_geom</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">src_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;inflow&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup discharge (src) points where a river enters the model domain.</span>
+
+<span class="sd">        If `rivers` is not provided, river centerlines are extracted from the</span>
+<span class="sd">        `hydrography` dataset based on the `river_upa` threshold.</span>
+
+<span class="sd">        Waterlevel or outflow boundary cells intersecting with the river</span>
+<span class="sd">        are removed from the model mask.</span>
+
+<span class="sd">        Discharge is set to zero at these points, but can be updated</span>
+<span class="sd">        using the `setup_discharge_forcing` or `setup_discharge_forcing_from_grid` methods.</span>
+
+<span class="sd">        Note: this method assumes the rivers are directed from up- to downstream. Use</span>
+<span class="sd">        `reverse_river_geom=True` if the rivers are directed from downstream to upstream.</span>
+
+<span class="sd">        Adds model layers:</span>
+
+<span class="sd">        * **dis** forcing: discharge forcing</span>
+<span class="sd">        * **mask** map: SFINCS mask layer (only if `river_width` &gt; 0)</span>
+<span class="sd">        * **rivers_inflow** geoms: river centerline (if `keep_rivers_geom`; not used by SFINCS)</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rivers : str, Path, gpd.GeoDataFrame, optional</span>
+<span class="sd">            Path, data source name, or geopandas object for river centerline data.</span>
+<span class="sd">            If present, the &#39;uparea&#39; and &#39;rivlen&#39; attributes are used.</span>
+<span class="sd">        hydrography: str, Path, xr.Dataset optional</span>
+<span class="sd">            Path, data source name, or a xarray raster object for hydrography data.</span>
+
+<span class="sd">            * Required layers: [&#39;uparea&#39;, &#39;flwdir&#39;].</span>
+<span class="sd">        buffer: float, optional</span>
+<span class="sd">            Buffer around the model region boundary to define in/outflow points [m],</span>
+<span class="sd">            by default 200 m. We suggest to use a buffer of at least twice the hydrography</span>
+<span class="sd">            resolution. Inflow points are moved to a downstreawm confluence if within the buffer.</span>
+<span class="sd">        river_upa : float, optional</span>
+<span class="sd">            Minimum upstream area threshold for rivers [km2], by default 10.0</span>
+<span class="sd">        river_len: float, optional</span>
+<span class="sd">            Mimimum river length within the model domain threshhold [m], by default 1 km.</span>
+<span class="sd">        river_width: float, optional</span>
+<span class="sd">            Estimated constant width [m] of the inflowing river. Boundary cells within</span>
+<span class="sd">            half the width are forced to be closed (mask = 1) to avoid instabilities with</span>
+<span class="sd">            nearby open or waterlevel boundary cells, by default 500 m.</span>
+<span class="sd">        merge: bool, optional</span>
+<span class="sd">            If True, merge rivers source points with existing points, by default False.</span>
+<span class="sd">        first_index: int, optional</span>
+<span class="sd">            First index for the river source points, by default 1.</span>
+<span class="sd">        keep_rivers_geom: bool, optional</span>
+<span class="sd">            If True, keep a geometry of the rivers &quot;rivers_inflow&quot; in geoms. By default False.</span>
+<span class="sd">        reverse_river_geom: bool, optional</span>
+<span class="sd">            If True, assume that segments in &#39;rivers&#39; are drawn from downstream to upstream.</span>
+<span class="sd">            Only used if &#39;rivers&#39; is not None, By default False</span>
+<span class="sd">        src_type: {&#39;inflow&#39;, &#39;headwater&#39;}, optional</span>
+<span class="sd">            Source type, by default &#39;inflow&#39;</span>
+<span class="sd">            If &#39;inflow&#39;, return points where the river flows into the model domain.</span>
+<span class="sd">            If &#39;headwater&#39;, return all headwater (including inflow) points within the model domain.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        setup_discharge_forcing</span>
+<span class="sd">        setup_discharge_forcing_from_grid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># FIXME what to do with these variables</span>
+        <span class="n">all_touched</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># get hydrography data</span>
+        <span class="n">da_uparea</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">hydrography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+                <span class="n">hydrography</span><span class="p">,</span>
+                <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
+                <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">,</span> <span class="s2">&quot;flwdir&quot;</span><span class="p">],</span>
+                <span class="n">buffer</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">da_uparea</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span>  <span class="c1"># reused in river_source_points</span>
+
+        <span class="c1"># FIXME reuse from inflow/outflow and get from self.data</span>
+        <span class="c1"># get river centerlines</span>
+        <span class="c1"># if (</span>
+        <span class="c1">#     isinstance(rivers, str)</span>
+        <span class="c1">#     and rivers == &quot;rivers_outflow&quot;</span>
+        <span class="c1">#     and rivers in self.geoms</span>
+        <span class="c1"># ):</span>
+        <span class="c1">#     # reuse rivers from setup_river_in/outflow</span>
+        <span class="c1">#     gdf_riv = self.geoms[rivers]</span>
+        <span class="c1"># el</span>
+        <span class="k">if</span> <span class="n">rivers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gdf_riv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
+                <span class="n">rivers</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">region</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">hydrography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">river_centerline_from_hydrography</span><span class="p">(</span>
+                <span class="n">da_flwdir</span><span class="o">=</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;flwdir&quot;</span><span class="p">],</span>
+                <span class="n">da_uparea</span><span class="o">=</span><span class="n">da_uparea</span><span class="p">,</span>
+                <span class="n">river_upa</span><span class="o">=</span><span class="n">river_upa</span><span class="p">,</span>
+                <span class="n">river_len</span><span class="o">=</span><span class="n">river_len</span><span class="p">,</span>
+                <span class="n">gdf_mask</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">hydrography</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Either hydrography or rivers must be provided.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># get river inflow / headwater source points</span>
+        <span class="n">gdf_src</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">river_source_points</span><span class="p">(</span>
+            <span class="n">gdf_riv</span><span class="o">=</span><span class="n">gdf_riv</span><span class="p">,</span>
+            <span class="n">gdf_mask</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
+            <span class="n">src_type</span><span class="o">=</span><span class="n">src_type</span><span class="p">,</span>
+            <span class="n">buffer</span><span class="o">=</span><span class="n">buffer</span><span class="p">,</span>
+            <span class="n">river_upa</span><span class="o">=</span><span class="n">river_upa</span><span class="p">,</span>
+            <span class="n">river_len</span><span class="o">=</span><span class="n">river_len</span><span class="p">,</span>
+            <span class="n">da_uparea</span><span class="o">=</span><span class="n">da_uparea</span><span class="p">,</span>
+            <span class="n">reverse_river_geom</span><span class="o">=</span><span class="n">reverse_river_geom</span><span class="p">,</span>
+            <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">gdf_src</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No river source points found.&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># set forcing src pnts</span>
+        <span class="c1"># TODO is this first_index variable still needed here? This depends on how we filter index/name/location</span>
+        <span class="n">gdf_src</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">gdf_src</span><span class="o">.</span><span class="n">index</span> <span class="o">+</span> <span class="n">first_index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">discharge_points</span><span class="o">.</span><span class="n">set_locations</span><span class="p">(</span>
+            <span class="n">gdf</span><span class="o">=</span><span class="n">gdf_src</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">merge</span><span class="o">=</span><span class="n">merge</span>
+        <span class="p">)</span>
+
+        <span class="c1"># set river</span>
+        <span class="k">if</span> <span class="n">keep_rivers_geom</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">gdf_riv</span>
+
+        <span class="c1"># update mask if river_width &gt; 0</span>
+        <span class="k">if</span> <span class="s2">&quot;rivwth&quot;</span> <span class="ow">in</span> <span class="n">gdf_src</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">river_width</span> <span class="o">=</span> <span class="n">gdf_src</span><span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">river_width</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;For quadtree grids, the mask is not updated around river source points.&quot;</span>
+                <span class="s2">&quot;Please carefully check the model mask.&quot;</span>
+            <span class="p">)</span>
+            <span class="c1"># TODO - add for quadtree grids</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">river_width</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="c1"># apply buffer</span>
+                <span class="n">gdf_src</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_src</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">river_width</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="c1"># find intersect of buffer and model grid</span>
+                <span class="n">da_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span>
+                <span class="n">da_include</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span>
+                    <span class="n">gdf_src</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span>
+                <span class="p">)</span>
+                <span class="n">reset_msk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">da_include</span><span class="p">,</span> <span class="n">da_mask</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="c1"># update model mask</span>
+                <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">reset_msk</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+                <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">reset_msk</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="s2">&quot;msk&quot;</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Boundary cells (n=</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">) updated around src points.&quot;</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_river_outflow</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">rivers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">hydrography</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">river_upa</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span>
+        <span class="n">river_len</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e3</span><span class="p">,</span>
+        <span class="n">river_width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+        <span class="n">gdf_out_include</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">buffer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">internal_dist</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1000.0</span><span class="p">,</span>
+        <span class="n">slope</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">keep_rivers_geom</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">reset_bounds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">reverse_river_geom</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup open boundary cells (mask=5) where a river flows</span>
+<span class="sd">        out of the model domain.</span>
+
+<span class="sd">        If `rivers` is not provided, river centerlines are extracted from the</span>
+<span class="sd">        `hydrography` dataset based on the `river_upa` threshold.</span>
+
+<span class="sd">        Downstream river mask that intersect with centerlines are set to</span>
+<span class="sd">        open boundary cells (mask=5). Downstream boundary points are stored</span>
+<span class="sd">        in the `downstream_boundary_points` data for SFINCS .bdr file output.</span>
+
+<span class="sd">        Note: this method assumes the rivers are directed from up- to downstream.</span>
+
+<span class="sd">        Adds / edits model layers:</span>
+
+<span class="sd">        * **msk** map: edited by adding downstream points (msk=5)</span>
+<span class="sd">        * **downstream_boundary_points** data: GeoDataFrame with downstream boundary points for SFINCS .bdr file</span>
+<span class="sd">        * **rivers_outflow** geoms: river centerline (if `keep_rivers_geom`; not used by SFINCS)</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rivers : str, Path, gpd.GeoDataFrame, optional</span>
+<span class="sd">            Path, data source name, or geopandas object for river centerline data.</span>
+<span class="sd">            If present, the &#39;uparea&#39; and &#39;rivlen&#39; attributes are used.</span>
+<span class="sd">        hydrography: str, Path, xr.Dataset optional</span>
+<span class="sd">            Path, data source name, or a xarray raster object for hydrography data.</span>
+
+<span class="sd">            * Required layers: [&#39;uparea&#39;, &#39;flwdir&#39;].</span>
+<span class="sd">        river_upa : float, optional</span>
+<span class="sd">            Minimum upstream area threshold for rivers [km2], by default 10.0</span>
+<span class="sd">        river_len: float, optional</span>
+<span class="sd">            Mimimum river length within the model domain threshhold [m], by default 1000 m.</span>
+<span class="sd">        river_width: int, optional</span>
+<span class="sd">            The width [m] of the open boundary cells in the SFINCS msk file.</span>
+<span class="sd">            By default 500m, i.e.: 250m to each side of the outflow location.</span>
+<span class="sd">        gdf_out_include: gpd.GeoDataFrame, optional</span>
+<span class="sd">            Outflow geometries to include as outflow boundary cells. This overrides the detected outflow points.</span>
+<span class="sd">        buffer: float, optional</span>
+<span class="sd">            Buffer around the model region boundary to define outflow points [m],</span>
+<span class="sd">        internal_dist : float, optional</span>
+<span class="sd">            Minimum internal distance [m] used when selecting outflow locations,</span>
+<span class="sd">            by default 1000.0.</span>
+<span class="sd">        slope : float, optional</span>
+<span class="sd">            Minimum slope threshold used in outflow detection.</span>
+<span class="sd">        append_bounds: bool, optional</span>
+<span class="sd">            If True, write new outflow boundary cells on top of existing. If False (default),</span>
+<span class="sd">            first reset existing outflow boundary cells to normal active cells.</span>
+<span class="sd">        keep_rivers_geom: bool, optional</span>
+<span class="sd">            If True, keep a geometry of the rivers &quot;rivers_outflow&quot; in geoms. By default False.</span>
+<span class="sd">        reset_bounds: bool, optional</span>
+<span class="sd">            If True, reset existing outlfow boundary cells before setting new boundary cells,</span>
+<span class="sd">            by default False.</span>
+<span class="sd">        btype: {&#39;waterlevel&#39;, &#39;outflow&#39;, &#39;downstream&#39;}, optional</span>
+<span class="sd">            Boundary type</span>
+<span class="sd">        reverse_river_geom: bool, optional</span>
+<span class="sd">            If True, assume that segments in &#39;rivers&#39; are drawn from downstream to upstream.</span>
+<span class="sd">            Only used if rivers is not None, By default False</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        setup_mask_bounds</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># get hydrography data</span>
+        <span class="n">da_uparea</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">hydrography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+                <span class="n">hydrography</span><span class="p">,</span>
+                <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
+                <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">,</span> <span class="s2">&quot;flwdir&quot;</span><span class="p">],</span>
+                <span class="n">buffer</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">da_uparea</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span>  <span class="c1"># reused in river_source_points</span>
+        <span class="c1"># get river centerlines</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">empty</span> <span class="ow">and</span> <span class="n">rivers</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">hydrography</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gdf_riv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reusing existing river centerlines.&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">rivers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gdf_riv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
+                <span class="n">rivers</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">region</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">hydrography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">river_centerline_from_hydrography</span><span class="p">(</span>
+                <span class="n">da_flwdir</span><span class="o">=</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;flwdir&quot;</span><span class="p">],</span>
+                <span class="n">da_uparea</span><span class="o">=</span><span class="n">da_uparea</span><span class="p">,</span>
+                <span class="n">river_upa</span><span class="o">=</span><span class="n">river_upa</span><span class="p">,</span>
+                <span class="n">river_len</span><span class="o">=</span><span class="n">river_len</span><span class="p">,</span>
+                <span class="n">gdf_mask</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">hydrography</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;No centerlines present in component.Either hydrography or rivers must be provided.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># get river inflow / headwater source points</span>
+        <span class="n">gdf_out</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">river_outflow_points</span><span class="p">(</span>
+            <span class="n">gdf_riv</span><span class="o">=</span><span class="n">gdf_riv</span><span class="p">,</span>
+            <span class="n">gdf_mask</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
+            <span class="n">src_type</span><span class="o">=</span><span class="s2">&quot;outflow&quot;</span><span class="p">,</span>
+            <span class="n">buffer</span><span class="o">=</span><span class="n">buffer</span><span class="p">,</span>
+            <span class="n">river_upa</span><span class="o">=</span><span class="n">river_upa</span><span class="p">,</span>
+            <span class="n">river_len</span><span class="o">=</span><span class="n">river_len</span><span class="p">,</span>
+            <span class="n">da_uparea</span><span class="o">=</span><span class="n">da_uparea</span><span class="p">,</span>
+            <span class="n">reverse_river_geom</span><span class="o">=</span><span class="n">reverse_river_geom</span><span class="p">,</span>
+            <span class="n">internal_distance</span><span class="o">=</span><span class="n">internal_dist</span><span class="p">,</span>
+            <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">gdf_out</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No river outflow points found.&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">gdf_out_lines</span> <span class="o">=</span> <span class="n">gdf_out</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="n">gdf_out</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_out</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">geom</span><span class="p">:</span> <span class="n">Point</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">geom</span><span class="o">.</span><span class="n">geom_type</span> <span class="o">==</span> <span class="s2">&quot;LineString&quot;</span>
+            <span class="k">else</span> <span class="n">geom</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gdf_out</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">&quot;rivwth&quot;</span> <span class="ow">in</span> <span class="n">gdf_out</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">river_width</span> <span class="o">=</span> <span class="n">gdf_out</span><span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">river_width</span><span class="p">)</span>
+            <span class="n">gdf_out</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_out</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">river_width</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># update mask</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gdf_out</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> valid river outflow points.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">create_boundary</span><span class="p">(</span>
+                    <span class="n">btype</span><span class="o">=</span><span class="s2">&quot;downstream&quot;</span><span class="p">,</span>
+                    <span class="n">include_polygon</span><span class="o">=</span><span class="n">gdf_out</span><span class="p">,</span>
+                    <span class="n">reset_bounds</span><span class="o">=</span><span class="n">reset_bounds</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_mask</span><span class="o">.</span><span class="n">create_boundary</span><span class="p">(</span>
+                    <span class="n">btype</span><span class="o">=</span><span class="s2">&quot;downstream&quot;</span><span class="p">,</span>
+                    <span class="n">include_polygon</span><span class="o">=</span><span class="n">gdf_out</span><span class="p">,</span>
+                    <span class="n">reset_bounds</span><span class="o">=</span><span class="n">reset_bounds</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="c1"># elif reset_bounds:</span>
+        <span class="c1">#     self.mask.create_boundary(btype=btype, reset_bounds=reset_bounds)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">river_boundary_points</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="n">locations</span><span class="o">=</span><span class="n">gdf_out_lines</span><span class="p">,</span>
+            <span class="n">internal_dist</span><span class="o">=</span><span class="n">internal_dist</span><span class="p">,</span>
+            <span class="n">slope</span><span class="o">=</span><span class="n">slope</span><span class="p">,</span>
+            <span class="n">merge</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># keep river centerlines</span>
+        <span class="k">if</span> <span class="n">keep_rivers_geom</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">gdf_riv</span></div>
+
+
+
+<span class="c1"># %% core HydroMT-SFINCS functions:</span>
+<span class="c1"># _initialize</span>
+<span class="c1"># create:</span>
+<span class="c1"># create_inflow</span>
+<span class="c1"># create_outflow</span>
+<span class="c1"># clear</span>
+
+<span class="c1"># %% DDB GUI focused additional functions:</span>
+<span class="c1"># - yet unsupported in DDB-</span>
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=0790524f97105ba85085"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=0790524f97105ba85085"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright Deltares.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.18.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
