@@ -5,6 +5,7 @@ SfincsModel class
 # %% Import packages
 from __future__ import annotations
 
+import copy
 import logging
 import os
 from os.path import dirname, join
@@ -193,53 +194,6 @@ class SfincsModel(Model):
             instance = cls(self)
             self.add_component(name, instance)
 
-    def write_batch_file(self, filename: str = None) -> Path:
-        """Write a platform-appropriate launcher script for SFINCS.
-
-        On Windows this emits ``run.bat`` (``set HDF5_USE_FILE_LOCKING``);
-        on Linux / macOS it emits ``run.sh`` (``#!/bin/bash`` + ``export``
-        + executable bit). The SFINCS binary itself is expected to be
-        ``sfincs.exe`` on Windows and ``sfincs`` elsewhere.
-
-        Parameters
-        ----------
-        filename : str, optional
-            Override the output file name. Defaults to ``run.bat`` on
-            Windows and ``run.sh`` on other platforms.
-
-        Returns
-        -------
-        Path
-            The path of the written launcher script.
-        """
-        if not self.exe_path:
-            raise ValueError(
-                "exe_path not set on SfincsModel; cannot write launcher script."
-            )
-        is_windows = os.name == "nt"
-        if filename is None:
-            filename = "run.bat" if is_windows else "run.sh"
-        script_path = Path(self.root.path) / filename
-        if is_windows:
-            exe = Path(self.exe_path) / "sfincs.exe"
-            script_path.write_text(
-                "set HDF5_USE_FILE_LOCKING=FALSE\n" f"{exe}\n",
-                encoding="ascii",
-            )
-        else:
-            exe = Path(self.exe_path) / "sfincs"
-            script_path.write_text(
-                "#!/bin/bash\n" "export HDF5_USE_FILE_LOCKING=FALSE\n" f'"{exe}"\n',
-                encoding="ascii",
-            )
-            # Mark executable (ignore on systems that don't support it).
-            try:
-                st = script_path.stat().st_mode
-                script_path.chmod(st | 0o111)
-            except OSError:
-                pass
-        return script_path
-
     def __del__(self):
         """Close the model and remove the logger file handler."""
         for handler in logger.handlers:
@@ -249,6 +203,15 @@ class SfincsModel(Model):
             ):
                 handler.close()
                 logger.removeHandler(handler)
+
+    def __deepcopy__(self, memo):
+        new = self.__class__.__new__(self.__class__)
+        memo[id(self)] = new
+
+        for k, v in self.__dict__.items():
+            setattr(new, k, copy.deepcopy(v, memo))
+
+        return new
 
     ## Real properties of the model ##
     @property
@@ -342,13 +305,18 @@ class SfincsModel(Model):
         For more information, see specific component write methods.
         """
 
+        # Resolve grid_type before iteration: accessing it may trigger config.read()
+        # which pops unused grid components from self.components, mutating the
+        # dict mid-loop and causing a RuntimeError.
+        grid_type = self.grid_type
+
         # TODO make sure that all components are in the config (in their individual write functions?)
         for name, comp in self.components.items():
             if name == "config":
                 continue
-            elif self.grid_type == "regular" and name in self._QUADTREE_GRID_NAMES:
+            elif grid_type == "regular" and name in self._QUADTREE_GRID_NAMES:
                 continue
-            elif self.grid_type == "quadtree" and name in self._REGULAR_GRID_NAMES:
+            elif grid_type == "quadtree" and name in self._REGULAR_GRID_NAMES:
                 continue
             comp.write()
 
@@ -367,6 +335,53 @@ class SfincsModel(Model):
         # Optional launcher script (opt-in; DDB passes True explicitly).
         if write_batch_file:
             self.write_batch_file()
+
+    def write_batch_file(self, filename: str = None) -> Path:
+        """Write a platform-appropriate launcher script for SFINCS.
+
+        On Windows this emits ``run.bat`` (``set HDF5_USE_FILE_LOCKING``);
+        on Linux / macOS it emits ``run.sh`` (``#!/bin/bash`` + ``export``
+        + executable bit). The SFINCS binary itself is expected to be
+        ``sfincs.exe`` on Windows and ``sfincs`` elsewhere.
+
+        Parameters
+        ----------
+        filename : str, optional
+            Override the output file name. Defaults to ``run.bat`` on
+            Windows and ``run.sh`` on other platforms.
+
+        Returns
+        -------
+        Path
+            The path of the written launcher script.
+        """
+        if not self.exe_path:
+            raise ValueError(
+                "exe_path not set on SfincsModel; cannot write launcher script."
+            )
+        is_windows = os.name == "nt"
+        if filename is None:
+            filename = "run.bat" if is_windows else "run.sh"
+        script_path = Path(self.root.path) / filename
+        if is_windows:
+            exe = Path(self.exe_path) / "sfincs.exe"
+            script_path.write_text(
+                "set HDF5_USE_FILE_LOCKING=FALSE\n" f"{exe}\n",
+                encoding="ascii",
+            )
+        else:
+            exe = Path(self.exe_path) / "sfincs"
+            script_path.write_text(
+                "#!/bin/bash\n" "export HDF5_USE_FILE_LOCKING=FALSE\n" f'"{exe}"\n',
+                encoding="ascii",
+            )
+            # Mark executable (ignore on systems that don't support it).
+            try:
+                st = script_path.stat().st_mode
+                script_path.chmod(st | 0o111)
+            except OSError:
+                pass
+        return script_path
 
     def clear_spatial_components(self):
         """Clear all spatial components."""

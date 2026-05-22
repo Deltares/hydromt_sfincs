@@ -150,9 +150,16 @@ class SfincsOutput(ModelComponent):
                 # set coords
                 ds = ds.set_coords(["mesh2d_node_x", "mesh2d_node_y"])
                 # get crs variable, drop it and set it correctly
-                crs = ds["crs"].values
-                ds.drop_vars("crs")
-                ds.grid.set_crs(CRS.from_user_input(crs))
+                if ds.grid.crs is None:
+                    logger.warning(
+                        "CRS not found in grid, trying to read from crs variable. "
+                    )
+                    try:
+                        crs = ds["crs"].values
+                        ds = ds.drop_vars("crs")
+                        ds.grid.set_crs(CRS.from_user_input(crs))
+                    except Exception as e:
+                        logger.error(f"Failed to set CRS from variable: {e}")
                 self.set(ds, split_dataset=True)
 
     def set(

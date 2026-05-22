@@ -112,7 +112,7 @@ class SfincsRunupGauges(ModelComponent):
             Output file path. Defaults to ``sfincs.rug``.
         """
         if self.data.empty:
-            logger.info("No runup gauges available to write.")
+            logger.debug("No runup gauges available to write.")
             return
 
         abs_file_path = self.model.config.get_set_file_variable(

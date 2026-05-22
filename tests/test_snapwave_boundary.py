@@ -179,7 +179,7 @@ def test_create_timeseries(quadtree_model_config):
     assert len(point_data.time) == 49  # 49 hours with 1 hour timestep
 
     # also check that the min, max of the other points are still the same
-    point_data = mod.snapwave_boundary_conditions.data["hs"].sel(index=2)
+    point_data = mod.snapwave_boundary_conditions.data["hs"].sel(index=0)
     assert point_data.values.min() == 3
     assert point_data.values.max() == 3
     # but length has changed accordingly

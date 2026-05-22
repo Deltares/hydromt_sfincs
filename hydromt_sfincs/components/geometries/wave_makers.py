@@ -112,7 +112,7 @@ class SfincsWaveMakers(ModelComponent):
 
         # Check that data is not empty
         if self.data.empty:
-            logger.info("No wave makers available to write.")
+            logger.debug("No wave makers available to write.")
             return
 
         # Set file name and get absolute path

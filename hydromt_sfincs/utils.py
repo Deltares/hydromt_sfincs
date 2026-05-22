@@ -231,7 +231,7 @@ def read_xy(fn: Union[str, Path], crs: Union[int, CRS] = None) -> gpd.GeoDataFra
         GeoDataFrame with point geomtries
     """
     gdf = open_vector(fn, crs=crs, driver="xy")
-    gdf.index = np.arange(1, gdf.index.size + 1, dtype=int)  # index starts at 1
+    gdf.index = np.arange(0, gdf.index.size, dtype=int)  # index starts at 0
     return gdf
 
 
@@ -259,7 +259,8 @@ def write_xyn(fn: str = "sfincs.obs", gdf: gpd.GeoDataFrame = None, fmt: str = "
 
     with open(fn, "w") as fid:
         for point in gdf.iterfeatures():
-            x, y = point["geometry"]["coordinates"]
+            # only take first two coordinates if geometry is 3D
+            x, y = point["geometry"]["coordinates"][:2]
             if "properties" in point and "name" in point["properties"]:
                 name = point["properties"]["name"]
             else:
@@ -659,10 +660,8 @@ def linestring2gdf(feats: List[Dict], crs: Union[int, CRS] = None) -> gpd.GeoDat
     records = []
     for f in feats:
         feat = copy.deepcopy(f)
-        xyz = [feat.pop("x"), feat.pop("y")]
-        if "elevation" in feat and np.atleast_1d(feat["elevation"]).size == len(xyz[0]):
-            xyz.append(feat.pop("elevation"))
-        feat.update({"geometry": LineString(list(zip(*xyz)))})
+        xy = [feat.pop("x"), feat.pop("y")]
+        feat.update({"geometry": LineString(list(zip(*xy)))})
         records.append(feat)
     gdf = gpd.GeoDataFrame.from_records(records)
     gdf.set_geometry("geometry", inplace=True)

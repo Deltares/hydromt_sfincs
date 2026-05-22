@@ -90,7 +90,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
 
         # Check that data is not empty
         if len(self.data.data_vars) == 0:
-            logger.info("No subgrid table available to write.")
+            logger.debug("No subgrid table available to write.")
             return
 
         # Set file name and get absolute path
