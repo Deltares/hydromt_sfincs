@@ -108,7 +108,7 @@ class SfincsConfigVariables(BaseSettings):
         json_schema_extra={"always": True},
     )
     dtmapout: float = Field(
-        0.0,
+        3600.0,
         ge=0.0,
         description="Spatial map output interval (seconds)",
         json_schema_extra={"always": True},

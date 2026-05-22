@@ -9,6 +9,9 @@ from pydantic import ValidationError
 
 from hydromt_sfincs import SfincsModel
 
+TESTDATADIR = join(os.path.dirname(os.path.abspath(__file__)), "data")
+TESTMODELDIR = join(TESTDATADIR, "sfincs_test")
+
 
 def test_config_get_set(model_init, caplog):
     config = model_init.config
@@ -192,3 +195,80 @@ def test_get_set_file_variable(model_config, tmp_dir):
 
     assert obs6_path == random_location_path
     assert Path(file_path).resolve().as_posix() == random_location_path
+
+
+def test_read_root_locked_after_read(tmp_path):
+    """_read_root and _filename are locked to the original root when read() is called."""
+    original_root = Path(TESTMODELDIR)
+    mod = SfincsModel(root=original_root, mode="r")
+    mod.config.read()
+
+    # _read_root should be set and match the original root
+    assert hasattr(mod.config, "_read_root")
+    assert mod.config._read_root == original_root.resolve()
+
+    # _filename should be an absolute path under the original root
+    assert Path(mod.config._filename).is_absolute()
+    assert Path(mod.config._filename) == original_root.resolve() / "sfincs.inp"
+
+
+def test_get_abs_path_uses_read_root_after_root_change(tmp_path):
+    """get(abs_path=True) with a fallback resolves against _read_root, not the new root."""
+    original_root = Path(TESTMODELDIR)
+    mod = SfincsModel(root=original_root, mode="r")
+    mod.config.read()
+
+    # Verify the config has obsfile set (relative)
+    obs_rel = mod.config.get("obsfile")
+    assert obs_rel is not None
+
+    # Before root change: resolves to original root
+    obs_abs_before = mod.config.get("obsfile", fallback="sfincs.obs", abs_path=True)
+    assert obs_abs_before == (original_root.resolve() / obs_rel)
+
+    # Change root to a new (empty) location
+    mod.root.set(tmp_path, mode="r+")
+
+    # After root change: should still resolve against the original read root
+    obs_abs_after = mod.config.get("obsfile", fallback="sfincs.obs", abs_path=True)
+    assert obs_abs_after == (
+        original_root.resolve() / obs_rel
+    ), "get(abs_path=True) with fallback should use _read_root after root change"
+
+
+def test_get_set_file_variable_uses_read_root_after_root_change(tmp_path):
+    """get_set_file_variable with no default (read context) resolves against _read_root."""
+    original_root = Path(TESTMODELDIR)
+    mod = SfincsModel(root=original_root, mode="r")
+    mod.config.read()
+
+    obs_rel = mod.config.get("obsfile")
+    assert obs_rel is not None
+
+    # Change root to a new (empty) location
+    mod.root.set(tmp_path, mode="r+")
+
+    # Pure get (no default) — should resolve against original root
+    obs_abs = mod.config.get_set_file_variable("obsfile")
+    assert obs_abs == (
+        original_root.resolve() / obs_rel
+    ), "get_set_file_variable without default should use _read_root after root change"
+
+
+def test_get_set_file_variable_write_uses_new_root_after_root_change(tmp_path):
+    """get_set_file_variable with a default (write context) resolves against the new root."""
+    original_root = Path(TESTMODELDIR)
+    mod = SfincsModel(root=original_root, mode="r")
+    mod.config.read()
+
+    obs_rel = mod.config.get("obsfile")
+    assert obs_rel is not None
+
+    # Change root to a new (empty) location
+    mod.root.set(tmp_path, mode="r+")
+
+    # Write context (default provided) — should resolve against the NEW root
+    obs_abs = mod.config.get_set_file_variable("obsfile", default="sfincs.obs")
+    assert obs_abs == (
+        tmp_path.resolve() / obs_rel
+    ), "get_set_file_variable with default should use the new root after root change"
