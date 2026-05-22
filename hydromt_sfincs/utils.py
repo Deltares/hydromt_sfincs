@@ -259,7 +259,8 @@ def write_xyn(fn: str = "sfincs.obs", gdf: gpd.GeoDataFrame = None, fmt: str = "
 
     with open(fn, "w") as fid:
         for point in gdf.iterfeatures():
-            x, y = point["geometry"]["coordinates"]
+            # only take first two coordinates if geometry is 3D
+            x, y = point["geometry"]["coordinates"][:2]
             if "properties" in point and "name" in point["properties"]:
                 name = point["properties"]["name"]
             else:
