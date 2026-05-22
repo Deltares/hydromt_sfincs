@@ -473,7 +473,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             )
             df_ts = da.transpose(..., da.vector.index_dim).to_pandas()
             gdf_locs = da.vector.to_gdf()
-            if gdf_locs.index.name == "stations":
+            if gdf_locs.index.name == "stations" or gdf_locs.index.name == "station":
                 gdf_locs.index.name = "index"
         elif timeseries is not None:
             df_ts = self.data_catalog.get_dataframe(
