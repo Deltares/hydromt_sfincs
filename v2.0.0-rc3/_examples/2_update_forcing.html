@@ -502,7 +502,7 @@
 <h1>Update forcing conditions to model from Python<a class="headerlink" href="#Update-forcing-conditions-to-model-from-Python" title="Link to this heading">#</a></h1>
 <p>In this example, the previously made <strong>SFINCS</strong> compound flood model will be updated with more boundary conditions..</p>
 <p>The model is situated in <strong>Northern Italy</strong>, where a small selection of topography and bathymetry data has already been made available for you to try the examples.</p>
-<div class="nbinput nblast docutils container">
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
@@ -512,6 +512,15 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt._utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/tmp/ipykernel_4816/36717968.py:4: DeprecationWarning: importing &#39;log&#39; from &#39;hydromt._utils&#39; is deprecated. use &#39;from hydromt import log&#39; instead.
+  from hydromt._utils import log
+</pre></div></div>
 </div>
 <p><strong>Steps followed in this notebook to update your SFINCS model:</strong></p>
 <ol><li><p>Initialize SfincsModel class, set data library, mode and root folder</p>
@@ -549,15 +558,32 @@
 </pre></div>
 </div>
 </div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+2026-06-08 15:24:38,471 - hydromt - log - INFO - HydroMT version: 1.4.0
+</pre></div></div>
+</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-05-22 17:09:43,632 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
-2026-05-22 17:09:43,633 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
-2026-05-22 17:09:44,303 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0rc3).
-2026-05-22 17:09:44,304 - hydromt.model.model - model - WARNING - No region component found in components.
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">AttributeError</span>                            Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[2]</span><span class="ansi-green-fg">, line 10</span>
+<span class="ansi-green-fg">      6</span> log.set_log_level(log_level=<span class="ansi-green-fg">20</span>)
+<span class="ansi-green-fg">      7</span>
+<span class="ansi-green-fg">      8</span> <span style="color: rgb(95,135,135)"># Add file handler to log to a file</span>
+<span class="ansi-green-fg">      9</span> log_file = Path(model_root) / <span class="ansi-yellow-fg">&#34;hydromt_sfincs.log&#34;</span>
+<span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">10</span> logger = log._add_filehandler(log_file)
+<span class="ansi-green-fg">     11</span>
+<span class="ansi-green-fg">     12</span> <span style="color: rgb(95,135,135)"># Initialize SfincsModel Python class with the artifact data catalog which contains publically available data for North Italy</span>
+<span class="ansi-green-fg">     13</span> sf = SfincsModel(
+
+<span class="ansi-red-fg">AttributeError</span>: module &#39;hydromt._utils.log&#39; has no attribute &#39;_add_filehandler&#39;
 </pre></div></div>
 </div>
 </section>
@@ -590,31 +616,22 @@
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-(&lt;Figure size 600x600 with 2 Axes&gt;,
- array([&lt;Axes: title={&#39;center&#39;: &#39;SFINCS waterlevel forcing (bzs)&#39;}, ylabel=&#39;waterlevel\n[m+ref]&#39;&gt;,
-        &lt;Axes: title={&#39;center&#39;: &#39;SFINCS discharge forcing (dis)&#39;}, ylabel=&#39;discharge\n[m3.s-1]&#39;&gt;],
-       dtype=object))
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<img alt="../_images/_examples_2_update_forcing_9_1.png" src="../_images/_examples_2_update_forcing_9_1.png" />
-</div>
-</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_2_update_forcing_9_2.png" src="../_images/_examples_2_update_forcing_9_2.png" />
-</div>
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[3]</span><span class="ansi-green-fg">, line 2</span>
+<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># optionally, points can be added manually</span>
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">2</span> sf.discharge_points.add_point(
+<span class="ansi-green-fg">      3</span>     x=<span class="ansi-green-fg">321483.2</span>, y=<span class="ansi-green-fg">5047503.0</span>, value=<span class="ansi-green-fg">1000.0</span>, name=<span class="ansi-yellow-fg">&#34;Piave_inflow&#34;</span>
+<span class="ansi-green-fg">      4</span> )
+<span class="ansi-green-fg">      5</span>
+
+<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
+</pre></div></div>
 </div>
 </section>
 <section id="3.-Add-spatially-varying-rainfall-data:">
@@ -631,33 +648,22 @@
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-2026-05-22 17:09:46,714 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading era5_hourly RasterDataset data from /home/runner/.hydromt/artifact_data/latest/era5_hourly.nc
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-(&lt;Figure size 600x900 with 3 Axes&gt;,
- array([&lt;Axes: title={&#39;center&#39;: &#39;SFINCS waterlevel forcing (bzs)&#39;}, ylabel=&#39;waterlevel\n[m+ref]&#39;&gt;,
-        &lt;Axes: title={&#39;center&#39;: &#39;SFINCS discharge forcing (dis)&#39;}, ylabel=&#39;discharge\n[m3.s-1]&#39;&gt;,
-        &lt;Axes: title={&#39;center&#39;: &#39;SFINCS precipitation forcing (precip_2d)&#39;}, ylabel=&#39;mean precipitation\n[mm.hr-1]&#39;&gt;],
-       dtype=object))
-</pre></div></div>
-</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_2_update_forcing_11_2.png" src="../_images/_examples_2_update_forcing_11_2.png" />
-</div>
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[4]</span><span class="ansi-green-fg">, line 2</span>
+<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># # hourly rainfall rates of ECMWF&#39; ERA5 data for the specific area and period have been made available for this period in the artefact data</span>
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">2</span> sf.precipitation.create(precip=<span class="ansi-yellow-fg">&#34;era5_hourly&#34;</span>, aggregate=<span class="ansi-bold" style="color: rgb(0,135,0)">False</span>)
+<span class="ansi-green-fg">      3</span>
+<span class="ansi-green-fg">      4</span> <span style="color: rgb(95,135,135)"># NOTE: when specifying an output name, the image is also saved to file</span>
+<span class="ansi-green-fg">      5</span> sf.plot_forcing(fn_out=<span class="ansi-yellow-fg">&#34;forcing.png&#34;</span>)
+
+<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
+</pre></div></div>
 </div>
 <div style="border-left: 4px solid #4CAF50; padding: 10px; margin: 5px 0; background-color: #f0fff0;"><p>💡 Tip: In case you want to add other types of forcing, read more in the SFINCS manual.</p>
 </div></section>
@@ -676,21 +682,22 @@
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-2026-05-22 17:09:47,549 - hydromt.hydromt_sfincs.components.grid.infiltration - infiltration - INFO - Creating curve number values for SFINCS with antecedent moisture condition: avg.
-2026-05-22 17:09:47,555 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gcn250 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gcn250/{variable}.tif
-</pre></div></div>
-</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_2_update_forcing_14_1.png" src="../_images/_examples_2_update_forcing_14_1.png" />
-</div>
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[5]</span><span class="ansi-green-fg">, line 3</span>
+<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># independent from subgrid files</span>
+<span class="ansi-green-fg">      2</span> <span style="color: rgb(95,135,135)"># curve number infiltration based on global CN dataset</span>
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">3</span> sf.infiltration.create_cn(<span class="ansi-yellow-fg">&#34;gcn250&#34;</span>, antecedent_moisture=<span class="ansi-yellow-fg">&#34;avg&#34;</span>)
+<span class="ansi-green-fg">      4</span>
+<span class="ansi-green-fg">      5</span> _ = sf.plot_basemap(variable=<span class="ansi-yellow-fg">&#34;scs&#34;</span>, plot_bounds=<span class="ansi-bold" style="color: rgb(0,135,0)">False</span>, bmap=<span class="ansi-yellow-fg">&#34;sat&#34;</span>, zoomlevel=<span class="ansi-green-fg">12</span>)
+
+<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
+</pre></div></div>
 </div>
 </section>
 <section id="5.-Write-all-files">
@@ -708,7 +715,12 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-05-22 17:09:49,633 - hydromt.hydromt_sfincs.utils - utils - INFO - No changes detected; skipping write to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_compound/sfincs_netbndbzsbzifile.nc
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[6]</span><span class="ansi-green-fg">, line 1</span>
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">1</span> sf.write()
+
+<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
 </pre></div></div>
 </div>
 <p>Now your model has new boundary conditions, you can progress (or run again) to the notebook: <a class="reference internal" href="4_run_model.html"><span class="doc">Run SFINCS model</span></a>. In case you want to add some geometries and structures to your model first, continue with notebook <a class="reference internal" href="3_update_geometries.html"><span class="doc">Update Geometries</span></a></p>

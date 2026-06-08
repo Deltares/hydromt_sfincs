@@ -502,7 +502,7 @@
 <h1>Add geometries to model from Python<a class="headerlink" href="#Add-geometries-to-model-from-Python" title="Link to this heading">#</a></h1>
 <p>In this example, the previously made <strong>SFINCS</strong> compound flood model will be extended with observation points and other geometries.</p>
 <p>The model is situated in <strong>Northern Italy</strong>, where a small selection of topography and bathymetry data has already been made available for you to try the examples.</p>
-<div class="nbinput nblast docutils container">
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
@@ -512,6 +512,15 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt._utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/tmp/ipykernel_4959/36717968.py:4: DeprecationWarning: importing &#39;log&#39; from &#39;hydromt._utils&#39; is deprecated. use &#39;from hydromt import log&#39; instead.
+  from hydromt._utils import log
+</pre></div></div>
 </div>
 <p><strong>Steps followed in this notebook to build your SFINCS model:</strong></p>
 <ol><li><p>Initialize SfincsModel class, set data library, mode and root folder</p>
@@ -549,15 +558,32 @@
 </pre></div>
 </div>
 </div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+2026-06-08 15:24:43,286 - hydromt - log - INFO - HydroMT version: 1.4.0
+</pre></div></div>
+</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-05-22 17:09:54,192 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
-2026-05-22 17:09:54,193 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
-2026-05-22 17:09:54,866 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0rc3).
-2026-05-22 17:09:54,867 - hydromt.model.model - model - WARNING - No region component found in components.
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">AttributeError</span>                            Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[2]</span><span class="ansi-green-fg">, line 10</span>
+<span class="ansi-green-fg">      6</span> log.set_log_level(log_level=<span class="ansi-green-fg">20</span>)
+<span class="ansi-green-fg">      7</span>
+<span class="ansi-green-fg">      8</span> <span style="color: rgb(95,135,135)"># Add file handler to log to a file</span>
+<span class="ansi-green-fg">      9</span> log_file = Path(model_root) / <span class="ansi-yellow-fg">&#34;hydromt_sfincs.log&#34;</span>
+<span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">10</span> logger = log._add_filehandler(log_file)
+<span class="ansi-green-fg">     11</span>
+<span class="ansi-green-fg">     12</span> <span style="color: rgb(95,135,135)"># Initialize SfincsModel Python class with the artifact data catalog which contains publically available data for North Italy</span>
+<span class="ansi-green-fg">     13</span> sf = SfincsModel(
+
+<span class="ansi-red-fg">AttributeError</span>: module &#39;hydromt._utils.log&#39; has no attribute &#39;_add_filehandler&#39;
 </pre></div></div>
 </div>
 <p>Let’s get started!</p>
@@ -580,20 +606,23 @@
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
+<div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-05-22 17:09:54,940 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading compound_example_weirfile_input.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_weirfile_input.geojson
-</pre></div></div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-Weir point 321599.2183972707 5047623.297730446 has no elevation data. Filled now with nearest non-NaN value. Please check your input!
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[3]</span><span class="ansi-green-fg">, line 4</span>
+<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># In this example specify a &#39;line&#39; style shapefile for the location of the weir to be added</span>
+<span class="ansi-green-fg">      2</span> <span style="color: rgb(95,135,135)"># # NOTE: optional: dz argument - If provided, for weir structures the z value is calculated from the model elevation (dep) plus dz.</span>
+<span class="ansi-green-fg">      3</span>
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">4</span> sf.weirs.create(
+<span class="ansi-green-fg">      5</span>     locations=<span class="ansi-yellow-fg">r&#34;data/compound_example_weirfile_input.geojson&#34;</span>,
+<span class="ansi-green-fg">      6</span>     dz=<span class="ansi-green-fg">7.7</span>,
+<span class="ansi-green-fg">      7</span>     merge=<span class="ansi-bold" style="color: rgb(0,135,0)">False</span>,
+
+<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
 </pre></div></div>
 </div>
 </section>
@@ -617,7 +646,16 @@ Weir point 321599.2183972707 5047623.297730446 has no elevation data. Filled now
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-05-22 17:09:55,007 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading compound_example_observation_points.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_observation_points.geojson
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[4]</span><span class="ansi-green-fg">, line 3</span>
+<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># Loading a point shapefile clicked by user:</span>
+<span class="ansi-green-fg">      2</span> <span style="color: rgb(95,135,135)"># NOTE: merge=True makes HydroMT merge the new observation points with already existing observation points (if present)</span>
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">3</span> sf.observation_points.create(
+<span class="ansi-green-fg">      4</span>     locations=<span class="ansi-yellow-fg">r&#34;data/compound_example_observation_points.geojson&#34;</span>, merge=<span class="ansi-bold" style="color: rgb(0,135,0)">False</span>
+<span class="ansi-green-fg">      5</span> )
+
+<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
 </pre></div></div>
 </div>
 </section>
@@ -643,8 +681,18 @@ Weir point 321599.2183972707 5047623.297730446 has no elevation data. Filled now
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_3_update_geometries_14_0.png" src="../_images/_examples_3_update_geometries_14_0.png" />
-</div>
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[5]</span><span class="ansi-green-fg">, line 2</span>
+<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># Use predefined plotting function &#39;plot_basemap&#39; to show your full SFINCS model setup</span>
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">2</span> _ = sf.plot_basemap(
+<span class="ansi-green-fg">      3</span>     fn_out=<span class="ansi-yellow-fg">&#34;basemap.png&#34;</span>,
+<span class="ansi-green-fg">      4</span>     variable=<span class="ansi-yellow-fg">&#34;dep&#34;</span>,
+<span class="ansi-green-fg">      5</span>     plot_geoms=<span class="ansi-bold" style="color: rgb(0,135,0)">True</span>,
+
+<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
+</pre></div></div>
 </div>
 </section>
 <section id="5.-Save-all-files">
@@ -662,7 +710,12 @@ Weir point 321599.2183972707 5047623.297730446 has no elevation data. Filled now
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-05-22 17:09:58,054 - hydromt.hydromt_sfincs.utils - utils - INFO - No changes detected; skipping write to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_compound/sfincs_netbndbzsbzifile.nc
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[6]</span><span class="ansi-green-fg">, line 1</span>
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">1</span> sf.write()  <span style="color: rgb(95,135,135)"># write all</span>
+
+<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
 </pre></div></div>
 </div>
 <div style="border-left: 4px solid #4CAF50; padding: 0.5em; background-color: #f0fff0;"><p>⚠️ Note: If you encounter a PermissionError when writing the model, it’s likely because another notebook or process currently has the NetCDF files with boundary conditions open. This can happen when multiple Jupyter kernels access the same .nc file simultaneously. 👉 To resolve it:   • Save your work in other notebooks using this file.   • Restart or close those kernels.   • Then rerun this notebook.</p>
