@@ -1,5 +1,6 @@
 # import all components that are stored in the subfolders
 from .cross_sections import *
+from .dike_breaches import *
 from .drainage_structures import *
 from .observation_points import *
 from .runup_gauges import *

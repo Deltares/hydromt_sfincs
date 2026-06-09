@@ -67,6 +67,7 @@ from hydromt_sfincs.components.forcing import (
 from hydromt_sfincs.components.geometries import (
     SfincsCrossSections,
     SfincsDrainageStructures,
+    SfincsDikeBreaches,
     SfincsObservationPoints,
     SfincsRunupGauges,
     SfincsThinDams,
@@ -119,6 +120,7 @@ class SfincsModel(Model):
         "weirs": SfincsWeirs,
         "wave_makers": SfincsWaveMakers,
         "drainage_structures": SfincsDrainageStructures,
+        "dike_breaches": SfincsDikeBreaches,
     }
     _FORCING_COMPONENTS = {
         "rivers": SfincsRivers,
