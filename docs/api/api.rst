@@ -235,8 +235,10 @@ Flood map downscaling
    :toctree: ../_generated/
 
    workflows.downscaling.downscale_floodmap
+   workflows.downscaling.downscale_velocity
    workflows.downscaling.dilate_zsmax
    workflows.downscaling.apply_energy_head
+   workflows.downscaling.smooth_cell_field
    workflows.downscaling.remove_disconnected_flooding
    workflows.downscaling.make_index_cog
    workflows.downscale_floodmap_webmercator

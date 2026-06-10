@@ -750,6 +750,21 @@ class SfincsGrid(GridComponent):
             )
 
     def get_indices_at_points(self, x, y):
+        """Return, for each (x, y) sample, the flat index of the containing cell.
+
+        The index points into the **flattened model field as hydromt-sfincs
+        exposes it**: ``field.values.reshape(-1)`` of the south-up raster
+        (row 0 = the SFINCS ``n=0`` row at ``y0``; this orientation is
+        enforced on read/create via ``raster.flipud``).  C-order:
+        ``row_south * mmax + col``.  Same contract as the quadtree
+        counterpart, which returns the ugrid face order.  This is the order
+        :func:`~hydromt_sfincs.workflows.downscaling.make_index_cog` and the
+        downscaling workflows rely on.
+
+        Note: this differs from the SFINCS-internal Fortran ordering
+        (``m * nmax + n``) used by the legacy webmercator index *tiles*
+        above.  Points outside the grid return ``-999``.
+        """
         # x and y are 2D arrays of coordinates (x, y) in the same projection as the model
         # if x is a float, convert to 2D array
         if np.ndim(x) == 0:
@@ -775,10 +790,12 @@ class SfincsGrid(GridComponent):
         xg = x00 * cosrot - y00 * sinrot
         yg = x00 * sinrot + y00 * cosrot
 
-        # determine the SFINCS cell indices
+        # SFINCS cell column (m, from x0) and row (n, from the southern origin y0)
         iind = np.floor(xg / dx).astype(int)
         jind = np.floor(yg / dy).astype(int)
-        ind = iind * nmax + jind
+        # C-order flatten of the south-up raster (row 0 = n=0 at y0) — matches
+        # field.values.reshape(-1) for hydromt-sfincs regular-grid fields
+        ind = jind * mmax + iind
         ind[iind < 0] = -999
         ind[jind < 0] = -999
         ind[iind >= mmax] = -999

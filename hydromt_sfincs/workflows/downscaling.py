@@ -28,8 +28,10 @@ if TYPE_CHECKING:
 
 __all__ = [
     "downscale_floodmap",
+    "downscale_velocity",
     "dilate_zsmax",
     "apply_energy_head",
+    "smooth_cell_field",
     "compute_flow_connected_mask",
     "remove_disconnected_flooding",
     "make_index_cog",
@@ -290,6 +292,105 @@ def apply_energy_head(
     out = zsmax.copy()
     out.values = zs_new.astype(zsmax.dtype)
     return out
+
+
+def smooth_cell_field(
+    da: Union[xr.DataArray, xu.UgridDataArray],
+    n: int = 3,
+) -> Union[xr.DataArray, xu.UgridDataArray]:
+    """NaN-aware spatial smoothing of a coarse SFINCS cell field.
+
+    Replaces each *wet* cell's value with the mean of the wet cells inside an
+    ``n``-cell window (``n x n`` on a regular grid; radius
+    ``(0.5 + (n-1)/2)`` cell widths on a quadtree).  Dry (NaN) cells stay
+    NaN and do not contribute to any mean — the wet-cell set is preserved.
+
+    This is a **method-agnostic pre-step**, intended e.g. to soften the
+    piecewise-constant ``qmax`` field before :func:`downscale_velocity`
+    redistributes it, removing blocky cell-boundary jumps in the
+    reconstructed velocity.  Note that per-cell flux conservation then holds
+    with respect to the *smoothed* field, not the original.
+
+    Parameters
+    ----------
+    da : xu.UgridDataArray or xr.DataArray
+        Coarse cell field (e.g. ``qmax``); NaN where dry.  Regular fields
+        must be 2-D ``(y, x)``.
+    n : int, optional
+        Window size in cells; must be odd.  ``n <= 1`` returns the input
+        unchanged.  By default 3 (one ring of neighbours).
+
+    Returns
+    -------
+    xu.UgridDataArray or xr.DataArray
+        Smoothed field on the same grid, same wet-cell set.
+    """
+    n = int(n)
+    if n <= 1:
+        return da
+    if n % 2 == 0:
+        raise ValueError(f"smoothing window n must be odd; got {n}.")
+    if isinstance(da, xu.UgridDataArray):
+        return _smooth_cell_field_quadtree(da, n)
+    if isinstance(da, xr.DataArray):
+        return _smooth_cell_field_regular(da, n)
+    raise TypeError(
+        f"da must be xu.UgridDataArray or xr.DataArray; got {type(da).__name__}."
+    )
+
+
+def _smooth_cell_field_regular(da: xr.DataArray, n: int) -> xr.DataArray:
+    """Regular-grid NaN-aware mean filter (see :func:`smooth_cell_field`)."""
+    from scipy.ndimage import uniform_filter
+
+    vals = da.values.astype(np.float64, copy=True)
+    if vals.ndim != 2:
+        raise ValueError(
+            f"regular cell field must be 2-D (y, x) for smoothing; got {vals.ndim}-D."
+        )
+    wet = np.isfinite(vals)
+
+    # NaN-aware window mean: sum of wet values / count of wet cells per window
+    filled = np.where(wet, vals, 0.0)
+    num = uniform_filter(filled, size=n, mode="constant", cval=0.0)
+    den = uniform_filter(wet.astype(np.float64), size=n, mode="constant", cval=0.0)
+    sm = np.where(den > 1e-12, num / np.maximum(den, 1e-12), np.nan)
+
+    out = np.where(wet, sm, np.nan)  # preserve the wet-cell set
+    res = da.copy()
+    res.values = out.astype(da.dtype)
+    return res
+
+
+def _smooth_cell_field_quadtree(da: xu.UgridDataArray, n: int) -> xu.UgridDataArray:
+    """Quadtree NaN-aware mean via cKDTree (see :func:`smooth_cell_field`)."""
+    from scipy.spatial import cKDTree
+
+    grid = da.ugrid.grid
+    face_x, face_y = grid.face_coordinates.T
+    fb = grid.face_bounds  # (n, 4): xmin, ymin, xmax, ymax
+    dcell = np.maximum(fb[:, 2] - fb[:, 0], fb[:, 3] - fb[:, 1])
+
+    vals = da.values.astype(np.float64, copy=True)
+    wet = ~np.isnan(vals)
+
+    tree = cKDTree(np.column_stack([face_x, face_y]))
+    radii = dcell * (0.5 + (n - 1) / 2.0)
+    nbr_lists = tree.query_ball_point(np.column_stack([face_x, face_y]), r=radii)
+
+    out = vals.copy()
+    for i, nbrs in enumerate(nbr_lists):
+        if not wet[i] or not nbrs:
+            continue
+        nv = vals[nbrs]
+        nv = nv[~np.isnan(nv)]
+        if nv.size:
+            out[i] = nv.mean()
+    out[~wet] = np.nan  # preserve the wet-cell set
+
+    res = da.copy()
+    res.values = out.astype(da.dtype)
+    return res
 
 
 def downscale_floodmap(
@@ -1234,6 +1335,10 @@ def _downscale_floodmap_da(
 
         zsmax = zsmax.raster.mask_nodata()  # make sure nodata is nan
 
+        # The index COG points into the SOUTH-UP flatten (make_index_cog
+        # convention) — normalise a north-up zsmax before the lookup.
+        zsmax = _ensure_south_up(zsmax)
+
         # Compute water depth
         zs_numpy = zsmax.values[:].flatten()
         h = zs_numpy[indices] - dep.values[:]
@@ -1255,6 +1360,563 @@ def _downscale_floodmap_da(
         hmax = hmax.where(mask)
 
     return hmax
+
+
+# =============================================================================
+#  Flow-velocity downscaling (conveyance / continuity reconstruction)
+# =============================================================================
+
+
+def _is_number(x):
+    """True for a numeric scalar (NOT a str/Path, which numpy treats as scalar)."""
+    return isinstance(x, (int, float, np.integer, np.floating))
+
+
+def _ensure_south_up(da):
+    """Flip a regular-grid cell field to south-up (ascending y) if needed.
+
+    The index rasters from :func:`make_index_cog` point into the C-order
+    flatten of the **south-up** field (row 0 = the SFINCS ``n=0`` row), which
+    is how hydromt-sfincs exposes regular-grid fields.  A field re-read from
+    e.g. a north-up GeoTIFF would silently scramble the lookup, so normalise
+    here.  Quadtree (1-D) fields and rotated grids (2-D coords) pass through
+    unchanged.
+    """
+    if (
+        isinstance(da, xr.DataArray)
+        and "y" in da.coords
+        and da["y"].ndim == 1
+        and da["y"].size > 1
+        and float(da["y"].values[0]) > float(da["y"].values[-1])
+    ):
+        logger.info("Flipping north-up field to south-up to match index order.")
+        da = da.isel(y=slice(None, None, -1))
+    return da
+
+
+def _reduce_time_max(da):
+    """Collapse any time dimension of a SFINCS cell field via max.
+
+    ``qmax`` / ``vmax`` are normally already temporal maxima (no time axis);
+    this is a defensive no-op in that case.  For quadtree fields, any
+    non-grid dimension is treated as time; for plain arrays, a dimension is
+    treated as time only if its name looks like one (so a 1-D cell array is
+    left untouched).
+    """
+    if isinstance(da, xu.UgridDataArray):
+        timedim = set(da.dims) - set(da.ugrid.grid.dims)
+    else:
+        timedim = [d for d in da.dims if str(d).lower().startswith("time") or d == "t"]
+    if timedim:
+        da = da.max(list(timedim))
+    return da
+
+
+def _indices_nodata(indices, default=2147483647):
+    """Best-effort fetch of the nodata sentinel of an index raster/array."""
+    try:
+        nd = indices.raster.nodata
+        if nd is not None:
+            return int(nd)
+    except (AttributeError, ValueError):
+        pass
+    nd = getattr(indices, "attrs", {}).get("_FillValue")
+    return int(nd) if nd is not None else int(default)
+
+
+def _block_windows(n1, m1, nrcb):
+    """Yield rasterio Windows tiling an (n1 x m1) raster in nrcb blocks.
+
+    Mirrors the merge-last-row/col trick used elsewhere so we never emit a
+    1-pixel-wide block.
+    """
+    nrbn = int(np.ceil(n1 / nrcb))
+    nrbm = int(np.ceil(m1 / nrcb))
+    # Merge a trailing 1-pixel strip into the previous block — but only when
+    # there *is* a previous block, else a single-block axis collapses to zero.
+    merge_last_col = (m1 % nrcb == 1) and nrbm > 1
+    merge_last_row = (n1 % nrcb == 1) and nrbn > 1
+    if merge_last_col:
+        nrbm -= 1
+    if merge_last_row:
+        nrbn -= 1
+    for ii in range(nrbm):
+        bm0 = ii * nrcb
+        bm1 = min(bm0 + nrcb, m1)
+        if merge_last_col and ii == (nrbm - 1):
+            bm1 += 1
+        for jj in range(nrbn):
+            bn0 = jj * nrcb
+            bn1 = min(bn0 + nrcb, n1)
+            if merge_last_row and jj == (nrbn - 1):
+                bn1 += 1
+            yield Window(bm0, bn0, bm1 - bm0, bn1 - bn0)
+
+
+def _velocity_ceiling(h_pix, idx_pix, vmax_flat, v_cap, v_cap_factor, froude_max):
+    """Per-pixel velocity ceiling, the tightest of the supplied bounds.
+
+    Combines a Froude-limited physical bound ``froude_max * sqrt(g*h)``, an
+    optional cell-aware bound ``v_cap_factor * vmax_cell`` (when the SFINCS
+    ``vmax`` field is supplied), and an optional absolute ``v_cap``.  Returns
+    ``None`` when no bound is active.
+    """
+    GRAVITY = 9.81
+    ceil = None
+    if froude_max is not None:
+        ceil = froude_max * np.sqrt(GRAVITY * np.maximum(h_pix, 0.0))
+    if vmax_flat is not None:
+        vc = v_cap_factor * vmax_flat[idx_pix]
+        ceil = vc if ceil is None else np.minimum(ceil, vc)
+    if v_cap is not None:
+        vcap = np.full(h_pix.shape, float(v_cap), dtype=np.float64)
+        ceil = vcap if ceil is None else np.minimum(ceil, vcap)
+    return ceil
+
+
+def _velocity_from_pixels(
+    h_pix,
+    idx_pix,
+    q_flat,
+    n_pix,
+    method,
+    Kcell,
+    vmax_flat,
+    hmin,
+    v_cap,
+    v_cap_factor,
+    froude_max,
+):
+    """Core per-pixel velocity reconstruction (vectorised, NaN-safe).
+
+    ``h_pix`` already has dry / out-of-bounds pixels set to NaN, so the wet
+    mask doubles as the valid mask.  ``idx_pix`` is the flat parent-cell index
+    (any sentinel value must already point at a real slot — those pixels are
+    masked out through ``h_pix`` being NaN).
+    """
+    v = np.full(h_pix.shape, np.nan, dtype=np.float64)
+    wet = np.isfinite(h_pix) & (h_pix > hmin)
+    qc = q_flat[idx_pix]  # parent-cell |qmax|, broadcast to pixels
+    valid = wet & np.isfinite(qc)
+
+    if method == "continuity":
+        v[valid] = qc[valid] / h_pix[valid]
+    else:  # conveyance
+        Kc = Kcell[idx_pix]
+        good = valid & (Kc > 1e-12)
+        if n_pix is None:
+            num = h_pix[good] ** (2.0 / 3.0)
+        else:
+            num = h_pix[good] ** (2.0 / 3.0) / np.maximum(n_pix[good], 1e-3)
+        # qc==0 legitimately yields v=0 (stagnant cell)
+        v[good] = qc[good] * num / Kc[good]
+
+    # Clip to the tightest physical / cell-aware ceiling, and to >= 0
+    ceil = _velocity_ceiling(
+        h_pix, idx_pix, vmax_flat, v_cap, v_cap_factor, froude_max
+    )
+    if ceil is not None:
+        m = np.isfinite(v)
+        v[m] = np.minimum(v[m], ceil[m])
+    finite = np.isfinite(v)
+    v[finite] = np.maximum(v[finite], 0.0)
+    return v
+
+
+def _conveyance_per_cell(h_pix, idx_pix, n_pix, n_cells, hmin, accum=None):
+    """Accumulate per-cell mean conveyance ``<h^(5/3)/n>`` over wet pixels.
+
+    Returns ``(sum_k, count)`` arrays of length ``n_cells``.  Pass the running
+    ``accum=(sum_k, count)`` back in to keep a global tally across DEM blocks
+    (so cells that straddle block boundaries are normalised over *all* their
+    pixels, not a partial sum).
+    """
+    if accum is None:
+        sum_k = np.zeros(n_cells, dtype=np.float64)
+        cnt = np.zeros(n_cells, dtype=np.float64)
+    else:
+        sum_k, cnt = accum
+    wet = np.isfinite(h_pix) & (h_pix > hmin)
+    if not np.any(wet):
+        return sum_k, cnt
+    idx_w = idx_pix[wet].astype(np.int64)
+    k = h_pix[wet] ** (5.0 / 3.0)
+    if n_pix is not None:
+        k = k / np.maximum(n_pix[wet], 1e-3)
+    sum_k += np.bincount(idx_w, weights=k, minlength=n_cells)
+    cnt += np.bincount(idx_w, minlength=n_cells)
+    return sum_k, cnt
+
+
+def _resolve_manning_array(manning, shape, logger):
+    """Return a per-pixel Manning array for a block/grid, or None.
+
+    Only a *sub-cell-varying* roughness changes the within-cell velocity
+    distribution: a per-cell-constant ``n`` cancels exactly in the conveyance
+    normalisation ``(h^(2/3)/n) / <h^(5/3)/n>``.  A scalar (or ``None``) is
+    therefore returned as ``None`` (no-op), and only a raster of values is
+    honoured.
+    """
+    if manning is None or _is_number(manning):
+        return None  # None / constant n cancels in the conveyance ratio
+    if isinstance(manning, (str, Path)):
+        with rasterio.open(str(manning)) as src:
+            arr = src.read(1).astype(np.float64)
+    else:
+        arr = np.asarray(getattr(manning, "values", manning), dtype=np.float64)
+    if arr.shape != shape:
+        raise ValueError(
+            f"manning raster shape {arr.shape} does not match grid {shape}."
+        )
+    return arr.reshape(-1)
+
+
+def downscale_velocity(
+    hmax: Union[Path, str, xr.DataArray],
+    qmax: Union[xr.DataArray, xu.UgridDataArray],
+    indices: Union[Path, str, xr.DataArray],
+    method: str = "conveyance",
+    manning: Union[Path, str, xr.DataArray, float, None] = None,
+    smooth: int = 0,
+    vmax: Union[xr.DataArray, xu.UgridDataArray, None] = None,
+    hmin: float = 0.05,
+    v_cap: Optional[float] = None,
+    v_cap_factor: float = 2.0,
+    froude_max: Optional[float] = 3.0,
+    gdf_mask: gpd.GeoDataFrame = None,
+    velocity_fn: Union[Path, str] = None,
+    nrmax: int = 2000,
+    logger=logger,
+):
+    """Downscale a coarse SFINCS flux field to a high-resolution velocity map.
+
+    Companion to :func:`downscale_floodmap`.  Where the floodmap turns a coarse
+    ``zsmax`` into a fine water-depth raster, this turns the coarse cell flux
+    ``qmax`` into a fine *velocity-magnitude* raster on the **same grid as the
+    downscaled depth** (``hmax``), by redistributing each cell's flux over its
+    fine pixels.
+
+    Two methods are supported:
+
+    * ``"conveyance"`` (default) — within each coarse cell, assume locally
+      uniform water-surface slope and steady-uniform (Manning) flow, so that
+      pixel ``i`` carries unit discharge ``q_i = (1/n_i) h_i^(5/3) S^(1/2)``.
+      Constraining the cell-mean unit discharge to ``qmax`` back-solves the
+      slope and gives
+
+      ``v_i = qmax * (h_i^(2/3)/n_i) / < (1/n_j) h_j^(5/3) >_cell``
+
+      where ``< >_cell`` is the unweighted mean over the cell's wet pixels.
+      This conserves the cell-mean unit discharge exactly
+      (``mean_i(h_i*v_i) == qmax``) and is the same conveyance closure SFINCS
+      uses to build its subgrid tables, so deeper / smoother pixels flow
+      faster.  No externally estimated slope is needed.
+    * ``"continuity"`` — the roughness-free fallback ``v_i = qmax / h_i`` (the
+      single-wet-pixel limit of the conveyance method, and what
+      :func:`apply_energy_head` uses at cell scale).  Useful when no roughness
+      is available and as a validation cross-check.
+
+    .. important::
+        ``qmax`` and ``hmax`` are *independent temporal maxima* — the peak flux
+        and the peak depth generally occur at different times (markedly so at
+        tidal / surge sites).  The reconstructed velocity is therefore an
+        **envelope / upper-bound estimate**, not a co-temporal snapshot.  This
+        is intrinsic to max-only SFINCS output; it is *mitigated* (not removed)
+        by the velocity clip (``froude_max`` / ``v_cap`` / ``vmax``).  For a
+        physically co-temporal estimate, downscale instantaneous ``q(t)`` and
+        ``h(t)`` at a chosen map timestep instead.
+
+    Parameters
+    ----------
+    hmax : Path, str or xr.DataArray
+        High-resolution flood-depth raster from :func:`downscale_floodmap`
+        (m).  Dry pixels are NaN (or ``<= hmin``).  An ``xr.DataArray`` runs
+        in memory and is returned; a file path streams in ``nrmax`` blocks and
+        writes ``velocity_fn``.
+    qmax : xr.DataArray or xu.UgridDataArray
+        Maximum unit-discharge magnitude (m²/s), cell-centred — the ``qmax``
+        SFINCS writes to ``sfincs_map.nc`` when ``storefluxmax=1``.  Sign is
+        ignored (``|qmax|`` is used).  Same grid/order as the model cells that
+        ``indices`` references.
+    indices : Path, str or xr.DataArray
+        Cell-index raster from :func:`make_index_cog`, mapping each fine pixel
+        to its parent cell's flat index.  Must be of the same kind (file vs
+        in-memory) and shape as ``hmax``.
+    method : {"conveyance", "continuity"}, optional
+        Reconstruction method, by default ``"conveyance"``.
+    manning : Path, str, xr.DataArray or float, optional
+        Manning roughness.  Only a **sub-cell-varying raster** (aligned to
+        ``hmax``) changes the within-cell distribution — a scalar or per-cell
+        value cancels exactly in the conveyance ratio and is treated as a
+        no-op (``None``).  Unused by ``"continuity"``.
+    smooth : int, optional
+        Spatial smoothing window for the coarse ``|qmax|`` field, in SFINCS
+        cells (odd; see :func:`smooth_cell_field`).  Softens the
+        piecewise-constant cell flux before redistribution, removing blocky
+        velocity jumps at cell boundaries.  Per-cell flux conservation then
+        holds w.r.t. the *smoothed* field.  ``0``/``1`` (default) disables.
+        Applies to both methods; ``vmax`` (clip ceiling) is not smoothed.
+    vmax : xr.DataArray or xu.UgridDataArray, optional
+        Cell-centred SFINCS max velocity (m/s, ``storevelmax=1``).  Used only
+        to set the cell-aware clip ceiling ``v_cap_factor * vmax_cell``.
+    hmin : float, optional
+        Minimum depth (m) to treat a pixel as wet, by default 0.05.
+    v_cap : float, optional
+        Absolute velocity ceiling (m/s).  Default ``None`` (Froude/vmax only).
+    v_cap_factor : float, optional
+        Multiplier on the broadcast ``vmax_cell`` for the cell-aware ceiling,
+        by default 2.0.  Only active when ``vmax`` is given.
+    froude_max : float, optional
+        Froude number for the physical ceiling ``froude_max * sqrt(g*h)``, by
+        default 3.0.  Set ``None`` to disable.
+    gdf_mask : geopandas.GeoDataFrame, optional
+        Polygons; pixels outside are set to NaN.
+    velocity_fn : Path or str, optional
+        Output velocity GeoTIFF (COG).  Required when ``hmax`` is a file path.
+    nrmax : int, optional
+        Block size in pixels for the file-based path, by default 2000.
+    logger : logging.Logger, optional
+
+    Returns
+    -------
+    xr.DataArray or None
+        The velocity raster (name ``"vmax"``, units ``m s-1``) when ``hmax`` is
+        an ``xr.DataArray``; otherwise ``None`` (result written to
+        ``velocity_fn``).
+    """
+    _VALID = {"conveyance", "continuity"}
+    if method not in _VALID:
+        raise ValueError(f"Unknown method {method!r}.  Choose from {sorted(_VALID)}.")
+
+    # --- Coarse cell fields → flat 1-D arrays (works for regular + quadtree) --
+    qmax = _ensure_south_up(_reduce_time_max(qmax))
+    if smooth and int(smooth) > 1:
+        logger.info(f"Smoothing |qmax| with a {int(smooth)}-cell window.")
+        qmax = qmax.copy()
+        qmax.values = np.abs(qmax.values)  # smooth magnitudes, not signed flux
+        qmax = smooth_cell_field(qmax, n=int(smooth))
+    q_flat = np.abs(np.asarray(qmax.values, dtype=np.float64).reshape(-1))
+    n_cells = q_flat.size
+
+    vmax_flat = None
+    if vmax is not None:
+        vmax = _ensure_south_up(_reduce_time_max(vmax))
+        vmax_flat = np.abs(np.asarray(vmax.values, dtype=np.float64).reshape(-1))
+        if vmax_flat.size != n_cells:
+            raise ValueError("vmax and qmax must have the same number of cells.")
+
+    if _is_number(manning):
+        logger.info(
+            "Scalar/constant manning cancels in the conveyance ratio — "
+            "ignoring (pass a sub-cell raster to vary roughness)."
+        )
+
+    # --- In-memory path -------------------------------------------------------
+    if isinstance(hmax, xr.DataArray):
+        if isinstance(indices, (str, Path)):
+            raise ValueError(
+                "indices must be an xr.DataArray when hmax is an xr.DataArray."
+            )
+        return _downscale_velocity_da(
+            hmax=hmax,
+            q_flat=q_flat,
+            n_cells=n_cells,
+            indices=indices,
+            method=method,
+            manning=manning,
+            vmax_flat=vmax_flat,
+            hmin=hmin,
+            v_cap=v_cap,
+            v_cap_factor=v_cap_factor,
+            froude_max=froude_max,
+            gdf_mask=gdf_mask,
+        )
+
+    # --- File-based path ------------------------------------------------------
+    if velocity_fn is None:
+        raise ValueError("velocity_fn is required when hmax is a file path.")
+    if not isinstance(indices, (str, Path)):
+        raise ValueError("indices must be str/Path when hmax is a file path.")
+    _downscale_velocity_file(
+        hmax_fn=hmax,
+        q_flat=q_flat,
+        n_cells=n_cells,
+        indices=indices,
+        method=method,
+        manning=manning,
+        vmax_flat=vmax_flat,
+        hmin=hmin,
+        v_cap=v_cap,
+        v_cap_factor=v_cap_factor,
+        froude_max=froude_max,
+        gdf_mask=gdf_mask,
+        velocity_fn=velocity_fn,
+        nrmax=nrmax,
+        logger=logger,
+    )
+    return None
+
+
+def _downscale_velocity_da(
+    hmax,
+    q_flat,
+    n_cells,
+    indices,
+    method,
+    manning,
+    vmax_flat,
+    hmin,
+    v_cap,
+    v_cap_factor,
+    froude_max,
+    gdf_mask,
+):
+    """In-memory velocity reconstruction for an ``xr.DataArray`` ``hmax``."""
+    shape = hmax.shape
+    nodata = _indices_nodata(indices)
+
+    h = np.asarray(hmax.values, dtype=np.float64).reshape(-1)
+    idx_raw = np.asarray(indices.values).reshape(-1)
+    inb = idx_raw != nodata
+    idx_safe = np.where(inb, idx_raw, 0).astype(np.int64)
+    # Mask out-of-bounds pixels by making their depth NaN (drops them from
+    # every wet/valid mask downstream).
+    h_masked = np.where(inb, h, np.nan)
+
+    n_pix = _resolve_manning_array(manning, shape, logger)
+
+    Kcell = None
+    if method == "conveyance":
+        sum_k, cnt = _conveyance_per_cell(h_masked, idx_safe, n_pix, n_cells, hmin)
+        Kcell = np.where(cnt > 0, sum_k / np.maximum(cnt, 1.0), 0.0)
+
+    v = _velocity_from_pixels(
+        h_masked, idx_safe, q_flat, n_pix, method, Kcell, vmax_flat,
+        hmin, v_cap, v_cap_factor, froude_max,
+    )
+
+    out = hmax.copy(data=v.reshape(shape).astype(np.float32))
+    out = out.where(np.isfinite(out))
+    try:
+        out.raster.set_nodata(np.nan)
+    except (AttributeError, ValueError):
+        pass
+    if gdf_mask is not None:
+        out = out.where(out.raster.geometry_mask(gdf_mask, all_touched=True))
+    out.name = "vmax"
+    out.attrs.update(
+        {
+            "long_name": "Maximum flow velocity (downscaled)",
+            "units": "m s-1",
+            "method": method,
+            "note": (
+                "Envelope estimate: qmax and hmax are independent temporal "
+                "maxima (not co-temporal)."
+            ),
+        }
+    )
+    return out
+
+
+def _downscale_velocity_file(
+    hmax_fn,
+    q_flat,
+    n_cells,
+    indices,
+    method,
+    manning,
+    vmax_flat,
+    hmin,
+    v_cap,
+    v_cap_factor,
+    froude_max,
+    gdf_mask,
+    velocity_fn,
+    nrmax,
+    logger,
+):
+    """Block-streamed velocity reconstruction for a file-based ``hmax``.
+
+    Two passes over the DEM blocks: pass 1 accumulates the per-cell mean
+    conveyance over *all* pixels of every cell (so cells straddling block
+    boundaries are normalised correctly); pass 2 computes and writes velocity.
+    Continuity skips pass 1 (no normalisation needed).
+    """
+    manning_is_raster = manning is not None and not _is_number(manning)
+
+    geo = _open_dem_geometry(hmax_fn)
+    profile = _make_output_profile(geo)
+    _create_output_rasters(profile, floodmap_fn=velocity_fn)
+
+    n1, m1 = geo["height"], geo["width"]
+    nodata_idx = None
+
+    hmax_src = rasterio.open(str(hmax_fn))
+    indices_src = rasterio.open(str(indices))
+    nodata_idx = (
+        int(indices_src.nodata) if indices_src.nodata is not None else 2147483647
+    )
+    manning_src = rasterio.open(str(manning)) if manning_is_raster else None
+    if manning_src is not None and (
+        manning_src.height != n1 or manning_src.width != m1
+    ):
+        raise ValueError(
+            f"manning raster {manning_src.height}x{manning_src.width} does not "
+            f"match hmax grid {n1}x{m1}; align manning to the downscaled depth."
+        )
+    try:
+        # --- Pass 1: global per-cell conveyance (conveyance method only) -----
+        Kcell = None
+        if method == "conveyance":
+            sum_k = np.zeros(n_cells, dtype=np.float64)
+            cnt = np.zeros(n_cells, dtype=np.float64)
+            for window in _block_windows(n1, m1, nrmax):
+                idx_b = indices_src.read(1, window=window)
+                inb = idx_b != nodata_idx
+                if not np.any(inb):
+                    continue
+                h_b = hmax_src.read(1, window=window).astype(np.float64)
+                h_b = np.where(inb, h_b, np.nan).reshape(-1)
+                idx_safe = np.where(inb, idx_b, 0).astype(np.int64).reshape(-1)
+                n_pix = (
+                    manning_src.read(1, window=window).astype(np.float64).reshape(-1)
+                    if manning_src is not None
+                    else None
+                )
+                sum_k, cnt = _conveyance_per_cell(
+                    h_b, idx_safe, n_pix, n_cells, hmin, accum=(sum_k, cnt)
+                )
+            Kcell = np.where(cnt > 0, sum_k / np.maximum(cnt, 1.0), 0.0)
+
+        # --- Pass 2: compute + write velocity --------------------------------
+        for window in _block_windows(n1, m1, nrmax):
+            idx_b = indices_src.read(1, window=window)
+            wshape = idx_b.shape
+            inb = idx_b != nodata_idx
+            if not np.any(inb):
+                continue
+            h_b = hmax_src.read(1, window=window).astype(np.float64)
+            h_b = np.where(inb, h_b, np.nan).reshape(-1)
+            idx_safe = np.where(inb, idx_b, 0).astype(np.int64).reshape(-1)
+            n_pix = (
+                manning_src.read(1, window=window).astype(np.float64).reshape(-1)
+                if manning_src is not None
+                else None
+            )
+            v = _velocity_from_pixels(
+                h_b, idx_safe, q_flat, n_pix, method, Kcell, vmax_flat,
+                hmin, v_cap, v_cap_factor, froude_max,
+            )
+            with rasterio.open(str(velocity_fn), "r+") as dst:
+                dst.write(v.reshape(wshape).astype(np.float32), window=window, indexes=1)
+    finally:
+        hmax_src.close()
+        indices_src.close()
+        if manning_src is not None:
+            manning_src.close()
+
+    _apply_mask_and_overviews(velocity_fn, None, gdf_mask, geo, logger)
+    logger.info(f"Downscaled velocity ({method}) saved to: {velocity_fn}")
 
 
 def compute_flow_connected_mask(

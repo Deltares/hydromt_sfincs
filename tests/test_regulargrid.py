@@ -120,3 +120,49 @@ def test_grid_create_from_region_rotated(model_init):
     assert np.isclose(model.grid.x0, 318650.0, atol=1e-3)
     assert np.isclose(model.grid.y0, 5040000.0, atol=1e-3)
     assert np.isclose(model.grid.rotation, 27.0, atol=1e-3)
+
+
+def test_get_indices_at_points_south_up_flatten(model_init):
+    """Indices must point into the C-order flatten of the SOUTH-UP raster.
+
+    Regression: the function used to return the SFINCS-internal Fortran
+    order (``col * nmax + row``), silently scrambling every index-COG
+    lookup for regular grids (downscale_floodmap / downscale_velocity).
+    """
+    model = model_init
+    model.grid.create(
+        mmax=10, nmax=6, dx=100, dy=100, x0=1000.0, y0=5000.0, rotation=0, epsg=32633
+    )
+    grid = model.grid
+
+    # centre of column 3, southern row 2 -> row * mmax + col
+    x = np.array([[1000.0 + 3.5 * 100]])
+    y = np.array([[5000.0 + 2.5 * 100]])
+    assert grid.get_indices_at_points(x, y)[0, 0] == 2 * 10 + 3
+
+    # consistency with the raster flatten: pixel [r, c] of the model raster
+    mask = grid.empty_mask
+    assert mask.y.values[0] < mask.y.values[-1]  # south-up convention
+    r, c = 4, 7
+    xc = float(mask.x.values[c])
+    yc = float(mask.y.values[r])
+    ind = grid.get_indices_at_points(np.array([[xc]]), np.array([[yc]]))
+    assert ind[0, 0] == r * grid.mmax + c
+
+
+def test_get_indices_at_points_rotated_and_outside(model_init):
+    model = model_init
+    model.grid.create(
+        mmax=8, nmax=5, dx=50, dy=50, x0=2000.0, y0=6000.0, rotation=27.0, epsg=32633
+    )
+    grid = model.grid
+
+    # rotated cell centre maps back to row * mmax + col
+    col, row = 6, 3
+    xw, yw = grid.transform * (col + 0.5, row + 0.5)
+    ind = grid.get_indices_at_points(np.array([[xw]]), np.array([[yw]]))
+    assert ind[0, 0] == row * grid.mmax + col
+
+    # points outside the grid return -999
+    ind = grid.get_indices_at_points(np.array([[-1e6]]), np.array([[-1e6]]))
+    assert ind[0, 0] == -999

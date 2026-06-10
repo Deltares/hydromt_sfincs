@@ -24,6 +24,8 @@ Added
 - New public helpers in ``hydromt_sfincs.workflows.downscaling``: ``dilate_zsmax`` (cell-space WSE dilation) and ``apply_energy_head`` (per-cell Bernoulli velocity-head correction). Both work on quadtree (``xu.UgridDataArray``) *and* regular (``xr.DataArray``) grids and preserve the wet-cell set.
 - ``downscale_floodmap`` gained two new kwargs: ``dilation`` (factor for the cell-space WSE dilation pre-step) and ``energy_flux`` (boolean switch for the Bernoulli velocity-head correction; requires ``qmax``). When ``energy_flux=True`` and ``method="bilinear"``, ``qmax`` is passed into ``_downscale_bilinear`` for per-cell Bernoulli + upstream-energy propagation (scaled by ``q_scale``); for any other method, :func:`apply_energy_head` runs as a pre-step (pure per-cell Bernoulli, no upstream propagation).
 - Reorganised the downscaling stack into the ``hydromt_sfincs.workflows.downscaling`` submodule. ``downscale_floodmap``, ``remove_disconnected_flooding``, and ``make_index_cog`` are now importable from ``hydromt_sfincs.workflows.downscaling`` (and re-exported via ``hydromt_sfincs.workflows``). ``hydromt_sfincs.utils`` now retains only generic I/O and grid utilities.
+- New ``downscale_velocity`` helper in ``hydromt_sfincs.workflows.downscaling``: reconstructs a high-resolution flow-velocity magnitude raster from the coarse cell flux ``qmax`` (``storefluxmax=1``) by redistributing it over the fine pixels of a downscaled depth (``hmax``) raster. Method ``"conveyance"`` (default) uses the subgrid conveyance closure ``v_i = qmax·(h_i^(2/3)/n_i)/<h^(5/3)/n>_cell`` (conserves the cell-mean unit discharge, deeper/smoother pixels flow faster); ``"continuity"`` is the roughness-free ``v = qmax/h`` fallback. Includes a Froude/``vmax``-based velocity clip and a two-pass block-streamed file path. Note: ``qmax`` and ``hmax`` are independent temporal maxima, so the result is an envelope estimate (documented).
+- New ``smooth_cell_field`` pre-step (NaN-aware n-cell window mean, wet-set preserving, regular + quadtree) and a ``smooth`` kwarg on ``downscale_velocity`` that softens the piecewise-constant ``|qmax|`` field before redistribution, removing blocky velocity jumps at coarse-cell boundaries.
 
 Fixed
 -----
@@ -35,6 +37,8 @@ Fixed
 - fix buffer for clipping meteo datasets after buffer definition changed in hydromt core (#348)
 - bugfixed in generating index file (#357)
 - fixed errors that were introduced by pandas releases ≥ 3.0.0 (#371)
+- ``RegularGrid.get_indices_at_points`` returned SFINCS-internal Fortran order (``col*nmax + row``) while the downscaling workflows index into the C-order flatten of the south-up raster — every regular-grid index-COG lookup (``make_index_cog`` → ``downscale_floodmap``/``downscale_velocity``) was silently scrambled. Now returns ``row_south*mmax + col``; the legacy webmercator index *tiles* keep their own (unchanged) convention. North-up cell fields passed to the index-based downscaling paths are now auto-flipped to south-up.
+- ``downscale_velocity`` treated a file-path ``manning`` as a scalar (``np.isscalar`` is True for strings) and silently ignored the roughness raster; file paths are now opened and honoured, with a shape check against the depth grid.
 
 Changed
 -------
