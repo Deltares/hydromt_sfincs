@@ -8,7 +8,8 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from .config_variables import SfincsConfigVariables
+from hydromt_sfincs.readers import read_config
+from hydromt_sfincs.components.config.config_variables import SfincsConfigVariables
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -64,50 +65,8 @@ class SfincsConfig(ModelComponent):
 
         self.root._assert_read_mode
 
-        if not exists(self.filename):
-            raise FileNotFoundError(
-                f"SFINCS input file '{self.filename}' does not exist."
-            )
-
-        # Read the file line by line
-        with open(self.filename, "r") as fid:
-            lines = fid.readlines()
-
-        inp_dict = {}
-        for line in lines:
-            # Check if first character is #
-            if line.strip().startswith("#"):
-                # Full line comment
-                continue
-            # Find last character before #
-            comment_idx = line.find("#")
-            if comment_idx >= 0:
-                line = line[:comment_idx]
-            line = [x.strip() for x in line.split("=")]
-            if len(line) != 2:
-                continue
-            name, val = line
-            if name in ["tref", "tstart", "tstop"]:
-                try:
-                    val = datetime.strptime(val, "%Y%m%d %H%M%S")
-                except ValueError:
-                    ValueError(f'"{name} = {val}" not understood.')
-            elif name in ["cdwnd", "cdval"]:
-                val = [float(x) for x in val.split()]
-            elif name == "utmzone":
-                val = str(val)
-            else:
-                try:
-                    val = literal_eval(val)
-                except Exception:
-                    pass
-
-            if name == "crs":
-                name = "epsg"
-            elif name == "dtout":
-                name = "dtmapout"
-
-            inp_dict[name] = val
+        # Read the config file
+        inp_dict = read_config(filename=self.filename)
 
         # FIXME: when reading an existing config, you don't want to start with all possible variables?
         # Convert dictionary to SfincsConfig instance
