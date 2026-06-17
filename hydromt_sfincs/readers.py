@@ -53,7 +53,7 @@ def read_config(
             try:
                 val = datetime.strptime(val, "%Y%m%d %H%M%S")
             except ValueError:
-                ValueError(f'"{name} = {val}" not understood.')
+                raise ValueError(f'"{name} = {val}" not understood.')
         elif name in ["cdwnd", "cdval"]:
             val = [float(x) for x in val.split()]
         elif name == "utmzone":
