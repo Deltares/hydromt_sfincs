@@ -31,7 +31,6 @@ tests = "pytest -v --cov=hydromt_sfincs -cov-report=term-missing"
 
 [dependencies]
 python = "3.13.*"
-pytest = ">=9.1.0,<10"
 
 [pypi-dependencies]
 hydromt_sfincs = { path = ".", editable = true, extras = ["full"] }

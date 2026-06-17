@@ -71,5 +71,5 @@ def read_config(
 
         inp_dict[name] = val
 
-        # Return the config values
-        return inp_dict
+    # Return the config values
+    return inp_dict
