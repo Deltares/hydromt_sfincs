@@ -27,8 +27,8 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=0790524f97105ba85085" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=0790524f97105ba85085" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=a95f357e85573c9b56d5" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=a95f357e85573c9b56d5" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/autodoc_pydantic.css" />
@@ -36,10 +36,10 @@
     <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css?v=a3fd7a5a" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="../_static/scripts/fontawesome.js?digest=0790524f97105ba85085"></script>
+  <script defer src="../_static/scripts/fontawesome.js?digest=a95f357e85573c9b56d5"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=0790524f97105ba85085" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=0790524f97105ba85085" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=a95f357e85573c9b56d5" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=a95f357e85573c9b56d5" />
 
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
@@ -48,7 +48,7 @@
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api/api';</script>
     <script>
-        DOCUMENTATION_OPTIONS.theme_version = '0.18.0';
+        DOCUMENTATION_OPTIONS.theme_version = '0.19.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
         DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0-r';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
@@ -522,6 +522,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../_generated/hydromt_sfincs.workflows.create_topobathy_tiles.html">hydromt_sfincs.workflows.create_topobathy_tiles</a></li>
 </ul>
 <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../_generated/hydromt_sfincs.readers.read_config.html">hydromt_sfincs.readers.read_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_binary_map.html">hydromt_sfincs.utils.read_binary_map</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../_generated/hydromt_sfincs.utils.write_binary_map.html">hydromt_sfincs.utils.write_binary_map</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_binary_map_index.html">hydromt_sfincs.utils.read_binary_map_index</a></li>
@@ -1063,58 +1064,61 @@ and other model data.</p>
 <h3>Input/Output methods<a class="headerlink" href="#input-output-methods" title="Link to this heading">#</a></h3>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_binary_map.html#hydromt_sfincs.utils.read_binary_map" title="hydromt_sfincs.utils.read_binary_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_binary_map</span></code></a>(fn, ind, shape[, mv, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.readers.read_config.html#hydromt_sfincs.readers.read_config" title="hydromt_sfincs.readers.read_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">readers.read_config</span></code></a>(filename)</p></td>
+<td><p>Read the SFINCS input file (sfincs.inp).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_binary_map.html#hydromt_sfincs.utils.read_binary_map" title="hydromt_sfincs.utils.read_binary_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_binary_map</span></code></a>(fn, ind, shape[, mv, ...])</p></td>
 <td><p>Read binary map.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.write_binary_map.html#hydromt_sfincs.utils.write_binary_map" title="hydromt_sfincs.utils.write_binary_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.write_binary_map</span></code></a>(fn, data, msk[, dtype])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.write_binary_map.html#hydromt_sfincs.utils.write_binary_map" title="hydromt_sfincs.utils.write_binary_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.write_binary_map</span></code></a>(fn, data, msk[, dtype])</p></td>
 <td><p>Write binary map file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_binary_map_index.html#hydromt_sfincs.utils.read_binary_map_index" title="hydromt_sfincs.utils.read_binary_map_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_binary_map_index</span></code></a>(fn_ind)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_binary_map_index.html#hydromt_sfincs.utils.read_binary_map_index" title="hydromt_sfincs.utils.read_binary_map_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_binary_map_index</span></code></a>(fn_ind)</p></td>
 <td><p>Read binary map index file.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.write_binary_map_index.html#hydromt_sfincs.utils.write_binary_map_index" title="hydromt_sfincs.utils.write_binary_map_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.write_binary_map_index</span></code></a>(fn_ind, msk)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.write_binary_map_index.html#hydromt_sfincs.utils.write_binary_map_index" title="hydromt_sfincs.utils.write_binary_map_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.write_binary_map_index</span></code></a>(fn_ind, msk)</p></td>
 <td><p>Write flat index of binary map file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_ascii_map.html#hydromt_sfincs.utils.read_ascii_map" title="hydromt_sfincs.utils.read_ascii_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_ascii_map</span></code></a>(fn)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_ascii_map.html#hydromt_sfincs.utils.read_ascii_map" title="hydromt_sfincs.utils.read_ascii_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_ascii_map</span></code></a>(fn)</p></td>
 <td><p>Read ascii map</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.write_ascii_map.html#hydromt_sfincs.utils.write_ascii_map" title="hydromt_sfincs.utils.write_ascii_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.write_ascii_map</span></code></a>(fn, data[, fmt])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.write_ascii_map.html#hydromt_sfincs.utils.write_ascii_map" title="hydromt_sfincs.utils.write_ascii_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.write_ascii_map</span></code></a>(fn, data[, fmt])</p></td>
 <td><p>Write ascii map</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_timeseries.html#hydromt_sfincs.utils.read_timeseries" title="hydromt_sfincs.utils.read_timeseries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_timeseries</span></code></a>(fn, tref)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_timeseries.html#hydromt_sfincs.utils.read_timeseries" title="hydromt_sfincs.utils.read_timeseries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_timeseries</span></code></a>(fn, tref)</p></td>
 <td><p>Read ascii timeseries files such as sfincs.bzs, sfincs.dis and sfincs.precip.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.write_timeseries.html#hydromt_sfincs.utils.write_timeseries" title="hydromt_sfincs.utils.write_timeseries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.write_timeseries</span></code></a>(fn, df, tref[, fmt])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.write_timeseries.html#hydromt_sfincs.utils.write_timeseries" title="hydromt_sfincs.utils.write_timeseries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.write_timeseries</span></code></a>(fn, df, tref[, fmt])</p></td>
 <td><p>Write pandas.DataFrame to fixed width ascii timeseries files such as sfincs.bzs, sfincs.dis and sfincs.precip.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_xy.html#hydromt_sfincs.utils.read_xy" title="hydromt_sfincs.utils.read_xy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_xy</span></code></a>(fn[, crs])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_xy.html#hydromt_sfincs.utils.read_xy" title="hydromt_sfincs.utils.read_xy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_xy</span></code></a>(fn[, crs])</p></td>
 <td><p>Read sfincs xy files and parse to GeoDataFrame.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.write_xy.html#hydromt_sfincs.utils.write_xy" title="hydromt_sfincs.utils.write_xy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.write_xy</span></code></a>(path, gdf[, fmt])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.write_xy.html#hydromt_sfincs.utils.write_xy" title="hydromt_sfincs.utils.write_xy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.write_xy</span></code></a>(path, gdf[, fmt])</p></td>
 <td><p>Write geopandas.GeoDataFrame with Point geometries to point xy files.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_xyn.html#hydromt_sfincs.utils.read_xyn" title="hydromt_sfincs.utils.read_xyn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_xyn</span></code></a>(fn[, crs])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_xyn.html#hydromt_sfincs.utils.read_xyn" title="hydromt_sfincs.utils.read_xyn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_xyn</span></code></a>(fn[, crs])</p></td>
 <td><p>Read xyn files, for example observation points with names.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.write_xyn.html#hydromt_sfincs.utils.write_xyn" title="hydromt_sfincs.utils.write_xyn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.write_xyn</span></code></a>([fn, gdf, fmt])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.write_xyn.html#hydromt_sfincs.utils.write_xyn" title="hydromt_sfincs.utils.write_xyn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.write_xyn</span></code></a>([fn, gdf, fmt])</p></td>
 <td><p>Write xyn files, for example observation points with names.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_geoms.html#hydromt_sfincs.utils.read_geoms" title="hydromt_sfincs.utils.read_geoms"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_geoms</span></code></a>(fn)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_geoms.html#hydromt_sfincs.utils.read_geoms" title="hydromt_sfincs.utils.read_geoms"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_geoms</span></code></a>(fn)</p></td>
 <td><p>Read structure files to list of dictionaries.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.write_geoms.html#hydromt_sfincs.utils.write_geoms" title="hydromt_sfincs.utils.write_geoms"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.write_geoms</span></code></a>(fn, feats[, stype, fmt, fmt_z])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.write_geoms.html#hydromt_sfincs.utils.write_geoms" title="hydromt_sfincs.utils.write_geoms"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.write_geoms</span></code></a>(fn, feats[, stype, fmt, fmt_z])</p></td>
 <td><p>Write list of structure dictionaries to file</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_drn.html#hydromt_sfincs.utils.read_drn" title="hydromt_sfincs.utils.read_drn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_drn</span></code></a>(fn[, crs])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_drn.html#hydromt_sfincs.utils.read_drn" title="hydromt_sfincs.utils.read_drn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_drn</span></code></a>(fn[, crs])</p></td>
 <td><p>Read drainage structure files to geodataframe.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.write_drn.html#hydromt_sfincs.utils.write_drn" title="hydromt_sfincs.utils.write_drn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.write_drn</span></code></a>(fn, gdf_drainage[, fmt])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.write_drn.html#hydromt_sfincs.utils.write_drn" title="hydromt_sfincs.utils.write_drn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.write_drn</span></code></a>(fn, gdf_drainage[, fmt])</p></td>
 <td><p>Write structure files from list of dictionaries.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_sfincs_map_results.html#hydromt_sfincs.utils.read_sfincs_map_results" title="hydromt_sfincs.utils.read_sfincs_map_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_sfincs_map_results</span></code></a>(fn_map, ds_like)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_sfincs_map_results.html#hydromt_sfincs.utils.read_sfincs_map_results" title="hydromt_sfincs.utils.read_sfincs_map_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_sfincs_map_results</span></code></a>(fn_map, ds_like)</p></td>
 <td><p>Read sfincs_map.nc staggered grid netcdf files and parse to two hydromt.RasterDataset objects: one with face and one with edge variables.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_sfincs_his_results.html#hydromt_sfincs.utils.read_sfincs_his_results" title="hydromt_sfincs.utils.read_sfincs_his_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_sfincs_his_results</span></code></a>(fn_his[, crs, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_generated/hydromt_sfincs.utils.read_sfincs_his_results.html#hydromt_sfincs.utils.read_sfincs_his_results" title="hydromt_sfincs.utils.read_sfincs_his_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">utils.read_sfincs_his_results</span></code></a>(fn_his[, crs, ...])</p></td>
 <td><p>Read sfincs_his.nc point timeseries netcdf file and parse to hydromt.GeoDataset object.</p></td>
 </tr>
 </tbody>
@@ -1280,8 +1284,8 @@ and other model data.</p>
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=0790524f97105ba85085"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=0790524f97105ba85085"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=a95f357e85573c9b56d5"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=a95f357e85573c9b56d5"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1315,7 +1319,7 @@ and other model data.</p>
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.18.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.19.0.
 </p></div>
       
     </div>
