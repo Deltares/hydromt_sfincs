@@ -23,6 +23,13 @@ def tmp_dir(tmp_path_factory):
     return tmp_path_factory.mktemp("data")
 
 
+@pytest.fixture(scope="session")
+def config_path() -> Path:
+    p = Path(TESTMODELDIR, "sfincs.inp")
+    assert p.is_file()
+    return p
+
+
 @pytest.fixture
 def data_catalog():
     return DataCatalog("artifact_data")
