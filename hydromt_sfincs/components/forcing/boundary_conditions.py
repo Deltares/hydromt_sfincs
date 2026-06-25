@@ -138,6 +138,13 @@ class SfincsBoundaryBase(ModelComponent):
                 # rename the index dimension to "index" if needed
                 geodataset = geodataset.rename({index_dim: "index"})
             self._data = geodataset.transpose("time", "index", ...)
+            # Enforce the canonical 0-based positional index used throughout
+            # this component (set_locations/delete renumber to np.arange(N)).
+            # Read paths otherwise carry the 1-based point-column labels from
+            # the SFINCS timeseries files, which breaks label-based .sel/.loc.
+            self._data = self._data.assign_coords(
+                index=np.arange(self._data.sizes["index"])
+            )
             return
 
         if df is None and gdf is None:
