@@ -375,8 +375,16 @@ def test_downscale_floodmap_raw_regular_index_fortran_order(tmp_path):
     transform = from_origin(0.0, 300.0, 100.0, 100.0)  # 3 rows x 2 cols, 100 m
     dep_fn = tmp_path / "dep.tif"
     with rasterio.open(
-        dep_fn, "w", driver="GTiff", height=3, width=2, count=1,
-        dtype="float32", crs="EPSG:32633", transform=transform, nodata=np.nan,
+        dep_fn,
+        "w",
+        driver="GTiff",
+        height=3,
+        width=2,
+        count=1,
+        dtype="float32",
+        crs="EPSG:32633",
+        transform=transform,
+        nodata=np.nan,
     ) as dst:
         dst.write(np.zeros((3, 2), dtype=np.float32), 1)
 
@@ -389,8 +397,16 @@ def test_downscale_floodmap_raw_regular_index_fortran_order(tmp_path):
     idx_vals = np.array([[2, 5], [1, 4], [0, 3]], dtype=np.uint32)
     idx_fn = tmp_path / "idx.tif"
     with rasterio.open(
-        idx_fn, "w", driver="GTiff", height=3, width=2, count=1,
-        dtype="uint32", crs="EPSG:32633", transform=transform, nodata=2147483647,
+        idx_fn,
+        "w",
+        driver="GTiff",
+        height=3,
+        width=2,
+        count=1,
+        dtype="uint32",
+        crs="EPSG:32633",
+        transform=transform,
+        nodata=2147483647,
     ) as dst:
         dst.write(idx_vals, 1)
 

@@ -932,12 +932,8 @@ def _downscale_raw(zsmax, dep, zsmap_fn, gdf_mask, nrmax, logger, indices=None):
                     coords={"yc": (("y", "x"), yy), "xc": (("y", "x"), xx)},
                 )
             else:
-                x_coords = (
-                    geo["transform"][2] + (np.arange(bm0, bm1) + 0.5) * geo["dx"]
-                )
-                y_coords = (
-                    geo["transform"][5] + (np.arange(bn0, bn1) + 0.5) * geo["dy"]
-                )
+                x_coords = geo["transform"][2] + (np.arange(bm0, bm1) + 0.5) * geo["dx"]
+                y_coords = geo["transform"][5] + (np.arange(bn0, bn1) + 0.5) * geo["dy"]
                 block_dep = xr.DataArray(
                     np.zeros((bn1 - bn0, bm1 - bm0), dtype=np.float32),
                     dims=("y", "x"),
@@ -1066,12 +1062,10 @@ def _downscale_constant(
 
             if src.transform[1] == 0 and src.transform[3] == 0:
                 x_coords = (
-                    src.transform[2]
-                    + (np.arange(bm0, bm1) + 0.5) * src.transform[0]
+                    src.transform[2] + (np.arange(bm0, bm1) + 0.5) * src.transform[0]
                 )
                 y_coords = (
-                    src.transform[5]
-                    + (np.arange(bn0, bn1) + 0.5) * src.transform[4]
+                    src.transform[5] + (np.arange(bn0, bn1) + 0.5) * src.transform[4]
                 )
                 block_dep = xr.DataArray(
                     block_data.squeeze(),
