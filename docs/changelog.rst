@@ -8,6 +8,25 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
+v2.0.0-rc3 (22-5-2026)
+=============================
+**This release contains minor bugfixes and improvements to the v2.0.0-rc2 release.**
+
+Added
+-----
+- introduced deepcopy so we can make a full copy of a model instance (#377)
+
+Fixed
+-----
+- fixed visualization of the sfincs.nc-file in QGIS (#381)
+- fixed writing observation points when they had 3D coodinates (#382)
+
+Changed
+-------
+- changed back default value of dtmapout to 3600 (was 0) in sfincs.inp ens (#378)
+- dtout is now automatically renamed to dtmapout when writing sfincs.inp (#378)
+
+
 v2.0.0-rc2 (16-4-2026)
 =============================
 **This release contains minor bugfixes and improvements to the v2.0.0-rc1 release.**

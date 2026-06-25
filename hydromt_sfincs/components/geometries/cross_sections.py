@@ -114,7 +114,7 @@ class SfincsCrossSections(ModelComponent):
 
         # Check that data is not empty
         if self.data.empty:
-            logger.info("No cross-sections available to write.")
+            logger.debug("No cross-sections available to write.")
             return
 
         # Set file name and get absolute path

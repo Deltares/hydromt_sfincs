@@ -145,7 +145,9 @@ class SfincsObservationPoints(ModelComponent):
                 logger=logger,
             )
 
-    def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
+    def set(
+        self, gdf: gpd.GeoDataFrame, merge: bool = True, skip_validation: bool = False
+    ):
         """Set SFINCS observation points.
 
         Parameters
@@ -159,29 +161,31 @@ class SfincsObservationPoints(ModelComponent):
             When directly using the set method, the GeoDataFrame needs to be in the same CRS as SFINCS model.
         """
 
-        if not gdf.geometry.type.isin(["Point"]).all():
-            raise ValueError("Observation points must be of type Point.")
-        if not gdf.crs == self.model.crs:
-            raise ValueError(
-                f"Observation points CRS {gdf.crs} does not match model CRS {self.model.crs}."
-            )
-
-        # Clip points outside of model region:
-        within = gdf.within(self.model.region.union_all())
-
-        if within.any() == True:
-            if within.all() == False:
-                # keep points that fall within region
-                gdf = gdf[within]
-
-                # write away the names of points that are removed
-                gdf_name = gdf.name[~within]
-                logger.info(
-                    "Some of the observation points fall out of model domain. Removing points: "
-                    + str(gdf_name.values)
+        if not skip_validation:
+            # Check that gdf has geometry column and that it is of type Point, and that the CRS matches the model CRS
+            if not gdf.geometry.type.isin(["Point"]).all():
+                raise ValueError("Observation points must be of type Point.")
+            if not gdf.crs == self.model.crs:
+                raise ValueError(
+                    f"Observation points CRS {gdf.crs} does not match model CRS {self.model.crs}."
                 )
-        else:
-            raise ValueError("None of observation points fall within model domain.")
+
+            # Clip points outside of model region:
+            within = gdf.within(self.model.region.union_all())
+
+            if within.any() == True:
+                if within.all() == False:
+                    # keep points that fall within region
+                    gdf = gdf[within]
+
+                    # write away the names of points that are removed
+                    gdf_name = gdf.name[~within]
+                    logger.info(
+                        "Some of the observation points fall out of model domain. Removing points: "
+                        + str(gdf_name.values)
+                    )
+            else:
+                raise ValueError("None of observation points fall within model domain.")
 
         if merge and self.data is not None:
             gdf0 = self.data
