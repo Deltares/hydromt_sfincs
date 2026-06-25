@@ -29,7 +29,6 @@ from shapely.geometry import LineString, Polygon
 
 import hydromt
 from hydromt.writers import write_xy
-from hydromt.readers import open_vector
 from hydromt.data_catalog.drivers import RasterioDriver
 from hydromt.gis.gis_utils import zoom_to_overview_level
 from hydromt.gis.vector import GeoDataset
@@ -228,7 +227,15 @@ def read_xy(fn: Union[str, Path], crs: Union[int, CRS] = None) -> gpd.GeoDataFra
     gdf: gpd.GeoDataFrame
         GeoDataFrame with point geomtries
     """
-    gdf = open_vector(fn, crs=crs, driver="xy")
+    # Read directly (only the x, y columns) so the parser is robust to a
+    # trailing name column, e.g. a sfincs.bnd written as ``x y "pointN"``.
+    # hydromt's open_vector(driver="xy") only renames columns 0/1 and then
+    # lower-cases all column names, which raises on the leftover integer name
+    # column.  Any columns beyond x, y are ignored here (use read_xyn for names).
+    df = pd.read_csv(fn, index_col=False, header=None, sep=r"\s+")
+    gdf = gpd.GeoDataFrame(geometry=gpd.points_from_xy(df[0], df[1]))
+    if crs is not None:
+        gdf.set_crs(crs, inplace=True)
     gdf.index = np.arange(1, gdf.index.size + 1, dtype=int)  # index starts at 1
     return gdf
 
@@ -1356,94 +1363,6 @@ def build_overviews(
 
         # update dataset tags
         src.update_tags(ns="rio_overview", resampling=resample_method)
-
-
-def _downscale_floodmap_da(
-    zsmax: Union[xr.DataArray, xu.UgridDataArray],
-    dep: xr.DataArray,
-    indices: xr.DataArray = None,
-    hmin: float = 0.05,
-    gdf_mask: gpd.GeoDataFrame = None,
-    reproj_method: str = "nearest",
-) -> xr.DataArray:
-    """Create a downscaled floodmap for (model) region.
-
-    Parameters
-    ----------
-    zsmax : xr.DataArray
-        Maximum water level (m). When multiple timesteps provided, maximum over all timesteps is used.
-    dep : Path, str, xr.DataArray
-        High-resolution DEM (m) of model region:
-    hmin : float, optional
-        Minimum water depth (m) to be considered as "flooded", by default 0.05
-    gdf_mask : gpd.GeoDataFrame, optional
-        Geodataframe with polygons to mask floodmap, example containing the landarea, by default None
-        Note that the area outside the polygons is set to nodata.
-    """
-
-    if indices is None:
-        # interpolate zsmax to dep grid
-        if isinstance(zsmax, xr.DataArray):
-            zsmax = zsmax.raster.reproject_like(dep, method=reproj_method)
-        elif isinstance(zsmax, xu.UgridDataArray):
-            # if non-rotated grid, use xugrid rasterize_like
-            if dep.raster.transform[1] == 0 and dep.raster.transform[3] == 0:
-                zsmax = zsmax.ugrid.rasterize_like(dep)
-            # if rotated grid, use xugrid regridder
-            else:
-                # need to convert dep to unstructured to enable xugrid regridder
-                uda_dep = xu.UgridDataArray.from_structured2d(dep, "xc", "yc")
-                regridder = xu.CentroidLocatorRegridder(source=zsmax, target=uda_dep)
-                result = regridder.regrid(zsmax)
-                # map back to structured
-                zsmax = dep.copy(data=result.values.reshape(dep.shape))
-
-        zsmax = zsmax.raster.mask_nodata()  # make sure nodata is nan
-
-        # get flood depth
-        hmax = (zsmax - dep).astype("float32")
-        hmax.raster.set_nodata(np.nan)
-    else:
-        # make sure index is same shape as dep
-        if indices.shape != dep.shape:
-            raise ValueError(
-                "Indices shape {} does not match dep shape {}.".format(
-                    indices.shape, dep.shape
-                )
-            )
-
-        # Get the no_data value from the indices array
-        nan_val_indices = indices.raster.nodata  # indices.attrs["_FillValue"]
-        # Set the no_data mask
-        no_data_mask = indices == nan_val_indices
-
-        # Turn indices into numpy array and set no_data values to 0
-        indices = np.squeeze(indices.values[:])
-        indices[np.where(indices == nan_val_indices)] = 0
-
-        zsmax = zsmax.raster.mask_nodata()  # make sure nodata is nan
-
-        # Compute water depth
-        zs_numpy = zsmax.values[:].flatten()
-        h = zs_numpy[indices] - dep.values[:]
-
-        # Set water depth to NaN where indices are no data
-        h[no_data_mask] = np.nan
-
-        # Turn h into a DataArray with the same dimensions as zb
-        # ds = xr.Dataset()
-        hmax = xr.DataArray(h, dims=["y", "x"], coords={"y": dep.y, "x": dep.x})
-        hmax.raster.set_nodata(np.nan)
-        hmax.raster.set_crs(dep.raster.crs)
-
-    # mask floodmap
-    hmax = hmax.where(hmax > hmin)
-
-    if gdf_mask is not None:
-        mask = hmax.raster.geometry_mask(gdf_mask, all_touched=True)
-        hmax = hmax.where(mask)
-
-    return hmax
 
 
 def find_uv_indices(mask: xr.DataArray):

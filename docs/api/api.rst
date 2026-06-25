@@ -235,8 +235,8 @@ Flood map downscaling
    :toctree: ../_generated/
 
    workflows.downscaling.downscale_floodmap
-   workflows.downscaling.dilate_zsmax
-   workflows.downscaling.apply_energy_head
+   workflows.downscaling.adjust_zsmax_dilation
+   workflows.downscaling.adjust_zsmax_energyhead
    workflows.downscaling.remove_disconnected_flooding
    workflows.downscaling.make_index_cog
    workflows.downscale_floodmap_webmercator

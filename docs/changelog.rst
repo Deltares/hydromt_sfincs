@@ -21,9 +21,9 @@ Added
 - added back the option to create discharge forcing from a grid (previously named `setup_discharge_forcing_from_grid`) (#358)
 - add runup gauges geometry component (#366)
 - platform aware launcher script (exe_path + write_batch_file) (#367)
-- New public helpers in ``hydromt_sfincs.workflows.downscaling``: ``dilate_zsmax`` (cell-space WSE dilation) and ``apply_energy_head`` (per-cell Bernoulli velocity-head correction). Both work on quadtree (``xu.UgridDataArray``) *and* regular (``xr.DataArray``) grids and preserve the wet-cell set.
-- ``downscale_floodmap`` gained two new kwargs: ``dilation`` (factor for the cell-space WSE dilation pre-step) and ``energy_flux`` (boolean switch for the Bernoulli velocity-head correction; requires ``qmax``). When ``energy_flux=True`` and ``method="bilinear"``, ``qmax`` is passed into ``_downscale_bilinear`` for per-cell Bernoulli + upstream-energy propagation (scaled by ``q_scale``); for any other method, :func:`apply_energy_head` runs as a pre-step (pure per-cell Bernoulli, no upstream propagation).
-- Reorganised the downscaling stack into the ``hydromt_sfincs.workflows.downscaling`` submodule. ``downscale_floodmap``, ``remove_disconnected_flooding``, and ``make_index_cog`` are now importable from ``hydromt_sfincs.workflows.downscaling`` (and re-exported via ``hydromt_sfincs.workflows``). ``hydromt_sfincs.utils`` now retains only generic I/O and grid utilities.
+- Reorganised the downscaling stack into the ``hydromt_sfincs.workflows.downscaling`` submodule with two method-agnostic WSE pre-steps — ``adjust_zsmax_dilation`` (cell-space WSE dilation) and ``adjust_zsmax_energyhead`` (per-cell Bernoulli velocity-head correction) — that work on quadtree (``xu.UgridDataArray``) *and* regular (``xr.DataArray``) grids and preserve the wet-cell set. ``downscale_floodmap``, ``remove_disconnected_flooding`` and ``make_index_cog`` are now importable from ``hydromt_sfincs.workflows.downscaling`` (and re-exported via ``hydromt_sfincs.workflows``); ``hydromt_sfincs.utils`` retains only generic I/O and grid utilities.
+- ``downscale_floodmap`` now supports ``raw``, ``constant`` and ``bilinear`` on both regular and quadtree grids. ``method`` is the single knob for the interpolation: on a regular grid ``constant`` uses nearest resampling (bathtub) and ``bilinear`` uses bilinear resampling (reproject engine); on a quadtree ``bilinear`` uses a scattered interpolator. ``raw`` paints the water level of the SFINCS cell that *contains* each pixel (exact containment via the index COG). All three methods use the index COG to speed up the computation (containment lookup for ``raw`` / ``constant``; empty-block skipping + edge masking for ``bilinear``).
+- ``downscale_floodmap`` returns the downscaled product as a (lazy) DataArray for *every* method — flood depth (``hmax``) for ``constant`` / ``bilinear`` and water level for ``raw`` — in addition to writing it to ``floodmap_fn`` / ``zsmap_fn``.
 
 Fixed
 -----
@@ -41,6 +41,11 @@ Changed
 - convert multipolygon into polygons and improve logging for creation of masks (#319)
 - some minor quadtree enhancements for missing and interpolating data (#352)
 - refactored config system: reorganized variables, improved keyword persistence logic, downgraded invalid keyword errors to warnings (#368)
+- ``downscale_floodmap`` is now a pure downscaler: the dilation and velocity-head adjustments are applied beforehand by calling ``adjust_zsmax_dilation`` / ``adjust_zsmax_energyhead`` on ``zsmax`` directly, instead of via the ``dilation`` / ``energy_flux`` kwargs.
+
+Removed
+-------
+- Removed the ``dilation``, ``energy_flux``, ``qmax``, ``zb``, ``q_threshold``, ``q_scale`` and ``reproj_method`` kwargs from ``downscale_floodmap`` (the resampling now follows from ``method``), together with the bilinear-only upstream-energy-propagation feature. The per-cell velocity head remains available via ``adjust_zsmax_energyhead``.
 
 v2.0.0-rc1 (25-11-2025)
 =============================
