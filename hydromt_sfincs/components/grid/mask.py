@@ -234,6 +234,19 @@ class SfincsMask(ModelComponent):
         da_mask = self.data["mask"] if "mask" in self.data else None
         da_dep = self.data["dep"] if "dep" in self.data else None
 
+        # check if we are going to apply any z constraints, if so we need dep data
+        has_z_constraints = any(
+            x is not None
+            for x in (
+                zmin,
+                zmax,
+                include_zmin,
+                include_zmax,
+                exclude_zmin,
+                exclude_zmax,
+            )
+        )
+
         da_mask0 = None
         if not reset_mask and da_mask is not None:
             # use current active mask
@@ -246,8 +259,11 @@ class SfincsMask(ModelComponent):
 
         if da_dep is None and (zmin is not None or zmax is not None):
             raise ValueError("dep required in combination with zmin / zmax")
-        elif da_dep is not None and not da_dep.raster.identical_grid(da_mask):
-            raise ValueError("dep does not match regular grid")
+        if da_dep is not None:
+            if not da_dep.raster.identical_grid(da_mask):
+                raise ValueError("dep does not match regular grid")
+            if da_dep.isnan.any() and has_z_constraints:
+                raise ValueError("dep contains NaN values, please fill these first")
 
         # initialize mask based on elevation range
         if zmin is not None or zmax is not None:
