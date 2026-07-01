@@ -12,14 +12,13 @@ import numpy as np
 import xarray as xr
 from affine import Affine
 from pyproj import CRS, Transformer
-import pandas as pd
 from shapely.geometry import LineString
 
 from hydromt import hydromt_step
 from hydromt.model.components import GridComponent
 from hydromt.model.processes.grid import create_grid_from_region
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import writers
 from hydromt_sfincs.workflows.tiling import int2png, tile_window, write_html
 
 if TYPE_CHECKING:
@@ -305,20 +304,18 @@ class SfincsGrid(GridComponent):
 
                 # write to gis-files for visualization
                 if self.model.write_gis:
-                    utils.write_raster(
+                    writers.write_raster(
                         ds_out[name],
                         root=join(self.model.root.path, "gis"),
                         mask=mask,
-                        logger=logger,
                     )
 
             # write the model region to a geojson file for visualization
             if self.model.write_gis:
-                utils.write_vector(
+                writers.write_vector(
                     self.region,
                     name="region",
                     root=join(self.model.root.path, "gis"),
-                    logger=logger,
                 )
 
     @hydromt_step

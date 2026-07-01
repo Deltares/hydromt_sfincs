@@ -14,7 +14,7 @@ from matplotlib import path
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers, utils
 from hydromt_sfincs.workflows.map_overlay import MaskOverlay
 
 np.warnings = warnings
@@ -298,7 +298,7 @@ class SfincsQuadtreeMask(ModelComponent):
             ).endswith(".pol"):
                 # NOTE polygons should be in same CRS as model
                 gdf_include = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=include_polygon), crs=self.model.crs
+                    feats=readers.read_geoms(fn=include_polygon), crs=self.model.crs
                 )
             else:
                 gdf_include = (
@@ -317,7 +317,7 @@ class SfincsQuadtreeMask(ModelComponent):
                 exclude_polygon
             ).endswith(".pol"):
                 gdf_exclude = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=exclude_polygon), crs=self.model.crs
+                    feats=readers.read_geoms(fn=exclude_polygon), crs=self.model.crs
                 )
             else:
                 gdf_exclude = (
@@ -527,7 +527,7 @@ class SfincsQuadtreeMask(ModelComponent):
             ).endswith(".pol"):
                 # NOTE polygons should be in same CRS as model
                 gdf_include = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=include_polygon), crs=self.model.crs
+                    feats=readers.read_geoms(fn=include_polygon), crs=self.model.crs
                 )
             else:
                 gdf_include = (
@@ -552,7 +552,7 @@ class SfincsQuadtreeMask(ModelComponent):
                 exclude_polygon
             ).endswith(".pol"):
                 gdf_exclude = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=exclude_polygon), crs=self.model.crs
+                    feats=readers.read_geoms(fn=exclude_polygon), crs=self.model.crs
                 )
             else:
                 gdf_exclude = (

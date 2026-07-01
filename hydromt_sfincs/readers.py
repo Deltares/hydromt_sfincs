@@ -202,6 +202,7 @@ def read_binary_map_index(fn_ind: Union[str, Path]) -> np.ndarray:
     return ind
 
 
+## OUTPUT: sfincs_map.nc, sfincs_his.nc ##
 def read_sfincs_his_results(
     fn_his: Union[str, Path],
     crs: Union[int, CRS] = None,
@@ -239,7 +240,6 @@ def read_sfincs_his_results(
     return ds_his
 
 
-## OUTPUT: sfincs_map.nc, sfincs_his.nc ##
 def read_sfincs_map_results(
     fn_map: Union[str, Path],
     ds_like: xr.Dataset,
