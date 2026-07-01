@@ -262,7 +262,7 @@ class SfincsMask(ModelComponent):
         if da_dep is not None:
             if not da_dep.raster.identical_grid(da_mask):
                 raise ValueError("dep does not match regular grid")
-            if da_dep.isnan.any() and has_z_constraints:
+            if da_dep.isnull().any() and has_z_constraints:
                 raise ValueError("dep contains NaN values, please fill these first")
 
         # initialize mask based on elevation range

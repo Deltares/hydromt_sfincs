@@ -501,7 +501,9 @@ class SfincsGrid(GridComponent):
             dims=("y", "x"),
             attrs={"_FillValue": mv},
         )
-        da = da.raster.mask_nodata()
+
+        if name != "mask":
+            da = da.raster.mask_nodata()
         return da
 
     def write_ind(
