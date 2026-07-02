@@ -1,3 +1,4 @@
+import logging
 import time
 import warnings
 
@@ -13,6 +14,8 @@ from shapely.prepared import prep
 from hydromt_sfincs import workflows
 
 np.warnings = warnings
+
+logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 def build_quadtree_xugrid(
@@ -1055,6 +1058,14 @@ class QuadtreeGrid:
                 interp_method="linear",
                 buffer_cells=0,
             )
+
+            # check if no nan data is present in the bed levels
+            nmissing = int(np.sum(np.isnan(da_dep.values)))
+            if nmissing > 0:
+                logger.warning(f"Interpolate elevation at {nmissing} cells")
+                da_dep = da_dep.raster.interpolate_na(
+                    method="rio_idw", extrapolate=True
+                )
 
             # Flatten the corner indices (4 x ind_ref)
             n_flat = n_corners.flatten()
