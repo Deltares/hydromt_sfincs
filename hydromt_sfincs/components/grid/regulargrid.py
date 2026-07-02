@@ -501,6 +501,9 @@ class SfincsGrid(GridComponent):
             dims=("y", "x"),
             attrs={"_FillValue": mv},
         )
+
+        if name != "mask":
+            da = da.raster.mask_nodata()
         return da
 
     def write_ind(
@@ -524,7 +527,14 @@ class SfincsGrid(GridComponent):
     ) -> None:
         """Write one of the grid variables of the SFINCS model map to a binary file."""
 
-        data_out = np.asarray(data.transpose()[mask.transpose() > 0], dtype=dtype)
+        data_masked = data.transpose()[mask.transpose() > 0]
+        # make sure there is no NaN in the data to be written, otherwise SFINCS will crash
+        if np.any(np.isnan(data_masked)):
+            raise ValueError(
+                f"Data to be written to {map_fn} contains NaN values. "
+                "Please replace NaN values with a valid value before writing."
+            )
+        data_out = np.asarray(data_masked, dtype=dtype)
         data_out.tofile(map_fn)
 
     def update_grid_from_config(self):
