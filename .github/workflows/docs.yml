@@ -49,6 +49,7 @@ jobs:
       - name: Setup env
         run: |
           python make_env.py doc,examples -p 3.11 -n hydromt-sfincs -o environment-doc.yml
+          echo "- libjxl<0.12" >> environment-doc.yml
           mamba env create -f environment-doc.yml
           mamba run -n hydromt-sfincs pip install -e .
 
