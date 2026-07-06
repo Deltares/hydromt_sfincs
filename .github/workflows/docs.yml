@@ -49,9 +49,9 @@ jobs:
       - name: Setup env
         run: |
           python make_env.py doc,examples -p 3.11 -n hydromt-sfincs -o environment-doc.yml
-          # Pin libjxl to avoid rasterio import errors (missing libjxl.so.0.11) on CI.
-          echo "- libjxl<0.12" >> environment-doc.yml
           mamba env create -f environment-doc.yml
+          # Pin libjxl to avoid rasterio import errors (missing libjxl.so.0.11) on CI.
+          mamba install -n hydromt-sfincs "libjxl<0.12" --yes
           mamba run -n hydromt-sfincs pip install -e .
 
       # if we're not publishing we don't have to write them, so we might as well
