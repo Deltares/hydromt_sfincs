@@ -497,19 +497,52 @@
 </div></div>
 <section id="Run-a-SFINCS-model">
 <h1>Run a SFINCS model<a class="headerlink" href="#Run-a-SFINCS-model" title="Link to this heading">#</a></h1>
-<p>This notebook demonstrates how to run and inspect a SFINCS model. The notebook does not contain the SFINCS code or executables to run the model with. Below there is explained where and how to get the SFINCS executable</p>
-<p>All lines in this notebook which start with <code class="docutils literal notranslate"><span class="pre">!</span></code> are executed from the command line. Within jupyter (except for jupyter lab) the logging messages are shown after completion.</p>
-<section id="Inspecting-the-batch-file-to-run-SFINCS">
-<h2>Inspecting the batch-file to run SFINCS<a class="headerlink" href="#Inspecting-the-batch-file-to-run-SFINCS" title="Link to this heading">#</a></h2>
-<p>On Windows, you can run SFINCS by executing a batch-file. We have already prepared this for an example model called <em>‘sfincs_compound’</em>. Let’s now inspect this batch-file.</p>
+<div class="line-block">
+<div class="line">SFINCS is a compiled Fortran binary — Python cannot execute it directly.</div>
+<div class="line">This notebook shows two ways to launch a simulation:</div>
+</div>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>Best for</p></th>
+<th class="head"><p>Output log</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Batch file</strong> (<code class="docutils literal notranslate"><span class="pre">run.bat</span></code>)</p></td>
+<td><p>Double-click from Explorer; share with colleagues who don’t use Python</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">sfincs.log</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Python</strong> (<code class="docutils literal notranslate"><span class="pre">run_sfincs</span></code>)</p></td>
+<td><p>Running from within this notebook; streams live output into the cell</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">sfincs_log.txt</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Both methods call the same executable and produce identical results.</p>
+<blockquote>
+<div><p><strong>Prerequisites:</strong> Download the SFINCS executable from <a class="reference external" href="https://download.deltares.nl/en/download/sfincs/">https://download.deltares.nl/en/download/sfincs/</a></p>
+</div></blockquote>
+<hr class="docutils" />
+<section id="Settings">
+<h2>Settings<a class="headerlink" href="#Settings" title="Link to this heading">#</a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fn</span> <span class="o">=</span> <span class="s2">&quot;./sfincs_compound/run.bat&quot;</span>
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-    <span class="n">txt</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="c1"># ── Adjust these two paths ────────────────────────────────────────────────────</span>
+<span class="n">model_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;./sfincs_compound&quot;</span><span class="p">)</span>  <span class="c1"># folder containing sfincs.inp</span>
+<span class="n">sfincs_exe_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;../sfincs_exe&quot;</span><span class="p">)</span>  <span class="c1"># folder containing sfincs.exe</span>
+<span class="c1"># ─────────────────────────────────────────────────────────────────────────────</span>
+
+<span class="n">sfincs_exe</span> <span class="o">=</span> <span class="n">sfincs_exe_dir</span> <span class="o">/</span> <span class="s2">&quot;sfincs.exe&quot;</span>  <span class="c1"># full path — used by run_sfincs</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model folder  : </span><span class="si">{</span><span class="n">model_root</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Executable    : </span><span class="si">{</span><span class="n">sfincs_exe</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Exe found     : </span><span class="si">{</span><span class="n">sfincs_exe</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -518,31 +551,124 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-call &#34;c:\put\your\own\path\sfincs.exe&#34;&gt;sfincs_log.txt
-
+Model folder  : /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_compound
+Executable    : /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/sfincs_exe/sfincs.exe
+Exe found     : False
 </pre></div></div>
 </div>
-<p><strong>Explanation of what is in the batch file:</strong></p>
-<ul class="simple">
-<li><p>‘call’ means here that an executable has to be run.</p></li>
-<li><p>..:nbsphinx-math:<cite>sfincs</cite>_exe is the folder where the executable ‘sfincs.exe’ is located</p></li>
-<li><p>The ‘&gt;sfincs_log.txt’ means that the output should be written to a log-file called ‘sfincs_log.txt’</p></li>
-</ul>
-<p>If you don’t have SFINCS yet, download SFINCS from here: <a class="reference external" href="https://download.deltares.nl/en/download/sfincs/">https://download.deltares.nl/en/download/sfincs/</a></p>
-<p>Then open the file <em>‘run.bat’</em> in any text editor, and add the folder of where you have saved the SFINCS executable <em>‘sfincs.exe’</em>.</p>
-<p>e.g. to *”c:<span class="math">\SFINCS</span>_download:nbsphinx-math:<cite>sfincs</cite>.exe”*</p>
 </section>
-<section id="Open-log-file">
-<h2>Open log file<a class="headerlink" href="#Open-log-file" title="Link to this heading">#</a></h2>
-<p>Let’s see whether this log-file with information of SFINCS output information is already available</p>
+<hr class="docutils" />
+<section id="Method-1-—-Batch-file">
+<h2>Method 1 — Batch file<a class="headerlink" href="#Method-1-—-Batch-file" title="Link to this heading">#</a></h2>
+<p>A batch file (<code class="docutils literal notranslate"><span class="pre">run.bat</span></code>) is a two-line Windows script: it sets one environment variable and calls the SFINCS binary. No Python is needed at runtime — useful for sharing a simulation with colleagues or scheduling automated runs.</p>
+<p>The recommended way to write it is via <code class="docutils literal notranslate"><span class="pre">SfincsModel.write_batch_file()</span></code>, which handles both Windows (<code class="docutils literal notranslate"><span class="pre">run.bat</span></code>) and Linux/macOS (<code class="docutils literal notranslate"><span class="pre">run.sh</span></code>, with execute permissions set automatically).</p>
+<blockquote>
+<div><p><strong>Path convention:</strong> <code class="docutils literal notranslate"><span class="pre">SfincsModel</span></code> expects the <strong>folder</strong> containing the binary (<code class="docutils literal notranslate"><span class="pre">exe_path</span></code>), not the full path to the executable itself.</p>
+</div></blockquote>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fn</span> <span class="o">=</span> <span class="s2">&quot;./sfincs_compound/sfincs_log.txt&quot;</span>
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-    <span class="n">txt</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
+
+<span class="c1"># Open the model read-only and pass the executable folder</span>
+<span class="n">sf</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span>
+    <span class="n">root</span><span class="o">=</span><span class="n">model_root</span><span class="p">,</span>
+    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">,</span>
+    <span class="n">exe_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">sfincs_exe_dir</span><span class="p">),</span>  <span class="c1"># folder — SfincsModel appends sfincs.exe internally</span>
+<span class="p">)</span>
+
+<span class="n">bat_file</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">write_batch_file</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Launcher written : </span><span class="si">{</span><span class="n">bat_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Contents:</span><span class="se">\n</span><span class="si">{</span><span class="n">bat_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+No region component found in components.
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Launcher written : /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/sfincs_compound/run.sh
+
+Contents:
+#!/bin/bash
+export HDF5_USE_FILE_LOCKING=FALSE
+&#34;../sfincs_exe/sfincs&#34;
+
+</pre></div></div>
+</div>
+<blockquote>
+<div><p><strong>Alternative — write the batch file manually</strong> (no model object needed):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bat_file</span> <span class="o">=</span> <span class="n">model_root</span> <span class="o">/</span> <span class="s1">&#39;run.bat&#39;</span>
+<span class="n">bat_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s1">&#39;set HDF5_USE_FILE_LOCKING=FALSE</span><span class="se">\n</span><span class="s1">&quot;</span><span class="si">{</span><span class="n">sfincs_exe</span><span class="si">}</span><span class="s1">&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span>
+    <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;ascii&#39;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+<section id="Launching-the-batch-file">
+<h3>Launching the batch file<a class="headerlink" href="#Launching-the-batch-file" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Interface</p></th>
+<th class="head"><p>Command</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Windows Explorer</strong></p></td>
+<td><p>Navigate to the model folder → double-click <code class="docutils literal notranslate"><span class="pre">run.bat</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Command Prompt</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">&lt;model_folder&gt;</span></code> then <code class="docutils literal notranslate"><span class="pre">run.bat</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>PowerShell / VS Code terminal</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">&lt;model_folder&gt;</span></code> then <code class="docutils literal notranslate"><span class="pre">.\run.bat</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>A Command Prompt window opens and streams SFINCS output while it runs. <code class="docutils literal notranslate"><span class="pre">sfincs.log</span></code> is written to the model folder on completion.</p>
+<blockquote>
+<div><p><strong>HPC / network drive:</strong> <code class="docutils literal notranslate"><span class="pre">HDF5_USE_FILE_LOCKING=FALSE</span></code> prevents NetCDF write errors caused by file-locking restrictions on some shared file systems.</p>
+</div></blockquote>
+</section>
+</section>
+<hr class="docutils" />
+<section id="Method-2-—-Python-(run_sfincs)">
+<h2>Method 2 — Python (<code class="docutils literal notranslate"><span class="pre">run_sfincs</span></code>)<a class="headerlink" href="#Method-2-—-Python-(run_sfincs)" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">run_sfincs</span></code> from <code class="docutils literal notranslate"><span class="pre">hydromt_sfincs.run</span></code> launches the executable as a subprocess and:</p>
+<ul class="simple">
+<li><p>streams output <strong>live</strong> into the notebook cell</p></li>
+<li><p>raises a <code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code> immediately if the run fails (non-zero exit code)</p></li>
+<li><p>writes all captured output to <code class="docutils literal notranslate"><span class="pre">sfincs_log.txt</span></code> in the model folder</p></li>
+</ul>
+<blockquote>
+<div><p><strong>Path convention:</strong> <code class="docutils literal notranslate"><span class="pre">run_sfincs</span></code> expects the <strong>full path</strong> to the executable (<code class="docutils literal notranslate"><span class="pre">sfincs_exe_dir</span> <span class="pre">/</span> <span class="pre">'sfincs.exe'</span></code>), unlike <code class="docutils literal notranslate"><span class="pre">SfincsModel</span></code> which takes the folder.</p>
+</div></blockquote>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.run</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_sfincs</span>
+
+<span class="k">if</span> <span class="n">sfincs_exe</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+    <span class="n">run_sfincs</span><span class="p">(</span>
+        <span class="n">model_root</span><span class="o">=</span><span class="n">model_root</span><span class="p">,</span>
+        <span class="n">sfincs_exe</span><span class="o">=</span><span class="n">sfincs_exe</span><span class="p">,</span>  <span class="c1"># full path to sfincs.exe</span>
+    <span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Skipping: executable not found at </span><span class="si">{</span><span class="n">sfincs_exe</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Download from: https://download.deltares.nl/en/download/sfincs/&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -551,148 +677,48 @@ call &#34;c:\put\your\own\path\sfincs.exe&#34;&gt;sfincs_log.txt
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-
------------- Welcome to SFINCS ------------
-
-  @@@@@  @@@@@@@ @@ @@  @@   @@@@   @@@@@
- @@@ @@@ @@@@@@@ @@ @@@ @@ @@@@@@@ @@@ @@@
- @@@     @@      @@ @@@ @@ @@   @@ @@@
-  @@@@@  @@@@@@  @@ @@@@@@ @@       @@@@@
-     @@@ @@      @@ @@ @@@ @@   @@     @@@
- @@@ @@@ @@      @@ @@  @@  @@@@@@ @@@ @@@
-  @@@@@  @@      @@ @@   @   @@@@   @@@@@
-
-              ..............
-          ......:@@@@@@@@:......
-       ..::::..@@........@@.:::::..
-     ..:::::..@@..::..::..@@.::::::..
-    .::::::..@@............@@.:::::::.
-   .::::::..@@..............@@.:::::::.
-  .::::::::..@@............@@..::::::::.
- .:::::::::...@@.@..@@..@.@@..::::::::::.
- .:::::::::...:@@@..@@..@@@:..:::::::::..
- ............@@.@@..@@..@@.@@............
- ^^^~~^^~~^^@@..............@@^^^~^^^~~^^
- .::::::::::@@..............@@.:::::::::.
-  .......:.@@.....@.....@....@@.:.......
-   .::....@@......@.@@@.@....@@.....::.
-    .:::~@@.:...:.@@...@@.:.:.@@~::::.
-     .::~@@@@@@@@@@.....@@@@@@@@@~::.
-       ..:~~~~~~~:.......:~~~~~~~:..
-          ......................
-              ..............
-
-------------------------------------------
-
-Build-Revision: $Rev: v2.3.0 mt. Faber Release
-Build-Date: $Date: 2025-11-18
-
------- Preparing model simulation --------
-
-------------------------------------------
-Computational mesh
-------------------------------------------
-Number of active z points      :     20687
-Number of active u/v points    :     41018
-Warning! Times in boundary conditions file do not cover entire simulation period !
-Warning! Adjusting last time in boundary conditions time series !
-
-------------------------------------------
-Processes
-------------------------------------------
-Subgrid topography   : no
-Quadtree refinement  : no
-Advection            : yes
-Viscosity            : yes
-Coriolis             : no
-Wind                 : no
-Atmospheric pressure : no
-Precipitation        : no
-Infiltration         : no
-SnapWave             : no
-Wave paddles         : no
-------------------------------------------
-
-
----------- Starting simulation -----------
----- Using 12 of 12 available threads ----
-
-   0% complete,       - s remaining ...
-   5% complete,    20.2 s remaining ...
-  10% complete,    18.4 s remaining ...
-  15% complete,    17.8 s remaining ...
-  20% complete,    17.2 s remaining ...
-  25% complete,    16.4 s remaining ...
-  30% complete,    15.2 s remaining ...
-  35% complete,    14.1 s remaining ...
-  40% complete,    12.9 s remaining ...
-  45% complete,    12.0 s remaining ...
-  50% complete,    11.0 s remaining ...
-  55% complete,    10.0 s remaining ...
-  60% complete,     8.9 s remaining ...
-  65% complete,     7.8 s remaining ...
-  70% complete,     6.7 s remaining ...
-  75% complete,     5.6 s remaining ...
-  80% complete,     4.5 s remaining ...
-  85% complete,     3.4 s remaining ...
-  90% complete,     2.3 s remaining ...
-  95% complete,     1.1 s remaining ...
- 100% complete,     0.0 s remaining ...
-
----------- Simulation finished -----------
-
- Total time             :     22.580
- Total simulation time  :     22.562
- Time in input          :      0.018
- Time in boundaries     :      0.519 (  2.3%)
- Time in discharges     :      0.007 (  0.0%)
- Time in momentum       :     16.512 ( 73.2%)
- Time in continuity     :      5.312 ( 23.5%)
- Time in output         :      0.150 (  0.7%)
-
- Average time step (s)  :      3.445
-
----------- Closing off SFINCS -----------
-
+Skipping: executable not found at ../sfincs_exe/sfincs.exe
+Download from: https://download.deltares.nl/en/download/sfincs/
 </pre></div></div>
 </div>
-<p>In case you get an error message, this means that the log-file is not available, and SFINCS has not run yet.</p>
-<p>Let’s now do this…</p>
 </section>
-<section id="Now-let's-try-to-run-this-batch-file">
-<h2>Now let’s try to run this batch-file<a class="headerlink" href="#Now-let's-try-to-run-this-batch-file" title="Link to this heading">#</a></h2>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
-</pre></div>
+<hr class="docutils" />
+<section id="Check-the-run-log">
+<h2>Check the run log<a class="headerlink" href="#Check-the-run-log" title="Link to this heading">#</a></h2>
+<p>The log location depends on how the model was launched:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>Log file</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Batch file</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">sfincs.log</span></code> (written by the SFINCS binary)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">run_sfincs</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">sfincs_log.txt</span></code> (captured stdout/stderr)</p></td>
+</tr>
+</tbody>
+</table>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-
-<span class="n">run_path</span> <span class="o">=</span> <span class="s2">&quot;./sfincs_compound&quot;</span>
-
-<span class="n">cur_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
-
-<span class="c1"># uncomment to run sfincs</span>
-<span class="c1"># os.chdir(run_path)</span>
-<span class="c1"># os.system(&quot;run.bat&quot;)</span>
-<span class="c1"># os.chdir(cur_dir)</span>
-</pre></div>
-</div>
-</div>
-<ul class="simple">
-<li><p>It should now take less than a minute or so for the SFINCS simulation to finish (not available on Binder)</p></li>
-<li><p>We can now have a look at the log-file</p></li>
-</ul>
-</section>
-<section id="Created-log-file">
-<h2>Created log-file<a class="headerlink" href="#Created-log-file" title="Link to this heading">#</a></h2>
+<p>The last lines should contain <code class="docutils literal notranslate"><span class="pre">Simulation</span> <span class="pre">finished</span></code>.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fn</span> <span class="o">=</span> <span class="s2">&quot;./sfincs_compound/sfincs_log.txt&quot;</span>
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-    <span class="n">txt</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># run_sfincs writes sfincs_log.txt; the SFINCS binary itself writes sfincs.log</span>
+<span class="n">log_file</span> <span class="o">=</span> <span class="n">model_root</span> <span class="o">/</span> <span class="s2">&quot;sfincs_log.txt&quot;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">log_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+    <span class="n">log_file</span> <span class="o">=</span> <span class="n">model_root</span> <span class="o">/</span> <span class="s2">&quot;sfincs.log&quot;</span>
+
+<span class="k">if</span> <span class="n">log_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">log_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s2">&quot;replace&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Log: </span><span class="si">{</span><span class="n">log_file</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">  (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span><span class="si">}</span><span class="s2"> lines)&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- Last 20 lines ---&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="o">-</span><span class="mi">20</span><span class="p">:]))</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No log file found — has the model run yet?&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -701,88 +727,9 @@ Wave paddles         : no
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
+Log: sfincs_log.txt  (102 lines)
 
------------- Welcome to SFINCS ------------
-
-  @@@@@  @@@@@@@ @@ @@  @@   @@@@   @@@@@
- @@@ @@@ @@@@@@@ @@ @@@ @@ @@@@@@@ @@@ @@@
- @@@     @@      @@ @@@ @@ @@   @@ @@@
-  @@@@@  @@@@@@  @@ @@@@@@ @@       @@@@@
-     @@@ @@      @@ @@ @@@ @@   @@     @@@
- @@@ @@@ @@      @@ @@  @@  @@@@@@ @@@ @@@
-  @@@@@  @@      @@ @@   @   @@@@   @@@@@
-
-              ..............
-          ......:@@@@@@@@:......
-       ..::::..@@........@@.:::::..
-     ..:::::..@@..::..::..@@.::::::..
-    .::::::..@@............@@.:::::::.
-   .::::::..@@..............@@.:::::::.
-  .::::::::..@@............@@..::::::::.
- .:::::::::...@@.@..@@..@.@@..::::::::::.
- .:::::::::...:@@@..@@..@@@:..:::::::::..
- ............@@.@@..@@..@@.@@............
- ^^^~~^^~~^^@@..............@@^^^~^^^~~^^
- .::::::::::@@..............@@.:::::::::.
-  .......:.@@.....@.....@....@@.:.......
-   .::....@@......@.@@@.@....@@.....::.
-    .:::~@@.:...:.@@...@@.:.:.@@~::::.
-     .::~@@@@@@@@@@.....@@@@@@@@@~::.
-       ..:~~~~~~~:.......:~~~~~~~:..
-          ......................
-              ..............
-
-------------------------------------------
-
-Build-Revision: $Rev: v2.3.0 mt. Faber Release
-Build-Date: $Date: 2025-11-18
-
------- Preparing model simulation --------
-
-------------------------------------------
-Computational mesh
-------------------------------------------
-Number of active z points      :     20687
-Number of active u/v points    :     41018
-Warning! Times in boundary conditions file do not cover entire simulation period !
-Warning! Adjusting last time in boundary conditions time series !
-
-------------------------------------------
-Processes
-------------------------------------------
-Subgrid topography   : no
-Quadtree refinement  : no
-Advection            : yes
-Viscosity            : yes
-Coriolis             : no
-Wind                 : no
-Atmospheric pressure : no
-Precipitation        : no
-Infiltration         : no
-SnapWave             : no
-Wave paddles         : no
-------------------------------------------
-
-
----------- Starting simulation -----------
----- Using 12 of 12 available threads ----
-
-   0% complete,       - s remaining ...
-   5% complete,    20.2 s remaining ...
-  10% complete,    18.4 s remaining ...
-  15% complete,    17.8 s remaining ...
-  20% complete,    17.2 s remaining ...
-  25% complete,    16.4 s remaining ...
-  30% complete,    15.2 s remaining ...
-  35% complete,    14.1 s remaining ...
-  40% complete,    12.9 s remaining ...
-  45% complete,    12.0 s remaining ...
-  50% complete,    11.0 s remaining ...
-  55% complete,    10.0 s remaining ...
-  60% complete,     8.9 s remaining ...
-  65% complete,     7.8 s remaining ...
-  70% complete,     6.7 s remaining ...
-  75% complete,     5.6 s remaining ...
+--- Last 20 lines ---
   80% complete,     4.5 s remaining ...
   85% complete,     3.4 s remaining ...
   90% complete,     2.3 s remaining ...
@@ -803,25 +750,39 @@ Wave paddles         : no
  Average time step (s)  :      3.445
 
 ---------- Closing off SFINCS -----------
-
 </pre></div></div>
 </div>
-<p>Now we actually should have output!</p>
-<p>You have run your first SFINCS model.</p>
 </section>
-<section id="Created-netcdf-output-files">
-<h2>Created netcdf output files<a class="headerlink" href="#Created-netcdf-output-files" title="Link to this heading">#</a></h2>
-<p>Let’s now inspect what files there are situated in the folder of the model setup:</p>
+<hr class="docutils" />
+<section id="Output-files">
+<h2>Output files<a class="headerlink" href="#Output-files" title="Link to this heading">#</a></h2>
+<p>A successful SFINCS run produces two NetCDF files in the model folder:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Contents</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sfincs_map.nc</span></code></p></td>
+<td><p>Gridded results: water levels (<code class="docutils literal notranslate"><span class="pre">zs</span></code>), max water level (<code class="docutils literal notranslate"><span class="pre">zsmax</span></code>), wave height (<code class="docutils literal notranslate"><span class="pre">hm0</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">sfincs_his.nc</span></code></p></td>
+<td><p>Time series at observation points: water level, wave height, wave direction</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">path</span> <span class="o">=</span> <span class="s2">&quot;./sfincs_compound&quot;</span>
-
-<span class="n">dir_list</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-
-<span class="c1"># prints all files</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">dir_list</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;sfincs_map.nc&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs_his.nc&quot;</span><span class="p">]:</span>
+    <span class="n">fp</span> <span class="o">=</span> <span class="n">model_root</span> <span class="o">/</span> <span class="n">fn</span>
+    <span class="k">if</span> <span class="n">fp</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">fp</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e6</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> MB&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2">: NOT FOUND&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -830,19 +791,18 @@ Wave paddles         : no
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&#39;sfincs.msk&#39;, &#39;sfincs.bnd&#39;, &#39;sfincs_his.nc&#39;, &#39;sfincs.dep&#39;, &#39;run.bat&#39;, &#39;sfincs_map.nc&#39;, &#39;sfincs.dis&#39;, &#39;sfincs.inp&#39;, &#39;gis&#39;, &#39;sfincs.obs&#39;, &#39;sfincs.bzs&#39;, &#39;sfincs.src&#39;, &#39;sfincs_log.txt&#39;, &#39;sfincs.ind&#39;, &#39;sfincs.manning&#39;]
+  sfincs_map.nc: 1.6 MB
+  sfincs_his.nc: 0.1 MB
 </pre></div></div>
 </div>
-<p>We see here the earlier inspected log-file <em>‘sfincs_log.txt’</em></p>
-<p>Do you additionally see the files <em>‘sfincs_map.nc’</em> and <em>‘sfincs_his.nc’</em> ?</p>
-<p>These are output files of SFINCS, containing the model results in the common NetCDF format.</p>
 </section>
-<section id="Continue-to-postprocessing-and-visualization">
-<h2>Continue to postprocessing and visualization<a class="headerlink" href="#Continue-to-postprocessing-and-visualization" title="Link to this heading">#</a></h2>
-<p>You can now continue to the notebook(s):</p>
+<hr class="docutils" />
+<section id="Next-steps">
+<h2>Next steps<a class="headerlink" href="#Next-steps" title="Link to this heading">#</a></h2>
+<p>Continue to the postprocessing notebooks to visualise the results:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="5_plot_results_hmax.html"><span class="doc">Example: Maximum water depth</span></a></p></li>
-<li><p><a class="reference internal" href="6_make_results_animation.html"><span class="doc">Example: Animation</span></a></p></li>
+<li><p><a class="reference internal" href="5_plot_results_hmax.html"><span class="doc">Maximum water depth</span></a></p></li>
+<li><p><a class="reference internal" href="6_make_results_animation.html"><span class="doc">Animation</span></a></p></li>
 </ul>
 </section>
 </section>
@@ -914,12 +874,15 @@ Wave paddles         : no
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Inspecting-the-batch-file-to-run-SFINCS">Inspecting the batch-file to run SFINCS</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Open-log-file">Open log file</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Now-let's-try-to-run-this-batch-file">Now let’s try to run this batch-file</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Created-log-file">Created log-file</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Created-netcdf-output-files">Created netcdf output files</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Continue-to-postprocessing-and-visualization">Continue to postprocessing and visualization</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Settings">Settings</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Method-1-—-Batch-file">Method 1 — Batch file</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Launching-the-batch-file">Launching the batch file</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Method-2-—-Python-(run_sfincs)">Method 2 — Python (<code class="docutils literal notranslate"><span class="pre">run_sfincs</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Check-the-run-log">Check the run log</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Output-files">Output files</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Next-steps">Next steps</a></li>
 </ul>
   </nav></div>
 
