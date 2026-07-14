@@ -768,24 +768,18 @@ def _downscale_floodmap_file(
     write_floodmap = subtract_dem and floodmap_fn is not None
     write_zsmap = zsmap_fn is not None
 
-    # Build the scattered quadtree interpolant once and reuse it across blocks:
-    # bilinear always needs it; nearest needs it only without an index COG
-    # (with an index we use exact containment).  Regular grids reproject per
-    # block, so they need no pre-built interpolant.
+    # Build the scattered quadtree interpolant once and reuse it across blocks.
+    # Only bilinear needs it; quadtree nearest uses exact cell containment in the
+    # core (index-COG lookup, or rasterize_like when no index).  Regular grids
+    # reproject per block, so they need no pre-built interpolant.
     interpolator = None
-    if is_quadtree and (reproj_method == "bilinear" or indices is None):
+    if is_quadtree and reproj_method == "bilinear":
         wet = int(np.sum(~np.isnan(zsmax.values)))
-        if reproj_method == "bilinear" and wet < 3:
+        if wet < 3:
             logger.warning(
                 "Fewer than 3 wet cells; cannot interpolate. Writing empty maps."
             )
-        interpolator = _build_scatter_interpolator(zsmax, reproj_method)
-        if reproj_method == "nearest":
-            logger.warning(
-                "Quadtree nearest without an index COG: approximating cell "
-                f"containment with the nearest face centre ({wet} wet cells). "
-                "Pass an index COG (make_index_cog) for exact containment."
-            )
+        interpolator = _build_scatter_interpolator(zsmax, "bilinear")
 
     if zoom_level is not None:
         zls_dict, crs = RasterioDriver._get_zoom_levels_and_crs(dep)
