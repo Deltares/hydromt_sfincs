@@ -14,7 +14,7 @@ import rasterio
 import xarray as xr
 import xugrid as xu
 from rasterio.windows import Window
-from pyproj import Transformer
+from pyproj import CRS, Transformer
 
 import hydromt
 from hydromt.data_catalog.drivers import RasterioDriver
@@ -477,7 +477,8 @@ def adjust_zsmax_energyhead(
 def downscale_floodmap(
     zsmax: Union[xr.DataArray, xu.UgridDataArray],
     dep: Union[Path, str, xr.DataArray],
-    method: str = "constant",
+    reproj_method: str = "nearest",
+    subtract_dem: bool = True,
     indices: Union[Path, str, xr.DataArray] = None,
     hmin: float = 0.05,
     gdf_mask: gpd.GeoDataFrame = None,
@@ -490,18 +491,22 @@ def downscale_floodmap(
 ):
     """Create a downscaled floodmap for (model) region.
 
-    Supports multiple downscaling methods via the *method* parameter:
+    The downscaler assigns every high-resolution DEM pixel a water-surface
+    elevation (WSE) interpolated from the SFINCS ``zsmax`` field and — by
+    default — subtracts the DEM to obtain flood depth.  Its behaviour is set by
+    two orthogonal knobs:
 
-    * ``"raw"`` -- Paint each DEM pixel with the water level of the SFINCS
-      cell that *contains* it (the value straight from the SFINCS computation,
-      via exact containment in the index COG).  On a regular grid containment
-      is the nearest cell; on a quadtree it is not.  No DEM subtraction, no
-      wet/dry masking.  Produces a water-level raster.
-    * ``"constant"`` -- Assign each DEM pixel the WSE of its parent cell
-      (optionally via a pre-computed index COG), then subtract the DEM.
-      This is the classic "bathtub" approach.
-    * ``"bilinear"`` -- Bilinearly interpolate WSE from surrounding cell
-      centers (Sanders & Schubert 2019), then subtract the DEM.
+    * ``reproj_method`` -- how the WSE is interpolated onto the DEM grid:
+      ``"nearest"`` (each pixel takes the WSE of the SFINCS cell that contains
+      it — the classic bathtub) or ``"bilinear"`` (interpolate between
+      surrounding cell centres, Sanders & Schubert 2019).
+    * ``subtract_dem`` -- when ``True`` (default) the DEM is subtracted to
+      return flood depth ``hmax``; when ``False`` the raw interpolated water
+      level is returned (no DEM subtraction, no ``hmin`` masking).
+
+    WSE pre-adjustments (cell-space dilation, Bernoulli velocity head) are
+    *not* part of this function — call :func:`adjust_zsmax_dilation` /
+    :func:`adjust_zsmax_energyhead` on ``zsmax`` beforehand if needed.
 
     Parameters
     ----------
@@ -510,57 +515,50 @@ def downscale_floodmap(
         maximum over all timesteps is used.
     dep : Path, str, or xr.DataArray
         High-resolution DEM (m) of the model region.
-    method : str, optional
-        Downscaling method (``"raw"`` / ``"constant"`` / ``"bilinear"``), by
-        default ``"constant"``.  The interpolation follows from *method*: on a
-        regular grid ``"constant"`` uses nearest resampling (bathtub) and
-        ``"bilinear"`` uses bilinear resampling (reproject engine); on a
-        quadtree ``"bilinear"`` uses a scattered interpolator.  WSE adjustments
-        (dilation, velocity head) are applied beforehand by calling
-        :func:`adjust_zsmax_dilation` / :func:`adjust_zsmax_energyhead` on
-        ``zsmax`` directly.
+    reproj_method : {"nearest", "bilinear"}, optional
+        WSE interpolation onto the DEM grid, by default ``"nearest"``.  On a
+        regular grid ``"bilinear"`` uses the reproject engine; on a quadtree it
+        uses a scattered interpolator over the cell centres.
+    subtract_dem : bool, optional
+        Subtract the DEM to return flood depth (``True``, default) or return
+        the raw interpolated water level (``False``).
     indices : Path, str, or xr.DataArray, optional
-        Pre-computed cell-index raster (only used by ``"constant"``).
+        Pre-computed cell-index raster (exact containment; used for
+        ``reproj_method="nearest"`` and to mask pixels outside the domain).
     hmin : float, optional
         Minimum water depth (m) to be considered flooded, by default 0.05.
-        Ignored by ``"raw"``.
+        Ignored when ``subtract_dem`` is ``False``.
     gdf_mask : gpd.GeoDataFrame, optional
         Polygons to mask the output (area outside is set to NaN).
     floodmap_fn : Path or str, optional
-        Output flood-depth GeoTIFF.  Required for all methods except ``"raw"``.
+        Output flood-depth GeoTIFF.  Required (for file input) when
+        ``subtract_dem`` is ``True``.
     zsmap_fn : Path or str, optional
-        Output water-level GeoTIFF.
+        Output water-level GeoTIFF.  Required (for file input) when
+        ``subtract_dem`` is ``False``.
     zoom_level : int or tuple, optional
-        Overview level of the raster dataset (only for ``"constant"``).
+        Overview level of the raster dataset (regular-grid nearest only).
     nrmax : int, optional
         Block size in pixels, by default 2000.
     logger : logging.Logger, optional
         Logger instance.
     kwargs : dict, optional
         Extra keyword arguments forwarded to ``RasterDataArray.to_raster``
-        (only for the in-memory ``"constant"`` path).
+        (only for the in-memory path).
 
     Returns
     -------
     xr.DataArray
-        The downscaled product: flood depth (``hmax``) for ``"constant"`` /
-        ``"bilinear"``, or water level for ``"raw"``.  Dry pixels are NaN (a
-        domain with no flooding yields an all-NaN array).  File-based methods
-        also write it to *floodmap_fn* / *zsmap_fn* and return a lazy
-        (dask-backed) view re-opened from that file; the in-memory
-        ``"constant"`` path returns the array directly.
+        The downscaled product: flood depth (``hmax``) when ``subtract_dem`` is
+        ``True``, otherwise the water level.  Dry pixels are NaN (a domain with
+        no flooding yields an all-NaN array).  File-based calls also write it to
+        *floodmap_fn* / *zsmap_fn* and return a lazy (dask-backed) view re-opened
+        from that file; the in-memory path returns the array directly.
     """
-    _VALID_METHODS = {"raw", "constant", "bilinear"}
-    if method not in _VALID_METHODS:
+    if reproj_method not in ("nearest", "bilinear"):
         raise ValueError(
-            f"Unknown method {method!r}.  Choose from {sorted(_VALID_METHODS)}."
+            f"Unknown reproj_method {reproj_method!r}. Choose 'nearest' or 'bilinear'."
         )
-
-    # On a regular grid, bilinear reuses the reproject engine
-    # (_downscale_constant / _downscale_floodmap_da derive the resampling from
-    # `method`); the bespoke scattered _downscale_bilinear is reserved for
-    # quadtree (unstructured) grids.
-    is_quadtree = isinstance(zsmax, xu.UgridDataArray)
 
     # --- Reduce time dimension -----------------------------------------------
     if isinstance(zsmax, xu.UgridDataArray):
@@ -573,32 +571,20 @@ def downscale_floodmap(
 
     # --- In-memory path (xr.DataArray dep) -----------------------------------
     if isinstance(dep, xr.DataArray):
-        if method == "raw" or (method == "bilinear" and is_quadtree):
-            raise ValueError(
-                "In-memory (xr.DataArray) dep supports method='constant' and "
-                "regular-grid method='bilinear'; use a file path for "
-                "method='raw' and quadtree method='bilinear'."
-            )
         if isinstance(floodmap_fn, Path):
             floodmap_fn = str(floodmap_fn)
-        if indices is not None:
-            if isinstance(indices, (str, Path)) and not isinstance(dep, (str, Path)):
-                raise ValueError(
-                    "index should be xr.DataArray when dep is xr.DataArray."
-                )
-            elif isinstance(indices, xr.DataArray) and not isinstance(
-                dep, xr.DataArray
-            ):
-                raise ValueError("index should be str/Path when dep is str/Path.")
-        hmax = _downscale_floodmap_da(
+        if indices is not None and isinstance(indices, (str, Path)):
+            raise ValueError("index should be xr.DataArray when dep is xr.DataArray.")
+        out = _downscale_floodmap_da(
             zsmax=zsmax,
             dep=dep,
             indices=indices,
             hmin=hmin,
             gdf_mask=gdf_mask,
-            method=method,
+            reproj_method=reproj_method,
+            subtract_dem=subtract_dem,
         )
-        if floodmap_fn is not None:
+        if subtract_dem and floodmap_fn is not None:
             if not kwargs:
                 kwargs = dict(
                     driver="GTiff",
@@ -609,87 +595,59 @@ def downscale_floodmap(
                     predictor=2,
                     profile="COG",
                 )
-            hmax.raster.to_raster(floodmap_fn, **kwargs)
+            out.raster.to_raster(floodmap_fn, **kwargs)
             build_overviews(fn=floodmap_fn, resample_method="nearest", logger=logger)
-        hmax.name = "hmax"
-        hmax.attrs.update({"long_name": "Maximum flood depth", "units": "m"})
-        return hmax
+        out.name = "hmax" if subtract_dem else "zsmax"
+        out.attrs.update(
+            {
+                "long_name": (
+                    "Maximum flood depth" if subtract_dem else "Maximum water level"
+                ),
+                "units": "m",
+            }
+        )
+        return out
 
     # --- File-based path (dep is str/Path) -----------------------------------
-    if method == "raw":
-        if zsmap_fn is None:
-            raise ValueError("zsmap_fn is required for method='raw'.")
-    else:
+    if subtract_dem:
         if floodmap_fn is None:
             raise ValueError("floodmap_fn is required when dep is a file path.")
-
-    # Dispatch to the appropriate engine.  Regular-grid bilinear reuses the
-    # reproject engine (_downscale_constant, which derives the resampling from
-    # `method`); quadtree bilinear uses the scattered interpolator.
-    if method == "raw":
-        _downscale_raw(
-            zsmax=zsmax,
-            dep=dep,
-            zsmap_fn=zsmap_fn,
-            gdf_mask=gdf_mask,
-            nrmax=nrmax,
-            logger=logger,
-            indices=indices,
-        )
-    elif method == "bilinear" and is_quadtree:
-        _downscale_bilinear(
-            zsmax=zsmax,
-            dep=dep,
-            hmin=hmin,
-            gdf_mask=gdf_mask,
-            floodmap_fn=floodmap_fn,
-            zsmap_fn=zsmap_fn,
-            nrmax=nrmax,
-            logger=logger,
-            indices=indices,
-        )
-    else:  # "constant" (regular or quadtree) or regular-grid "bilinear"
-        _downscale_constant(
-            zsmax=zsmax,
-            dep=dep,
-            indices=indices,
-            hmin=hmin,
-            gdf_mask=gdf_mask,
-            floodmap_fn=floodmap_fn,
-            zsmap_fn=zsmap_fn,
-            method=method,
-            zoom_level=zoom_level,
-            nrmax=nrmax,
-            logger=logger,
+    elif zsmap_fn is None:
+        raise ValueError(
+            "zsmap_fn is required for a raw water-level map (subtract_dem=False)."
         )
 
-    # Re-open the written product so every method returns a DataArray
-    # (write-then-read keeps the streaming engines memory-bounded).  ``raw`` has
-    # no depth, so it returns the water level (zsmap) instead of hmax.
-    out_fn = zsmap_fn if method == "raw" else floodmap_fn
+    # One streamer handles every case; it selects exact containment (index COG),
+    # a reproject (regular grid) or a scattered interpolant (quadtree) per block.
+    _downscale_floodmap_file(
+        zsmax=zsmax,
+        dep=dep,
+        reproj_method=reproj_method,
+        subtract_dem=subtract_dem,
+        indices=indices,
+        hmin=hmin,
+        gdf_mask=gdf_mask,
+        floodmap_fn=floodmap_fn,
+        zsmap_fn=zsmap_fn,
+        zoom_level=zoom_level,
+        nrmax=nrmax,
+        logger=logger,
+    )
+
+    # Re-open the written product so the call returns a DataArray (write-then-
+    # read keeps the streamer memory-bounded).  With subtract_dem=False the
+    # water level (zsmap) is the product; otherwise it is the flood depth.
+    out_fn = floodmap_fn if subtract_dem else zsmap_fn
     if out_fn is None or not Path(str(out_fn)).exists():
         return None
-    out_name = "zsmax" if method == "raw" else "hmax"
-    long_name = "Maximum water level" if method == "raw" else "Maximum flood depth"
+    out_name = "hmax" if subtract_dem else "zsmax"
+    long_name = "Maximum flood depth" if subtract_dem else "Maximum water level"
     da = _open_result_da(out_fn, out_name)
     da.attrs.update({"long_name": long_name, "units": "m"})
     return da
 
 
 # ---- 2b. helpers : block streaming + output-raster plumbing -----------------
-def _open_dem_geometry(dep):
-    """Read only grid geometry (no elevation values) from a DEM GeoTIFF."""
-    with rasterio.open(str(dep)) as src:
-        return dict(
-            transform=src.transform,
-            width=src.width,
-            height=src.height,
-            crs=src.crs,
-            dx=src.transform[0],
-            dy=src.transform[4],
-        )
-
-
 def _open_result_da(fn, name):
     """Re-open a written GeoTIFF as a (lazy) DataArray for the return value.
 
@@ -737,74 +695,6 @@ def _stream_blocks(width, height, nrmax, merge_singletons=False):
             yield Window(bm0, bn0, bm1 - bm0, bn1 - bn0), bm0, bm1, bn0, bn1
 
 
-def _make_output_profile(geo):
-    """Standard COG profile for float32 output rasters."""
-    return dict(
-        driver="GTiff",
-        width=geo["width"],
-        height=geo["height"],
-        count=1,
-        dtype=np.float32,
-        crs=geo["crs"],
-        transform=geo["transform"],
-        tiled=True,
-        blockxsize=256,
-        blockysize=256,
-        compress="deflate",
-        predictor=2,
-        profile="COG",
-        nodata=np.nan,
-        BIGTIFF="YES",
-    )
-
-
-def _create_output_rasters(profile, floodmap_fn=None, zsmap_fn=None):
-    """Create empty output GeoTIFF(s)."""
-    if floodmap_fn is not None:
-        with rasterio.open(str(floodmap_fn), "w", **profile):
-            pass
-    if zsmap_fn is not None:
-        with rasterio.open(str(zsmap_fn), "w", **profile):
-            pass
-
-
-def _apply_mask_and_overviews(
-    floodmap_fn,
-    zsmap_fn,
-    gdf_mask,
-    geo,
-    logger,
-):
-    """Apply polygon mask and build overviews on output raster(s)."""
-    if gdf_mask is not None:
-        logger.info("Applying polygon mask...")
-        from rasterio.features import geometry_mask
-
-        # CRS-aware masking: reproject the mask polygons to the output CRS
-        # (matches the in-memory path's raster.geometry_mask, which is CRS-aware).
-        if gdf_mask.crs is not None and geo["crs"] is not None:
-            gdf_mask = gdf_mask.to_crs(geo["crs"].to_wkt())
-
-        mask = geometry_mask(
-            gdf_mask.geometry,
-            out_shape=(geo["height"], geo["width"]),
-            transform=geo["transform"],
-            invert=True,
-            all_touched=True,
-        )
-        for fn in [floodmap_fn, zsmap_fn]:
-            if fn is None:
-                continue
-            with rasterio.open(str(fn), "r+") as dst:
-                data = dst.read(1)
-                data[~mask] = np.nan
-                dst.write(data, indexes=1)
-
-    for fn in [floodmap_fn, zsmap_fn]:
-        if fn is not None:
-            build_overviews(fn=str(fn), resample_method="nearest", logger=logger)
-
-
 def _block_pixel_centres(transform, bm0, bm1, bn0, bn1):
     """Map coordinates of pixel centres for a block window, rotation-aware.
 
@@ -844,167 +734,75 @@ def _canonical_cellfield(zsmax):
     return zsmax
 
 
-# ---- 2c. engines : per-method file-based implementations --------------------
-#  raw — paint the containing SFINCS cell's WSE onto the DEM (no DEM subtraction)
-def _downscale_raw(zsmax, dep, zsmap_fn, gdf_mask, nrmax, logger, indices=None):
-    vals = zsmax.values
-    wet = ~np.isnan(vals)
-
-    geo = _open_dem_geometry(dep)
-    profile = _make_output_profile(geo)
-    _create_output_rasters(profile, zsmap_fn=zsmap_fn)
-
-    if np.sum(wet) < 1:
-        logger.warning("No wet cells found; writing an empty water-level map.")
-        return
-
-    windows = list(_stream_blocks(geo["width"], geo["height"], nrmax))
-    total = len(windows)
-    done = 0
-
-    if indices is not None:
-        # ----- Index-COG path: exact cell containment, no interpolation -----
-        # Normalise to canonical (y, x) south-up order, then flatten in Fortran
-        # order to match the SFINCS index convention (get_indices_at_points
-        # returns iind*nmax + jind; quadtree zsmax is already 1-D so both are a
-        # no-op there).
-        vals_flat = np.asarray(_canonical_cellfield(zsmax).values).ravel(order="F")
-        logger.info(f"Raw (index-COG): {int(np.sum(wet))} wet cells")
-        indices_src = rasterio.open(str(indices))
-        nodata_idx = indices_src.nodata
-        nodata_idx = int(nodata_idx) if nodata_idx is not None else 2147483647
-
-        for window, bm0, bm1, bn0, bn1 in windows:
-            idx_block = indices_src.read(1, window=window)
-            zs_block = np.full(idx_block.shape, np.nan, dtype=np.float32)
-            valid = idx_block != nodata_idx
-            zs_block[valid] = vals_flat[idx_block[valid]]
-
-            with rasterio.open(str(zsmap_fn), "r+") as dst:
-                dst.write(zs_block, window=window, indexes=1)
-
-            done += 1
-            if done % 25 == 0 or done == total:
-                logger.info(f"  Block {done}/{total} ({100*done/total:.0f}%)")
-
-        indices_src.close()
-    elif isinstance(zsmax, xu.UgridDataArray):
-        # ----- Quadtree fallback: NearestNDInterpolator over face centres ---
-        from scipy.interpolate import NearestNDInterpolator
-
-        grid = zsmax.ugrid.grid
-        face_x, face_y = grid.face_coordinates.T
-        interpolator = NearestNDInterpolator(
-            np.column_stack([face_x[wet], face_y[wet]]),
-            vals[wet],
-        )
-        logger.warning(
-            "Raw quadtree without an index COG: approximating cell containment "
-            f"with the nearest face centre ({int(np.sum(wet))} wet cells). "
-            "Pass an index COG (make_index_cog) for exact containment."
-        )
-
-        for window, bm0, bm1, bn0, bn1 in windows:
-            xx, yy = _block_pixel_centres(geo["transform"], bm0, bm1, bn0, bn1)
-            zs_block = (
-                interpolator(np.column_stack([xx.ravel(), yy.ravel()]))
-                .reshape(xx.shape)
-                .astype(np.float32)
-            )
-
-            with rasterio.open(str(zsmap_fn), "r+") as dst:
-                dst.write(zs_block, window=window, indexes=1)
-
-            done += 1
-            if done % 25 == 0 or done == total:
-                logger.info(f"  Block {done}/{total} ({100*done/total:.0f}%)")
-    else:
-        # ----- Regular fallback: nearest reproject of zsmax onto the DEM ----
-        logger.info(f"Raw regular (nearest reproject): {int(np.sum(wet))} wet cells")
-
-        rotated = not (geo["transform"][1] == 0 and geo["transform"][3] == 0)
-        for window, bm0, bm1, bn0, bn1 in windows:
-            if rotated:
-                xx, yy = _block_pixel_centres(geo["transform"], bm0, bm1, bn0, bn1)
-                block_dep = xr.DataArray(
-                    np.zeros((bn1 - bn0, bm1 - bm0), dtype=np.float32),
-                    dims=("y", "x"),
-                    coords={"yc": (("y", "x"), yy), "xc": (("y", "x"), xx)},
-                )
-            else:
-                x_coords = geo["transform"][2] + (np.arange(bm0, bm1) + 0.5) * geo["dx"]
-                y_coords = geo["transform"][5] + (np.arange(bn0, bn1) + 0.5) * geo["dy"]
-                block_dep = xr.DataArray(
-                    np.zeros((bn1 - bn0, bm1 - bm0), dtype=np.float32),
-                    dims=("y", "x"),
-                    coords={"y": ("y", y_coords), "x": ("x", x_coords)},
-                )
-            block_dep.raster.set_crs(geo["crs"].to_wkt())
-            zs_block = (
-                zsmax.raster.reproject_like(block_dep, method="nearest")
-                .raster.mask_nodata()
-                .values.astype(np.float32)
-            )
-
-            with rasterio.open(str(zsmap_fn), "r+") as dst:
-                dst.write(zs_block, window=window, indexes=1)
-
-            done += 1
-            if done % 25 == 0 or done == total:
-                logger.info(f"  Block {done}/{total} ({100*done/total:.0f}%)")
-
-    _apply_mask_and_overviews(None, zsmap_fn, gdf_mask, geo, logger)
-    logger.info(f"Raw quadtree water level map saved to: {zsmap_fn}")
-
-
-#  constant — index-COG lookup / reproject per block (bathtub)
-def _downscale_constant(
+# ---- 2c. engine : single file-based streamer (shared core per block) --------
+def _downscale_floodmap_file(
     zsmax,
     dep,
+    reproj_method,
+    subtract_dem,
     indices,
     hmin,
     gdf_mask,
     floodmap_fn,
     zsmap_fn,
-    method,
     zoom_level,
     nrmax,
     logger,
 ):
-    """File-based constant/bilinear downscaling via _downscale_floodmap_da.
+    """Stream a DEM in blocks, downscaling each block through the shared core.
 
-    ``method`` is ``"constant"`` (nearest) or ``"bilinear"`` (regular-grid
-    bilinear resampling); it is forwarded per block to _downscale_floodmap_da.
+    Every variant (nearest/bilinear, depth/raw) uses this one block loop; they
+    differ only in how :func:`_downscale_floodmap_da` interpolates the water
+    level.  A quadtree scattered interpolant is built once and reused across
+    blocks.  Flood depth is written to ``floodmap_fn`` (when ``subtract_dem``)
+    and the interpolated water level to ``zsmap_fn`` (when given).
     """
     if isinstance(floodmap_fn, Path):
         floodmap_fn = str(floodmap_fn)
+    if isinstance(zsmap_fn, Path):
+        zsmap_fn = str(zsmap_fn)
+    if indices is not None and not isinstance(indices, (str, Path)):
+        raise ValueError("indices should be str/Path when dep is str/Path.")
 
-    # indices validation
-    if indices is not None:
-        if not isinstance(indices, (str, Path)):
-            raise ValueError("indices should be str/Path when dep is str/Path.")
+    is_quadtree = isinstance(zsmax, xu.UgridDataArray)
+    write_floodmap = subtract_dem and floodmap_fn is not None
+    write_zsmap = zsmap_fn is not None
+
+    # Build the scattered quadtree interpolant once and reuse it across blocks:
+    # bilinear always needs it; nearest needs it only without an index COG
+    # (with an index we use exact containment).  Regular grids reproject per
+    # block, so they need no pre-built interpolant.
+    interpolator = None
+    if is_quadtree and (reproj_method == "bilinear" or indices is None):
+        wet = int(np.sum(~np.isnan(zsmax.values)))
+        if reproj_method == "bilinear" and wet < 3:
+            logger.warning(
+                "Fewer than 3 wet cells; cannot interpolate. Writing empty maps."
+            )
+        interpolator = _build_scatter_interpolator(zsmax, reproj_method)
+        if reproj_method == "nearest":
+            logger.warning(
+                "Quadtree nearest without an index COG: approximating cell "
+                f"containment with the nearest face centre ({wet} wet cells). "
+                "Pass an index COG (make_index_cog) for exact containment."
+            )
 
     if zoom_level is not None:
         zls_dict, crs = RasterioDriver._get_zoom_levels_and_crs(dep)
         overview_level = zoom_to_overview_level(
-            zoom=zoom_level,
-            zls_dict=zls_dict,
-            source_crs=crs,
+            zoom=zoom_level, zls_dict=zls_dict, source_crs=crs
         )
-        if overview_level:
-            overview_level -= 1
-        else:
-            overview_level = None
+        overview_level = overview_level - 1 if overview_level else None
     else:
         overview_level = None
-
     _open_kwargs = (
         {"overview_level": overview_level} if overview_level is not None else {}
     )
-    with rasterio.open(dep, **_open_kwargs) as src:
-        if indices is not None:
-            indices_src = rasterio.open(indices, **_open_kwargs)
 
+    with rasterio.open(dep, **_open_kwargs) as src:
+        indices_src = (
+            rasterio.open(indices, **_open_kwargs) if indices is not None else None
+        )
         n1, m1 = src.shape  # rows (height), cols (width); used in the log below
 
         profile = dict(
@@ -1024,9 +822,10 @@ def _downscale_constant(
             nodata=np.nan,
             BIGTIFF="YES",
         )
-        with rasterio.open(floodmap_fn, "w", **profile):
-            pass
-        if zsmap_fn is not None:
+        if write_floodmap:
+            with rasterio.open(floodmap_fn, "w", **profile):
+                pass
+        if write_zsmap:
             with rasterio.open(zsmap_fn, "w", **profile):
                 pass
 
@@ -1037,13 +836,13 @@ def _downscale_constant(
         done = 0
         skipped = 0
         logger.info(
-            f"Constant WSE: {total} blocks to process "
-            f"({m1}x{n1} pixels, block size {nrmax})"
+            f"Downscaling ({reproj_method}, subtract_dem={subtract_dem}): "
+            f"{total} blocks ({m1}x{n1} pixels, block size {nrmax})"
         )
 
         for window, bm0, bm1, bn0, bn1 in windows:
-            # Read indices first — skip block early if no SFINCS cells
-            if indices is not None:
+            # Read indices first — skip block early if no SFINCS cells.
+            if indices_src is not None:
                 block_idx = indices_src.read(window=window)
                 if np.all(block_idx == indices_src.nodata):
                     done += 1
@@ -1055,7 +854,8 @@ def _downscale_constant(
             # never treated as bathymetry (h = zsmax - (-9999) would explode).
             if src.nodata is not None and not np.isnan(src.nodata):
                 block_data[block_data == src.nodata] = np.nan
-            if np.all(np.isnan(block_data)):
+            # Depth needs a DEM; a raw water-level map paints regardless.
+            if subtract_dem and np.all(np.isnan(block_data)):
                 done += 1
                 skipped += 1
                 continue
@@ -1072,7 +872,7 @@ def _downscale_constant(
                     dims=("y", "x"),
                     coords={"y": ("y", y_coords), "x": ("x", x_coords)},
                 )
-                if indices is not None:
+                if indices_src is not None:
                     block_idx = xr.DataArray(
                         block_idx.squeeze(),
                         dims=("y", "x"),
@@ -1086,7 +886,7 @@ def _downscale_constant(
                     dims=("y", "x"),
                     coords={"yc": (("y", "x"), yc), "xc": (("y", "x"), xc)},
                 )
-                if indices is not None:
+                if indices_src is not None:
                     block_idx = xr.DataArray(
                         block_idx.squeeze(),
                         dims=("y", "x"),
@@ -1094,26 +894,32 @@ def _downscale_constant(
                     )
 
             block_dep.raster.set_crs(src.crs.to_wkt())
-            if indices is not None:
+            if indices_src is not None:
                 block_idx.raster.set_nodata(int(indices_src.nodata))
                 block_idx.raster.set_crs(indices_src.crs.to_wkt())
 
-            block_hmax = _downscale_floodmap_da(
+            block_out, block_zs = _downscale_floodmap_da(
                 zsmax=zsmax,
                 dep=block_dep,
-                indices=block_idx if indices is not None else None,
+                indices=block_idx if indices_src is not None else None,
                 hmin=hmin,
                 gdf_mask=gdf_mask,
-                method=method,
+                reproj_method=reproj_method,
+                subtract_dem=subtract_dem,
+                return_zs=True,
+                interpolator=interpolator,
             )
 
-            with rasterio.open(floodmap_fn, "r+") as fm:
-                fm.write(block_hmax.values, window=window, indexes=1)
-            if zsmap_fn is not None:
-                block_zs = (block_hmax + block_dep).astype(np.float32)
-                block_zs = block_zs.where(~np.isnan(block_hmax))
+            if write_floodmap:
+                with rasterio.open(floodmap_fn, "r+") as fm:
+                    fm.write(
+                        block_out.values.astype(np.float32), window=window, indexes=1
+                    )
+            if write_zsmap:
                 with rasterio.open(zsmap_fn, "r+") as zs:
-                    zs.write(block_zs.values, window=window, indexes=1)
+                    zs.write(
+                        block_zs.values.astype(np.float32), window=window, indexes=1
+                    )
 
             done += 1
             if done % 25 == 0 or done == total:
@@ -1121,157 +927,160 @@ def _downscale_constant(
 
         if skipped:
             logger.info(f"  Skipped {skipped}/{total} empty blocks")
-
-        if indices is not None:
+        if indices_src is not None:
             indices_src.close()
 
-    build_overviews(fn=floodmap_fn, resample_method="nearest", logger=logger)
-    if zsmap_fn is not None:
+    if write_floodmap:
+        build_overviews(fn=floodmap_fn, resample_method="nearest", logger=logger)
+    if write_zsmap:
         build_overviews(fn=zsmap_fn, resample_method="nearest", logger=logger)
 
 
-#  bilinear — scattered LinearNDInterpolator over cell centres (quadtree)
-def _downscale_bilinear(
-    zsmax,
-    dep,
-    hmin,
-    gdf_mask,
-    floodmap_fn,
-    zsmap_fn,
-    nrmax,
-    logger,
-    indices=None,
-):
-    from scipy.interpolate import LinearNDInterpolator
+#  core helpers — interpolate a SFINCS zsmax field onto a DEM grid ------------
+def _build_scatter_interpolator(zsmax: xu.UgridDataArray, reproj_method: str):
+    """Scattered interpolant over the wet quadtree cell centres.
+
+    ``"bilinear"`` -> linear barycentric interpolation (Sanders & Schubert
+    2019); anything else -> nearest cell centre.  Built once over the whole
+    mesh so the file-based streamer can reuse it across every block.
+    """
+    from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
 
     grid = zsmax.ugrid.grid
     face_x, face_y = grid.face_coordinates.T
-    vals = zsmax.values
+    vals = np.asarray(zsmax.values)
+    wet = ~np.isnan(vals)
+    points = np.column_stack([face_x[wet], face_y[wet]])
+    if reproj_method == "bilinear":
+        return LinearNDInterpolator(points, vals[wet])
+    return NearestNDInterpolator(points, vals[wet])
 
-    geo = _open_dem_geometry(dep)
-    profile = _make_output_profile(geo)
-    _create_output_rasters(profile, floodmap_fn, zsmap_fn)
 
-    if np.sum(~np.isnan(vals)) < 3:
-        logger.warning(
-            "Fewer than 3 wet cells; cannot interpolate. Writing an empty floodmap."
-        )
-        return
+def _scatter_zs_on_dep(interpolator, dep: xr.DataArray, model_crs) -> xr.DataArray:
+    """Query a scattered interpolant at every DEM pixel centre.
 
-    H_eff = vals.copy()
-
-    wet_ext = ~np.isnan(H_eff)
-    interpolator = LinearNDInterpolator(
-        np.column_stack([face_x[wet_ext], face_y[wet_ext]]),
-        H_eff[wet_ext],
+    Pixel centres are computed in the DEM's CRS and transformed to the model
+    CRS before querying — otherwise a DEM and model in different projections
+    silently return all-NaN (the query lands outside the interpolant's hull).
+    """
+    x_dim, y_dim = dep.raster.x_dim, dep.raster.y_dim
+    width, height = dep[x_dim].size, dep[y_dim].size
+    xx, yy = _block_pixel_centres(dep.raster.transform, 0, width, 0, height)
+    dep_crs = dep.raster.crs
+    if model_crs is not None and dep_crs is not None:
+        try:
+            same_crs = CRS.from_user_input(dep_crs) == CRS.from_user_input(model_crs)
+        except Exception:
+            same_crs = False
+        if not same_crs:
+            transformer = Transformer.from_crs(dep_crs, model_crs, always_xy=True)
+            xx, yy = transformer.transform(xx, yy)
+    vals = (
+        interpolator(np.column_stack([np.ravel(xx), np.ravel(yy)]))
+        .reshape(np.shape(xx))
+        .astype("float32")
     )
-    logger.info(f"Bilinear WSE: interpolant from {np.sum(wet_ext)} cells")
+    zs = dep.copy(data=vals)
+    zs.raster.set_nodata(np.nan)
+    return zs
 
-    # Open index COG to mask pixels not belonging to a wet SFINCS cell.
-    # Without this, LinearNDInterpolator fills across dry-cell gaps inside
-    # the convex hull of wet cell centres.
-    indices_src = None
-    idx_nodata = None
-    if indices is not None:
-        indices_src = rasterio.open(str(indices))
-        idx_nodata = indices_src.nodata
-        logger.info("  Using index COG to mask dry-cell gaps")
 
-    windows = list(_stream_blocks(geo["width"], geo["height"], nrmax))
-    total = len(windows)
-    done = 0
+def _interp_zs_on_dep(
+    zsmax: Union[xr.DataArray, xu.UgridDataArray],
+    dep: xr.DataArray,
+    reproj_method: str,
+    interpolator=None,
+) -> xr.DataArray:
+    """Interpolate ``zsmax`` (regular or quadtree) onto the DEM grid.
 
-    for window, bm0, bm1, bn0, bn1 in windows:
-        # Skip blocks with no SFINCS cells (fast path when an index COG is given)
-        idx_block = None
-        if indices_src is not None:
-            idx_block = indices_src.read(1, window=window)
-            if np.all(idx_block == idx_nodata):
-                done += 1
-                continue
-
-        with rasterio.open(str(dep)) as src:
-            dem_block = src.read(1, window=window).astype(np.float64)
-            # Mask the DEM's own nodata sentinel (e.g. -9999) to NaN.
-            if src.nodata is not None and not np.isnan(src.nodata):
-                dem_block[dem_block == src.nodata] = np.nan
-
-        xx, yy = _block_pixel_centres(geo["transform"], bm0, bm1, bn0, bn1)
-        zs_interp = (
-            interpolator(np.column_stack([xx.ravel(), yy.ravel()]))
-            .reshape(dem_block.shape)
-            .astype(np.float32)
+    * a pre-built ``interpolator`` (file-based streamer) -> scattered query;
+    * regular grid -> reproject engine (nearest/bilinear, CRS-aware);
+    * quadtree + bilinear -> scattered linear interpolant over cell centres;
+    * quadtree + nearest -> exact containment via xugrid rasterize/regrid.
+    """
+    if interpolator is not None:
+        model_crs = (
+            zsmax.ugrid.grid.crs
+            if isinstance(zsmax, xu.UgridDataArray)
+            else zsmax.raster.crs
         )
+        return _scatter_zs_on_dep(interpolator, dep, model_crs)
 
-        # Mask pixels outside any wet SFINCS cell
-        if idx_block is not None:
-            outside = idx_block == idx_nodata
-            # Also mask pixels whose parent cell is dry (NaN zsmax)
-            inside = ~outside
-            if inside.any():
-                pidx = idx_block[inside].astype(int)
-                parent_zs = vals[pidx]
-                parent_H = H_eff[pidx]
-                dry_parent = np.isnan(parent_zs) & np.isnan(parent_H)
-                mask_arr = np.zeros_like(outside)
-                mask_arr[inside] = dry_parent
-                outside |= mask_arr
-            zs_interp[outside] = np.nan
+    if isinstance(zsmax, xr.DataArray):
+        zs_on_dep = zsmax.raster.reproject_like(dep, method=reproj_method)
+        return zs_on_dep.raster.mask_nodata()
 
-        hmax_block = (zs_interp - dem_block).astype(np.float32)
-        hmax_block[np.isnan(hmax_block)] = np.nan
-        hmax_block[hmax_block <= hmin] = np.nan
-        hmax_block[np.isnan(dem_block)] = np.nan
-        zs_block = zs_interp.copy()
-        zs_block[np.isnan(hmax_block)] = np.nan
+    # quadtree (xu.UgridDataArray)
+    if reproj_method == "bilinear":
+        interp = _build_scatter_interpolator(zsmax, "bilinear")
+        return _scatter_zs_on_dep(interp, dep, zsmax.ugrid.grid.crs)
 
-        if np.any(~np.isnan(hmax_block)):
-            with rasterio.open(str(floodmap_fn), "r+") as dst:
-                dst.write(hmax_block, window=window, indexes=1)
-            if zsmap_fn is not None:
-                with rasterio.open(str(zsmap_fn), "r+") as dst:
-                    dst.write(zs_block, window=window, indexes=1)
-
-        done += 1
-        if done % 25 == 0 or done == total:
-            logger.info(f"  Block {done}/{total} ({100*done/total:.0f}%)")
-
-    if indices_src is not None:
-        indices_src.close()
-
-    _apply_mask_and_overviews(floodmap_fn, zsmap_fn, gdf_mask, geo, logger)
-    logger.info(f"Bilinear WSE floodmap saved to: {floodmap_fn}")
+    # nearest: exact cell containment
+    if dep.raster.transform[1] == 0 and dep.raster.transform[3] == 0:
+        zs_on_dep = zsmax.ugrid.rasterize_like(dep)
+    else:
+        uda_dep = xu.UgridDataArray.from_structured2d(dep, "xc", "yc")
+        regridder = xu.CentroidLocatorRegridder(source=zsmax, target=uda_dep)
+        zs_on_dep = dep.copy(data=regridder.regrid(zsmax).values.reshape(dep.shape))
+    return zs_on_dep.raster.mask_nodata()
 
 
-#  core — per-block zs->hmax engine (reproject or index-COG lookup)
+#  core — per-block zs->depth/WSE engine (single interpolation, shared by all paths)
 def _downscale_floodmap_da(
     zsmax: Union[xr.DataArray, xu.UgridDataArray],
     dep: xr.DataArray,
     indices: xr.DataArray = None,
     hmin: float = 0.05,
     gdf_mask: gpd.GeoDataFrame = None,
-    method: str = "constant",
+    reproj_method: str = "nearest",
+    subtract_dem: bool = True,
+    return_zs: bool = False,
+    interpolator=None,
 ) -> xr.DataArray:
-    """Create a downscaled floodmap for (model) region.
+    """Downscale a SFINCS ``zsmax`` field onto a DEM grid (in-memory / per-block).
+
+    This is the single interpolation core shared by the in-memory and
+    file-based paths.  It interpolates the water level onto the DEM grid
+    (``reproj_method``), optionally subtracts the DEM to get flood depth
+    (``subtract_dem``), and masks the result.
 
     Parameters
     ----------
-    zsmax : xr.DataArray
-        Maximum water level (m). When multiple timesteps provided, maximum over all timesteps is used.
-    dep : Path, str, xr.DataArray
-        High-resolution DEM (m) of model region:
+    zsmax : xr.DataArray or xu.UgridDataArray
+        Maximum water level (m); regular or quadtree.
+    dep : xr.DataArray
+        High-resolution DEM (m) of the model region (a single block).
+    indices : xr.DataArray, optional
+        Cell-index raster for exact containment (``reproj_method="nearest"``)
+        and/or to mask pixels outside the domain.
     hmin : float, optional
-        Minimum water depth (m) to be considered as "flooded", by default 0.05
+        Minimum flood depth (m), by default 0.05.  Only applied when
+        ``subtract_dem`` is ``True``.
     gdf_mask : gpd.GeoDataFrame, optional
-        Geodataframe with polygons to mask floodmap, example containing the landarea, by default None
-        Note that the area outside the polygons is set to nodata.
+        Polygons to mask the output (area outside set to nodata).
+    reproj_method : {"nearest", "bilinear"}, optional
+        WSE interpolation onto the DEM grid.
+    subtract_dem : bool, optional
+        Subtract the DEM to return flood depth (``True``, default) or return
+        the raw interpolated water level (``False``).
+    return_zs : bool, optional
+        Also return the interpolated water level, by default False.
+    interpolator : callable, optional
+        Pre-built scattered interpolant over the quadtree cell centres (reused
+        by the file-based streamer across blocks).
+
+    Returns
+    -------
+    xr.DataArray or tuple[xr.DataArray, xr.DataArray]
+        The downscaled product (flood depth or water level); when ``return_zs``
+        is ``True`` a ``(product, water_level)`` tuple is returned instead.
     """
+    idx_outside = None
 
     # Fast path: exact containing-cell lookup via the index COG.  Only valid
-    # for nearest sampling (constant) — bilinear needs neighbouring cell
-    # centres, so it falls through to the reproject path below and uses the
-    # index (if any) purely to mask.
-    if indices is not None and method != "bilinear":
+    # for nearest sampling — bilinear needs neighbouring cell centres, so it
+    # falls through to the interpolation path and uses the index only to mask.
+    if indices is not None and reproj_method != "bilinear":
         # Squeeze a possible band dim (rioxarray hands back (1, ny, nx)).
         idx_arr = np.squeeze(np.asarray(indices.values))
         if idx_arr.shape != dep.shape:
@@ -1292,40 +1101,20 @@ def _downscale_floodmap_da(
         # quadtree field keeps its Ugrid type), then flatten in Fortran order to
         # match the SFINCS index convention (get_indices_at_points returns
         # iind*nmax + jind; quadtree zsmax is already 1-D so both are a no-op).
-        zsmax = _canonical_cellfield(zsmax)
-        zsmax = zsmax.raster.mask_nodata()  # make sure nodata is nan
-        zs_numpy = np.asarray(zsmax.values).flatten(order="F")
-        h = zs_numpy[idx] - dep.values[:]
-        h[no_data_mask] = np.nan
+        zs_cell = _canonical_cellfield(zsmax).raster.mask_nodata()
+        zs_numpy = np.asarray(zs_cell.values).flatten(order="F")
+        zs_vals = zs_numpy[idx]
+        zs_vals[no_data_mask] = np.nan
 
-        hmax = xr.DataArray(h, dims=["y", "x"], coords={"y": dep.y, "x": dep.x})
-        hmax.raster.set_nodata(np.nan)
-        hmax.raster.set_crs(dep.raster.crs)
+        zs_on_dep = xr.DataArray(
+            zs_vals, dims=["y", "x"], coords={"y": dep.y, "x": dep.x}
+        )
+        zs_on_dep.raster.set_nodata(np.nan)
+        zs_on_dep.raster.set_crs(dep.raster.crs)
     else:
-        # Interpolate zsmax onto the dep grid, honouring `method` (bilinear vs
-        # nearest).  Regular grids reproject; quadtree grids rasterize/regrid.
-        resampling = "bilinear" if method == "bilinear" else "nearest"
-        if isinstance(zsmax, xr.DataArray):
-            zs_on_dep = zsmax.raster.reproject_like(dep, method=resampling)
-        elif isinstance(zsmax, xu.UgridDataArray):
-            # if non-rotated grid, use xugrid rasterize_like
-            if dep.raster.transform[1] == 0 and dep.raster.transform[3] == 0:
-                zs_on_dep = zsmax.ugrid.rasterize_like(dep)
-            # if rotated grid, use xugrid regridder
-            else:
-                # need to convert dep to unstructured to enable xugrid regridder
-                uda_dep = xu.UgridDataArray.from_structured2d(dep, "xc", "yc")
-                regridder = xu.CentroidLocatorRegridder(source=zsmax, target=uda_dep)
-                result = regridder.regrid(zsmax)
-                # map back to structured
-                zs_on_dep = dep.copy(data=result.values.reshape(dep.shape))
-
-        zs_on_dep = zs_on_dep.raster.mask_nodata()  # make sure nodata is nan
-        hmax = (zs_on_dep - dep).astype("float32")
-        hmax.raster.set_nodata(np.nan)
-
-        # If an index COG is supplied, use it to mask pixels outside any cell
-        # (keeps a bilinear interpolant from bleeding past the domain edge).
+        zs_on_dep = _interp_zs_on_dep(zsmax, dep, reproj_method, interpolator)
+        # An index COG (if supplied) masks pixels outside any cell, keeping a
+        # bilinear interpolant from bleeding past the domain edge.
         if indices is not None:
             idx_vals = np.squeeze(np.asarray(indices.values))
             if idx_vals.shape != dep.shape:
@@ -1336,16 +1125,37 @@ def _downscale_floodmap_da(
             idx_nodata = indices.raster.nodata
             if idx_nodata is None:
                 idx_nodata = 2147483647
-            hmax = hmax.where(idx_vals != idx_nodata)
+            idx_outside = idx_vals == idx_nodata
+            # Also drop pixels whose parent cell is dry (zsmax NaN) so a
+            # scattered interpolant cannot bleed across dry cells in-domain.
+            inside = ~idx_outside
+            if inside.any():
+                zs_flat = np.asarray(
+                    _canonical_cellfield(zsmax).raster.mask_nodata().values
+                ).flatten(order="F")
+                dry = np.zeros(idx_vals.shape, dtype=bool)
+                dry[inside] = np.isnan(zs_flat[idx_vals[inside].astype(int)])
+                idx_outside = idx_outside | dry
 
-    # mask floodmap
-    hmax = hmax.where(hmax > hmin)
+    # Subtract the DEM for flood depth, or keep the raw water level.
+    if subtract_dem:
+        out = (zs_on_dep - dep).astype("float32")
+    else:
+        out = zs_on_dep.astype("float32")
+    out.raster.set_nodata(np.nan)
 
+    if idx_outside is not None:
+        out = out.where(~idx_outside)
+    if subtract_dem:
+        out = out.where(out > hmin)  # never want new wet cells below hmin
     if gdf_mask is not None:
-        mask = hmax.raster.geometry_mask(gdf_mask, all_touched=True)
-        hmax = hmax.where(mask)
+        mask = out.raster.geometry_mask(gdf_mask, all_touched=True)
+        out = out.where(mask)
 
-    return hmax
+    if return_zs:
+        # water level masked to the same wet set as the product
+        return out, zs_on_dep.where(~np.isnan(out))
+    return out
 
 
 # =============================================================================

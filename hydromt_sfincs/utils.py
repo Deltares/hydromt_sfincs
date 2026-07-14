@@ -236,7 +236,7 @@ def read_xy(fn: Union[str, Path], crs: Union[int, CRS] = None) -> gpd.GeoDataFra
     gdf = gpd.GeoDataFrame(geometry=gpd.points_from_xy(df[0], df[1]))
     if crs is not None:
         gdf.set_crs(crs, inplace=True)
-    gdf.index = np.arange(1, gdf.index.size + 1, dtype=int)  # index starts at 1
+    gdf.index = np.arange(0, gdf.index.size, dtype=int)  # canonical 0-based index
     return gdf
 
 
@@ -264,7 +264,9 @@ def write_xyn(fn: str = "sfincs.obs", gdf: gpd.GeoDataFrame = None, fmt: str = "
 
     with open(fn, "w") as fid:
         for point in gdf.iterfeatures():
-            x, y = point["geometry"]["coordinates"]
+            # only take the first two coordinates in case the geometry is 3D
+            # (GIS points often carry a Z value that is not part of an xyn file)
+            x, y = point["geometry"]["coordinates"][:2]
             if "properties" in point and "name" in point["properties"]:
                 name = point["properties"]["name"]
             else:

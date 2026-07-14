@@ -40,9 +40,9 @@ Added
 - added back the option to create discharge forcing from a grid (previously named `setup_discharge_forcing_from_grid`) (#358)
 - add runup gauges geometry component (#366)
 - platform aware launcher script (exe_path + write_batch_file) (#367)
-- Reorganised the downscaling stack into the ``hydromt_sfincs.workflows.downscaling`` submodule with two method-agnostic WSE pre-steps — ``adjust_zsmax_dilation`` (cell-space WSE dilation) and ``adjust_zsmax_energyhead`` (per-cell Bernoulli velocity-head correction) — that work on quadtree (``xu.UgridDataArray``) *and* regular (``xr.DataArray``) grids and preserve the wet-cell set. ``downscale_floodmap``, ``remove_disconnected_flooding`` and ``make_index_cog`` are now importable from ``hydromt_sfincs.workflows.downscaling`` (and re-exported via ``hydromt_sfincs.workflows``); ``hydromt_sfincs.utils`` retains only generic I/O and grid utilities.
-- ``downscale_floodmap`` now supports ``raw``, ``constant`` and ``bilinear`` on both regular and quadtree grids. ``method`` is the single knob for the interpolation: on a regular grid ``constant`` uses nearest resampling (bathtub) and ``bilinear`` uses bilinear resampling (reproject engine); on a quadtree ``bilinear`` uses a scattered interpolator. ``raw`` paints the water level of the SFINCS cell that *contains* each pixel (exact containment via the index COG). All three methods use the index COG to speed up the computation (containment lookup for ``raw`` / ``constant``; empty-block skipping + edge masking for ``bilinear``).
-- ``downscale_floodmap`` returns the downscaled product as a (lazy) DataArray for *every* method — flood depth (``hmax``) for ``constant`` / ``bilinear`` and water level for ``raw`` — in addition to writing it to ``floodmap_fn`` / ``zsmap_fn``.
+- Moved the downscaling utilities from ``hydromt_sfincs.utils`` to a dedicated ``hydromt_sfincs.workflows.downscaling`` submodule (re-exported via ``hydromt_sfincs.workflows``).
+- ``downscale_floodmap`` is now parameterised by ``reproj_method`` (``nearest`` or ``bilinear``) and a ``subtract_dem`` flag (flood depth vs. raw water level), and works on both regular and quadtree grids.
+- Added reusable pre-processing (``adjust_zsmax_dilation``, ``adjust_zsmax_energyhead``) and post-processing (``remove_disconnected_flooding``) helpers as separate functions.
 
 Fixed
 -----

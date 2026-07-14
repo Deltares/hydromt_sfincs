@@ -144,6 +144,34 @@ def test_adjust_zsmax_energyhead_preserves_wet_set():
     assert np.all(out.values[wet] >= zs_vals[wet] - 1e-9)
 
 
+def test_adjust_zsmax_energyhead_quadtree_preserves_wet_set(quadtree_model):
+    """Energy-head pre-step on a real quadtree mesh: wet-set preserved, monotone
+    lift, and a high-discharge cell is actually raised."""
+    grid = quadtree_model.quadtree_grid.data.ugrid.grid
+    n_faces = grid.n_face
+
+    zs_vals = np.full(n_faces, np.nan, dtype=np.float32)
+    zs_vals[: n_faces // 2] = 2.0  # wet half at 2 m WSE
+    zb_vals = np.zeros(n_faces, dtype=np.float32)  # bed at 0 -> h = 2 m
+    q_vals = np.zeros(n_faces, dtype=np.float32)
+    q_vals[: n_faces // 4] = 4.0  # strong unit discharge on part of the wet cells
+
+    def _uda(vals):
+        return xu.UgridDataArray(
+            xr.DataArray(vals, dims=(grid.face_dimension,)), grid=grid
+        )
+
+    zs, q, zb = _uda(zs_vals), _uda(q_vals), _uda(zb_vals)
+    out = adjust_zsmax_energyhead(zs, q, zb=zb, hmin=0.05, q_threshold=0.01)
+
+    np.testing.assert_array_equal(np.isnan(out.values), np.isnan(zs_vals))
+    wet = ~np.isnan(zs_vals)
+    assert np.all(out.values[wet] >= zs_vals[wet] - 1e-9)  # monotone
+    # cells with q=4, h=2 -> v=2 -> +v^2/2g ~ 0.204 m; must be strictly raised
+    lifted = out.values[: n_faces // 4]
+    np.testing.assert_allclose(lifted, 2.0 + 0.5 * (4.0 / 2.0) ** 2 / 9.81, rtol=1e-5)
+
+
 # ---------------------------------------------------------------------------
 # downscale_floodmap — regular-grid bilinear reuses the reproject engine
 # ---------------------------------------------------------------------------
@@ -173,8 +201,8 @@ def _regular_zs_and_dep():
 def test_downscale_floodmap_bilinear_regular_uses_reproject():
     """Regular bilinear interpolates between cell centres; nearest is blocky."""
     zs, dep = _regular_zs_and_dep()
-    hmax_bil = downscale_floodmap(zs, dep, method="bilinear")
-    hmax_near = downscale_floodmap(zs, dep, method="constant")
+    hmax_bil = downscale_floodmap(zs, dep, reproj_method="bilinear")
+    hmax_near = downscale_floodmap(zs, dep, reproj_method="nearest")
 
     # bilinear must differ from nearest (otherwise it isn't interpolating)
     assert not np.allclose(hmax_bil.values, hmax_near.values, equal_nan=True)
@@ -201,9 +229,12 @@ def test_downscale_floodmap_drops_prestep_kwargs():
         "zb",
         "q_threshold",
         "q_scale",
-        "reproj_method",
+        "method",  # the ambiguous method= param is gone (clean break)
     ):
         assert removed not in params, f"{removed} should no longer be a parameter"
+    # the downscaler is parameterised by an interpolation + a subtract flag
+    for present in ("reproj_method", "subtract_dem"):
+        assert present in params, f"{present} should be a parameter"
 
 
 # ---------------------------------------------------------------------------
@@ -240,7 +271,13 @@ def test_downscale_floodmap_raw_regular_no_index(tmp_path):
         dst.write(np.zeros((4, 4), dtype=np.float32), 1)
 
     zsmap_fn = tmp_path / "zsmap.tif"
-    da = downscale_floodmap(zs, str(dep_fn), method="raw", zsmap_fn=str(zsmap_fn))
+    da = downscale_floodmap(
+        zs,
+        str(dep_fn),
+        reproj_method="nearest",
+        subtract_dem=False,
+        zsmap_fn=str(zsmap_fn),
+    )
 
     # the method returns the written product (raw -> water level)
     assert da is not None
@@ -317,7 +354,7 @@ def test_downscale_floodmap_constant_regular_file_blocks(tmp_path):
     floodmap_fn = tmp_path / "hmax.tif"
     # nrmax=2 over width 5 forces multiple blocks and a merged trailing column
     hmax = downscale_floodmap(
-        zs, str(dep_fn), method="constant", floodmap_fn=str(floodmap_fn), nrmax=2
+        zs, str(dep_fn), reproj_method="nearest", floodmap_fn=str(floodmap_fn), nrmax=2
     )
 
     # the method returns the written product (constant -> hmax)
@@ -349,8 +386,8 @@ def test_downscale_floodmap_da_bilinear_ignores_index_lookup():
     idx.raster.set_nodata(-1)
     idx.raster.set_crs(32633)
 
-    hmax_near = _downscale_floodmap_da(zs, dep, indices=idx, method="constant")
-    hmax_bil = _downscale_floodmap_da(zs, dep, indices=idx, method="bilinear")
+    hmax_near = _downscale_floodmap_da(zs, dep, indices=idx, reproj_method="nearest")
+    hmax_bil = _downscale_floodmap_da(zs, dep, indices=idx, reproj_method="bilinear")
 
     # nearest (index lookup) is blocky; bilinear must differ even WITH an index
     assert not np.allclose(hmax_near.values, hmax_bil.values, equal_nan=True)
@@ -412,7 +449,12 @@ def test_downscale_floodmap_raw_regular_index_fortran_order(tmp_path):
 
     zsmap_fn = tmp_path / "zsmap.tif"
     da = downscale_floodmap(
-        zs, str(dep_fn), method="raw", zsmap_fn=str(zsmap_fn), indices=str(idx_fn)
+        zs,
+        str(dep_fn),
+        reproj_method="nearest",
+        subtract_dem=False,
+        zsmap_fn=str(zsmap_fn),
+        indices=str(idx_fn),
     )
     # each pixel must get its own cell's WSE; a wrong flatten order scrambles this
     np.testing.assert_array_equal(da.values, zs_vals)
@@ -436,5 +478,196 @@ def test_downscale_floodmap_da_bilinear_index_band_dim():
     idx.raster.set_nodata(-1)
     idx.raster.set_crs(32633)
 
-    hmax = _downscale_floodmap_da(zs, dep, indices=idx, method="bilinear")
+    hmax = _downscale_floodmap_da(zs, dep, indices=idx, reproj_method="bilinear")
     assert tuple(hmax.shape) == tuple(dep.shape)
+
+
+# ---------------------------------------------------------------------------
+# _downscale_floodmap_da — subtract_dem flag (raw water level vs flood depth)
+# ---------------------------------------------------------------------------
+
+
+def test_downscale_floodmap_da_subtract_dem_false_returns_wse():
+    """subtract_dem=False returns the interpolated water level (no DEM subtraction,
+    no hmin masking); subtract_dem=True returns depth = WSE - DEM."""
+    from hydromt_sfincs.workflows.downscaling import _downscale_floodmap_da
+
+    zs, dep = _regular_zs_and_dep()  # WSE [[1,3],[1,3]], flat bed 0
+    dep = dep + 0.5  # non-zero bed so WSE (1..3) and depth (0.5..2.5) differ
+    dep.raster.set_crs(32633)
+
+    wse = _downscale_floodmap_da(zs, dep, reproj_method="nearest", subtract_dem=False)
+    depth = _downscale_floodmap_da(zs, dep, reproj_method="nearest", subtract_dem=True)
+
+    w = wse.values[~np.isnan(wse.values)]
+    d = depth.values[~np.isnan(depth.values)]
+    assert w.min() >= 1.0 - 1e-6 and w.max() <= 3.0 + 1e-6  # raw WSE range
+    assert d.max() <= 2.5 + 1e-6  # depth = WSE - 0.5
+    # water level is strictly above depth everywhere (bed is 0.5 m)
+    assert np.allclose(w, d + 0.5, equal_nan=True)
+
+
+def test_downscale_floodmap_da_return_zs_gives_both():
+    """return_zs=True yields (product, interpolated_wse) so a caller can write
+    both a depth and a water-level raster from a single interpolation."""
+    from hydromt_sfincs.workflows.downscaling import _downscale_floodmap_da
+
+    zs, dep = _regular_zs_and_dep()
+    dep = dep + 0.5
+    dep.raster.set_crs(32633)
+
+    hmax, zs_on_dep = _downscale_floodmap_da(
+        zs, dep, reproj_method="nearest", subtract_dem=True, return_zs=True
+    )
+    # zs_on_dep is the water level; hmax = zs_on_dep - dep on wet pixels
+    wet = ~np.isnan(hmax.values)
+    np.testing.assert_allclose(
+        hmax.values[wet], (zs_on_dep.values - dep.values)[wet], rtol=1e-5
+    )
+
+
+# ---------------------------------------------------------------------------
+# _downscale_floodmap_da — quadtree bilinear (scattered interpolation + CRS)
+# ---------------------------------------------------------------------------
+
+
+def _quadtree_zs_linear(grid):
+    """WSE rising linearly west->east over the quadtree faces (0..1)."""
+    fx, _ = grid.face_coordinates.T
+    zs_vals = ((fx - fx.min()) / (fx.max() - fx.min())).astype("float32")
+    return xu.UgridDataArray(
+        xr.DataArray(zs_vals, dims=(grid.face_dimension,), name="zsmax"), grid=grid
+    )
+
+
+def _dep_over_grid(grid, n=24, bed=0.0, crs=None):
+    """Flat-bed DEM covering the grid extent, axis-aligned in ``crs``."""
+    from pyproj import Transformer
+
+    fx, fy = grid.face_coordinates.T
+    xmin, xmax = float(fx.min()), float(fx.max())
+    ymin, ymax = float(fy.min()), float(fy.max())
+    if crs is not None and crs != grid.crs:
+        tf = Transformer.from_crs(grid.crs, crs, always_xy=True)
+        (xmin, xmax), (ymin, ymax) = tf.transform([xmin, xmax], [ymin, ymax])
+    dx, dy = (xmax - xmin) / n, (ymax - ymin) / n
+    x = np.linspace(xmin + dx / 2, xmax - dx / 2, n)
+    y = np.linspace(ymax - dy / 2, ymin + dy / 2, n)  # north-up (descending)
+    dep = xr.DataArray(
+        np.full((n, n), bed, dtype="float32"),
+        dims=("y", "x"),
+        coords={"y": y, "x": x},
+        name="dep",
+    )
+    dep.raster.set_crs(crs if crs is not None else grid.crs)
+    return dep
+
+
+def test_downscale_floodmap_da_quadtree_bilinear_interpolates(quadtree_model):
+    """On a quadtree, bilinear scatters over cell centres (not blocky nearest)."""
+    from hydromt_sfincs.workflows.downscaling import _downscale_floodmap_da
+
+    grid = quadtree_model.quadtree_grid.data.ugrid.grid
+    zs = _quadtree_zs_linear(grid)
+    dep = _dep_over_grid(grid, n=24)
+
+    hmax_bil = _downscale_floodmap_da(zs, dep, reproj_method="bilinear")
+    hmax_near = _downscale_floodmap_da(zs, dep, reproj_method="nearest")
+
+    assert np.isfinite(hmax_bil.values).any()
+    both = np.isfinite(hmax_bil.values) & np.isfinite(hmax_near.values)
+    assert both.any()
+    # bilinear must interpolate, i.e. differ from the blocky nearest result
+    assert not np.allclose(hmax_bil.values[both], hmax_near.values[both])
+    # linear WSE 0..1 on a flat bed -> depths stay in range
+    v = hmax_bil.values[np.isfinite(hmax_bil.values)]
+    assert v.min() >= -1e-3 and v.max() <= 1.0 + 1e-3
+
+
+def test_downscale_floodmap_da_quadtree_bilinear_crs_mismatch(quadtree_model):
+    """DEM in a different CRS than the model: pixel centres must be transformed
+    to the model CRS before querying the scattered interpolator (else silently
+    all-NaN)."""
+    from hydromt_sfincs.workflows.downscaling import _downscale_floodmap_da
+
+    grid = quadtree_model.quadtree_grid.data.ugrid.grid  # EPSG:32633
+    zs = _quadtree_zs_linear(grid)
+    dep = _dep_over_grid(grid, n=20, crs=3857)  # DEM in web-mercator
+
+    hmax = _downscale_floodmap_da(zs, dep, reproj_method="bilinear")
+
+    # with the CRS transform the interior is wet; without it every query lands
+    # far outside the interpolant's convex hull -> all NaN
+    assert np.isfinite(hmax.values).any()
+    v = hmax.values[np.isfinite(hmax.values)]
+    assert v.min() >= -1e-3 and v.max() <= 1.0 + 1e-2
+
+
+# ---------------------------------------------------------------------------
+# downscale_floodmap — quadtree file-based streaming (bilinear + raw)
+# ---------------------------------------------------------------------------
+
+
+def _write_dep_tif(grid, path, n=40, bed=0.0):
+    """Flat-bed DEM GeoTIFF covering the quadtree extent (model CRS)."""
+    fx, fy = grid.face_coordinates.T
+    xmin, xmax = float(fx.min()), float(fx.max())
+    ymin, ymax = float(fy.min()), float(fy.max())
+    dx, dy = (xmax - xmin) / n, (ymax - ymin) / n
+    with rasterio.open(
+        path,
+        "w",
+        driver="GTiff",
+        height=n,
+        width=n,
+        count=1,
+        dtype="float32",
+        crs="EPSG:32633",
+        transform=from_origin(xmin, ymax, dx, dy),
+        nodata=np.nan,
+    ) as dst:
+        dst.write(np.full((n, n), bed, dtype="float32"), 1)
+
+
+def test_downscale_floodmap_quadtree_file_bilinear(quadtree_model, tmp_path):
+    """Quadtree bilinear via the file streamer (blocks + one shared interpolant)."""
+    grid = quadtree_model.quadtree_grid.data.ugrid.grid
+    zs = _quadtree_zs_linear(grid)
+    dep_fn = tmp_path / "dep.tif"
+    _write_dep_tif(grid, str(dep_fn), n=40)
+
+    fm = tmp_path / "hmax.tif"
+    # nrmax < n forces several blocks -> exercises the reused interpolant
+    da = downscale_floodmap(
+        zs, str(dep_fn), reproj_method="bilinear", floodmap_fn=str(fm), nrmax=16
+    )
+    assert da is not None
+    with rasterio.open(fm) as src:
+        out = src.read(1)
+    wet = out[np.isfinite(out)]
+    assert wet.size > 0
+    assert wet.min() >= -1e-3 and wet.max() <= 1.0 + 1e-2
+
+
+def test_downscale_floodmap_quadtree_file_raw(quadtree_model, tmp_path):
+    """Quadtree raw water level via the file streamer (subtract_dem=False)."""
+    grid = quadtree_model.quadtree_grid.data.ugrid.grid
+    zs = _quadtree_zs_linear(grid)
+    dep_fn = tmp_path / "dep.tif"
+    _write_dep_tif(grid, str(dep_fn), n=40)
+
+    zsmap = tmp_path / "zsmap.tif"
+    da = downscale_floodmap(
+        zs,
+        str(dep_fn),
+        reproj_method="nearest",
+        subtract_dem=False,
+        zsmap_fn=str(zsmap),
+        nrmax=16,
+    )
+    assert da is not None
+    with rasterio.open(zsmap) as src:
+        out = src.read(1)
+    wet = out[np.isfinite(out)]
+    assert wet.size > 0
+    assert wet.min() >= -1e-3 and wet.max() <= 1.0 + 1e-2
