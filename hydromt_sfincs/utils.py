@@ -8,6 +8,7 @@ from datetime import datetime
 import io
 import logging
 import os
+import warnings
 from pathlib import Path
 import shutil
 import tempfile
@@ -68,9 +69,30 @@ __all__ = [
     "make_regular_grid_transform",
     "partition_quadtree",
     "write_netcdf_safely",
+    "downscale_floodmap",  # deprecated — kept for backwards compatibility
 ]
 
 logger = logging.getLogger(f"hydromt.{__name__}")
+
+
+def downscale_floodmap(*args, **kwargs):
+    """Deprecated. Import from ``hydromt_sfincs.workflows`` instead.
+
+    .. deprecated::
+        ``downscale_floodmap`` has moved to
+        :func:`hydromt_sfincs.workflows.downscale_floodmap`.
+        This shim will be removed in a future release.
+    """
+    from hydromt_sfincs.workflows import downscale_floodmap as _downscale_floodmap
+
+    msg = (
+        "downscale_floodmap has moved to hydromt_sfincs.workflows. "
+        "Update your import to: from hydromt_sfincs.workflows import downscale_floodmap. "
+        "The old location will be removed in a future release."
+    )
+    warnings.warn(msg, FutureWarning, stacklevel=2)
+    logger.warning(msg)
+    return _downscale_floodmap(*args, **kwargs)
 
 
 ## BINARY MAPS: sfincs.ind, sfincs.msk, sfincs.dep etc. ##

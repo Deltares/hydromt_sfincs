@@ -183,8 +183,8 @@ def make_index_cog(
                     window=window,
                     indexes=1,
                 )
-        # add overviews
-        build_overviews(fn=indices_fn, resample_method="nearest")
+    # add overviews
+    build_overviews(fn=indices_fn, resample_method="nearest")
 
 
 # =============================================================================
