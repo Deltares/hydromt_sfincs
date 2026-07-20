@@ -249,8 +249,8 @@ class SfincsQuadtreeGrid(MeshComponent):
             data_vars = list(data_vars)
         variables = []
         for var in data_vars:
-            fn_var = self.model.config.get(f"{var}file", abs_path=True) #TO DO
-            
+            fn_var = self.model.config.get(f"{var}file", abs_path=True)  # TO DO
+
             if var == "infiltration":
                 fn_var = self.model.config.get(f"{var}_file", abs_path=True)
 
