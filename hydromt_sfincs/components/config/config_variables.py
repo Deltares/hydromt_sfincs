@@ -278,13 +278,13 @@ class SfincsConfigVariables(BaseSettings):
         None,
         gt=0.0,
         lt=0.5,
-        description="Manning's n for land areas; -999 = not set (s/m^(1/3))",
+        description="Manning's n for land areas; 0.04 recommended, -999 = not set (s/m^(1/3))",
     )
     manning_sea: float | None = Field(
         None,
         gt=0.0,
         lt=0.5,
-        description="Manning's n for sea areas; -999 = not set (s/m^(1/3))",
+        description="Manning's n for sea areas; 0.02 recommended, -999 = not set (s/m^(1/3))",
     )
     rgh_lev_land: float | None = Field(
         None,
