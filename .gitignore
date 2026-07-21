@@ -116,6 +116,9 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+# claude
+.claude/
+
 # dask
 dask-worker-space/
 
@@ -132,3 +135,4 @@ pixi.lock
 examples/test_quadtree
 examples/test_regular
 examples/tmp_sfincs_compound
+.claude/settings.local.json
