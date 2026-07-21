@@ -4,14 +4,13 @@ from typing import TYPE_CHECKING, Union
 
 import geopandas as gpd
 import numpy as np
-import pandas as pd
 from pyflwdir.regions import region_area
 from scipy import ndimage
 
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers, utils
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -212,7 +211,7 @@ class SfincsMask(ModelComponent):
             ).endswith(".pol"):
                 # NOTE polygons should be in same CRS as model
                 gdf_include = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=include_polygon), crs=self.model.crs
+                    feats=readers.read_geoms(fn=include_polygon), crs=self.model.crs
                 )
             else:
                 gdf_include = self.data_catalog.get_geodataframe(
@@ -223,7 +222,7 @@ class SfincsMask(ModelComponent):
                 exclude_polygon
             ).endswith(".pol"):
                 gdf_exclude = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=exclude_polygon), crs=self.model.crs
+                    feats=readers.read_geoms(fn=exclude_polygon), crs=self.model.crs
                 )
             else:
                 gdf_exclude = self.data_catalog.get_geodataframe(
@@ -429,7 +428,7 @@ class SfincsMask(ModelComponent):
             ).endswith(".pol"):
                 # NOTE polygons should be in same CRS as model
                 gdf_include = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=include_polygon), crs=self.model.crs
+                    feats=readers.read_geoms(fn=include_polygon), crs=self.model.crs
                 )
             else:
                 gdf_include = self.data_catalog.get_geodataframe(
@@ -446,7 +445,7 @@ class SfincsMask(ModelComponent):
                 exclude_polygon
             ).endswith(".pol"):
                 gdf_exclude = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=exclude_polygon), crs=self.model.crs
+                    feats=readers.read_geoms(fn=exclude_polygon), crs=self.model.crs
                 )
             else:
                 gdf_exclude = self.data_catalog.get_geodataframe(

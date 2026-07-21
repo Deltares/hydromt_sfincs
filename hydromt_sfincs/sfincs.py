@@ -22,7 +22,7 @@ import xugrid as xu
 from hydromt.error import NoDataException
 from hydromt.model import Model
 
-from hydromt_sfincs import DATADIR, plots, utils
+from hydromt_sfincs import DATADIR, plots, utils, writers
 
 # Input component
 from hydromt_sfincs.components.config import SfincsConfig
@@ -325,11 +325,10 @@ class SfincsModel(Model):
 
         # Write region geometry
         if self.write_gis:
-            utils.write_vector(
+            writers.write_vector(
                 self.region,
                 name="region",
                 root=join(self.root.path, "gis"),
-                logger=logger,
             )
 
         # Optional launcher script (opt-in; DDB passes True explicitly).
