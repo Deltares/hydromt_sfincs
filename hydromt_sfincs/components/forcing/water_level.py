@@ -7,13 +7,11 @@ from cht_tide import predict
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from pyproj import Transformer
-import shapely
 import xarray as xr
 
 from hydromt import hydromt_step
 from hydromt.gis.vector import GeoDataset
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers, utils, writers
 from .deltares_ini import IniStruct
 from .boundary_conditions import SfincsBoundaryBase
 
@@ -91,7 +89,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             )
 
         # Read bnd file
-        gdf = utils.read_xy(abs_file_path, crs=self.model.crs)
+        gdf = readers.read_xy(abs_file_path, crs=self.model.crs)
         return gdf
 
     def read_boundary_conditions_timeseries(self, filename: str | Path = None):
@@ -117,7 +115,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             )
 
         # Read bzs file (this creates one DataFrame with all timeseries)
-        df = utils.read_timeseries(abs_file_path, tref=self.model.config.get("tref"))
+        df = readers.read_timeseries(abs_file_path, tref=self.model.config.get("tref"))
         df.index.name = "time"
         df.columns.name = "index"
         return df
@@ -242,11 +240,10 @@ class SfincsWaterLevel(SfincsBoundaryBase):
             self.write_boundary_conditions_netcdf()
 
         if self.model.write_gis:
-            utils.write_vector(
+            writers.write_vector(
                 self.gdf,
                 name="bnd",
                 root=join(self.model.root.path, "gis"),
-                logger=logger,
             )
 
     def write_boundary_points(self, filename: str | Path = None):
@@ -272,7 +269,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
 
         # Write x, y only (no name column) — SFINCS bnd file format
         gdf = self.gdf.drop(columns=["name"], errors="ignore")
-        utils.write_xy(abs_file_path, gdf, fmt=fmt)
+        writers.write_xy(abs_file_path, gdf, fmt=fmt)
 
     def write_boundary_conditions_timeseries(self, filename: str | Path = None):
         """Write SFINCS boundary condition timeseries (.bzs) file"""
@@ -293,7 +290,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         df = da.to_pandas()
 
         # Write to file
-        utils.write_timeseries(abs_file_path, df, self.model.config.get("tref"))
+        writers.write_timeseries(abs_file_path, df, self.model.config.get("tref"))
 
     def write_boundary_conditions_astro(self, filename: str | Path = None):
         """Write SFINCS boundary condition astro (.bca) file"""
@@ -369,7 +366,7 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         ds = ds.rename({"bzi": "zi"}) if "bzi" in ds.data_vars else ds
 
         # Write netcdf file safely (might get locked)
-        final_path = utils.write_netcdf_safely(ds, abs_file_path, encoding=encoding)
+        final_path = writers.write_netcdf_safely(ds, abs_file_path, encoding=encoding)
         if final_path != abs_file_path:
             self.model.config.set("netbndbzsbzifile", final_path.name)
 

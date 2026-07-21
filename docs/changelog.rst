@@ -8,6 +8,25 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
+v2.0.0-rc4 (unreleased)
+=============================
+**This release contains minor bugfixes and improvements to the v2.0.0-rc3 release.**
+
+Added
+-----
+- Added reusable pre-processing (``adjust_zsmax_dilation``, ``adjust_zsmax_energyhead``) and post-processing (``remove_disconnected_flooding``) helpers as separate functions.
+- Added optional argument to ``elevation.create()`` to skip extrapolation of the DEM (#392)
+
+Fixed
+-----
+- Fixed plot_basemap() for very flat and/or below-sea-level Models (#394)
+
+Changed
+-------
+- Moved the downscaling utilities from ``hydromt_sfincs.utils`` to a dedicated ``hydromt_sfincs.workflows.downscaling`` submodule (re-exported via ``hydromt_sfincs.workflows``).
+- ``downscale_floodmap`` is now parameterised by ``reproj_method`` (``nearest`` or ``bilinear``) and a ``subtract_dem`` flag (flood depth vs. raw water level), and works on both regular and quadtree grids.
+- Moved readers and writers from ``utils.py`` to dedicated ``readers.py`` and ``writers.py`` modules (#390)
+
 v2.0.0-rc3 (22-5-2026)
 =============================
 **This release contains minor bugfixes and improvements to the v2.0.0-rc2 release.**

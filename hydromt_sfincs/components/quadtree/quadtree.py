@@ -25,7 +25,7 @@ from hydromt.model.components import MeshComponent
 from hydromt.model.processes.grid import create_grid_from_region
 
 from hydromt_sfincs.utils import make_regular_grid
-from hydromt_sfincs.workflows.cog import make_index_cog, make_topobathy_cog
+from hydromt_sfincs.workflows.cog import make_quadtree_index_cog, make_topobathy_cog
 from hydromt_sfincs.workflows.map_overlay import MeshOverlay
 from hydromt_sfincs.workflows.tiling import (
     create_topobathy_tiles,
@@ -895,7 +895,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         """Write a COG raster mapping each pixel to a quadtree cell index.
 
         Thin wrapper around
-        :py:func:`hydromt_sfincs.workflows.cog.make_index_cog`.
+        :py:func:`hydromt_sfincs.workflows.cog.make_quadtree_index_cog`.
 
         Parameters
         ----------
@@ -904,7 +904,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         filename_topobathy : str or Path
             Reference topobathy COG whose grid / CRS define the output.
         """
-        make_index_cog(
+        make_quadtree_index_cog(
             quadtree_grid=self,
             filename=filename,
             filename_topobathy=filename_topobathy,

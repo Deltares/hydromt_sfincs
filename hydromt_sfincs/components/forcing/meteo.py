@@ -1,7 +1,6 @@
 import logging
-from os.path import isfile
 from pathlib import Path
-from typing import List, Literal, Optional, Union, TYPE_CHECKING
+from typing import Literal, Optional, Union, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -11,7 +10,7 @@ from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 from hydromt.model.processes.meteo import da_to_timedelta
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers, utils, writers
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -114,7 +113,7 @@ class SfincsMeteo(ModelComponent):
         """Read in spatially uniform precipitation data."""
         tref = utils.parse_datetime(self.model.config.get("tref"))
 
-        df = utils.read_timeseries(filename, tref)
+        df = readers.read_timeseries(filename, tref)
         df.index.name = "time"
 
         # spatially uniform forcing
@@ -199,7 +198,7 @@ class SfincsMeteo(ModelComponent):
         df = da[variable].to_pandas()
 
         # write timeseries
-        utils.write_timeseries(filename, df, tref, fmt=fmt)
+        writers.write_timeseries(filename, df, tref, fmt=fmt)
 
     def set(
         self,

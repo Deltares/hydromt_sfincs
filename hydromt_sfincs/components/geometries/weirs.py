@@ -12,7 +12,7 @@ from shapely.geometry import LineString
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers, utils, writers
 
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel
@@ -105,7 +105,7 @@ class SfincsWeirs(ModelComponent):
             raise FileNotFoundError(f"Weir file not found: {abs_file_path}")
 
         # Read weir file:
-        struct = utils.read_geoms(abs_file_path)  # =utils.py function
+        struct = readers.read_geoms(abs_file_path)  # =utils.py function
         gdf = utils.linestring2gdf(struct, crs=self.model.crs)  # =utils.py function
 
         # Add to self._data
@@ -142,15 +142,14 @@ class SfincsWeirs(ModelComponent):
         struct = utils.gdf2linestring(self.data)
 
         # Write to weirfile
-        utils.write_geoms(abs_file_path, struct, stype="weir", fmt=fmt)
+        writers.write_geoms(abs_file_path, struct, stype="weir", fmt=fmt)
 
         # write also as geojson:
         if self.model.write_gis:
-            utils.write_vector(
+            writers.write_vector(
                 self.data,
                 name="weir",
                 root=join(self.root.path, "gis"),
-                logger=logger,
             )
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
