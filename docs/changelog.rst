@@ -20,6 +20,7 @@ Added
 Fixed
 -----
 - Fixed plot_basemap() for very flat and/or below-sea-level Models (#394)
+- Fixed writing of infiltration layers in Quadtree models (#397)
 
 Changed
 -------
