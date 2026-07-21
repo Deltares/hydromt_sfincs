@@ -41,12 +41,12 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 
-_QT_MAPS = {  
-    "manning": None,  
-    "vol": None,  
-    "ini": None,  
-    "infiltration": "infiltration_file",  
-}  
+_QT_MAPS = {
+    "manning": None,
+    "vol": None,
+    "ini": None,
+    "infiltration": "infiltration_file",
+}
 
 
 class SfincsQuadtreeGrid(MeshComponent):
