@@ -68,6 +68,7 @@ examples = [
 ]
 quadtree = [
     "datashader",
+    "numba_celltree>=0.4.2",  # xugrid>=0.15 no longer installs this transitively; needed for celltree spatial ops on quadtree meshes
 ]
 
 full = ["hydromt_sfincs[test, doc, examples, quadtree]"]

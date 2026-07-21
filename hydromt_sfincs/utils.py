@@ -6,8 +6,9 @@ as well as some common data conversions.
 import copy
 from datetime import datetime
 import logging
+import warnings
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 from affine import Affine
 import geopandas as gpd
@@ -19,14 +20,11 @@ from xugrid.core.wrap import UgridDataArray
 from pyproj.crs.crs import CRS
 from rasterio.enums import Resampling
 from rasterio.rio.overview import get_maximum_overview_level
-from rasterio.windows import Window
 from shapely.geometry import LineString, Polygon
-
-from hydromt.data_catalog.drivers import RasterioDriver
-from hydromt.gis.gis_utils import zoom_to_overview_level
 
 
 __all__ = [
+    "downscale_floodmap",
     "get_bounds_vector",
     "create_boundary_points",
     "mask2gdf",
@@ -34,16 +32,34 @@ __all__ = [
     "gdf2polygon",
     "linestring2gdf",
     "polygon2gdf",
-    "downscale_floodmap",
     "rotated_grid",
     "build_overviews",
     "find_uv_indices",
     "make_regular_grid",
     "make_regular_grid_transform",
-    "partition_quadtree",
 ]
 
 logger = logging.getLogger(f"hydromt.{__name__}")
+
+
+def downscale_floodmap(*args, **kwargs):
+    """Deprecated. Import from ``hydromt_sfincs.workflows`` instead.
+
+    .. deprecated::
+        ``downscale_floodmap`` has moved to
+        :func:`hydromt_sfincs.workflows.downscale_floodmap`.
+        This shim will be removed in a future release.
+    """
+    from hydromt_sfincs.workflows import downscale_floodmap as _downscale_floodmap
+
+    msg = (
+        "downscale_floodmap has moved to hydromt_sfincs.workflows. "
+        "Update your import to: from hydromt_sfincs.workflows import downscale_floodmap. "
+        "The old location will be removed in a future release."
+    )
+    warnings.warn(msg, FutureWarning, stacklevel=2)
+    logger.warning(msg)
+    return _downscale_floodmap(*args, **kwargs)
 
 
 def parse_datetime(dt: Union[str, datetime], format="%Y%m%d %H%M%S") -> datetime:
@@ -407,291 +423,6 @@ def polygon2gdf(
     return gdf
 
 
-def downscale_floodmap(
-    zsmax: Union[xr.DataArray, xu.UgridDataArray],
-    dep: Union[Path, str, xr.DataArray],
-    indices: Union[Path, str, xr.DataArray] = None,
-    hmin: float = 0.05,
-    gdf_mask: gpd.GeoDataFrame = None,
-    floodmap_fn: Union[Path, str] = None,
-    reproj_method: str = "nearest",
-    zoom_level: Optional[Union[int, tuple]] = None,
-    nrmax: int = 2000,
-    logger=logger,
-    **kwargs,
-):
-    """Create a downscaled floodmap for (model) region.
-
-    Parameters
-    ----------
-    zsmax : xr.DataArray
-        Maximum water level (m). When multiple timesteps provided, maximum over all timesteps is used.
-    dep : Path, str, xr.DataArray
-        High-resolution DEM (m) of model region:
-        * If a Path or str is provided, the DEM is read from disk and the floodmap
-        is written to disk (recommened for datasets that do not fit in memory.)
-        * If a xr.DataArray is provided, the floodmap is returned as xr.DataArray
-        and only written to disk when floodmap_fn is provided.
-    indices: Path, str, xr.DataArray, optional
-        Indices of the corresponding SFINCS cells to the DEM cells.
-    hmin : float, optional
-        Minimum water depth (m) to be considered as "flooded", by default 0.05
-    gdf_mask : gpd.GeoDataFrame, optional
-        Geodataframe with polygons to mask floodmap, example containing the landarea, by default None
-        Note that the area outside the polygons is set to nodata.
-    floodmap_fn : Union[Path, str], optional
-        Name (path) of output floodmap, by default None. If provided, the floodmap is written to disk.
-    reproj_method : str, optional
-        Reprojection method for downscaling the water levels, by default "nearest".
-        Other option is "bilinear".
-    zoom_level : int, tuple, optional
-        Overview level of the raster dataset (0 is highest resolution), if present.
-        Using a tuple the zoom level can be specified as (<zoom_resolution>, <unit>), e.g., (1000, 'meter')
-        Note, this only works when dep is a Path or str.
-    nrmax : int, optional
-        Maximum number of cells per block, by default 2000. These blocks are used to prevent memory issues.
-    kwargs : dict, optional
-        Additional keyword arguments passed to `RasterDataArray.to_raster`.
-    Returns
-    -------
-    hmax: xr.Dataset
-        Downscaled and masked floodmap.
-
-    See Also
-    --------
-    hydromt.raster.RasterDataArray.to_raster
-    """
-    # get maximum water level
-    if isinstance(zsmax, xu.UgridDataArray):
-        timedim = set(zsmax.dims) - set(zsmax.ugrid.grid.dims)
-    else:
-        timedim = set(zsmax.dims) - set(zsmax.raster.dims)
-    if timedim:
-        logger.info(f"Multiple values present in {timedim} dimension.")
-        logger.info(f"Downscaling floodmap for maximum water level over {timedim}.")
-        zsmax = zsmax.max(timedim)
-
-    # Hydromt expects a string so if a Path is provided, convert to str
-    if isinstance(floodmap_fn, Path):
-        floodmap_fn = str(floodmap_fn)
-
-    # indices (if provided) should be of the same type as dep
-    if indices is not None:
-        if isinstance(indices, (str, Path)):
-            if not isinstance(dep, (str, Path)):
-                raise ValueError(
-                    "index should be a xr.DataArray when dep is a xr.DataArray."
-                )
-        elif isinstance(indices, xr.DataArray):
-            if not isinstance(dep, xr.DataArray):
-                raise ValueError(
-                    "index should be a str or Path when dep is a str or Path."
-                )
-        else:
-            raise ValueError("index should be a str, Path or xr.DataArray.")
-
-    if isinstance(dep, xr.DataArray):
-        hmax = _downscale_floodmap_da(
-            zsmax=zsmax,
-            dep=dep,
-            indices=indices,
-            hmin=hmin,
-            gdf_mask=gdf_mask,
-            reproj_method=reproj_method,
-        )
-
-        # write floodmap
-        if floodmap_fn is not None:
-            if not kwargs:  # write COG by default
-                kwargs = dict(
-                    driver="GTiff",
-                    tiled=True,
-                    blockxsize=256,
-                    blockysize=256,
-                    compress="deflate",
-                    predictor=2,
-                    profile="COG",
-                )
-            hmax.raster.to_raster(floodmap_fn, **kwargs)
-
-            # add overviews
-            build_overviews(fn=floodmap_fn, resample_method="nearest", logger=logger)
-
-        hmax.name = "hmax"
-        hmax.attrs.update({"long_name": "Maximum flood depth", "units": "m"})
-        return hmax
-
-    elif isinstance(dep, (str, Path)):
-        if floodmap_fn is None:
-            raise ValueError(
-                "floodmap_fn should be provided when dep is a Path or str."
-            )
-
-        if zoom_level is not None:
-            zls_dict, crs = RasterioDriver._get_zoom_levels_and_crs(dep)
-            overview_level = zoom_to_overview_level(
-                zoom=zoom_level, zls_dict=zls_dict, source_crs=crs
-            )
-            if overview_level:
-                # NOTE: overview levels start at zoom_level 1, see _get_zoom_levels_and_crs
-                overview_level -= 1
-        else:
-            # use highest resolution by default
-            overview_level = 0
-
-        with rasterio.open(dep, overview_level=overview_level) as src:
-            # check if index is provided and open it if it is
-            if indices is not None:
-                indices_src = rasterio.open(indices, overview_level=overview_level)
-
-            # Define block size
-            n1, m1 = src.shape
-            nrcb = nrmax  # nr of cells in a block
-            nrbn = int(np.ceil(n1 / nrcb))  # nr of blocks in n direction
-            nrbm = int(np.ceil(m1 / nrcb))  # nr of blocks in m direction
-
-            # avoid blocks with width or height of 1
-            merge_last_col = False
-            merge_last_row = False
-            if m1 % nrcb == 1:
-                nrbm -= 1
-                merge_last_col = True
-            if n1 % nrcb == 1:
-                nrbn -= 1
-                merge_last_row = True
-
-            profile = dict(
-                driver="GTiff",
-                width=src.width,
-                height=src.height,
-                count=1,
-                dtype=np.float32,
-                crs=src.crs,
-                transform=src.transform,
-                tiled=True,
-                blockxsize=256,
-                blockysize=256,
-                compress="deflate",
-                predictor=2,
-                profile="COG",
-                nodata=np.nan,
-                BIGTIFF="YES",  # Add the BIGTIFF option here
-            )
-
-            with rasterio.open(floodmap_fn, "w", **profile):
-                pass
-
-            ## Loop through blocks
-            for ii in range(nrbm):
-                bm0 = ii * nrcb  # Index of first m in block
-                bm1 = min(bm0 + nrcb, m1)  # last m in block
-                if merge_last_col and ii == (nrbm - 1):
-                    bm1 += 1
-
-                for jj in range(nrbn):
-                    bn0 = jj * nrcb  # Index of first n in block
-                    bn1 = min(bn0 + nrcb, n1)  # last n in block
-                    if merge_last_row and jj == (nrbn - 1):
-                        bn1 += 1
-
-                    # Define a window to read a block of data
-                    window = Window(bm0, bn0, bm1 - bm0, bn1 - bn0)
-
-                    # Read the block of data
-                    block_data = src.read(window=window)
-
-                    # check for nan-data
-                    if np.all(np.isnan(block_data)):
-                        continue
-
-                    if indices is not None:
-                        # Read the corresponding index block
-                        block_indices = indices_src.read(window=window)
-
-                    # Determine if rotation is zero
-                    if src.transform[1] == 0 and src.transform[3] == 0:  # No rotation
-                        # Compute the 1D coordinates for x and y using the affine transformation
-                        x_coords = (
-                            src.transform[2]
-                            + (np.arange(bm0, bm1) + 0.5) * src.transform[0]
-                        )
-                        y_coords = (
-                            src.transform[5]
-                            + (np.arange(bn0, bn1) + 0.5) * src.transform[4]
-                        )
-
-                        # Create xarray DataArray with coordinates
-                        block_dep = xr.DataArray(
-                            block_data.squeeze(),
-                            dims=("y", "x"),
-                            coords={
-                                "y": ("y", y_coords),
-                                "x": ("x", x_coords),
-                            },
-                        )
-                        # create xarray DataArray with coordinates for index
-                        if indices is not None:
-                            block_indices = xr.DataArray(
-                                block_indices.squeeze(),
-                                dims=("y", "x"),
-                                coords={
-                                    "y": ("y", y_coords),
-                                    "x": ("x", x_coords),
-                                },
-                            )
-                    else:
-                        # Convert row and column indices to pixel coordinates
-                        cols, rows = np.meshgrid(
-                            np.arange(bm0, bm1), np.arange(bn0, bn1)
-                        )
-                        x_coords, y_coords = src.transform * (cols + 0.5, rows + 0.5)
-
-                        # Create xarray DataArray with coordinates
-                        block_dep = xr.DataArray(
-                            block_data.squeeze(),
-                            dims=("y", "x"),
-                            coords={
-                                "yc": (("y", "x"), y_coords),
-                                "xc": (("y", "x"), x_coords),
-                            },
-                        )
-                        # create xarray DataArray with coordinates for index
-                        if indices is not None:
-                            block_indices = xr.DataArray(
-                                block_indices.squeeze(),
-                                dims=("y", "x"),
-                                coords={
-                                    "yc": (("y", "x"), y_coords),
-                                    "xc": (("y", "x"), x_coords),
-                                },
-                            )
-
-                    # make sure the nodata value and crs are set
-                    block_dep.raster.set_crs(src.crs.to_epsg())
-                    if indices is not None:
-                        block_indices.raster.set_nodata(int(indices_src.nodata))
-                        block_indices.raster.set_crs(indices_src.crs.to_epsg())
-
-                    block_hmax = _downscale_floodmap_da(
-                        zsmax=zsmax,
-                        dep=block_dep,
-                        indices=block_indices if indices is not None else None,
-                        hmin=hmin,
-                        gdf_mask=gdf_mask,
-                        reproj_method=reproj_method,
-                    )
-
-                    with rasterio.open(floodmap_fn, "r+") as fm_tif:
-                        fm_tif.write(
-                            block_hmax.values,
-                            window=window,
-                            indexes=1,
-                        )
-
-        # add overviews
-        build_overviews(fn=floodmap_fn, resample_method="nearest", logger=logger)
-
-
 def rotated_grid(
     pol: Polygon, res: float, dec_origin=0, dec_rotation=3
 ) -> Tuple[float, float, int, int, float]:
@@ -798,94 +529,6 @@ def build_overviews(
 
         # update dataset tags
         src.update_tags(ns="rio_overview", resampling=resample_method)
-
-
-def _downscale_floodmap_da(
-    zsmax: Union[xr.DataArray, xu.UgridDataArray],
-    dep: xr.DataArray,
-    indices: xr.DataArray = None,
-    hmin: float = 0.05,
-    gdf_mask: gpd.GeoDataFrame = None,
-    reproj_method: str = "nearest",
-) -> xr.DataArray:
-    """Create a downscaled floodmap for (model) region.
-
-    Parameters
-    ----------
-    zsmax : xr.DataArray
-        Maximum water level (m). When multiple timesteps provided, maximum over all timesteps is used.
-    dep : Path, str, xr.DataArray
-        High-resolution DEM (m) of model region:
-    hmin : float, optional
-        Minimum water depth (m) to be considered as "flooded", by default 0.05
-    gdf_mask : gpd.GeoDataFrame, optional
-        Geodataframe with polygons to mask floodmap, example containing the landarea, by default None
-        Note that the area outside the polygons is set to nodata.
-    """
-
-    if indices is None:
-        # interpolate zsmax to dep grid
-        if isinstance(zsmax, xr.DataArray):
-            zsmax = zsmax.raster.reproject_like(dep, method=reproj_method)
-        elif isinstance(zsmax, xu.UgridDataArray):
-            # if non-rotated grid, use xugrid rasterize_like
-            if dep.raster.transform[1] == 0 and dep.raster.transform[3] == 0:
-                zsmax = zsmax.ugrid.rasterize_like(dep)
-            # if rotated grid, use xugrid regridder
-            else:
-                # need to convert dep to unstructured to enable xugrid regridder
-                uda_dep = xu.UgridDataArray.from_structured2d(dep, "xc", "yc")
-                regridder = xu.CentroidLocatorRegridder(source=zsmax, target=uda_dep)
-                result = regridder.regrid(zsmax)
-                # map back to structured
-                zsmax = dep.copy(data=result.values.reshape(dep.shape))
-
-        zsmax = zsmax.raster.mask_nodata()  # make sure nodata is nan
-
-        # get flood depth
-        hmax = (zsmax - dep).astype("float32")
-        hmax.raster.set_nodata(np.nan)
-    else:
-        # make sure index is same shape as dep
-        if indices.shape != dep.shape:
-            raise ValueError(
-                "Indices shape {} does not match dep shape {}.".format(
-                    indices.shape, dep.shape
-                )
-            )
-
-        # Get the no_data value from the indices array
-        nan_val_indices = indices.raster.nodata  # indices.attrs["_FillValue"]
-        # Set the no_data mask
-        no_data_mask = indices == nan_val_indices
-
-        # Turn indices into numpy array and set no_data values to 0
-        indices = np.squeeze(indices.values[:])
-        indices[np.where(indices == nan_val_indices)] = 0
-
-        zsmax = zsmax.raster.mask_nodata()  # make sure nodata is nan
-
-        # Compute water depth
-        zs_numpy = zsmax.values[:].flatten()
-        h = zs_numpy[indices] - dep.values[:]
-
-        # Set water depth to NaN where indices are no data
-        h[no_data_mask] = np.nan
-
-        # Turn h into a DataArray with the same dimensions as zb
-        # ds = xr.Dataset()
-        hmax = xr.DataArray(h, dims=["y", "x"], coords={"y": dep.y, "x": dep.x})
-        hmax.raster.set_nodata(np.nan)
-        hmax.raster.set_crs(dep.raster.crs)
-
-    # mask floodmap
-    hmax = hmax.where(hmax > hmin)
-
-    if gdf_mask is not None:
-        mask = hmax.raster.geometry_mask(gdf_mask, all_touched=True)
-        hmax = hmax.where(mask)
-
-    return hmax
 
 
 def find_uv_indices(mask: xr.DataArray):
@@ -1150,91 +793,3 @@ def make_regular_grid_transform(
         )
 
     return transform, width, height
-
-
-def partition_quadtree(
-    quadtree: xu.UgridDataset,
-    partition_by_level: bool = True,
-    partition_in_blocks: bool = True,
-    nrmax: int = 2000,
-    logger=logger,
-):
-    """Partition a 2D unstructured grid into blocks.
-
-    Parameters
-    ----------
-    quadtree : xu.UgridDataset
-        Unstructured 2D grid.
-    partition_by_level : bool, optional
-        Partition by level, by default True
-    partition_in_blocks : bool, optional
-        Partition in blocks, by default False
-    nrmax : int, optional
-        Maximum number of cells per block, by default 2000
-
-    Returns
-    -------
-    Partitions : List[xu.UgridDataset]
-        List of partitiones, by levels, in spatial blocks, or both.
-    """
-
-    if partition_by_level:
-        if "level" not in quadtree:
-            raise ValueError("No 'level' attribute found in quadtree.")
-        partitions = quadtree.ugrid.partition_by_label(quadtree["level"] - 1)
-    else:
-        partitions = [quadtree]
-
-    partitions_new = []
-    if partition_in_blocks:
-        for level, partition in enumerate(partitions):
-            if len(partition.coords["mesh2d_nFaces"]) > 0:
-                logger.debug(
-                    f"Partition level {level} has {len(partition.coords['mesh2d_nFaces'])} faces: "
-                )
-
-                # approximate nr of cells in x and y direction based on resolution (to prevent too large datasets loaded in memory)
-                dx = partition.dx / (2**level)
-                dy = partition.dy / (2**level)
-                logger.debug(f"dx, dy:  {dx}, {dy}")
-                xmin, ymin, xmax, ymax = partition.ugrid.grid.bounds
-                nmax = int(np.ceil((ymax - ymin) / dy))
-                mmax = int(np.ceil((xmax - xmin) / dx))
-                logger.debug(f"mmax: {mmax}, nmax: {nmax}")
-
-                # check if partition is too large and split in smaller blocks
-                nrbn = int(np.ceil(nmax / nrmax))  # nr of blocks in n direction
-                nrbm = int(np.ceil(mmax / nrmax))  # nr of blocks in m direction
-
-                # if too large, split on spatial extent (so not the traditional partitions ...)
-                if nrbn > 1 or nrbm > 1:
-                    logger.debug(
-                        f"Partition level {level} is too large, splitting in {nrbn} x {nrbm} blocks"
-                    )
-                    # Create coordinate ranges for slicing
-                    x_edges = np.linspace(xmin, xmax, nrbm + 1)
-                    y_edges = np.linspace(ymin, ymax, nrbn + 1)
-                    # Generate all index pairs in a vectorized manner
-                    index_pairs = np.array(
-                        np.meshgrid(np.arange(nrbm), np.arange(nrbn))
-                    ).T.reshape(-1, 2)
-                    # Use a list comprehension with vectorized index pairs
-                    subsets = [
-                        partition.ugrid.sel(
-                            x=slice(x_edges[ii], x_edges[ii + 1]),
-                            y=slice(y_edges[jj], y_edges[jj + 1]),
-                        )
-                        for ii, jj in index_pairs
-                    ]
-                    for subset in subsets:
-                        if len(subset.coords["mesh2d_nFaces"]) > 0:
-                            # subset.level = level
-                            partitions_new.append(subset)
-                else:
-                    # partition.level = level
-                    partitions_new.append(partition)
-
-    if len(partitions_new) > 0:
-        return partitions_new
-    else:
-        return partitions
