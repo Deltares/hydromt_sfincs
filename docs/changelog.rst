@@ -61,6 +61,7 @@ Changed
 - some minor quadtree enhancements for missing and interpolating data (#352)
 - refactored config system: reorganized variables, improved keyword persistence logic, downgraded invalid keyword errors to warnings (#368)
 - ``downscale_floodmap`` is now a pure downscaler: the dilation and velocity-head adjustments are applied beforehand by calling ``adjust_zsmax_dilation`` / ``adjust_zsmax_energyhead`` on ``zsmax`` directly, instead of via the ``dilation`` / ``energy_flux`` kwargs.
+- moved readers and writers from utils.py to dedicated readers.py and writers.py modules
 
 Removed
 -------
