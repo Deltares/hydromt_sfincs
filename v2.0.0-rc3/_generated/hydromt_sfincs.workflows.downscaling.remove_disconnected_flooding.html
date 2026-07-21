@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>hydromt_sfincs.utils.downscale_floodmap &#8212; HydroMT SFINCS  documentation</title>
+    <title>hydromt_sfincs.workflows.downscaling.remove_disconnected_flooding &#8212; HydroMT SFINCS  documentation</title>
   
   
   
@@ -27,8 +27,8 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=a95f357e85573c9b56d5" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=a95f357e85573c9b56d5" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/autodoc_pydantic.css" />
@@ -36,19 +36,19 @@
     <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css?v=a3fd7a5a" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="../_static/scripts/fontawesome.js?digest=a95f357e85573c9b56d5"></script>
+  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=a95f357e85573c9b56d5" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=a95f357e85573c9b56d5" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.utils.downscale_floodmap';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.workflows.downscaling.remove_disconnected_flooding';</script>
     <script>
-        DOCUMENTATION_OPTIONS.theme_version = '0.19.0';
+        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
         DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0-r';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
@@ -58,8 +58,8 @@
     <link rel="icon" href="../_static/hydromt-icon.svg"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hydromt_sfincs.workflows.downscale_floodmap_webmercator" href="hydromt_sfincs.workflows.downscale_floodmap_webmercator.html" />
-    <link rel="prev" title="hydromt_sfincs.plots.plot_forcing" href="hydromt_sfincs.plots.plot_forcing.html" />
+    <link rel="next" title="hydromt_sfincs.workflows.downscaling.make_index_cog" href="hydromt_sfincs.workflows.downscaling.make_index_cog.html" />
+    <link rel="prev" title="hydromt_sfincs.workflows.downscaling.adjust_zsmax_energyhead" href="hydromt_sfincs.workflows.downscaling.adjust_zsmax_energyhead.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="2.0.0-rc3" />
@@ -372,7 +372,8 @@
   </div>
   
     <div class="sidebar-primary-items__start sidebar-primary__section">
-        <div class="sidebar-primary-item pst-sidebar-collapse"><button id="pst-collapse-sidebar-button" aria-expanded="true" aria-controls="pst-primary-sidebar"><svg class="pst-icon svg-inline--fa" role="img" aria-hidden="true" focusable="false" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <div class="sidebar-primary-item pst-sidebar-collapse"><button id="pst-collapse-sidebar-button" aria-expanded="true" aria-controls="pst-primary-sidebar">
+  <svg class="pst-icon" role="img" aria-hidden="true" focusable="false" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
     <path fill="currentColor" d="M3 15.5C2.36232 15.5 1.74874 15.2564 1.28478 14.8189C0.820828 14.3815 0.541576 13.7832 0.504167 13.1467L0.5 13L0.5 3C0.499965 2.36232 0.743605 1.74874 1.18107 1.28478C1.61854 0.820828 2.21676 0.541576 2.85333 0.504167L3 0.5L13 0.5C13.6377 0.499965 14.2513 0.743605 14.7152 1.18107C15.1792 1.61854 15.4584 2.21676 15.4958 2.85333L15.5 3L15.5 13C15.5 13.6377 15.2564 14.2513 14.8189 14.7152C14.3815 15.1792 13.7832 15.4584 13.1467 15.4958L13 15.5L3 15.5ZM3 13.8333L10.5 13.8333L10.5 2.16667L3 2.16667C2.79589 2.16669 2.59889 2.24163 2.44636 2.37726C2.29383 2.5129 2.19638 2.69979 2.1725 2.9025L2.16667 3L2.16667 13C2.16669 13.2041 2.24163 13.4011 2.37726 13.5536C2.5129 13.7062 2.69979 13.8036 2.9025 13.8275L3 13.8333ZM6.65583 10.325L6.5775 10.2558L4.91083 8.58917C4.76735 8.44567 4.68116 8.25476 4.66843 8.05223C4.65569 7.84971 4.71729 7.6495 4.84167 7.48917L4.91083 7.41083L6.5775 5.74417C6.72747 5.59471 6.9287 5.50794 7.14032 5.50148C7.35194 5.49502 7.55809 5.56935 7.7169 5.70937C7.8757 5.8494 7.97525 6.04463 7.99533 6.25539C8.01541 6.46616 7.95451 6.67667 7.825 6.84417L7.75583 6.9225L6.67917 8L7.75583 9.0775C7.89931 9.22099 7.98551 9.41191 7.99824 9.61443C8.01097 9.81695 7.94938 10.0172 7.825 10.1775L7.75583 10.2558C7.61234 10.3993 7.42142 10.4855 7.2189 10.4982C7.01638 10.511 6.81617 10.4494 6.65583 10.325Z"/>
   </svg>
   <span class="pst-collapse-sidebar-label">Collapse Sidebar</span>
@@ -521,6 +522,14 @@
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.cn_to_s.html">hydromt_sfincs.workflows.cn_to_s</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.create_topobathy_tiles.html">hydromt_sfincs.workflows.create_topobathy_tiles</a></li>
 </ul>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscaling.downscale_floodmap.html">hydromt_sfincs.workflows.downscaling.downscale_floodmap</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscaling.adjust_zsmax_dilation.html">hydromt_sfincs.workflows.downscaling.adjust_zsmax_dilation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscaling.adjust_zsmax_energyhead.html">hydromt_sfincs.workflows.downscaling.adjust_zsmax_energyhead</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.workflows.downscaling.remove_disconnected_flooding</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscaling.make_index_cog.html">hydromt_sfincs.workflows.downscaling.make_index_cog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscale_floodmap_webmercator.html">hydromt_sfincs.workflows.downscale_floodmap_webmercator</a></li>
+</ul>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.readers.read_config.html">hydromt_sfincs.readers.read_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_binary_map.html">hydromt_sfincs.utils.read_binary_map</a></li>
@@ -552,11 +561,9 @@
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.mask2gdf.html">hydromt_sfincs.utils.mask2gdf</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.rotated_grid.html">hydromt_sfincs.utils.rotated_grid</a></li>
 </ul>
-<ul class="current nav bd-sidenav">
+<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.plots.plot_basemap.html">hydromt_sfincs.plots.plot_basemap</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.plots.plot_forcing.html">hydromt_sfincs.plots.plot_forcing</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.utils.downscale_floodmap</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscale_floodmap_webmercator.html">hydromt_sfincs.workflows.downscale_floodmap_webmercator</a></li>
 </ul>
 </div>
 </nav></div>
@@ -600,7 +607,7 @@
     
     <li class="breadcrumb-item"><a href="../api/api.html" class="nav-link">API</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">hydromt_sfincs.utils.downscale_floodmap</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">hydromt_sfincs.workflows.downscaling.remove_disconnected_flooding</span></li>
   </ul>
 </nav>
 </div>
@@ -617,46 +624,38 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="hydromt-sfincs-utils-downscale-floodmap">
-<h1>hydromt_sfincs.utils.downscale_floodmap<a class="headerlink" href="#hydromt-sfincs-utils-downscale-floodmap" title="Link to this heading">#</a></h1>
+  <section id="hydromt-sfincs-workflows-downscaling-remove-disconnected-flooding">
+<h1>hydromt_sfincs.workflows.downscaling.remove_disconnected_flooding<a class="headerlink" href="#hydromt-sfincs-workflows-downscaling-remove-disconnected-flooding" title="Link to this heading">#</a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="hydromt_sfincs.utils.downscale_floodmap">
-<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.utils.</span></span><span class="sig-name descname"><span class="pre">downscale_floodmap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">zsmax:</span> <span class="pre">~xarray.core.dataarray.DataArray</span> <span class="pre">|</span> <span class="pre">~xugrid.core.wrap.UgridDataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dep:</span> <span class="pre">~pathlib.Path</span> <span class="pre">|</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">~xarray.core.dataarray.DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices:</span> <span class="pre">~pathlib.Path</span> <span class="pre">|</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">~xarray.core.dataarray.DataArray</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hmin:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gdf_mask:</span> <span class="pre">~geopandas.geodataframe.GeoDataFrame</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">floodmap_fn:</span> <span class="pre">~pathlib.Path</span> <span class="pre">|</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reproj_method:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'nearest'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom_level:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">tuple</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nrmax:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">2000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger=&lt;Logger</span> <span class="pre">hydromt.hydromt_sfincs.utils</span> <span class="pre">(WARNING)&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/utils.html#downscale_floodmap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.utils.downscale_floodmap" title="Link to this definition">#</a></dt>
-<dd><p>Create a downscaled floodmap for (model) region.</p>
+<dt class="sig sig-object py" id="hydromt_sfincs.workflows.downscaling.remove_disconnected_flooding">
+<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.workflows.downscaling.</span></span><span class="sig-name descname"><span class="pre">remove_disconnected_flooding</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">depth_fn:</span> <span class="pre">~pathlib.Path</span> <span class="pre">|</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bnd_fn:</span> <span class="pre">~pathlib.Path</span> <span class="pre">|</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hmin:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">0.02</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connection_fn:</span> <span class="pre">~pathlib.Path</span> <span class="pre">|</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_fns:</span> <span class="pre">dict</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger=&lt;Logger</span> <span class="pre">hydromt.hydromt_sfincs.workflows.downscaling</span> <span class="pre">(WARNING)&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/workflows/downscaling.html#remove_disconnected_flooding"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.workflows.downscaling.remove_disconnected_flooding" title="Link to this definition">#</a></dt>
+<dd><p>Remove disconnected flooding from a downscaled depth raster.</p>
+<p>Identifies wet pixels reachable from SFINCS boundary points via BFS
+flood-fill (8-connectivity), then masks pixels that are wet but
+unreachable.  Removes the need for a manually drawn source polygon.</p>
+<p>Uses a vectorised level-set BFS instead of <code class="docutils literal notranslate"><span class="pre">scipy.ndimage.label</span></code>
+to avoid allocating a full int64 label array, which can exceed
+available memory for large high-resolution domains.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>zsmax</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">xr.DataArray</span></code>) – Maximum water level (m). When multiple timesteps provided, maximum over all timesteps is used.</p></li>
-<li><p><strong>dep</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">xr.DataArray</span></code>) – High-resolution DEM (m) of model region:
-* If a Path or str is provided, the DEM is read from disk and the floodmap
-is written to disk (recommened for datasets that do not fit in memory.)
-* If a xr.DataArray is provided, the floodmap is returned as xr.DataArray
-and only written to disk when floodmap_fn is provided.</p></li>
-<li><p><strong>indices</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">xr.DataArray</span></code>, <em>optional</em>) – Indices of the corresponding SFINCS cells to the DEM cells.</p></li>
-<li><p><strong>hmin</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – Minimum water depth (m) to be considered as “flooded”, by default 0.05</p></li>
-<li><p><strong>gdf_mask</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">gpd.GeoDataFrame</span></code>, <em>optional</em>) – Geodataframe with polygons to mask floodmap, example containing the landarea, by default None
-Note that the area outside the polygons is set to nodata.</p></li>
-<li><p><strong>floodmap_fn</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[Path</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str]</span></code>, <em>optional</em>) – Name (path) of output floodmap, by default None. If provided, the floodmap is written to disk.</p></li>
-<li><p><strong>reproj_method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <em>optional</em>) – Reprojection method for downscaling the water levels, by default “nearest”.
-Other option is “bilinear”.</p></li>
-<li><p><strong>zoom_level</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>, <em>optional</em>) – Overview level of the raster dataset (0 is highest resolution), if present.
-Using a tuple the zoom level can be specified as (&lt;zoom_resolution&gt;, &lt;unit&gt;), e.g., (1000, ‘meter’)
-Note, this only works when dep is a Path or str.</p></li>
-<li><p><strong>nrmax</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <em>optional</em>) – Maximum number of cells per block, by default 2000. These blocks are used to prevent memory issues.</p></li>
-<li><p><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>, <em>optional</em>) – Additional keyword arguments passed to <cite>RasterDataArray.to_raster</cite>.</p></li>
+<li><p><strong>depth_fn</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Path to the downscaled flood-depth GeoTIFF.</p></li>
+<li><p><strong>bnd_fn</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Path to the SFINCS boundary point file (<code class="docutils literal notranslate"><span class="pre">sfincs.bnd</span></code>).
+Each point marks a location where water enters the domain.</p></li>
+<li><p><strong>hmin</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – Minimum water depth (m) to be considered wet, by default 0.02.</p></li>
+<li><p><strong>connection_fn</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <em>optional</em>) – If provided, a connection-mask GeoTIFF is written here with values:
+0 = dry, 1 = connected to boundary, 2 = disconnected (wet but
+unreachable from any boundary point).</p></li>
+<li><p><strong>output_fns</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>, <em>optional</em>) – Dictionary of <code class="docutils literal notranslate"><span class="pre">{input_fn:</span> <span class="pre">output_fn}</span></code> pairs.  For each pair the
+input raster is read, pixels where <code class="docutils literal notranslate"><span class="pre">connection</span> <span class="pre">!=</span> <span class="pre">1</span></code> are set to
+NaN, and the result is written to <em>output_fn</em>.</p></li>
+<li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">logging.Logger</span></code></a>, <em>optional</em>) – Logger instance.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>hmax</strong> – Downscaled and masked floodmap.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">xr.Dataset</span></code></p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
 </dd>
 </dl>
-<div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">hydromt.raster.RasterDataArray.to_raster</span></code></p>
-</div>
 </dd></dl>
 
 </section>
@@ -672,20 +671,20 @@ Note, this only works when dep is a Path or str.</p></li>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="hydromt_sfincs.plots.plot_forcing.html"
+       href="hydromt_sfincs.workflows.downscaling.adjust_zsmax_energyhead.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">hydromt_sfincs.plots.plot_forcing</p>
+        <p class="prev-next-title">hydromt_sfincs.workflows.downscaling.adjust_zsmax_energyhead</p>
       </div>
     </a>
     <a class="right-next"
-       href="hydromt_sfincs.workflows.downscale_floodmap_webmercator.html"
+       href="hydromt_sfincs.workflows.downscaling.make_index_cog.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">hydromt_sfincs.workflows.downscale_floodmap_webmercator</p>
+        <p class="prev-next-title">hydromt_sfincs.workflows.downscaling.make_index_cog</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -728,7 +727,7 @@ Note, this only works when dep is a Path or str.</p></li>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.utils.downscale_floodmap"><code class="docutils literal notranslate"><span class="pre">downscale_floodmap()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.workflows.downscaling.remove_disconnected_flooding"><code class="docutils literal notranslate"><span class="pre">remove_disconnected_flooding()</span></code></a></li>
 </ul>
   </nav></div>
 
@@ -745,8 +744,8 @@ Note, this only works when dep is a Path or str.</p></li>
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=a95f357e85573c9b56d5"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=a95f357e85573c9b56d5"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -780,7 +779,7 @@ Note, this only works when dep is a Path or str.</p></li>
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.19.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
 </p></div>
       
     </div>
