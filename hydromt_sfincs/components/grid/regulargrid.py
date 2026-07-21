@@ -13,6 +13,7 @@ import xarray as xr
 from affine import Affine
 from pyproj import CRS, Transformer
 from shapely.geometry import LineString
+from xugrid.core.wrap import UgridDataArray
 
 from hydromt import hydromt_step
 from hydromt.model.components import GridComponent
@@ -216,29 +217,14 @@ class SfincsGrid(GridComponent):
             ds.raster.set_crs(epsg)
         self.set(ds)
 
-        # # TODO - fix this properly; but to create overlays in GUIs,
-        # # we always convert regular grids to a UgridDataArray
-        # self.quadtree = QuadtreeGrid(logger=logger)
-        # if self.config.get("rotation", 0) != 0:  # This is a rotated regular grid
-        #     self.quadtree.data = UgridDataArray.from_structured(
-        #         self.mask, "xc", "yc"
-        #     )
-        # else:
-        #     self.quadtree.data = UgridDataArray.from_structured(self.mask)
-        # self.quadtree.data.grid.set_crs(self.crs)
-
-        # keep some metadata maps from gis directory
-
-        # fns = glob.glob(join(self.root, "gis", "*.tif"))
-        # fns = [
-        #     fn
-        #     for fn in fns
-        #     if basename(fn).split(".")[0] not in self.grid.data_vars
-        # ]
-        # if fns:
-        #     ds = hydromt.open_mfraster(fns).load()
-        #     self.set_grid(ds)
-        #     ds.close()
+        # we always convert regular grids to a UgridDataArray to be able to use the grid_snapper
+        if self.model.config.get("rotation", 0) != 0:
+            self.model.quadtree_grid._data = UgridDataArray.from_structured2d(
+                self.mask, "xc", "yc"
+            )
+        else:
+            self.model.quadtree_grid._data = UgridDataArray.from_structured2d(self.mask)
+        self.model.quadtree_grid.data.grid.set_crs(self.crs)
 
     def write(
         self,
