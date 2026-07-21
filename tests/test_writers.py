@@ -1,17 +1,22 @@
+from os.path import join
 from pathlib import Path
 
+import geopandas as gpd
 import numpy as np
 import pytest
+from shapely.geometry import Point
 
 from hydromt_sfincs.readers import (
     read_binary_map,
     read_binary_map_index,
     read_geoms,
+    read_xyn,
 )
 from hydromt_sfincs.writers import (
     write_binary_map,
     write_binary_map_index,
     write_geoms,
+    write_xyn,
 )
 
 from .conftest import TESTMODELDIR
@@ -58,3 +63,21 @@ def test_write_geoms_errors():
     # Assert the error while writing
     with pytest.raises(ValueError, match='"elevation" value missing'):
         write_geoms("fail", [g], stype="weir")
+
+
+def test_write_xyn_drops_z_of_3d_points(tmp_dir):
+    """write_xyn must tolerate 3D (X, Y, Z) geometries from GIS by dropping Z."""
+
+    gdf = gpd.GeoDataFrame(
+        {"name": ["a", "b"]},
+        geometry=[Point(1.0, 2.0, 99.0), Point(3.0, 4.0, 88.0)],
+        crs=32633,
+    )
+    fn = join(tmp_dir, "sfincs.obs")
+    write_xyn(fn, gdf)  # must not raise on the Z coordinate
+    gdf_rt = read_xyn(fn)
+    assert len(gdf_rt) == 2
+    np.testing.assert_allclose(
+        [gdf_rt.geometry.x.tolist(), gdf_rt.geometry.y.tolist()],
+        [[1.0, 3.0], [2.0, 4.0]],
+    )
