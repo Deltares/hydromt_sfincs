@@ -20,7 +20,8 @@ import hydromt
 from hydromt.data_catalog.drivers import RasterioDriver
 from hydromt.gis.gis_utils import zoom_to_overview_level
 
-from hydromt_sfincs.utils import build_overviews, read_xy
+from hydromt_sfincs.utils import build_overviews
+from hydromt_sfincs.readers import read_xy
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
