@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>hydromt_sfincs.utils.read_xy &#8212; HydroMT SFINCS  documentation</title>
+    <title>hydromt_sfincs.writers.write_xy &#8212; HydroMT SFINCS  documentation</title>
   
   
   
@@ -46,7 +46,7 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.utils.read_xy';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.writers.write_xy';</script>
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
@@ -58,8 +58,8 @@
     <link rel="icon" href="../_static/hydromt-icon.svg"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hydromt_sfincs.utils.write_xy" href="hydromt_sfincs.utils.write_xy.html" />
-    <link rel="prev" title="hydromt_sfincs.utils.write_timeseries" href="hydromt_sfincs.utils.write_timeseries.html" />
+    <link rel="next" title="hydromt_sfincs.readers.read_xyn" href="hydromt_sfincs.readers.read_xyn.html" />
+    <link rel="prev" title="hydromt_sfincs.readers.read_xy" href="hydromt_sfincs.readers.read_xy.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="2.0.0-rc3" />
@@ -532,24 +532,24 @@
 </ul>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.readers.read_config.html">hydromt_sfincs.readers.read_config</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_binary_map.html">hydromt_sfincs.utils.read_binary_map</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.write_binary_map.html">hydromt_sfincs.utils.write_binary_map</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_binary_map_index.html">hydromt_sfincs.utils.read_binary_map_index</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.write_binary_map_index.html">hydromt_sfincs.utils.write_binary_map_index</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_ascii_map.html">hydromt_sfincs.utils.read_ascii_map</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.write_ascii_map.html">hydromt_sfincs.utils.write_ascii_map</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_timeseries.html">hydromt_sfincs.utils.read_timeseries</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.write_timeseries.html">hydromt_sfincs.utils.write_timeseries</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.utils.read_xy</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.write_xy.html">hydromt_sfincs.utils.write_xy</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_xyn.html">hydromt_sfincs.utils.read_xyn</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.write_xyn.html">hydromt_sfincs.utils.write_xyn</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_geoms.html">hydromt_sfincs.utils.read_geoms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.write_geoms.html">hydromt_sfincs.utils.write_geoms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_drn.html">hydromt_sfincs.utils.read_drn</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.write_drn.html">hydromt_sfincs.utils.write_drn</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_sfincs_map_results.html">hydromt_sfincs.utils.read_sfincs_map_results</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.read_sfincs_his_results.html">hydromt_sfincs.utils.read_sfincs_his_results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.readers.read_binary_map.html">hydromt_sfincs.readers.read_binary_map</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.writers.write_binary_map.html">hydromt_sfincs.writers.write_binary_map</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.readers.read_binary_map_index.html">hydromt_sfincs.readers.read_binary_map_index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.writers.write_binary_map_index.html">hydromt_sfincs.writers.write_binary_map_index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.readers.read_ascii_map.html">hydromt_sfincs.readers.read_ascii_map</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.writers.write_ascii_map.html">hydromt_sfincs.writers.write_ascii_map</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.readers.read_timeseries.html">hydromt_sfincs.readers.read_timeseries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.writers.write_timeseries.html">hydromt_sfincs.writers.write_timeseries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.readers.read_xy.html">hydromt_sfincs.readers.read_xy</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">hydromt_sfincs.writers.write_xy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.readers.read_xyn.html">hydromt_sfincs.readers.read_xyn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.writers.write_xyn.html">hydromt_sfincs.writers.write_xyn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.readers.read_geoms.html">hydromt_sfincs.readers.read_geoms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.writers.write_geoms.html">hydromt_sfincs.writers.write_geoms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.readers.read_drn.html">hydromt_sfincs.readers.read_drn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.writers.write_drn.html">hydromt_sfincs.writers.write_drn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.readers.read_sfincs_map_results.html">hydromt_sfincs.readers.read_sfincs_map_results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.readers.read_sfincs_his_results.html">hydromt_sfincs.readers.read_sfincs_his_results</a></li>
 </ul>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.utils.parse_datetime.html">hydromt_sfincs.utils.parse_datetime</a></li>
@@ -607,7 +607,7 @@
     
     <li class="breadcrumb-item"><a href="../api/api.html" class="nav-link">API</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">hydromt_sfincs.utils.read_xy</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">hydromt_sfincs.writers.write_xy</span></li>
   </ul>
 </nav>
 </div>
@@ -624,24 +624,19 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="hydromt-sfincs-utils-read-xy">
-<h1>hydromt_sfincs.utils.read_xy<a class="headerlink" href="#hydromt-sfincs-utils-read-xy" title="Link to this heading">#</a></h1>
+  <section id="hydromt-sfincs-writers-write-xy">
+<h1>hydromt_sfincs.writers.write_xy<a class="headerlink" href="#hydromt-sfincs-writers-write-xy" title="Link to this heading">#</a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="hydromt_sfincs.utils.read_xy">
-<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.utils.</span></span><span class="sig-name descname"><span class="pre">read_xy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">CRS</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v1.1.4)"><span class="pre">GeoDataFrame</span></a></span></span><a class="reference internal" href="../_modules/hydromt_sfincs/utils.html#read_xy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.utils.read_xy" title="Link to this definition">#</a></dt>
-<dd><p>Read sfincs xy files and parse to GeoDataFrame.</p>
+<dt class="sig sig-object py" id="hydromt_sfincs.writers.write_xy">
+<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.writers.</span></span><span class="sig-name descname"><span class="pre">write_xy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">gdf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'%.4f'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt/writers.html#write_xy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.writers.write_xy" title="Link to this definition">#</a></dt>
+<dd><p>Write geopandas.GeoDataFrame with Point geometries to point xy files.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code>) – Path to ascii xy file.</p></li>
-<li><p><strong>crs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">CRS</span></code>) – Coordinate reference system</p></li>
+<li><p><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> or <code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code>) – Path to the output file.</p></li>
+<li><p><strong>gdf</strong> (<a class="reference external" href="https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v1.1.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code></a>) – GeoDataFrame to write to point file.</p></li>
+<li><p><strong>fmt</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">fmt</span></code>) – String formatting. By default “%.4f”.</p></li>
 </ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>gdf</strong> – GeoDataFrame with point geomtries</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">gpd.GeoDataFrame</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -659,20 +654,20 @@
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="hydromt_sfincs.utils.write_timeseries.html"
+       href="hydromt_sfincs.readers.read_xy.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">hydromt_sfincs.utils.write_timeseries</p>
+        <p class="prev-next-title">hydromt_sfincs.readers.read_xy</p>
       </div>
     </a>
     <a class="right-next"
-       href="hydromt_sfincs.utils.write_xy.html"
+       href="hydromt_sfincs.readers.read_xyn.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">hydromt_sfincs.utils.write_xy</p>
+        <p class="prev-next-title">hydromt_sfincs.readers.read_xyn</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -715,7 +710,7 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.utils.read_xy"><code class="docutils literal notranslate"><span class="pre">read_xy()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.writers.write_xy"><code class="docutils literal notranslate"><span class="pre">write_xy()</span></code></a></li>
 </ul>
   </nav></div>
 

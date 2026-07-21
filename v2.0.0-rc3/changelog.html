@@ -457,24 +457,50 @@
 Distinction is made between new methods (Added), changes to existing methods (Changed), bugfixes (Fixed), deprecated methods (Deprecated) and removed methods (Removed).</p>
 <p>The format is based on <a class="reference external" href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>, and this project adheres to
 <a class="reference external" href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
-<section id="v2-0-0-rc3-22-5-2026">
-<h2>v2.0.0-rc3 (22-5-2026)<a class="headerlink" href="#v2-0-0-rc3-22-5-2026" title="Link to this heading">#</a></h2>
-<p><strong>This release contains minor bugfixes and improvements to the v2.0.0-rc2 release.</strong></p>
+<section id="v2-0-0-rc4-unreleased">
+<h2>v2.0.0-rc4 (unreleased)<a class="headerlink" href="#v2-0-0-rc4-unreleased" title="Link to this heading">#</a></h2>
+<p><strong>This release contains minor bugfixes and improvements to the v2.0.0-rc3 release.</strong></p>
 <section id="added">
 <h3>Added<a class="headerlink" href="#added" title="Link to this heading">#</a></h3>
 <ul class="simple">
-<li><p>introduced deepcopy so we can make a full copy of a model instance (#377)</p></li>
+<li><p>Added reusable pre-processing (<code class="docutils literal notranslate"><span class="pre">adjust_zsmax_dilation</span></code>, <code class="docutils literal notranslate"><span class="pre">adjust_zsmax_energyhead</span></code>) and post-processing (<code class="docutils literal notranslate"><span class="pre">remove_disconnected_flooding</span></code>) helpers as separate functions.</p></li>
+<li><p>Added optional argument to <code class="docutils literal notranslate"><span class="pre">elevation.create()</span></code> to skip extrapolation of the DEM (#392)</p></li>
 </ul>
 </section>
 <section id="fixed">
 <h3>Fixed<a class="headerlink" href="#fixed" title="Link to this heading">#</a></h3>
 <ul class="simple">
-<li><p>fixed visualization of the sfincs.nc-file in QGIS (#381)</p></li>
-<li><p>fixed writing observation points when they had 3D coodinates (#382)</p></li>
+<li><p>Fixed plot_basemap() for very flat and/or below-sea-level Models (#394)</p></li>
+<li><p>Fixed writing of infiltration layers in Quadtree models (#397)</p></li>
 </ul>
 </section>
 <section id="changed">
 <h3>Changed<a class="headerlink" href="#changed" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Moved the downscaling utilities from <code class="docutils literal notranslate"><span class="pre">hydromt_sfincs.utils</span></code> to a dedicated <code class="docutils literal notranslate"><span class="pre">hydromt_sfincs.workflows.downscaling</span></code> submodule (re-exported via <code class="docutils literal notranslate"><span class="pre">hydromt_sfincs.workflows</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">downscale_floodmap</span></code> is now parameterised by <code class="docutils literal notranslate"><span class="pre">reproj_method</span></code> (<code class="docutils literal notranslate"><span class="pre">nearest</span></code> or <code class="docutils literal notranslate"><span class="pre">bilinear</span></code>) and a <code class="docutils literal notranslate"><span class="pre">subtract_dem</span></code> flag (flood depth vs. raw water level), and works on both regular and quadtree grids.</p></li>
+<li><p>Moved readers and writers from <code class="docutils literal notranslate"><span class="pre">utils.py</span></code> to dedicated <code class="docutils literal notranslate"><span class="pre">readers.py</span></code> and <code class="docutils literal notranslate"><span class="pre">writers.py</span></code> modules (#390)</p></li>
+</ul>
+</section>
+</section>
+<section id="v2-0-0-rc3-22-5-2026">
+<h2>v2.0.0-rc3 (22-5-2026)<a class="headerlink" href="#v2-0-0-rc3-22-5-2026" title="Link to this heading">#</a></h2>
+<p><strong>This release contains minor bugfixes and improvements to the v2.0.0-rc2 release.</strong></p>
+<section id="id1">
+<h3>Added<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>introduced deepcopy so we can make a full copy of a model instance (#377)</p></li>
+</ul>
+</section>
+<section id="id2">
+<h3>Fixed<a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>fixed visualization of the sfincs.nc-file in QGIS (#381)</p></li>
+<li><p>fixed writing observation points when they had 3D coodinates (#382)</p></li>
+</ul>
+</section>
+<section id="id3">
+<h3>Changed<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>changed back default value of dtmapout to 3600 (was 0) in sfincs.inp ens (#378)</p></li>
 <li><p>dtout is now automatically renamed to dtmapout when writing sfincs.inp (#378)</p></li>
@@ -484,8 +510,8 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 <section id="v2-0-0-rc2-16-4-2026">
 <h2>v2.0.0-rc2 (16-4-2026)<a class="headerlink" href="#v2-0-0-rc2-16-4-2026" title="Link to this heading">#</a></h2>
 <p><strong>This release contains minor bugfixes and improvements to the v2.0.0-rc1 release.</strong></p>
-<section id="id1">
-<h3>Added<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
+<section id="id4">
+<h3>Added<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>Added script to easily run SFINCS models from Python using local executable or docker (#312)</p></li>
 <li><p>Added the option to visualize the grid in the plot_basemap method (#312)</p></li>
@@ -494,13 +520,10 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 <li><p>added back the option to create discharge forcing from a grid (previously named <cite>setup_discharge_forcing_from_grid</cite>) (#358)</p></li>
 <li><p>add runup gauges geometry component (#366)</p></li>
 <li><p>platform aware launcher script (exe_path + write_batch_file) (#367)</p></li>
-<li><p>Moved the downscaling utilities from <code class="docutils literal notranslate"><span class="pre">hydromt_sfincs.utils</span></code> to a dedicated <code class="docutils literal notranslate"><span class="pre">hydromt_sfincs.workflows.downscaling</span></code> submodule (re-exported via <code class="docutils literal notranslate"><span class="pre">hydromt_sfincs.workflows</span></code>).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">downscale_floodmap</span></code> is now parameterised by <code class="docutils literal notranslate"><span class="pre">reproj_method</span></code> (<code class="docutils literal notranslate"><span class="pre">nearest</span></code> or <code class="docutils literal notranslate"><span class="pre">bilinear</span></code>) and a <code class="docutils literal notranslate"><span class="pre">subtract_dem</span></code> flag (flood depth vs. raw water level), and works on both regular and quadtree grids.</p></li>
-<li><p>Added reusable pre-processing (<code class="docutils literal notranslate"><span class="pre">adjust_zsmax_dilation</span></code>, <code class="docutils literal notranslate"><span class="pre">adjust_zsmax_energyhead</span></code>) and post-processing (<code class="docutils literal notranslate"><span class="pre">remove_disconnected_flooding</span></code>) helpers as separate functions.</p></li>
 </ul>
 </section>
-<section id="id2">
-<h3>Fixed<a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
+<section id="id5">
+<h3>Fixed<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>fixed setting up SFINCS with geographical grid (#307)</p></li>
 <li><p>parentheses appeared in the drnfile causing the kernel to crash (#308)</p></li>
@@ -512,19 +535,12 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 <li><p>fixed errors that were introduced by pandas releases ≥ 3.0.0 (#371)</p></li>
 </ul>
 </section>
-<section id="id3">
-<h3>Changed<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
+<section id="id6">
+<h3>Changed<a class="headerlink" href="#id6" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>convert multipolygon into polygons and improve logging for creation of masks (#319)</p></li>
 <li><p>some minor quadtree enhancements for missing and interpolating data (#352)</p></li>
 <li><p>refactored config system: reorganized variables, improved keyword persistence logic, downgraded invalid keyword errors to warnings (#368)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">downscale_floodmap</span></code> is now a pure downscaler: the dilation and velocity-head adjustments are applied beforehand by calling <code class="docutils literal notranslate"><span class="pre">adjust_zsmax_dilation</span></code> / <code class="docutils literal notranslate"><span class="pre">adjust_zsmax_energyhead</span></code> on <code class="docutils literal notranslate"><span class="pre">zsmax</span></code> directly, instead of via the <code class="docutils literal notranslate"><span class="pre">dilation</span></code> / <code class="docutils literal notranslate"><span class="pre">energy_flux</span></code> kwargs.</p></li>
-</ul>
-</section>
-<section id="removed">
-<h3>Removed<a class="headerlink" href="#removed" title="Link to this heading">#</a></h3>
-<ul class="simple">
-<li><p>Removed the <code class="docutils literal notranslate"><span class="pre">dilation</span></code>, <code class="docutils literal notranslate"><span class="pre">energy_flux</span></code>, <code class="docutils literal notranslate"><span class="pre">qmax</span></code>, <code class="docutils literal notranslate"><span class="pre">zb</span></code>, <code class="docutils literal notranslate"><span class="pre">q_threshold</span></code>, <code class="docutils literal notranslate"><span class="pre">q_scale</span></code> and <code class="docutils literal notranslate"><span class="pre">reproj_method</span></code> kwargs from <code class="docutils literal notranslate"><span class="pre">downscale_floodmap</span></code> (the resampling now follows from <code class="docutils literal notranslate"><span class="pre">method</span></code>), together with the bilinear-only upstream-energy-propagation feature. The per-cell velocity head remains available via <code class="docutils literal notranslate"><span class="pre">adjust_zsmax_energyhead</span></code>.</p></li>
 </ul>
 </section>
 </section>
@@ -538,22 +554,22 @@ For users new to the package, we recommend to start with the <a class="reference
 <section id="v1-2-1-31-7-2025">
 <h2>v1.2.1 (31-7-2025)<a class="headerlink" href="#v1-2-1-31-7-2025" title="Link to this heading">#</a></h2>
 <p><strong>This release contains some minor bugfixes and updates, which are mostly relevant for users of FloodAdapt in combination with Quadtree models.</strong></p>
-<section id="id4">
-<h3>Added<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
+<section id="id7">
+<h3>Added<a class="headerlink" href="#id7" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>introduced setup_storage_volume for existing quadtree models for FloodAdapt (#260)</p></li>
 <li><p>add creation of cloud-optimized-geotiffs with indices and optimize downscale_floodmap accordingly (#263)</p></li>
 </ul>
 </section>
-<section id="id5">
-<h3>Fixed<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
+<section id="id8">
+<h3>Fixed<a class="headerlink" href="#id8" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>fix reading/writing of wnd-file where the direction column got ignored, including updated tests (#262)</p></li>
 <li><p>removed instable behavior of np.size() for .size (#264)</p></li>
 </ul>
 </section>
-<section id="id6">
-<h3>Changed<a class="headerlink" href="#id6" title="Link to this heading">#</a></h3>
+<section id="id9">
+<h3>Changed<a class="headerlink" href="#id9" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>always rename x and y dimensions into x,y (so no lat lon etc) to match SFINCS conventions of netcdf meteo forcing (#263)</p></li>
 </ul>
@@ -564,16 +580,16 @@ For users new to the package, we recommend to start with the <a class="reference
 <p><strong>This release contains new functionality on reading/writing quadtree models and some minor bugfixes and updates.
 It is strongly recommended to use this version in combination with
 `SFINCS versions ≥ 2.2.0 &lt;https://github.com/Deltares/SFINCS/releases/tag/v2.2.0_col_dEze_release&gt;`.</strong></p>
-<section id="id7">
-<h3>Added<a class="headerlink" href="#id7" title="Link to this heading">#</a></h3>
+<section id="id10">
+<h3>Added<a class="headerlink" href="#id10" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>added reading/writing of quadtree models, but NOT building them from scratch (#226)</p></li>
 <li><p>added a “factor_ksat” to <cite>SfincsModel.setup_cn_infiltration_with_ks</cite> to change the units of the saturated hydraulic conductivity (#227)</p></li>
 <li><p>added the option to provide cumulative precipitation [mm] instead of precipitation rates [mm/hr] to <cite>SfincsModel.setup_precip_forcing_from_grid</cite> (#255)</p></li>
 </ul>
 </section>
-<section id="id8">
-<h3>Changed<a class="headerlink" href="#id8" title="Link to this heading">#</a></h3>
+<section id="id11">
+<h3>Changed<a class="headerlink" href="#id11" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>nr_subgrid_pixels in <cite>SfincsModel.setup_subgrid</cite> can only be a multiple of 2 (#225)</p></li>
 <li><p>provide decent warning when all waterlevel boundary points are outside of region+buffer (#237)</p></li>
@@ -582,8 +598,8 @@ It is strongly recommended to use this version in combination with
 <li><p>changed the way <cite>SfincsModel.setup_precip_forcing_from_grid</cite> deals with cumulative precipitation inputs (#255)</p></li>
 </ul>
 </section>
-<section id="id9">
-<h3>Fixed<a class="headerlink" href="#id9" title="Link to this heading">#</a></h3>
+<section id="id12">
+<h3>Fixed<a class="headerlink" href="#id12" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>fixed a bug in <cite>river_centerline_from_hydrography</cite> in case there is only one river with a single segment (#215)</p></li>
 <li><p>clean the grid variables when recreating the grid (#220)</p></li>
@@ -602,8 +618,8 @@ It is strongly recommended to use this version in combination with
 <p>The most important change is the implementation of a new subgrid methodology including wet fraction as in Van Ormondt et al. (2024, in review),
 which is now written as a NetCDF file! The old implementation is still available when providing the original binary file, but then all wet fractions are assumed to be 1.</p>
 <p>Next to this, some minor additions and bugfixes are made that improve the overall functionality of the package.</p>
-<section id="id10">
-<h3>Added<a class="headerlink" href="#id10" title="Link to this heading">#</a></h3>
+<section id="id13">
+<h3>Added<a class="headerlink" href="#id13" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>improved subgrid tables that account for the wet fraction of the cell (#160)</p></li>
 <li><p>add source points at headwater locations with <cite>SfincsModel.setup_river_inflow</cite> (#170)</p></li>
@@ -611,8 +627,8 @@ which is now written as a NetCDF file! The old implementation is still available
 <li><p>river bed levels for burn-in can now be provided at point locations in <cite>SfincsModel.setup_subgrid</cite> (#209)</p></li>
 </ul>
 </section>
-<section id="id11">
-<h3>Changed<a class="headerlink" href="#id11" title="Link to this heading">#</a></h3>
+<section id="id14">
+<h3>Changed<a class="headerlink" href="#id14" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>improved subgrid tables are saved as NetCDF (#160)</p></li>
 <li><p>improved weighting of adjacent cells in u/v points for determining representative Manning roughness and conveyance depth (#200)</p></li>
@@ -622,8 +638,8 @@ model boundary, the confluence rather than both tributaries is selected as inflo
 <li><p>the expected variable names for wind and pressure forcing have been changed to “wind10_u”, “wind10_v” and “press_msl” to match hydromt-core conventions (#211)</p></li>
 </ul>
 </section>
-<section id="id12">
-<h3>Fixed<a class="headerlink" href="#id12" title="Link to this heading">#</a></h3>
+<section id="id15">
+<h3>Fixed<a class="headerlink" href="#id15" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>rounding errors in <cite>workflows.tile_window</cite> which resulted in erronuous slippy-tiles (#178)</p></li>
 <li><p>“active geometry column to use has not been set” error for GeoDataFrame (#180)</p></li>
@@ -635,16 +651,16 @@ model boundary, the confluence rather than both tributaries is selected as inflo
 <h2>v1.0.3 (3 January 2024)<a class="headerlink" href="#v1-0-3-3-january-2024" title="Link to this heading">#</a></h2>
 <p>This release contains several changes and fixes. Most notably, models with a geographical CRS can now be build.
 Also note the changes in the default values in the sfincs.inp file.</p>
-<section id="id13">
-<h3>Changed<a class="headerlink" href="#id13" title="Link to this heading">#</a></h3>
+<section id="id16">
+<h3>Changed<a class="headerlink" href="#id16" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>support for HydroMT core v0.9</p></li>
 <li><p>changed default value of dtmaxout to 86400 (was 99999.0) and for advection to 1 (instead of non-existing 2) in sfincs.inp (#156)</p></li>
 <li><p>support for filtering forcing data from timeseries and locations based on model region (#162)</p></li>
 </ul>
 </section>
-<section id="id14">
-<h3>Fixed<a class="headerlink" href="#id14" title="Link to this heading">#</a></h3>
+<section id="id17">
+<h3>Fixed<a class="headerlink" href="#id17" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>fixed <cite>SfincsModel.setup_subgrid</cite> for models with geograpgical CRS (#152)</p></li>
 <li><p>fixed masking of elevation and manning datasets when providing mask attribute (#153)</p></li>
@@ -658,23 +674,23 @@ Also note the changes in the default values in the sfincs.inp file.</p>
 <p>This release mostly contains bugfixes and improvements to existing methods. Some new features have been added as well,
 such as the option to add storage volume to the model to account for green infrastructure. Another addition is the
 generation of overviews for the Cloud Optimized GeoTIFF files for faster visualization.</p>
-<section id="id15">
-<h3>Added<a class="headerlink" href="#id15" title="Link to this heading">#</a></h3>
+<section id="id18">
+<h3>Added<a class="headerlink" href="#id18" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><cite>SfincsModel.setup_storage_volume</cite> to account for green-infrastructure PR #101</p></li>
 <li><p>Added reverse_river_geom keyword argument in workflows.river_boundary_points #PR 136</p></li>
 <li><p>the COG files that are written automatically contain overviews for faster visualization PR #144</p></li>
 </ul>
 </section>
-<section id="id16">
-<h3>Changed<a class="headerlink" href="#id16" title="Link to this heading">#</a></h3>
+<section id="id19">
+<h3>Changed<a class="headerlink" href="#id19" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>Changed <cite>setup_cn_infiltration_with_kr</cite> into <cite>setup_cn_infiltration_with_ks</cite> since saturated hydraulic conductivity (ks) is used instead of recovery rate (kr) PR #126</p></li>
 <li><p>precision of coordinates in geoms and forcing now depends on CRS (geographic or not) PR #143</p></li>
 </ul>
 </section>
-<section id="id17">
-<h3>Fixed<a class="headerlink" href="#id17" title="Link to this heading">#</a></h3>
+<section id="id20">
+<h3>Fixed<a class="headerlink" href="#id20" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>writing COG files in <cite>SfincsModel.setup_subgrid</cite> (the COG driver settings were wrong) PR #117</p></li>
 <li><p>a constant offset in the <cite>datasets_dep</cite> argument to <cite>SfincsModel.setup_subgrid</cite> and <cite>SfincsModel.setup_dep</cite> was ignored PR #119</p></li>
@@ -692,8 +708,8 @@ generation of overviews for the Cloud Optimized GeoTIFF files for faster visuali
 <p>This release contains several new features, such as burning in river bathymetry into the subgrid, setting up drainage structures and adding wind and pressure forcing.
 It also contains several bugfixes and improvements to existing methods.
 It is recommended to use this release together with the latest version of the <a class="reference external" href="https://github.com/Deltares/SFINCS/releases/tag/v2.0.2_Blockhaus_release">SFINCS model</a>.</p>
-<section id="id18">
-<h3>Added<a class="headerlink" href="#id18" title="Link to this heading">#</a></h3>
+<section id="id21">
+<h3>Added<a class="headerlink" href="#id21" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><cite>SfincsModel.setup_cn_infiltration_with_kr</cite> to setup three layers related to the curve number
 (maximum and effective infiltration capacity; seff and smax) and recovery rate (kr) PR #87</p></li>
@@ -702,8 +718,8 @@ It is recommended to use this release together with the latest version of the <a
 <li><p><cite>SfincsModel.setup_observation_lines</cite> to setup model observation lines (cross-sections) to monitor discharges. PR #114</p></li>
 </ul>
 </section>
-<section id="id19">
-<h3>Changed<a class="headerlink" href="#id19" title="Link to this heading">#</a></h3>
+<section id="id22">
+<h3>Changed<a class="headerlink" href="#id22" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><cite>SfincsModel.setup_subgrid</cite> now supports the ‘riv_datasets’ to burn in river bathymetry into the subgrid. PR #84</p></li>
 <li><p><cite>SfincsModel.setup_mask_active</cite> argument reset_mask default to True PR #94</p></li>
@@ -716,8 +732,8 @@ It is recommended to use this release together with the latest version of the <a
 <li><p>hydromt_data.yml is written to the model root directory with used data sources.</p></li>
 </ul>
 </section>
-<section id="id20">
-<h3>Fixed<a class="headerlink" href="#id20" title="Link to this heading">#</a></h3>
+<section id="id23">
+<h3>Fixed<a class="headerlink" href="#id23" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>bugfix in <cite>SfincsModel.write_forcing</cite> to ensure all NetCDF files are written instead of only the first one. PR #86</p></li>
 <li><p>bugfix in <cite>SfincsModel.read_config</cite> &amp; <cite>SfincsInput.read</cite> for relative paths in inp file. PR #88</p></li>
@@ -727,8 +743,8 @@ It is recommended to use this release together with the latest version of the <a
 <li><p>bugfix in <cite>SfincsModel.setup_discharge_from_grid</cite> when snapping based on upstream area in case a src points is outside of the uparea grid domain. PR #99</p></li>
 </ul>
 </section>
-<section id="id21">
-<h3>Removed<a class="headerlink" href="#id21" title="Link to this heading">#</a></h3>
+<section id="removed">
+<h3>Removed<a class="headerlink" href="#removed" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><cite>burn_river_zb</cite> and <cite>get_river_bathymetry</cite> workflow methods have been deprecated in favor of <cite>burn_river_rect</cite>. PR #84</p></li>
 </ul>
@@ -759,8 +775,8 @@ This method can now also be used to setup a bathymetry map from multiple sources
 <li><p><cite>setup_observation_points</cite> has replace <cite>setup_gauges</cite></p></li>
 </ul>
 </section>
-<section id="id22">
-<h3>Added<a class="headerlink" href="#id22" title="Link to this heading">#</a></h3>
+<section id="id24">
+<h3>Added<a class="headerlink" href="#id24" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><cite>setup_grid</cite> to setup a user-defined regular grid based coordinates, shape, rotation, etc.</p></li>
 <li><p><cite>setup_subgrid</cite> to setup subgrid tables (sbgfile) based on one ore more elevation and Manning roughness datasets</p></li>
@@ -769,8 +785,8 @@ This method can now also be used to setup a bathymetry map from multiple sources
 <li><p><cite>setup_tiles</cite> to create tiles of the model for fast visualization</p></li>
 </ul>
 </section>
-<section id="id23">
-<h3>Changed<a class="headerlink" href="#id23" title="Link to this heading">#</a></h3>
+<section id="id25">
+<h3>Changed<a class="headerlink" href="#id25" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><cite>setup_river_inflow</cite> and <cite>setup_river_outflow</cite> are now based river centerline data (which can be derivded from hydrography data).
 This is more robust compared to the previous method which was based on reprojected flow direction data.</p></li>
@@ -798,8 +814,8 @@ in the subgrid data will be added in to <cite>setup_subgrid</cite> a future rele
 </section>
 <section id="v0-2-1-23-february-2022">
 <h2>v0.2.1 (23 February 2022)<a class="headerlink" href="#v0-2-1-23-february-2022" title="Link to this heading">#</a></h2>
-<section id="id24">
-<h3>Deprecated<a class="headerlink" href="#id24" title="Link to this heading">#</a></h3>
+<section id="id26">
+<h3>Deprecated<a class="headerlink" href="#id26" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>setup_basemaps</strong> has been replaced by <strong>setup_topobathy</strong></p></li>
 <li><p>In <strong>setup_mask</strong>, the “active_mask_fn” argument has been renamed to “mask_fn” for consistency</p></li>
@@ -826,8 +842,8 @@ Derived ‘uparea’ and ‘flwdir’ maps are saved in the GIS folder and can b
 <li><p>Added parameter mapping file for ESA Worldcover dataset</p></li>
 </ul>
 </section>
-<section id="id25">
-<h3>Changed<a class="headerlink" href="#id25" title="Link to this heading">#</a></h3>
+<section id="id27">
+<h3>Changed<a class="headerlink" href="#id27" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>setup_mask</strong> and <strong>setup_bounds</strong> both have a “mask_fn”, “include_mask_fn” and “exclude_mask_fn” polygon and “min_elv” and “max_elv” elevation arguments to determine valid / boundary cells.</p></li>
 <li><p><strong>setup_mask</strong> and <strong>setup_bounds</strong> have a “reset_mask” and “reset_bounds” option respectively to start with a clean mask or remove previously set boundary cells.</p></li>
@@ -856,15 +872,15 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 </section>
 <section id="v0-2-0-2-august-2021">
 <h2>v0.2.0 (2 August 2021)<a class="headerlink" href="#v0-2-0-2-august-2021" title="Link to this heading">#</a></h2>
-<section id="id26">
-<h3>Bugfix<a class="headerlink" href="#id26" title="Link to this heading">#</a></h3>
+<section id="id28">
+<h3>Bugfix<a class="headerlink" href="#id28" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>scsfile variable changed to maximum soil moisture retention [inch]; was curve number [-]</p></li>
 <li><p>fix setting delimited text based geodatasets for h and q forcing.</p></li>
 </ul>
 </section>
-<section id="id27">
-<h3>Changed<a class="headerlink" href="#id27" title="Link to this heading">#</a></h3>
+<section id="id29">
+<h3>Changed<a class="headerlink" href="#id29" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>Bumped minimal hydromt version to 0.4.2</p></li>
 <li><p>splitted <code class="docutils literal notranslate"><span class="pre">setup_topobathy</span></code> into multiple smaller methods: <code class="docutils literal notranslate"><span class="pre">setup_merge_topobathy</span></code>, <code class="docutils literal notranslate"><span class="pre">setup_mask</span></code> and <code class="docutils literal notranslate"><span class="pre">setup_bounds</span></code></p></li>
@@ -874,8 +890,8 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 <li><p>staticmaps are by default saved (and read) in S-&gt;N orientation as this matches the SFINCS better.</p></li>
 </ul>
 </section>
-<section id="id28">
-<h3>Added<a class="headerlink" href="#id28" title="Link to this heading">#</a></h3>
+<section id="id30">
+<h3>Added<a class="headerlink" href="#id30" title="Link to this heading">#</a></h3>
 <p>support for SFINCS files:</p>
 <ul class="simple">
 <li><p>structures: sfincs.thd &amp; sfincs.weir</p></li>
@@ -908,8 +924,8 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 <li><p>overviews with SfincsModel setup components &amp; SfincsModel data</p></li>
 </ul>
 </section>
-<section id="id29">
-<h3>Deprecated<a class="headerlink" href="#id29" title="Link to this heading">#</a></h3>
+<section id="id31">
+<h3>Deprecated<a class="headerlink" href="#id31" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">setup_p_gridded</span></code></p></li>
 </ul>
@@ -918,20 +934,20 @@ The model domain is also determined on-the-fly, thus it is not required to run s
 <section id="v0-1-0-18-may-2021">
 <h2>v0.1.0 (18 May 2021)<a class="headerlink" href="#v0-1-0-18-may-2021" title="Link to this heading">#</a></h2>
 <p>Noticeable changes are a new <code class="docutils literal notranslate"><span class="pre">setup_river_inflow</span></code> and <code class="docutils literal notranslate"><span class="pre">setup_river_outflow</span></code> methods</p>
-<section id="id30">
-<h3>Added<a class="headerlink" href="#id30" title="Link to this heading">#</a></h3>
+<section id="id32">
+<h3>Added<a class="headerlink" href="#id32" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>setup_river_outflow method to set ouflow (msk=3) boundary at river outflow points</p></li>
 </ul>
 </section>
-<section id="id31">
-<h3>Changed<a class="headerlink" href="#id31" title="Link to this heading">#</a></h3>
+<section id="id33">
+<h3>Changed<a class="headerlink" href="#id33" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>Updated to hydromt v0.4.1</p></li>
 </ul>
 </section>
-<section id="id32">
-<h3>Documentation<a class="headerlink" href="#id32" title="Link to this heading">#</a></h3>
+<section id="id34">
+<h3>Documentation<a class="headerlink" href="#id34" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>Now <strong>latest</strong> and <strong>stable</strong> versions.</p></li>
 <li><p>Updated build instructions</p></li>
@@ -1008,84 +1024,89 @@ The model domain is also determined on-the-fly, thus it is not required to run s
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v2-0-0-rc3-22-5-2026">v2.0.0-rc3 (22-5-2026)</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v2-0-0-rc4-unreleased">v2.0.0-rc4 (unreleased)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#added">Added</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fixed">Fixed</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changed">Changed</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v2-0-0-rc2-16-4-2026">v2.0.0-rc2 (16-4-2026)</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v2-0-0-rc3-22-5-2026">v2.0.0-rc3 (22-5-2026)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Added</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Fixed</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">Changed</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#removed">Removed</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v2-0-0-rc1-25-11-2025">v2.0.0-rc1 (25-11-2025)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-2-1-31-7-2025">v1.2.1 (31-7-2025)</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v2-0-0-rc2-16-4-2026">v2.0.0-rc2 (16-4-2026)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">Added</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">Fixed</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">Changed</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-2-0-23-4-2025">v1.2.0 (23-4-2025)</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v2-0-0-rc1-25-11-2025">v2.0.0-rc1 (25-11-2025)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-2-1-31-7-2025">v1.2.1 (31-7-2025)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">Added</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">Changed</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">Fixed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">Fixed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">Changed</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-1-0-05-09-2024">v1.1.0 (05-09-2024)</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-2-0-23-4-2025">v1.2.0 (23-4-2025)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">Added</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id11">Changed</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id12">Fixed</a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-1-0-05-09-2024">v1.1.0 (05-09-2024)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id13">Added</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id14">Changed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id15">Fixed</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-0-3-3-january-2024">v1.0.3 (3 January 2024)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id13">Changed</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id14">Fixed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id16">Changed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id17">Fixed</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-0-2-9-november-2023">v1.0.2 (9 November 2023)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id15">Added</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id16">Changed</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id17">Fixed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id18">Added</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id19">Changed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id20">Fixed</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deprecated">Deprecated</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-0-1-3-august-2023">v1.0.1 (3 August 2023)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id18">Added</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id19">Changed</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id20">Fixed</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id21">Removed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id21">Added</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id22">Changed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id23">Fixed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#removed">Removed</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-0-17-april-2023">v1.0 (17 April 2023)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#main-differences">Main differences</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id22">Added</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id23">Changed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id24">Added</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id25">Changed</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#removed-not-replaced">Removed (not replaced)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#new-low-level-classes">New low-level classes</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v0-2-1-23-february-2022">v0.2.1 (23 February 2022)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id24">Deprecated</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id26">Deprecated</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bugfix">Bugfix</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#new">New</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id25">Changed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id27">Changed</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v0-2-0-2-august-2021">v0.2.0 (2 August 2021)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id26">Bugfix</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id27">Changed</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id28">Added</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id28">Bugfix</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id29">Changed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id30">Added</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation">Documentation</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id29">Deprecated</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id31">Deprecated</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v0-1-0-18-may-2021">v0.1.0 (18 May 2021)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id30">Added</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id31">Changed</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id32">Documentation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id32">Added</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id33">Changed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id34">Documentation</a></li>
 </ul>
 </li>
 </ul>

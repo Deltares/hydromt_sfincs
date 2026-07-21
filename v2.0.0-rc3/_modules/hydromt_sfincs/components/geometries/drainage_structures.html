@@ -438,7 +438,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt</span><span class="w"> </span><span class="kn">import</span> <span class="n">hydromt_step</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelComponent</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">readers</span><span class="p">,</span> <span class="n">writers</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
@@ -549,7 +549,7 @@
 
         <span class="c1"># Read input file:</span>
         <span class="c1"># TODO we can move the utils to here, since only used here?</span>
-        <span class="n">gdf</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">read_drn</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+        <span class="n">gdf</span> <span class="o">=</span> <span class="n">readers</span><span class="o">.</span><span class="n">read_drn</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
 
         <span class="c1"># Add to self._data</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
@@ -584,15 +584,14 @@
             <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%11.1f</span><span class="s2">&quot;</span>
 
         <span class="c1"># TODO we can move the utils to here, since only used here?</span>
-        <span class="n">utils</span><span class="o">.</span><span class="n">write_drn</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
+        <span class="n">writers</span><span class="o">.</span><span class="n">write_drn</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
 
         <span class="c1"># write also as geojson:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">write_gis</span><span class="p">:</span>
-            <span class="n">utils</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span>
+            <span class="n">writers</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
                 <span class="n">name</span><span class="o">=</span><span class="s2">&quot;drn&quot;</span><span class="p">,</span>
                 <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;gis&quot;</span><span class="p">),</span>
-                <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
             <span class="p">)</span></div>
 
 

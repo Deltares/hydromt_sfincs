@@ -427,9 +427,8 @@
                   
   <h1>Source code for hydromt_sfincs.components.forcing.meteo</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="kn">import</span> <span class="n">isfile</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
@@ -439,7 +438,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelComponent</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.model.processes.meteo</span><span class="w"> </span><span class="kn">import</span> <span class="n">da_to_timedelta</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">readers</span><span class="p">,</span> <span class="n">utils</span><span class="p">,</span> <span class="n">writers</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
@@ -542,7 +541,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Read in spatially uniform precipitation data.&quot;&quot;&quot;</span>
         <span class="n">tref</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_datetime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tref&quot;</span><span class="p">))</span>
 
-        <span class="n">df</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">read_timeseries</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">tref</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">readers</span><span class="o">.</span><span class="n">read_timeseries</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">tref</span><span class="p">)</span>
         <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span>
 
         <span class="c1"># spatially uniform forcing</span>
@@ -627,7 +626,7 @@
         <span class="n">df</span> <span class="o">=</span> <span class="n">da</span><span class="p">[</span><span class="n">variable</span><span class="p">]</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
 
         <span class="c1"># write timeseries</span>
-        <span class="n">utils</span><span class="o">.</span><span class="n">write_timeseries</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">tref</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
+        <span class="n">writers</span><span class="o">.</span><span class="n">write_timeseries</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">tref</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>

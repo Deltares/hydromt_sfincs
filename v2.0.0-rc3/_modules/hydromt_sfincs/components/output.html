@@ -434,10 +434,9 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">xugrid</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xu</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt</span><span class="w"> </span><span class="kn">import</span> <span class="n">hydromt_step</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelComponent</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">readers</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
@@ -548,7 +547,7 @@
         <span class="n">chunksize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Read the sfincs_his.nc file and return it as an xarray Dataset.&quot;&quot;&quot;</span>
-        <span class="n">ds_his</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">read_sfincs_his_results</span><span class="p">(</span>
+        <span class="n">ds_his</span> <span class="o">=</span> <span class="n">readers</span><span class="o">.</span><span class="n">read_sfincs_his_results</span><span class="p">(</span>
             <span class="n">fn_his</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">chunksize</span><span class="o">=</span><span class="n">chunksize</span>
         <span class="p">)</span>
         <span class="c1"># drop double vars (map files has priority)</span>
@@ -568,7 +567,7 @@
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Grid type not known, trying to read from config file. &quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span><span class="p">:</span>
-            <span class="n">ds_face</span><span class="p">,</span> <span class="n">ds_edge</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">read_sfincs_map_results</span><span class="p">(</span>
+            <span class="n">ds_face</span><span class="p">,</span> <span class="n">ds_edge</span> <span class="o">=</span> <span class="n">readers</span><span class="o">.</span><span class="n">read_sfincs_map_results</span><span class="p">(</span>
                 <span class="n">fn_map</span><span class="p">,</span>
                 <span class="n">ds_like</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span>
                 <span class="n">drop</span><span class="o">=</span><span class="n">drop</span><span class="p">,</span>

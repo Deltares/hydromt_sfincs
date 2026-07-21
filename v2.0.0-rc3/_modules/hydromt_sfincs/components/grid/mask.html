@@ -432,14 +432,13 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyflwdir.regions</span><span class="w"> </span><span class="kn">import</span> <span class="n">region_area</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">ndimage</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt</span><span class="w"> </span><span class="kn">import</span> <span class="n">hydromt_step</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelComponent</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">readers</span><span class="p">,</span> <span class="n">utils</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
@@ -647,7 +646,7 @@
             <span class="p">)</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.pol&quot;</span><span class="p">):</span>
                 <span class="c1"># NOTE polygons should be in same CRS as model</span>
                 <span class="n">gdf_include</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">polygon2gdf</span><span class="p">(</span>
-                    <span class="n">feats</span><span class="o">=</span><span class="n">utils</span><span class="o">.</span><span class="n">read_geoms</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">include_polygon</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span>
+                    <span class="n">feats</span><span class="o">=</span><span class="n">readers</span><span class="o">.</span><span class="n">read_geoms</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">include_polygon</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">gdf_include</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
@@ -658,7 +657,7 @@
                 <span class="n">exclude_polygon</span>
             <span class="p">)</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.pol&quot;</span><span class="p">):</span>
                 <span class="n">gdf_exclude</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">polygon2gdf</span><span class="p">(</span>
-                    <span class="n">feats</span><span class="o">=</span><span class="n">utils</span><span class="o">.</span><span class="n">read_geoms</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">exclude_polygon</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span>
+                    <span class="n">feats</span><span class="o">=</span><span class="n">readers</span><span class="o">.</span><span class="n">read_geoms</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">exclude_polygon</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">gdf_exclude</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
@@ -867,7 +866,7 @@
             <span class="p">)</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.pol&quot;</span><span class="p">):</span>
                 <span class="c1"># NOTE polygons should be in same CRS as model</span>
                 <span class="n">gdf_include</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">polygon2gdf</span><span class="p">(</span>
-                    <span class="n">feats</span><span class="o">=</span><span class="n">utils</span><span class="o">.</span><span class="n">read_geoms</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">include_polygon</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span>
+                    <span class="n">feats</span><span class="o">=</span><span class="n">readers</span><span class="o">.</span><span class="n">read_geoms</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">include_polygon</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">gdf_include</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
@@ -884,7 +883,7 @@
                 <span class="n">exclude_polygon</span>
             <span class="p">)</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.pol&quot;</span><span class="p">):</span>
                 <span class="n">gdf_exclude</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">polygon2gdf</span><span class="p">(</span>
-                    <span class="n">feats</span><span class="o">=</span><span class="n">utils</span><span class="o">.</span><span class="n">read_geoms</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">exclude_polygon</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span>
+                    <span class="n">feats</span><span class="o">=</span><span class="n">readers</span><span class="o">.</span><span class="n">read_geoms</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">exclude_polygon</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">gdf_exclude</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>

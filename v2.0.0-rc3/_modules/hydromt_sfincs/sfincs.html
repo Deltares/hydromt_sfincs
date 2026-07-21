@@ -450,7 +450,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.error</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoDataException</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">DATADIR</span><span class="p">,</span> <span class="n">plots</span><span class="p">,</span> <span class="n">utils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">DATADIR</span><span class="p">,</span> <span class="n">plots</span><span class="p">,</span> <span class="n">utils</span><span class="p">,</span> <span class="n">writers</span>
 
 <span class="c1"># Input component</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.components.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsConfig</span>
@@ -763,11 +763,10 @@
 
         <span class="c1"># Write region geometry</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_gis</span><span class="p">:</span>
-            <span class="n">utils</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span>
+            <span class="n">writers</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
                 <span class="n">name</span><span class="o">=</span><span class="s2">&quot;region&quot;</span><span class="p">,</span>
                 <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;gis&quot;</span><span class="p">),</span>
-                <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="c1"># Optional launcher script (opt-in; DDB passes True explicitly).</span>
