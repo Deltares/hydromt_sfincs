@@ -10,7 +10,7 @@ import shapely
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers, writers
 
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel
@@ -103,7 +103,7 @@ class SfincsObservationPoints(ModelComponent):
             )
 
         # Read input file:
-        gdf = utils.read_xyn(abs_file_path, crs=self.model.crs)  # =utils.py function
+        gdf = readers.read_xyn(abs_file_path, crs=self.model.crs)  # =utils.py function
 
         # Add to self._data
         self.set(gdf, merge=False)
@@ -134,15 +134,14 @@ class SfincsObservationPoints(ModelComponent):
         else:
             fmt = "%11.1f"
 
-        utils.write_xyn(abs_file_path, self.data, fmt=fmt)  # =utils.py function
+        writers.write_xyn(abs_file_path, self.data, fmt=fmt)  # =utils.py function
 
         # write also as geojson:
         if self.model.write_gis:
-            utils.write_vector(
+            writers.write_vector(
                 self.data,
                 name="obs",
                 root=join(self.model.root.path, "gis"),
-                logger=logger,
             )
 
     def set(
