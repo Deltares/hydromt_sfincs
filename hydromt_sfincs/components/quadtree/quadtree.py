@@ -41,7 +41,12 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 
-_QT_MAPS = ["manning", "vol", "ini", "infiltration"]
+_QT_MAPS = {  
+    "manning": None,  
+    "vol": None,  
+    "ini": None,  
+    "infiltration": "infiltration_file",  
+}  
 
 
 class SfincsQuadtreeGrid(MeshComponent):
@@ -249,11 +254,10 @@ class SfincsQuadtreeGrid(MeshComponent):
             data_vars = list(data_vars)
         variables = []
         for var in data_vars:
-            fn_var = self.model.config.get(f"{var}file", abs_path=True)  # TO DO
-
-            if var == "infiltration":
-                fn_var = self.model.config.get(f"{var}_file", abs_path=True)
-
+            # infiltration uses a non-standard config key ("infiltration_file");
+            # other variables follow the default "{var}file" pattern.
+            key = _QT_MAPS.get(var) or f"{var}file"
+            fn_var = self.model.config.get(key, abs_path=True)
             if fn_var is not None:
                 fn_var.parent.mkdir(parents=True, exist_ok=True)
                 variables.append({"variable": var, "file_name": fn_var})
