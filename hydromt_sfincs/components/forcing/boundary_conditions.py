@@ -25,6 +25,10 @@ class SfincsBoundaryBase(ModelComponent):
     Subclasses must set the class attribute `_default_varname` to the variable
     name used inside the dataset (for example "bzs" for water level, or "dis"
     for discharge).
+
+    Internal datasets use a canonical 0-based positional ``index`` coordinate.
+    Imported/read index labels are normalized to this convention when data is
+    stored in the component.
     """
 
     _default_varname: Union[
@@ -137,7 +141,9 @@ class SfincsBoundaryBase(ModelComponent):
             if index_dim != "index":
                 # rename the index dimension to "index" if needed
                 geodataset = geodataset.rename({index_dim: "index"})
-            self._data = geodataset.transpose("time", "index", ...)
+            self._data = self._ensure_canonical_index(
+                geodataset.transpose("time", "index", ...)
+            )
             return
 
         if df is None and gdf is None:
@@ -199,9 +205,7 @@ class SfincsBoundaryBase(ModelComponent):
                 else self._default_varname
             )
             gds_combined = _safe_concat([ds0[varnames], gds_new], dim="index")
-            gds_combined = gds_combined.assign_coords(
-                index=np.arange(gds_combined.sizes["index"])
-            )
+            gds_combined = self._ensure_canonical_index(gds_combined)
             # Find where the added points ended up in the combined dataset and return those indices
             new_indices = range(len(gdf0), gds_combined.sizes["index"])
             self.set(geodataset=gds_combined)
@@ -211,7 +215,7 @@ class SfincsBoundaryBase(ModelComponent):
             ds_new = self._create_dummy_dataset(gdf, time, value)
             # Combine geometry and dataset into a GeoDataset, assign new integer index and store
             gds_new = GeoDataset.from_gdf(gdf, ds_new, keep_cols=True)
-            gds_new = gds_new.assign_coords(index=np.arange(gds_new.sizes["index"]))
+            gds_new = self._ensure_canonical_index(gds_new)
             # Return the new indices which will be 0..N-1 since we are replacing all data
             new_indices = gds_new.index
             self.set(geodataset=gds_new)
@@ -317,9 +321,7 @@ class SfincsBoundaryBase(ModelComponent):
         if any(x > (self.nr_points - 1) for x in index):
             raise ValueError("One of the indices exceeds length of index range!")
         # Drop the points from the dataset and reassign a new integer index
-        self._data = self.data.drop_isel(index=index).assign_coords(
-            index=np.arange(self.nr_points - len(index))
-        )
+        self._data = self._ensure_canonical_index(self.data.drop_isel(index=index))
 
     def clear(self):
         """
@@ -386,6 +388,19 @@ class SfincsBoundaryBase(ModelComponent):
             coords={"time": df.index, "index": df.columns},
         )
         return da
+
+    def _ensure_canonical_index(self, ds: xr.Dataset) -> xr.Dataset:
+        """Ensure the internal dataset uses a canonical 0-based positional index."""
+        if "index" not in ds.dims:
+            return ds
+
+        expected = np.arange(ds.sizes["index"])
+        current = np.asarray(ds.coords["index"].values)
+
+        if not np.array_equal(current, expected):
+            ds = ds.assign_coords(index=expected)
+
+        return ds
 
     def _drop_duplicate_points(self, gdf_existing, gdf_new):
         """Drop points from gdf_existing that duplicate gdf_new by name or geometry."""
