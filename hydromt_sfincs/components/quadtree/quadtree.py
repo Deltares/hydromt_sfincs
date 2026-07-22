@@ -25,14 +25,11 @@ from hydromt.model.components import MeshComponent
 from hydromt.model.processes.grid import create_grid_from_region
 
 from hydromt_sfincs.utils import make_regular_grid
-from hydromt_sfincs.workflows.cog import make_quadtree_index_cog, make_topobathy_cog
+from hydromt_sfincs.workflows.cog import create_index_cog, create_topobathy_cog
 from hydromt_sfincs.workflows.map_overlay import MeshOverlay
 from hydromt_sfincs.workflows.tiling import (
     create_topobathy_tiles,
-    int2png,
-    make_index_tiles,
-    tile_window,
-    write_html,
+    create_index_tiles,
 )
 from .quadtree_builder import build_quadtree_xugrid, cut_inactive_cells
 
@@ -117,6 +114,11 @@ class SfincsQuadtreeGrid(MeshComponent):
         polygons = shapely.ops.polygonize(merged)
 
         return gpd.GeoDataFrame(geometry=list(polygons), crs=self.crs)
+
+    @property
+    def region(self) -> gpd.GeoDataFrame:
+        """Return the outer boundary of the active grid as polygons"""
+        return self.exterior
 
     @property
     def empty_mask(self) -> Optional[xu.UgridDataArray]:
@@ -799,10 +801,9 @@ class SfincsQuadtreeGrid(MeshComponent):
             Defaults to ``os.cpu_count()``. Pass ``1`` to disable
             parallelism.
         """
-        make_index_tiles(
-            quadtree_grid=self,
+        create_index_tiles(
+            model=self.model,
             root=root,
-            region=region,
             zoom_range=zoom_range,
             fmt=fmt,
             write_html_viewer=write_html_viewer,
@@ -891,6 +892,50 @@ class SfincsQuadtreeGrid(MeshComponent):
             logger=logger,
         )
 
+    def create_topobathy_cog(
+        self,
+        filename: Union[str, Path],
+        elevation_list: List[dict],
+        resolution: float = 10.0,
+        river_list: Optional[List[dict]] = None,
+        bounds: Optional[List[float]] = None,
+        buffer_cells: int = 0,
+        z_minimum: float = -20000.0,
+        nrmax: int = 2000,
+    ) -> None:
+        """Write a COG raster sampling the model topobathy.
+
+        Parameters
+        ----------
+        filename : str or Path
+            Output COG file path.
+        elevation_list : List[dict]
+            List of dictionaries with variable names and dataset names to use for depth.
+        resolution : float, optional
+            Raster resolution in model CRS units, by default 10.0.
+        river_list : List[dict], optional
+            List of dictionaries with variable names and dataset names to use for river depth.
+        bounds : List[float], optional
+            Bounding box for the output raster in model CRS units, by default None.
+        buffer_cells : int, optional
+            Number of buffer cells to add around the bounding box, by default 0.
+        z_minimum : float, optional
+            Minimum elevation value to use for the output raster, by default -20000.0.
+        nrmax : int, optional
+            Maximum number of rows/columns for the output raster, by default 2000.
+        """
+        create_topobathy_cog(
+            model=self.model,
+            elevation_list=elevation_list,
+            river_list=river_list,
+            topobathy_fn=filename,
+            res=resolution,
+            buffer_cells=buffer_cells,
+            z_minimum=z_minimum,
+            bounds=bounds,
+            nrmax=nrmax,
+        )
+
     def create_index_cog(
         self,
         filename: Union[str, Path],
@@ -908,7 +953,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         filename_topobathy : str or Path
             Reference topobathy COG whose grid / CRS define the output.
         """
-        make_quadtree_index_cog(
+        create_index_cog(
             quadtree_grid=self,
             filename=filename,
             filename_topobathy=filename_topobathy,

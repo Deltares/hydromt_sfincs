@@ -5,7 +5,7 @@ import math
 import os
 from os.path import isfile, join
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, List, Union, Optional
 
 import geopandas as gpd
 import numpy as np
@@ -19,7 +19,7 @@ from hydromt.model.components import GridComponent
 from hydromt.model.processes.grid import create_grid_from_region
 
 from hydromt_sfincs import writers
-from hydromt_sfincs.workflows.tiling import int2png, tile_window, write_html
+from hydromt_sfincs.workflows.tiling import create_index_tiles, create_topobathy_tiles
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -626,12 +626,7 @@ class SfincsGrid(GridComponent):
         return gpd.GeoDataFrame(geometry=lines, crs=self.model.crs)
 
     # %% DDB GUI focused additional functions:
-    # create_index_tiles > FIXME - TL: still needed?
     # map_overlay
-    # snap_to_grid
-
-    # TODO - missing as in cht_sfincs:
-    # Many...
 
     def create_index_tiles(
         self,
@@ -659,102 +654,94 @@ class SfincsGrid(GridComponent):
             alongside the tiles so they can be previewed in a browser.
         """
 
-        index_path = os.path.join(root, "indices")
-        npix = 256
+        create_index_tiles(
+            model=self.model,
+            root=root,
+            region=region,
+            zoom_range=zoom_range,
+            fmt=fmt,
+            write_html_viewer=write_html_viewer,
+            logger=logger,
+        )
 
-        # for binary format, use .dat extension
-        if fmt == "bin":
-            extension = "dat"
-        # for net, tif and png extension and format are the same
-        else:
-            extension = fmt
+    def create_topobathy_tiles(
+        self,
+        root: Union[str, Path],
+        elevation_list: Optional[List[dict]] = None,
+        region: Optional[gpd.GeoDataFrame] = None,
+        index_path: Optional[Union[str, Path]] = None,
+        zoom_range: Union[int, List[int]] = [0, 13],
+        z_range: List[float] = [-20000.0, 20000.0],
+        fmt: str = "bin",
+        write_html_viewer: bool = True,
+        max_workers: Optional[int] = None,
+        logger: logging.Logger = logger,
+    ) -> None:
+        """Create webmercator topobathy tiles for this quadtree grid.
 
-        # if only one zoom level is specified, create tiles up to that zoom level (inclusive)
+        Thin wrapper around
+        :py:func:`hydromt_sfincs.workflows.tiling.create_topobathy_tiles`.
+
+        Parameters
+        ----------
+        root : Union[str, Path]
+            Parent directory; tiles land in ``<root>/topobathy``.
+        elevation_list : List[dict], optional
+            Topobathy datasets. Entries may be in DDB name-only format
+            (``{"name": ..., "zmin": ..., "zmax": ...}``) or hydromt format
+            (with a ``"da"`` DataArray). DDB entries are auto-resolved via
+            the model's data catalog. If ``None``, all sources in the
+            model's data catalog are used instead.
+        region : gpd.GeoDataFrame, optional
+            Area for which tiles are generated. Defaults to the grid
+            exterior.
+        index_path : Union[str, Path], optional
+            Directory containing index tiles; if given, topobathy tiles
+            are only written where index tiles exist.
+        zoom_range : Union[int, List[int]], optional
+            Range of zoom levels, by default ``[0, 13]``.
+        z_range : List[float], optional
+            Valid elevation range; tiles entirely outside are skipped.
+        fmt : str, optional
+            ``"bin"`` (default), ``"png"``, or ``"tif"``.
+        write_html_viewer : bool, optional
+            If True (default) and ``fmt == "png"``, also write an
+            ``index.html`` Leaflet viewer alongside the tiles.
+        max_workers : int, optional
+            Number of worker threads used to render tiles concurrently.
+            Defaults to ``os.cpu_count()``. Pass ``1`` to disable
+            parallelism.
+        """
+
+        if region is None:
+            region = self.exterior
+
         if isinstance(zoom_range, int):
-            zoom_range = [0, zoom_range]
-
-        # get bounding box of sfincs model
-        minx, miny, maxx, maxy = region.total_bounds
-        transformer = Transformer.from_crs(region.crs.to_epsg(), 3857)
-
-        # rotation of the model
-        cosrot = math.cos(-self.rotation * math.pi / 180)
-        sinrot = math.sin(-self.rotation * math.pi / 180)
-
-        # axis order is different for geographic and projected CRS
-        if region.crs.is_geographic:
-            minx, miny = map(
-                max, zip(transformer.transform(miny, minx), [-20037508.34] * 2)
-            )
-            maxx, maxy = map(
-                min, zip(transformer.transform(maxy, maxx), [20037508.34] * 2)
-            )
+            zr = [0, zoom_range]
         else:
-            minx, miny = map(
-                max, zip(transformer.transform(minx, miny), [-20037508.34] * 2)
-            )
-            maxx, maxy = map(
-                min, zip(transformer.transform(maxx, maxy), [20037508.34] * 2)
-            )
+            zr = zoom_range
 
-        for izoom in range(zoom_range[0], zoom_range[1] + 1):
-            logger.debug("Processing zoom level " + str(izoom))
+        # Parse elevation_list and determine the resolution of the topobathy tiles.
+        res = 40075016.686 / 256 / 2 ** zr[1]
+        elevation_list = self.model._parse_datasets_elevation(elevation_list, res=res)
 
-            zoom_path = os.path.join(index_path, str(izoom))
+        # When no elevation_list is given, the workflow falls back to the
+        # model's data catalog (if populated).
+        data_catalog = self.model.data_catalog if elevation_list is None else None
 
-            for transform, col, row in tile_window(izoom, minx, miny, maxx, maxy):
-                # transform is a rasterio Affine object
-                # col, row are the tile indices
-                file_name = os.path.join(
-                    zoom_path, str(col), str(row) + "." + extension
-                )
-
-                # get the coordinates of the tile in webmercator projection
-                x = np.arange(0, npix) + 0.5
-                y = np.arange(0, npix) + 0.5
-                x3857, y3857 = transform * (x, y)
-                x3857, y3857 = np.meshgrid(x3857, y3857)
-
-                # convert to SFINCS coordinates
-                x, y = transformer.transform(x3857, y3857, direction="INVERSE")
-
-                # Now rotate around origin of SFINCS model
-                x00 = x - self.x0
-                y00 = y - self.y0
-                xg = x00 * cosrot - y00 * sinrot
-                yg = x00 * sinrot + y00 * cosrot
-
-                # determine the SFINCS cell indices
-                iind = np.floor(xg / self.dx).astype(int)
-                jind = np.floor(yg / self.dy).astype(int)
-                ind = iind * self.nmax + jind
-                ind[iind < 0] = -999
-                ind[jind < 0] = -999
-                ind[iind >= self.mmax] = -999
-                ind[jind >= self.nmax] = -999
-
-                # only write tiles that link to at least one SFINCS cell
-                if np.any(ind >= 0):
-                    if not os.path.exists(os.path.join(zoom_path, str(col))):
-                        os.makedirs(os.path.join(zoom_path, str(col)))
-                    # And write indices to file
-                    if fmt == "bin":
-                        fid = open(file_name, "wb")
-                        fid.write(ind)
-                        fid.close()
-                    elif fmt == "png":
-                        # for png, change nodata -999 nodata into 0
-                        ind[ind == -999] = 0
-                        int2png(ind, file_name)
-
-        if write_html_viewer and fmt == "png":
-            os.makedirs(index_path, exist_ok=True)
-            write_html(
-                os.path.join(index_path, "index.html"),
-                title="Index tiles",
-                legend_title="Cell indices",
-                max_native_zoom=zoom_range[1],
-            )
+        create_topobathy_tiles(
+            root=root,
+            region=region,
+            elevation_list=elevation_list,
+            data_catalog=data_catalog,
+            index_path=index_path,
+            zoom_range=zr,
+            z_range=z_range,
+            fmt=fmt,
+            write_html_viewer=write_html_viewer,
+            max_workers=max_workers,
+            logger=logger,
+        )
 
     def get_indices_at_points(self, x, y):
         # x and y are 2D arrays of coordinates (x, y) in the same projection as the model
