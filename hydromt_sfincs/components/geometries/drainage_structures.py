@@ -388,7 +388,12 @@ class SfincsDrainageStructures(ModelComponent):
         drnfile_backup = self.model.config.get("drnfile")
         try:
             self.write_toml(filename=abs_file_path.parent / "sfincs.toml.drn")
-        finally:
+            self.model.config.set("drnfile", "sfincs.toml.drn")
+
+        except Exception as e:
+            logger.warning(
+                "Failed to write TOML drainage structures file: %s", e, "continuing with legacy .drn file only."
+            )
             self.model.config.set("drnfile", drnfile_backup)
 
         if self.model.write_gis:
