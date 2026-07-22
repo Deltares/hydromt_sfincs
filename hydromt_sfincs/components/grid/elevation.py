@@ -65,6 +65,7 @@ class SfincsElevation(ModelComponent):
         elevation_list: List[dict],
         buffer_cells: int = 0,  # not in list
         interp_method: str = "linear",  # used for buffer cells only
+        interpolate_na: bool = True,
     ):
         """Interpolate topobathy (dep) data to the model grid.
 
@@ -82,6 +83,8 @@ class SfincsElevation(ModelComponent):
             Number of cells between datasets to ensure smooth transition of bed levels, by default 0
         interp_method : str, optional
             Interpolation method used to fill the buffer cells , by default "linear"
+        interpolate_na : bool, optional
+            If True, interpolate missing values in the final bed level dataset, by default True
         """
 
         # retrieve model resolution to determine zoom level for xyz-datasets
@@ -102,9 +105,11 @@ class SfincsElevation(ModelComponent):
 
         # check if no nan data is present in the bed levels
         nmissing = int(np.sum(np.isnan(da_dep.values)))
-        if nmissing > 0:
+        if nmissing > 0 and interpolate_na:
             logger.warning(f"Interpolate elevation at {nmissing} cells")
             da_dep = da_dep.raster.interpolate_na(method="rio_idw", extrapolate=True)
+        elif nmissing > 0:
+            logger.info(f"Elevation has {nmissing} missing cells; leaving them as NaN")
 
         # set the dep layer in the model data
         mname = "dep"

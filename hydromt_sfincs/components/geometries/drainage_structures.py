@@ -16,7 +16,7 @@ except ImportError:  # Python < 3.11
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers, writers
 
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel
@@ -161,13 +161,212 @@ class SfincsDrainageStructures(ModelComponent):
             is_toml = False
 
         if is_toml:
+            readers.read_toml(abs_file_path)
+            return
+
+        # Legacy fixed-column reader → translate par1..par6 into the
+        # named-column schema. Defaults are stamped first, then the
+        # per-type values from the file overwrite them.
+        legacy = readers.read_drn(abs_file_path, crs=self.model.crs)
+        if legacy.empty:
+            self.set(legacy, merge=False)
+            return
+
+        gdf = gpd.GeoDataFrame(
+            {
+                "name": ["" for _ in range(len(legacy))],
+                "type": legacy["type"].astype(int).values,
+            },
+            geometry=legacy.geometry.values,
+            crs=self.model.crs,
+        )
+        self._set_defaults(gdf)
+
+        for idx, row in legacy.iterrows():
+            t = int(row["type"])
+            if t == 1:
+                # pump
+                gdf.at[idx, "q"] = float(row["par1"])
+            elif t == 2:
+                # culvert_simple (two-way)
+                gdf.at[idx, "flow_coef"] = float(row["par1"])
+                gdf.at[idx, "direction"] = "both"
+            elif t == 3:
+                # legacy check_valve → culvert_simple with direction=positive
+                gdf.at[idx, "type"] = 2
+                gdf.at[idx, "flow_coef"] = float(row["par1"])
+                gdf.at[idx, "direction"] = "positive"
+            elif t == 4:
+                # gate
+                gdf.at[idx, "width"] = float(row["par1"])
+                gdf.at[idx, "sill_elevation"] = float(row["par2"])
+                gdf.at[idx, "mannings_n"] = float(row["par3"])
+                zmin = float(row["par4"])
+                zmax = float(row["par5"])
+                gdf.at[idx, "rules_open"] = f"z1>{zmin} & z1<{zmax}"
+                closing = float(row["par6"])
+                gdf.at[idx, "closing_duration"] = closing
+                gdf.at[idx, "opening_duration"] = closing
+            elif t == 5:
+                # culvert (detailed)
+                gdf.at[idx, "flow_coef"] = float(row["par1"])
+                gdf.at[idx, "width"] = float(row["par2"])
+                gdf.at[idx, "height"] = float(row["par3"])
+                gdf.at[idx, "invert_1"] = float(row["par4"])
+                gdf.at[idx, "invert_2"] = float(row["par5"])
+                gdf.at[idx, "submergence_ratio"] = float(row["par6"])
+                gdf.at[idx, "direction"] = "both"
+            else:
+                logger.warning(
+                    "Skipping drainage structure at row %d with unknown type %d",
+                    idx,
+                    t,
+                )
+
+        self.set(gdf, merge=False)
+
+    def read_toml(self, filename: str | Path) -> None:
+        """Read a drainage-structures file in the new TOML format.
+
+        Parses ``[[src_structure]]`` entries as described in
+        ``sfincs_src_structures.f90`` and stores them in the GeoDataFrame
+        using integer ``type`` codes (1=pump, 2=culvert_simple, 4=gate,
+        5=culvert). The legacy ``check_valve`` type is resolved on read
+        into ``culvert_simple`` + ``direction="positive"``.
+        """
+        with open(filename, "rb") as f:
+            doc = tomllib.load(f)
+        structs = doc.get("src_structure", []) or []
+
+        names: list[str] = []
+        types: list[int] = []
+        geoms: list = []
+        entries: list[dict] = []
+        for entry in structs:
+            ztype = str(entry.get("type", "")).lower()
+            if ztype == "pump":
+                t = 1
+            elif ztype in ("culvert_simple", "check_valve"):
+                t = 2
+            elif ztype == "gate":
+                t = 4
+            elif ztype == "culvert":
+                t = 5
+            else:
+                logger.warning(
+                    "Skipping src_structure %r: unsupported type %r",
+                    entry.get("name"),
+                    ztype,
+                )
+                continue
+
+            src_1 = entry.get("src_1", [0.0, 0.0])
+            src_2 = entry.get("src_2", [0.0, 0.0])
+            x1, y1 = float(src_1[0]), float(src_1[1])
+            x2, y2 = float(src_2[0]), float(src_2[1])
+
+            names.append(str(entry.get("name", "") or ""))
+            types.append(t)
+            geoms.append(LineString([(x1, y1), (x2, y2)]))
+            entries.append({"_toml_type": ztype, **entry})
+
+        gdf = gpd.GeoDataFrame(
+            {"name": names, "type": types},
+            geometry=geoms,
+            crs=self.model.crs,
+        )
+        self._set_defaults(gdf)
+
+        for idx, entry in enumerate(entries):
+            ztype = entry["_toml_type"]
+            direction = str(entry.get("direction", "") or "").lower()
+            t = int(gdf.at[idx, "type"])
+            if t == 1:
+                gdf.at[idx, "q"] = float(entry.get("q", _DEFAULTS["q"]))
+            elif t == 2:
+                # culvert_simple (or legacy check_valve alias)
+                if ztype == "check_valve":
+                    gdf.at[idx, "direction"] = "positive"
+                elif direction in ("both", "positive", "negative"):
+                    gdf.at[idx, "direction"] = direction
+                else:
+                    gdf.at[idx, "direction"] = "both"
+                gdf.at[idx, "flow_coef"] = float(
+                    entry.get("flow_coef", _DEFAULTS["flow_coef"])
+                )
+            elif t == 4:
+                gdf.at[idx, "width"] = float(
+                    entry.get("width", _DEFAULTS["width"])
+                )
+                gdf.at[idx, "sill_elevation"] = float(
+                    entry.get("sill_elevation", _DEFAULTS["sill_elevation"])
+                )
+                gdf.at[idx, "mannings_n"] = float(
+                    entry.get("mannings_n", _DEFAULTS["mannings_n"])
+                )
+                closing = float(
+                    entry.get("closing_duration", _DEFAULTS["closing_duration"])
+                )
+                gdf.at[idx, "closing_duration"] = closing
+                gdf.at[idx, "opening_duration"] = float(
+                    entry.get("opening_duration", closing)
+                )
+            elif t == 5:
+                if direction in ("both", "positive", "negative"):
+                    gdf.at[idx, "direction"] = direction
+                else:
+                    gdf.at[idx, "direction"] = "both"
+                gdf.at[idx, "flow_coef"] = float(
+                    entry.get("flow_coef", _DEFAULTS["flow_coef"])
+                )
+                gdf.at[idx, "width"] = float(
+                    entry.get("width", _DEFAULTS["width"])
+                )
+                gdf.at[idx, "height"] = float(
+                    entry.get("height", _DEFAULTS["height"])
+                )
+                gdf.at[idx, "invert_1"] = float(
+                    entry.get("invert_1", _DEFAULTS["invert_1"])
+                )
+                gdf.at[idx, "invert_2"] = float(
+                    entry.get("invert_2", _DEFAULTS["invert_2"])
+                )
+                gdf.at[idx, "submergence_ratio"] = float(
+                    entry.get("submergence_ratio", _DEFAULTS["submergence_ratio"])
+                )
+
+            # Rules apply to all non-pump types.
+            if t != 1:
+                gdf.at[idx, "rules_open"] = str(
+                    entry.get("rules_open", "") or ""
+                )
+                gdf.at[idx, "rules_close"] = str(
+                    entry.get("rules_close", "") or ""
+                )
+
+        # Read input file:
+        # TODO we can move the utils to here, since only used here?
+        gdf = readers.read_drn(abs_file_path, crs=self.model.crs)
+
+        # Add to self._data
+        # Detect format: parseable as TOML with a ``src_structure`` key → new
+        # format; anything else → legacy fixed-column reader.
+        is_toml = False
+        try:
+            with open(abs_file_path, "rb") as f:
+                doc = tomllib.load(f)
+            is_toml = isinstance(doc, dict) and "src_structure" in doc
+        except tomllib.TOMLDecodeError:
+            is_toml = False
+
+        if is_toml:
             self.read_toml(abs_file_path)
             return
 
         # Legacy fixed-column reader → translate par1..par6 into the
         # named-column schema. Defaults are stamped first, then the
         # per-type values from the file overwrite them.
-        legacy = utils.read_drn(abs_file_path, crs=self.model.crs)
+        legacy = readers.read_drn(abs_file_path, crs=self.model.crs)
         if legacy.empty:
             self.set(legacy, merge=False)
             return
@@ -380,7 +579,7 @@ class SfincsDrainageStructures(ModelComponent):
         # Legacy .drn write — build a par-backed view on the fly so the
         # stored gdf stays in the named-column schema.
         legacy = self._to_legacy_gdf()
-        utils.write_drn(abs_file_path, legacy, fmt=fmt)
+        writers.write_drn(abs_file_path, legacy, fmt=fmt)
 
         # Companion TOML file — always ``sfincs.toml.drn`` next to the
         # legacy file. Preserve the ``drnfile`` config entry so it
@@ -397,18 +596,17 @@ class SfincsDrainageStructures(ModelComponent):
             self.model.config.set("drnfile", drnfile_backup)
 
         if self.model.write_gis:
-            utils.write_vector(
+            writers.write_vector(
                 self.data,
                 name="drn",
                 root=join(self.model.root.path, "gis"),
-                logger=logger,
             )
 
     def _to_legacy_gdf(self) -> gpd.GeoDataFrame:
         """Build a legacy par1..par6 GeoDataFrame from the named-column data.
 
         Used only for writing the fixed-column ``.drn`` file via
-        :func:`utils.write_drn`. The stored gdf is not modified.
+        :func:`readers.write_drn`. The stored gdf is not modified.
         """
         n = len(self.data)
         legacy = gpd.GeoDataFrame(

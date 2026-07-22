@@ -6,10 +6,9 @@ from pyproj import CRS
 import xarray as xr
 import xugrid as xu
 
-from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -115,7 +114,7 @@ class SfincsOutput(ModelComponent):
         chunksize: int = 100,
     ) -> xr.Dataset:
         """Read the sfincs_his.nc file and return it as an xarray Dataset."""
-        ds_his = utils.read_sfincs_his_results(
+        ds_his = readers.read_sfincs_his_results(
             fn_his, crs=self.model.crs, chunksize=chunksize
         )
         # drop double vars (map files has priority)
@@ -135,7 +134,7 @@ class SfincsOutput(ModelComponent):
             logger.warning("Grid type not known, trying to read from config file. ")
             self.model.config.read()
         if self.model.grid_type == "regular":
-            ds_face, ds_edge = utils.read_sfincs_map_results(
+            ds_face, ds_edge = readers.read_sfincs_map_results(
                 fn_map,
                 ds_like=self.model.grid.mask,
                 drop=drop,

@@ -25,7 +25,7 @@ from hydromt.model.components import MeshComponent
 from hydromt.model.processes.grid import create_grid_from_region
 
 from hydromt_sfincs.utils import make_regular_grid
-from hydromt_sfincs.workflows.cog import make_index_cog, make_topobathy_cog
+from hydromt_sfincs.workflows.cog import make_quadtree_index_cog, make_topobathy_cog
 from hydromt_sfincs.workflows.map_overlay import MeshOverlay
 from hydromt_sfincs.workflows.tiling import (
     create_topobathy_tiles,
@@ -41,7 +41,12 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 
-_QT_MAPS = ["manning", "vol", "ini", "infiltration"]
+_QT_MAPS = {
+    "manning": None,
+    "vol": None,
+    "ini": None,
+    "infiltration": "infiltration_file",
+}
 
 
 class SfincsQuadtreeGrid(MeshComponent):
@@ -249,7 +254,10 @@ class SfincsQuadtreeGrid(MeshComponent):
             data_vars = list(data_vars)
         variables = []
         for var in data_vars:
-            fn_var = self.model.config.get(f"{var}file", abs_path=True)
+            # infiltration uses a non-standard config key ("infiltration_file");
+            # other variables follow the default "{var}file" pattern.
+            key = _QT_MAPS.get(var) or f"{var}file"
+            fn_var = self.model.config.get(key, abs_path=True)
             if fn_var is not None:
                 fn_var.parent.mkdir(parents=True, exist_ok=True)
                 variables.append({"variable": var, "file_name": fn_var})
@@ -891,7 +899,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         """Write a COG raster mapping each pixel to a quadtree cell index.
 
         Thin wrapper around
-        :py:func:`hydromt_sfincs.workflows.cog.make_index_cog`.
+        :py:func:`hydromt_sfincs.workflows.cog.make_quadtree_index_cog`.
 
         Parameters
         ----------
@@ -900,7 +908,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         filename_topobathy : str or Path
             Reference topobathy COG whose grid / CRS define the output.
         """
-        make_index_cog(
+        make_quadtree_index_cog(
             quadtree_grid=self,
             filename=filename,
             filename_topobathy=filename_topobathy,

@@ -272,3 +272,32 @@ def test_get_set_file_variable_write_uses_new_root_after_root_change(tmp_path):
     assert obs_abs == (
         tmp_path.resolve() / obs_rel
     ), "get_set_file_variable with default should use the new root after root change"
+
+
+def test_config_manning_land_sea_io(tmp_path):
+    # Create a new model
+    model0 = SfincsModel(root=tmp_path, mode="w+")
+
+    # By default, land/sea roughness is not set
+    assert model0.config.get("manning_land") is None
+    assert model0.config.get("manning_sea") is None
+    assert model0.config.get("rgh_lev_land") is None
+
+    # Explicitly set land/sea roughness
+    model0.config.update(
+        {
+            "manning_land": 0.04,
+            "manning_sea": 0.02,
+            "rgh_lev_land": 0.0,
+        }
+    )
+
+    model0.config.write()
+
+    # Read the configuration back
+    model1 = SfincsModel(root=tmp_path, mode="r")
+    model1.config.read()
+
+    assert model1.config.get("manning_land") == 0.04
+    assert model1.config.get("manning_sea") == 0.02
+    assert model1.config.get("rgh_lev_land") == 0.0
