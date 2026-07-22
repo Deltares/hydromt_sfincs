@@ -435,9 +435,8 @@ def create_index_tiles(
             logger.debug(f"Processing zoom level {izoom}")
             for transform, col, row in tile_window(izoom, minx, miny, maxx, maxy):
                 futures.append(
-                    executor.submit(_process_tile, izoom, transform, col, row)
+                    executor.submit(_process_tile, (izoom, transform, col, row)),
                 )
-
         for future in futures:
             future.result()
 

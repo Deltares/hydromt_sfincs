@@ -25,12 +25,13 @@ from hydromt.model.components import MeshComponent
 from hydromt.model.processes.grid import create_grid_from_region
 
 from hydromt_sfincs.utils import make_regular_grid
-from hydromt_sfincs.workflows.cog import create_index_cog, create_topobathy_cog
 from hydromt_sfincs.workflows.map_overlay import MeshOverlay
+from hydromt_sfincs.workflows.cog import create_index_cog, create_topobathy_cog
 from hydromt_sfincs.workflows.tiling import (
     create_topobathy_tiles,
     create_index_tiles,
 )
+
 from .quadtree_builder import build_quadtree_xugrid, cut_inactive_cells
 
 if TYPE_CHECKING:
@@ -733,49 +734,13 @@ class SfincsQuadtreeGrid(MeshComponent):
         """Invalidate the cached edge-overlay dataframe."""
         self._overlay.invalidate()
 
-    def create_topobathy_cog(
-        self,
-        filename: Union[str, Path],
-        bathymetry_sets: List[dict],
-        bathymetry_database: Optional[object] = None,
-        dx: float = 10.0,
-    ) -> None:
-        """Write a COG raster sampling the model topobathy.
-
-        Thin wrapper around
-        :py:func:`hydromt_sfincs.workflows.cog.make_topobathy_cog`.
-
-        Parameters
-        ----------
-        filename : str or Path
-            Output COG file path.
-        bathymetry_sets : list of dict
-            Dataset list passed through to
-            ``bathymetry_database.get_bathymetry_on_points``.
-        bathymetry_database : object, optional
-            Backing bathymetry database providing
-            ``get_bathymetry_on_points``. Required for this method to
-            produce data.
-        dx : float, optional
-            Raster resolution in model CRS units, by default ``10.0``.
-        """
-        make_topobathy_cog(
-            quadtree_grid=self,
-            filename=filename,
-            bathymetry_sets=bathymetry_sets,
-            bathymetry_database=bathymetry_database,
-            dx=dx,
-        )
-
     def create_index_tiles(
         self,
-        root: Union[str, Path],
-        region: Optional[gpd.GeoDataFrame] = None,
+        root: Union[str, Path] = None,
         zoom_range: Union[int, List[int]] = [0, 13],
         fmt: str = "png",
         write_html_viewer: bool = True,
         max_workers: Optional[int] = None,
-        logger: logging.Logger = logger,
     ) -> None:
         """Create webmercator index tiles for this quadtree grid.
 
@@ -786,9 +751,6 @@ class SfincsQuadtreeGrid(MeshComponent):
         ----------
         root : Union[str, Path]
             Parent directory; tiles land in ``<root>/indices``.
-        region : gpd.GeoDataFrame, optional
-            Area for which tiles are generated. Defaults to the grid
-            exterior.
         zoom_range : Union[int, List[int]], optional
             Range of zoom levels, by default ``[0, 13]``.
         fmt : str, optional
@@ -801,6 +763,11 @@ class SfincsQuadtreeGrid(MeshComponent):
             Defaults to ``os.cpu_count()``. Pass ``1`` to disable
             parallelism.
         """
+
+        # if root is None, use the model root directory
+        if root is None:
+            root = os.path.join(self.model.root.path, "indices")
+
         create_index_tiles(
             model=self.model,
             root=root,
@@ -808,21 +775,18 @@ class SfincsQuadtreeGrid(MeshComponent):
             fmt=fmt,
             write_html_viewer=write_html_viewer,
             max_workers=max_workers,
-            logger=logger,
         )
 
     def create_topobathy_tiles(
         self,
-        root: Union[str, Path],
-        elevation_list: Optional[List[dict]] = None,
-        region: Optional[gpd.GeoDataFrame] = None,
+        elevation_list: List[dict],
+        root: Union[str, Path] = None,
         index_path: Optional[Union[str, Path]] = None,
         zoom_range: Union[int, List[int]] = [0, 13],
         z_range: List[float] = [-20000.0, 20000.0],
         fmt: str = "bin",
         write_html_viewer: bool = True,
         max_workers: Optional[int] = None,
-        logger: logging.Logger = logger,
     ) -> None:
         """Create webmercator topobathy tiles for this quadtree grid.
 
@@ -839,9 +803,6 @@ class SfincsQuadtreeGrid(MeshComponent):
             (with a ``"da"`` DataArray). DDB entries are auto-resolved via
             the model's data catalog. If ``None``, all sources in the
             model's data catalog are used instead.
-        region : gpd.GeoDataFrame, optional
-            Area for which tiles are generated. Defaults to the grid
-            exterior.
         index_path : Union[str, Path], optional
             Directory containing index tiles; if given, topobathy tiles
             are only written where index tiles exist.
@@ -859,28 +820,26 @@ class SfincsQuadtreeGrid(MeshComponent):
             Defaults to ``os.cpu_count()``. Pass ``1`` to disable
             parallelism.
         """
-        if region is None:
-            region = self.exterior
+        if root is None:
+            root = os.path.join(self.model.root.path, "topobathy")
 
         if isinstance(zoom_range, int):
             zr = [0, zoom_range]
         else:
             zr = zoom_range
 
-        # Auto-convert DDB-format elevation_list (name-only) to hydromt format
-        if elevation_list and "da" not in elevation_list[0]:
-            res = 40075016.686 / 256 / 2 ** zr[1]
-            elevation_list = self.model._parse_datasets_elevation(
-                elevation_list, res=res
-            )
+        # Parse elevation_list and determine the resolution of the topobathy tiles.
+        res = 40075016.686 / 256 / 2 ** zr[1]
+        elevation_list = self.model._parse_datasets_elevation(elevation_list, res=res)
 
+        # FIXME
         # When no elevation_list is given, the workflow falls back to the
         # model's data catalog (if populated).
         data_catalog = self.model.data_catalog if elevation_list is None else None
 
         create_topobathy_tiles(
             root=root,
-            region=region,
+            region=self.model.region,
             elevation_list=elevation_list,
             data_catalog=data_catalog,
             index_path=index_path,
@@ -889,7 +848,6 @@ class SfincsQuadtreeGrid(MeshComponent):
             fmt=fmt,
             write_html_viewer=write_html_viewer,
             max_workers=max_workers,
-            logger=logger,
         )
 
     def create_topobathy_cog(
@@ -898,7 +856,6 @@ class SfincsQuadtreeGrid(MeshComponent):
         elevation_list: List[dict],
         resolution: float = 10.0,
         river_list: Optional[List[dict]] = None,
-        bounds: Optional[List[float]] = None,
         buffer_cells: int = 0,
         z_minimum: float = -20000.0,
         nrmax: int = 2000,
@@ -908,31 +865,30 @@ class SfincsQuadtreeGrid(MeshComponent):
         Parameters
         ----------
         filename : str or Path
-            Output COG file path.
+            Output COG file path, with the merged elevation datasets.
         elevation_list : List[dict]
-            List of dictionaries with variable names and dataset names to use for depth.
+            List of dictionaries with datasets and merge arguments to use for depth.
         resolution : float, optional
-            Raster resolution in model CRS units, by default 10.0.
+            Desired resolution in model CRS units, by default 10.0.
         river_list : List[dict], optional
             List of dictionaries with variable names and dataset names to use for river depth.
-        bounds : List[float], optional
-            Bounding box for the output raster in model CRS units, by default None.
         buffer_cells : int, optional
-            Number of buffer cells to add around the bounding box, by default 0.
+            Number of buffer cells for interpolation between datasets, by default 0.
         z_minimum : float, optional
             Minimum elevation value to use for the output raster, by default -20000.0.
         nrmax : int, optional
-            Maximum number of rows/columns for the output raster, by default 2000.
+            Maximum number of cells per block, by default 2000
+            These blocks are used to prevent memory issues while working with large datasets
         """
+
         create_topobathy_cog(
             model=self.model,
             elevation_list=elevation_list,
             river_list=river_list,
-            topobathy_fn=filename,
+            filename=filename,
             res=resolution,
             buffer_cells=buffer_cells,
             z_minimum=z_minimum,
-            bounds=bounds,
             nrmax=nrmax,
         )
 
@@ -940,23 +896,30 @@ class SfincsQuadtreeGrid(MeshComponent):
         self,
         filename: Union[str, Path],
         filename_topobathy: Union[str, Path],
+        nrmax: int = 2000,
     ) -> None:
         """Write a COG raster mapping each pixel to a quadtree cell index.
 
         Thin wrapper around
-        :py:func:`hydromt_sfincs.workflows.cog.make_quadtree_index_cog`.
+        :py:func:`hydromt_sfincs.workflows.cog.create_index_cog`.
 
         Parameters
         ----------
         filename : str or Path
-            Output COG file path.
+            Output COG file path. This raster contains the quadtree cell index for each pixel,
+            or -999 for pixels outside the active grid. Note that this index file only works in
+            combination with the topobathy COG used for creation.
         filename_topobathy : str or Path
             Reference topobathy COG whose grid / CRS define the output.
+        nrmax : int, optional
+            Maximum number of cells per block, by default 2000
+            These blocks are used to prevent memory issues while working with large datasets
         """
         create_index_cog(
-            quadtree_grid=self,
+            model=self.model,
             filename=filename,
             filename_topobathy=filename_topobathy,
+            nrmax=nrmax,
         )
 
 

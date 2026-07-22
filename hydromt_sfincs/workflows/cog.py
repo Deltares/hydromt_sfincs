@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 def create_topobathy_cog(
     model: "SfincsModel",
     elevation_list: List[dict],
-    topobathy_fn: Union[str, Path],
+    filename: Union[str, Path],
     res: float,
     river_list: List[dict] = [],
     bounds: Optional[List[float]] = None,
@@ -146,9 +146,9 @@ def create_topobathy_cog(
     )
 
     # Create the output directory if it doesn't exist and create an empty COG file
-    topobathy_fn = Path(topobathy_fn)
-    topobathy_fn.parent.mkdir(parents=True, exist_ok=True)
-    with rasterio.open(topobathy_fn, "w", **profile):
+    filename = Path(filename)
+    filename.parent.mkdir(parents=True, exist_ok=True)
+    with rasterio.open(filename, "w", **profile):
         pass
 
     # Determine the number of blocks in each direction
@@ -234,7 +234,7 @@ def create_topobathy_cog(
                 da_dep.sizes[y_dim_dep],
             )
             # write the block to the output COG
-            with rasterio.open(topobathy_fn, "r+") as dep_tif:
+            with rasterio.open(filename, "r+") as dep_tif:
                 dep_tif.write(
                     da_dep.values,
                     window=window,
@@ -243,15 +243,15 @@ def create_topobathy_cog(
 
     # Create COG overviews for faster visualization
     build_overviews(
-        fn=topobathy_fn,
+        fn=filename,
         resample_method="average",
     )
 
 
 def create_index_cog(
     model: "SfincsModel",
-    indices_fn: Union[str, Path],
-    topobathy_fn: Union[str, Path],
+    filename: Union[str, Path],
+    filename_topobathy: Union[str, Path],
     nrmax: int = 2000,
     nodata: int = 2147483647,
 ):
@@ -262,10 +262,10 @@ def create_index_cog(
     ----------
     model : SfincsModel
         The SfincsModel instance containing the grid information.
-    indices_fn : Union[str, Path]
+    filename : Union[str, Path]
         The filename for the output COG file containing the indices. Note that this file only works
         for this SFINCS model and the topobathy file provided.
-    topobathy_fn : Union[str, Path]
+    filename_topobathy : Union[str, Path],
         The filename of the topobathy file from which to read the coordinates.
     nrmax : int, optional
         The maximum number of cells in a block, by default 2000.
@@ -282,7 +282,7 @@ def create_index_cog(
     grid = model.grid_component
 
     # Read coordinates from topobathy file
-    with rasterio.open(topobathy_fn) as src:
+    with rasterio.open(filename_topobathy) as src:
         dem_crs = src.crs
         dem_transform = src.transform
         width = src.width
@@ -324,7 +324,7 @@ def create_index_cog(
             BIGTIFF="YES",
         )
 
-    with rasterio.open(indices_fn, "w", **profile):
+    with rasterio.open(filename, "w", **profile):
         pass
 
     # Create transformer once
@@ -371,7 +371,7 @@ def create_index_cog(
             )
             out[:, :] = indices
 
-            with rasterio.open(indices_fn, "r+") as fm_tif:
+            with rasterio.open(filename, "r+") as fm_tif:
                 fm_tif.write(
                     out,
                     window=window,
@@ -379,7 +379,7 @@ def create_index_cog(
                 )
 
     build_overviews(
-        fn=indices_fn,
+        fn=filename,
         resample_method="nearest",
     )
 
