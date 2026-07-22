@@ -257,7 +257,6 @@ class SfincsUrbanDrainageAreas(ModelComponent):
                 self._data,
                 name="urb",
                 root=join(self.model.root.path, "gis"),
-                logger=logger,
             )
 
     # ----- set / create / delete / clear -------------------------------
