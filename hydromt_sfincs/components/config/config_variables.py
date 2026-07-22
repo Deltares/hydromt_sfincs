@@ -841,10 +841,10 @@ class SfincsConfigVariables(BaseSettings):
         0, ge=0, le=1, description="Write dynamic bed level output (1: yes, 0: no)"
     )
     regular_output_on_mesh: int = Field(
-        0,
+        1,
         ge=0,
         le=1,
-        description="Write regular grid on quadtree mesh output (1: yes, 0: no)",
+        description="Write quadtree without refinement on quadtree mesh (1: yes) or regular grid (0: no)",
     )
     twet_threshold: float = Field(
         0.01, ge=0.0, description="Time-wet minimum depth threshold (m)"
