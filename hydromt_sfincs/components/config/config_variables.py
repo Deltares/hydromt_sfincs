@@ -274,16 +274,20 @@ class SfincsConfigVariables(BaseSettings):
         lt=0.5,
         description="Manning's n coefficient for spatially uniform roughness (s/m^(1/3))",
     )
-    manning_land: float = Field(
-        0.04,
-        description="Manning's n for land areas; -999 = not set (s/m^(1/3))",
+    manning_land: float | None = Field(
+        None,
+        gt=0.0,
+        lt=0.5,
+        description="Manning's n for land areas; 0.04 recommended, -999 = not set (s/m^(1/3))",
     )
-    manning_sea: float = Field(
-        0.02,
-        description="Manning's n for sea areas; -999 = not set (s/m^(1/3))",
+    manning_sea: float | None = Field(
+        None,
+        gt=0.0,
+        lt=0.5,
+        description="Manning's n for sea areas; 0.02 recommended, -999 = not set (s/m^(1/3))",
     )
-    rgh_lev_land: float = Field(
-        0.0,
+    rgh_lev_land: float | None = Field(
+        None,
         description="Elevation level to distinguish land and sea roughness (m)",
     )
 
