@@ -742,6 +742,146 @@ class SfincsDrainageStructures(ModelComponent):
         with open(abs_file_path, "wb") as f:
             tomli_w.dump({"src_structure": tables}, f)
 
+    def _to_legacy_gdf(self) -> gpd.GeoDataFrame:
+        """Build a legacy par1..par6 GeoDataFrame from the named-column data.
+
+        Used only for writing the fixed-column ``.drn`` file via
+        :func:`utils.write_drn`. The stored gdf is not modified.
+        """
+        n = len(self.data)
+        legacy = gpd.GeoDataFrame(
+            {
+                "type": [0] * n,
+                "par1": [0.0] * n,
+                "par2": [0.0] * n,
+                "par3": [0.0] * n,
+                "par4": [0.0] * n,
+                "par5": [0.0] * n,
+                "par6": [0.0] * n,
+            },
+            geometry=self.data.geometry.values,
+            crs=self.model.crs,
+        )
+        for idx, row in self.data.iterrows():
+            t = int(row["type"])
+            if t == 1:
+                legacy.at[idx, "type"] = 1
+                legacy.at[idx, "par1"] = float(row["q"])
+            elif t == 2:
+                direction = str(row.get("direction", "") or "both").lower()
+                if direction == "positive":
+                    # Round-trip legacy check_valve so SFINCS (which has
+                    # no direction flag in the fixed-column format) still
+                    # gets the one-way semantics.
+                    legacy.at[idx, "type"] = 3
+                else:
+                    legacy.at[idx, "type"] = 2
+                legacy.at[idx, "par1"] = float(row["flow_coef"])
+            elif t == 4:
+                legacy.at[idx, "type"] = 4
+                legacy.at[idx, "par1"] = float(row["width"])
+                legacy.at[idx, "par2"] = float(row["sill_elevation"])
+                legacy.at[idx, "par3"] = float(row["mannings_n"])
+                legacy.at[idx, "par6"] = float(row["closing_duration"])
+            elif t == 5:
+                legacy.at[idx, "type"] = 5
+                legacy.at[idx, "par1"] = float(row["flow_coef"])
+                legacy.at[idx, "par2"] = float(row["width"])
+                legacy.at[idx, "par3"] = float(row["height"])
+                legacy.at[idx, "par4"] = float(row["invert_1"])
+                legacy.at[idx, "par5"] = float(row["invert_2"])
+                legacy.at[idx, "par6"] = float(row["submergence_ratio"])
+            else:
+                legacy.at[idx, "type"] = t
+        return legacy
+
+    def write_toml(self, filename: str | Path = None) -> None:
+        """Write drainage structures in the new TOML format.
+
+        Default filename is ``sfincs.toml.drn``. Emits all per-type
+        parameters for each ``[[src_structure]]`` entry. For non-pump
+        structures ``rules_open`` and ``rules_close`` are always
+        written, falling back to empty strings when no rules are set.
+        """
+        self.root._assert_write_mode()
+
+        if self.data.empty:
+            logger.debug("No drainage structures available to write.")
+            return
+
+        abs_file_path = self.model.config.get_set_file_variable(
+            key="drnfile", value=filename, default="sfincs.toml.drn"
+        )
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        tables: list[dict] = []
+        for idx, row in self.data.iterrows():
+            coords = list(row.geometry.coords)
+            x1, y1 = float(coords[0][0]), float(coords[0][1])
+            x2, y2 = float(coords[-1][0]), float(coords[-1][1])
+
+            t = int(row["type"])
+            name = str(row.get("name", "") or f"drn_{idx + 1:03d}")
+
+            if t == 1:
+                type_str = "pump"
+            elif t == 2:
+                type_str = "culvert_simple"
+            elif t == 4:
+                type_str = "gate"
+            elif t == 5:
+                type_str = "culvert"
+            else:
+                logger.warning(
+                    "Skipping drainage structure %r with unknown type %s",
+                    name,
+                    t,
+                )
+                continue
+
+            entry: dict = {
+                "type": type_str,
+                "name": name,
+                "src_1": [x1, y1],
+                "src_2": [x2, y2],
+            }
+            if t == 1:
+                entry["q"] = float(row["q"])
+            elif t == 2:
+                direction = str(row.get("direction", "") or "both").lower()
+                if direction not in ("both", "positive", "negative"):
+                    direction = "both"
+                entry["direction"] = direction
+                entry["flow_coef"] = float(row["flow_coef"])
+            elif t == 4:
+                entry["width"] = float(row["width"])
+                entry["sill_elevation"] = float(row["sill_elevation"])
+                entry["mannings_n"] = float(row["mannings_n"])
+                entry["opening_duration"] = float(row["opening_duration"])
+                entry["closing_duration"] = float(row["closing_duration"])
+            elif t == 5:
+                direction = str(row.get("direction", "") or "both").lower()
+                if direction not in ("both", "positive", "negative"):
+                    direction = "both"
+                entry["direction"] = direction
+                entry["flow_coef"] = float(row["flow_coef"])
+                entry["width"] = float(row["width"])
+                entry["height"] = float(row["height"])
+                entry["invert_1"] = float(row["invert_1"])
+                entry["invert_2"] = float(row["invert_2"])
+                entry["submergence_ratio"] = float(row["submergence_ratio"])
+
+            # Rules apply to every non-pump type; always emit them, even
+            # when empty, so the TOML schema is consistent.
+            if t != 1:
+                entry["rules_open"] = str(row.get("rules_open", "") or "")
+                entry["rules_close"] = str(row.get("rules_close", "") or "")
+
+            tables.append(entry)
+
+        with open(abs_file_path, "wb") as f:
+            tomli_w.dump({"src_structure": tables}, f)
+
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
         """Set SFINCS drainage structures.
 
