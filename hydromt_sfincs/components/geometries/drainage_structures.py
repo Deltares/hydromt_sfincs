@@ -432,6 +432,11 @@ class SfincsDrainageStructures(ModelComponent):
         using integer ``type`` codes (1=pump, 2=culvert_simple, 4=gate,
         5=culvert). The legacy ``check_valve`` type is resolved on read
         into ``culvert_simple`` + ``direction="positive"``.
+
+        Gate control rules are read from the ordered ``[[src_structure.rule]]``
+        tables (``operation`` + ``when``) into the internal ``rules_open`` /
+        ``rules_close`` columns. Legacy files using scalar ``rules_open`` /
+        ``rules_close`` keys are still accepted as a fallback.
         """
         with open(filename, "rb") as f:
             doc = tomllib.load(f)
@@ -534,14 +539,27 @@ class SfincsDrainageStructures(ModelComponent):
                     entry.get("submergence_ratio", _DEFAULTS["submergence_ratio"])
                 )
 
-            # Rules apply to all non-pump types.
+            # Rules apply to all non-pump types. The SFINCS TOML format
+            # carries them as an ordered array of tables under "rule"
+            # (each {operation = "open"/"close", when = "<expr>"}). Older
+            # files used scalar rules_open / rules_close keys; accept both,
+            # mapping into the internal rules_open / rules_close columns.
             if t != 1:
-                gdf.at[idx, "rules_open"] = str(
-                    entry.get("rules_open", "") or ""
-                )
-                gdf.at[idx, "rules_close"] = str(
-                    entry.get("rules_close", "") or ""
-                )
+                rule_open, rule_close = "", ""
+                for r in entry.get("rule", []) or []:
+                    op = str(r.get("operation", "")).lower()
+                    when = str(r.get("when", "") or "")
+                    if op == "open" and not rule_open:
+                        rule_open = when
+                    elif op == "close" and not rule_close:
+                        rule_close = when
+                # Fall back to legacy scalar keys when no rule tables present.
+                if not rule_open:
+                    rule_open = str(entry.get("rules_open", "") or "")
+                if not rule_close:
+                    rule_close = str(entry.get("rules_close", "") or "")
+                gdf.at[idx, "rules_open"] = rule_open
+                gdf.at[idx, "rules_close"] = rule_close
 
         self.set(gdf, merge=False)
 
@@ -551,12 +569,18 @@ class SfincsDrainageStructures(ModelComponent):
         Always writes two files side by side:
 
         * The legacy fixed-column file (``sfincs.drn`` by default, or
-          whatever ``filename`` / ``drnfile`` resolves to). This is the
-          file ``drnfile`` in the config keeps pointing at.
+          whatever ``filename`` / ``drnfile`` resolves to), kept as a
+          human-readable artifact. It is lossy: it cannot carry rules,
+          direction, or detailed-culvert geometry.
         * A companion TOML file named ``sfincs.toml.drn`` next to the
           legacy file, carrying the full new schema (direction, rules,
-          detailed-culvert geometry, etc.). ``drnfile`` is NOT changed
-          by this companion write — it stays on the legacy file.
+          detailed-culvert geometry, etc.).
+
+        On a successful TOML write, ``drnfile`` is pointed at
+        ``sfincs.toml.drn`` so SFINCS reads the full-fidelity file
+        directly instead of re-transcribing the lossy legacy ``.drn``
+        over the top of it. If the TOML write fails, ``drnfile`` is left
+        on the legacy file as a fallback.
         """
 
         self.root._assert_write_mode()
@@ -800,8 +824,11 @@ class SfincsDrainageStructures(ModelComponent):
 
         Default filename is ``sfincs.toml.drn``. Emits all per-type
         parameters for each ``[[src_structure]]`` entry. For non-pump
-        structures ``rules_open`` and ``rules_close`` are always
-        written, falling back to empty strings when no rules are set.
+        structures, any ``rules_open`` / ``rules_close`` expressions are
+        written as an ordered list of ``[[src_structure.rule]]`` tables
+        (``operation`` = ``"open"``/``"close"``, ``when`` = expression),
+        which is the format the SFINCS reader expects. Structures with no
+        rules get no ``rule`` tables (SFINCS treats them as always open).
         """
         self.root._assert_write_mode()
 
@@ -871,11 +898,21 @@ class SfincsDrainageStructures(ModelComponent):
                 entry["invert_2"] = float(row["invert_2"])
                 entry["submergence_ratio"] = float(row["submergence_ratio"])
 
-            # Rules apply to every non-pump type; always emit them, even
-            # when empty, so the TOML schema is consistent.
+            # Rules apply to every non-pump type. SFINCS reads them as an
+            # ordered array of tables under the "rule" sub-key
+            # (each -> [[src_structure.rule]] with "operation" + "when");
+            # the scalar rules_open/rules_close keys are ignored by the reader.
+            # Emit an "open" rule then a "close" rule, skipping empty ones.
             if t != 1:
-                entry["rules_open"] = str(row.get("rules_open", "") or "")
-                entry["rules_close"] = str(row.get("rules_close", "") or "")
+                rules: list[dict] = []
+                rule_open = str(row.get("rules_open", "") or "").strip()
+                rule_close = str(row.get("rules_close", "") or "").strip()
+                if rule_open:
+                    rules.append({"operation": "open", "when": rule_open})
+                if rule_close:
+                    rules.append({"operation": "close", "when": rule_close})
+                if rules:
+                    entry["rule"] = rules
 
             tables.append(entry)
 
