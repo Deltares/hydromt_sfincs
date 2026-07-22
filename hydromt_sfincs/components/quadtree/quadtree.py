@@ -19,6 +19,7 @@ import shapely
 
 import xarray as xr
 import xugrid as xu
+from xugrid.core.wrap import UgridDataArray
 
 from hydromt import hydromt_step
 from hydromt.model.components import MeshComponent
@@ -61,7 +62,31 @@ class SfincsQuadtreeGrid(MeshComponent):
             model=model,
         )
 
-    # NOTE @data and @initialize are inherited from the MeshComponent
+    @property
+    def data(self) -> xu.UgridDataArray | xu.UgridDataset:
+        """
+        Model static mesh data. It returns a xugrid.UgridDataset.
+
+        Mesh can contain several grids (1D, 2D, 3D) defined according
+        to UGRID conventions. To extract a specific grid, use get_mesh
+        method.
+        """
+        # XU grid data type Xarray dataset with xu sampling.
+        if self._data is None and self.model.grid_type == "quadtree":
+            self._initialize()
+        elif self._data is None and self.model.grid_type == "regular":
+            self._initialize_from_regular()
+        return self._data
+
+    def _initialize_from_regular(self):
+        """Initialize the quadtree grid from the regular grid."""
+        # we convert regular grids to a UgridDataArray to be able to use the grid_snapper
+        if self.model.config.get("rotation", 0) != 0:
+            uda = UgridDataArray.from_structured2d(self.model.grid.mask, "xc", "yc")
+        else:
+            uda = UgridDataArray.from_structured2d(self.model.grid.mask)
+        uda.grid.set_crs(self.model.crs)
+        self._data = uda
 
     @property
     def crs(self) -> CRS:

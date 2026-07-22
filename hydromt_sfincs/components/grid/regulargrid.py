@@ -13,7 +13,6 @@ import xarray as xr
 from affine import Affine
 from pyproj import CRS, Transformer
 from shapely.geometry import LineString
-from xugrid.core.wrap import UgridDataArray
 
 from hydromt import hydromt_step
 from hydromt.model.components import GridComponent
@@ -216,15 +215,6 @@ class SfincsGrid(GridComponent):
         if epsg is not None:
             ds.raster.set_crs(epsg)
         self.set(ds)
-
-        # we always convert regular grids to a UgridDataArray to be able to use the grid_snapper
-        if self.model.config.get("rotation", 0) != 0:
-            self.model.quadtree_grid._data = UgridDataArray.from_structured2d(
-                self.mask, "xc", "yc"
-            )
-        else:
-            self.model.quadtree_grid._data = UgridDataArray.from_structured2d(self.mask)
-        self.model.quadtree_grid.data.grid.set_crs(self.crs)
 
     def write(
         self,
