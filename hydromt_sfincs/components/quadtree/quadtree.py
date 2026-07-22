@@ -25,7 +25,7 @@ from hydromt.model.components import MeshComponent
 from hydromt.model.processes.grid import create_grid_from_region
 
 from hydromt_sfincs.utils import make_regular_grid
-from hydromt_sfincs.workflows.cog import make_index_cog, make_topobathy_cog
+from hydromt_sfincs.workflows.cog import make_quadtree_index_cog, make_topobathy_cog
 from hydromt_sfincs.workflows.map_overlay import MeshOverlay
 from hydromt_sfincs.workflows.tiling import (
     create_topobathy_tiles,
@@ -41,7 +41,12 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 
-_QT_MAPS = ["manning", "vol", "ini", "infiltration"]
+_QT_MAPS = {
+    "manning": None,
+    "vol": None,
+    "ini": None,
+    "infiltration": "infiltration_file",
+}
 
 
 class SfincsQuadtreeGrid(MeshComponent):
@@ -164,9 +169,13 @@ class SfincsQuadtreeGrid(MeshComponent):
             raise FileNotFoundError(f"Quadtree grid file not found: {abs_file_path}")
 
         # load dataset and set CRS
+        # xugrid reads mesh2d_crs automatically and sets grid.crs from crs_wkt.
+        # For older files, fall back progressively.
         ds = xu.load_dataset(abs_file_path)
         ds.close()
-        ds.grid.set_crs(CRS.from_wkt(ds["crs"].crs_wkt))
+        if ds.grid.crs is None:
+            with xr.open_dataset(abs_file_path) as raw:
+                ds.grid.set_crs(CRS.from_wkt(raw["crs"].attrs["crs_wkt"]))
 
         # rename variables to match Python conventions
         # ds = ds.rename({"z": "dep"}) if "z" in ds else ds
@@ -229,9 +238,12 @@ class SfincsQuadtreeGrid(MeshComponent):
 
         attrs = self.data.attrs
         ds = self.data.ugrid.to_dataset()
-        # FIXME set the CRS manually, since when is this needed?
-        ds["crs"] = self.crs.to_epsg()
-        ds["crs"].attrs = self.crs.to_cf()
+        # xugrid writes a 'mesh2d_crs' variable with full CF metadata from
+        # pyproj. Add epsg/epsg_code so MDAL can auto-detect the CRS in QGIS.
+        epsg = self.crs.to_epsg()
+        if "mesh2d_crs" in ds:
+            ds["mesh2d_crs"].attrs["epsg"] = epsg
+            ds["mesh2d_crs"].attrs["epsg_code"] = f"EPSG:{epsg}"
 
         # certain variables are stored as individual netcdfs because they might change between scnearios;
         # in Python we keep everything in the same object so they are splitted here
@@ -242,7 +254,10 @@ class SfincsQuadtreeGrid(MeshComponent):
             data_vars = list(data_vars)
         variables = []
         for var in data_vars:
-            fn_var = self.model.config.get(f"{var}file", abs_path=True)
+            # infiltration uses a non-standard config key ("infiltration_file");
+            # other variables follow the default "{var}file" pattern.
+            key = _QT_MAPS.get(var) or f"{var}file"
+            fn_var = self.model.config.get(key, abs_path=True)
             if fn_var is not None:
                 fn_var.parent.mkdir(parents=True, exist_ok=True)
                 variables.append({"variable": var, "file_name": fn_var})
@@ -295,7 +310,32 @@ class SfincsQuadtreeGrid(MeshComponent):
         self.model.config.set("epsg", self.model.crs.to_epsg())
 
         # And write the file
+        attrs["Conventions"] = "CF-1.8 UGRID-1.0 Deltares-0.10"
         ds.attrs = attrs
+
+        # Cast all int8/uint8 variables to int32 — MDAL rejects the entire mesh
+        # when it encounters these small integer types on the face dimension.
+        # The SFINCS Fortran kernel reads them into integer*1 arrays via
+        # nf90_get_var; NetCDF auto-conversion handles int32→int8 transparently.
+        _small_int = (np.int8, np.uint8)
+        for var in list(ds.data_vars):
+            if ds[var].dtype in _small_int:
+                ds[var] = ds[var].astype(np.int32)
+
+        # xugrid's to_dataset() omits units on node coordinates; add them so
+        # MDAL can interpret the coordinate system correctly in QGIS.
+        geo = self.model.crs.is_geographic
+        coord_units = {
+            "mesh2d_node_x": "degrees_east" if geo else "m",
+            "mesh2d_node_y": "degrees_north" if geo else "m",
+        }
+        crs_var_name = "mesh2d_crs" if "mesh2d_crs" in ds else "crs"
+        for coord, units in coord_units.items():
+            if coord in ds:
+                if "units" not in ds[coord].attrs:
+                    ds[coord].attrs["units"] = units
+                ds[coord].attrs["grid_mapping"] = crs_var_name
+
         ds.to_netcdf(abs_file_path)
         ds.close()
 
@@ -388,7 +428,8 @@ class SfincsQuadtreeGrid(MeshComponent):
         )
         # add nFaces coordinates to grid
         ds = xu.UgridDataset(ds.ugrid.to_dataset())
-        ds.grid.set_crs(CRS.from_wkt(ds["crs"].crs_wkt))
+        crs_var = ds["mesh2d_crs"] if "mesh2d_crs" in ds else ds["crs"]
+        ds.grid.set_crs(CRS.from_wkt(crs_var.crs_wkt))
         self._data = ds
 
         # Make sure epsg is stored in the config as well
@@ -858,7 +899,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         """Write a COG raster mapping each pixel to a quadtree cell index.
 
         Thin wrapper around
-        :py:func:`hydromt_sfincs.workflows.cog.make_index_cog`.
+        :py:func:`hydromt_sfincs.workflows.cog.make_quadtree_index_cog`.
 
         Parameters
         ----------
@@ -867,7 +908,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         filename_topobathy : str or Path
             Reference topobathy COG whose grid / CRS define the output.
         """
-        make_index_cog(
+        make_quadtree_index_cog(
             quadtree_grid=self,
             filename=filename,
             filename_topobathy=filename_topobathy,

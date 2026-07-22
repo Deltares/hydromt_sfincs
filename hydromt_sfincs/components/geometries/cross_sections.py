@@ -11,7 +11,7 @@ from shapely.geometry import LineString
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers, utils, writers
 
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel
@@ -102,7 +102,7 @@ class SfincsCrossSections(ModelComponent):
             raise FileNotFoundError(f"Cross-sections file not found: {abs_file_path}")
 
         # Read crs file
-        struct = utils.read_geoms(abs_file_path)
+        struct = readers.read_geoms(abs_file_path)
         gdf = utils.linestring2gdf(struct, crs=self.model.crs)
 
         # Add to self._data
@@ -114,7 +114,7 @@ class SfincsCrossSections(ModelComponent):
 
         # Check that data is not empty
         if self.data.empty:
-            logger.info("No cross-sections available to write.")
+            logger.debug("No cross-sections available to write.")
             return
 
         # Set file name and get absolute path
@@ -137,15 +137,14 @@ class SfincsCrossSections(ModelComponent):
         struct = utils.gdf2linestring(self.data)
 
         # Write to crs file
-        utils.write_geoms(abs_file_path, struct, stype="crs", fmt=fmt)
+        writers.write_geoms(abs_file_path, struct, stype="crs", fmt=fmt)
 
         # write also as geojson:
         if self.model.write_gis:
-            utils.write_vector(
+            writers.write_vector(
                 self.data,
                 name="crs",
                 root=join(self.root.path, "gis"),
-                logger=logger,
             )
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):

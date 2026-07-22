@@ -228,6 +228,19 @@ SFINCS workflows
    workflows.cn_to_s
    workflows.create_topobathy_tiles
 
+Flood map downscaling
+---------------------
+
+.. autosummary::
+   :toctree: ../_generated/
+
+   workflows.downscaling.downscale_floodmap
+   workflows.downscaling.adjust_zsmax_dilation
+   workflows.downscaling.adjust_zsmax_energyhead
+   workflows.downscaling.remove_disconnected_flooding
+   workflows.downscaling.make_index_cog
+   workflows.downscale_floodmap_webmercator
+
 .. _methods:
 
 SFINCS low-level methods
@@ -239,24 +252,25 @@ Input/Output methods
 .. autosummary::
    :toctree: ../_generated/
 
-   utils.read_binary_map
-   utils.write_binary_map
-   utils.read_binary_map_index
-   utils.write_binary_map_index
-   utils.read_ascii_map
-   utils.write_ascii_map
-   utils.read_timeseries
-   utils.write_timeseries
-   utils.read_xy
-   utils.write_xy
-   utils.read_xyn
-   utils.write_xyn
-   utils.read_geoms
-   utils.write_geoms
-   utils.read_drn
-   utils.write_drn
-   utils.read_sfincs_map_results
-   utils.read_sfincs_his_results
+   readers.read_config
+   readers.read_binary_map
+   writers.write_binary_map
+   readers.read_binary_map_index
+   writers.write_binary_map_index
+   readers.read_ascii_map
+   writers.write_ascii_map
+   readers.read_timeseries
+   writers.write_timeseries
+   readers.read_xy
+   writers.write_xy
+   readers.read_xyn
+   writers.write_xyn
+   readers.read_geoms
+   writers.write_geoms
+   readers.read_drn
+   writers.write_drn
+   readers.read_sfincs_map_results
+   readers.read_sfincs_his_results
 
 Utilities
 ---------
@@ -281,5 +295,3 @@ Visualization
 
    plots.plot_basemap
    plots.plot_forcing
-   utils.downscale_floodmap
-   workflows.downscale_floodmap_webmercator

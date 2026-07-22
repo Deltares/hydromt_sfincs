@@ -12,14 +12,13 @@ import numpy as np
 import xarray as xr
 from affine import Affine
 from pyproj import CRS, Transformer
-import pandas as pd
 from shapely.geometry import LineString
 
 from hydromt import hydromt_step
 from hydromt.model.components import GridComponent
 from hydromt.model.processes.grid import create_grid_from_region
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import writers
 from hydromt_sfincs.workflows.tiling import int2png, tile_window, write_html
 
 if TYPE_CHECKING:
@@ -305,20 +304,18 @@ class SfincsGrid(GridComponent):
 
                 # write to gis-files for visualization
                 if self.model.write_gis:
-                    utils.write_raster(
+                    writers.write_raster(
                         ds_out[name],
                         root=join(self.model.root.path, "gis"),
                         mask=mask,
-                        logger=logger,
                     )
 
             # write the model region to a geojson file for visualization
             if self.model.write_gis:
-                utils.write_vector(
+                writers.write_vector(
                     self.region,
                     name="region",
                     root=join(self.model.root.path, "gis"),
-                    logger=logger,
                 )
 
     @hydromt_step
@@ -501,6 +498,9 @@ class SfincsGrid(GridComponent):
             dims=("y", "x"),
             attrs={"_FillValue": mv},
         )
+
+        if name != "mask":
+            da = da.raster.mask_nodata()
         return da
 
     def write_ind(
@@ -524,7 +524,14 @@ class SfincsGrid(GridComponent):
     ) -> None:
         """Write one of the grid variables of the SFINCS model map to a binary file."""
 
-        data_out = np.asarray(data.transpose()[mask.transpose() > 0], dtype=dtype)
+        data_masked = data.transpose()[mask.transpose() > 0]
+        # make sure there is no NaN in the data to be written, otherwise SFINCS will crash
+        if np.any(np.isnan(data_masked)):
+            raise ValueError(
+                f"Data to be written to {map_fn} contains NaN values. "
+                "Please replace NaN values with a valid value before writing."
+            )
+        data_out = np.asarray(data_masked, dtype=dtype)
         data_out.tofile(map_fn)
 
     def update_grid_from_config(self):

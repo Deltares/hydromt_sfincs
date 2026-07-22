@@ -153,8 +153,8 @@ def test_determine_weir_elevation(model_config):
     # check if data is added
     obs0 = model_config.weirs.data
 
-    # Extract the z values
-    z_values = obs0.geometry.apply(lambda point: point.coords[0][2])
+    # Elevation is stored per-vertex in the 'elevation' column (geometry is 2D).
+    z_values = obs0["elevation"].apply(lambda v: v[0])
 
     # check first elevation value
     assert np.isclose(z_values[0], 0.021235, atol=1e-05)
@@ -164,7 +164,7 @@ def test_determine_weir_elevation(model_config):
 
     # check first elevation value
     obs1 = model_config.weirs.data
-    z_values1 = obs1.geometry.apply(lambda point: point.coords[0][2])
+    z_values1 = obs1["elevation"].apply(lambda v: v[0])
 
     assert np.isclose(
         z_values1[0], 2.021235, atol=1e-05

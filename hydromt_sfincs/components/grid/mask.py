@@ -4,14 +4,13 @@ from typing import TYPE_CHECKING, Union
 
 import geopandas as gpd
 import numpy as np
-import pandas as pd
 from pyflwdir.regions import region_area
 from scipy import ndimage
 
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers, utils
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -212,7 +211,7 @@ class SfincsMask(ModelComponent):
             ).endswith(".pol"):
                 # NOTE polygons should be in same CRS as model
                 gdf_include = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=include_polygon), crs=self.model.crs
+                    feats=readers.read_geoms(fn=include_polygon), crs=self.model.crs
                 )
             else:
                 gdf_include = self.data_catalog.get_geodataframe(
@@ -223,7 +222,7 @@ class SfincsMask(ModelComponent):
                 exclude_polygon
             ).endswith(".pol"):
                 gdf_exclude = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=exclude_polygon), crs=self.model.crs
+                    feats=readers.read_geoms(fn=exclude_polygon), crs=self.model.crs
                 )
             else:
                 gdf_exclude = self.data_catalog.get_geodataframe(
@@ -233,6 +232,19 @@ class SfincsMask(ModelComponent):
         # get mask and dep data
         da_mask = self.data["mask"] if "mask" in self.data else None
         da_dep = self.data["dep"] if "dep" in self.data else None
+
+        # check if we are going to apply any z constraints, if so we need dep data
+        has_z_constraints = any(
+            x is not None
+            for x in (
+                zmin,
+                zmax,
+                include_zmin,
+                include_zmax,
+                exclude_zmin,
+                exclude_zmax,
+            )
+        )
 
         da_mask0 = None
         if not reset_mask and da_mask is not None:
@@ -246,8 +258,11 @@ class SfincsMask(ModelComponent):
 
         if da_dep is None and (zmin is not None or zmax is not None):
             raise ValueError("dep required in combination with zmin / zmax")
-        elif da_dep is not None and not da_dep.raster.identical_grid(da_mask):
-            raise ValueError("dep does not match regular grid")
+        if da_dep is not None:
+            if not da_dep.raster.identical_grid(da_mask):
+                raise ValueError("dep does not match regular grid")
+            if da_dep.isnull().any() and has_z_constraints:
+                raise ValueError("dep contains NaN values, please fill these first")
 
         # initialize mask based on elevation range
         if zmin is not None or zmax is not None:
@@ -413,7 +428,7 @@ class SfincsMask(ModelComponent):
             ).endswith(".pol"):
                 # NOTE polygons should be in same CRS as model
                 gdf_include = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=include_polygon), crs=self.model.crs
+                    feats=readers.read_geoms(fn=include_polygon), crs=self.model.crs
                 )
             else:
                 gdf_include = self.data_catalog.get_geodataframe(
@@ -430,7 +445,7 @@ class SfincsMask(ModelComponent):
                 exclude_polygon
             ).endswith(".pol"):
                 gdf_exclude = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=exclude_polygon), crs=self.model.crs
+                    feats=readers.read_geoms(fn=exclude_polygon), crs=self.model.crs
                 )
             else:
                 gdf_exclude = self.data_catalog.get_geodataframe(

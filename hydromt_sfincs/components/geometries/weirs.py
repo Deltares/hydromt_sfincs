@@ -7,11 +7,12 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
+from shapely.geometry import LineString
 
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers, utils, writers
 
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel
@@ -104,7 +105,7 @@ class SfincsWeirs(ModelComponent):
             raise FileNotFoundError(f"Weir file not found: {abs_file_path}")
 
         # Read weir file:
-        struct = utils.read_geoms(abs_file_path)  # =utils.py function
+        struct = readers.read_geoms(abs_file_path)  # =utils.py function
         gdf = utils.linestring2gdf(struct, crs=self.model.crs)  # =utils.py function
 
         # Add to self._data
@@ -141,15 +142,14 @@ class SfincsWeirs(ModelComponent):
         struct = utils.gdf2linestring(self.data)
 
         # Write to weirfile
-        utils.write_geoms(abs_file_path, struct, stype="weir", fmt=fmt)
+        writers.write_geoms(abs_file_path, struct, stype="weir", fmt=fmt)
 
         # write also as geojson:
         if self.model.write_gis:
-            utils.write_vector(
+            writers.write_vector(
                 self.data,
                 name="weir",
                 root=join(self.root.path, "gis"),
-                logger=logger,
             )
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
@@ -260,6 +260,22 @@ class SfincsWeirs(ModelComponent):
         if not gdf.geometry.type.isin(["LineString"]).all():
             raise ValueError("Weirs must be of type LineString.")
 
+        # Weir geometries are stored as 2D LineStrings; any per-vertex Z
+        # values coming from the input (e.g. 3D LineStrings in a geojson)
+        # are moved into the ``elevation`` column instead.
+        if gdf.geometry.apply(lambda geom: geom.has_z).any():
+            has_z_mask = gdf.geometry.apply(lambda geom: geom.has_z)
+            if "elevation" not in gdf.columns:
+                gdf["elevation"] = None
+            for irow in gdf.index[has_z_mask]:
+                coords = list(gdf.at[irow, "geometry"].coords)
+                gdf.at[irow, "elevation"] = [c[2] for c in coords]
+            gdf.geometry = gdf.geometry.apply(
+                lambda geom: LineString([(x, y) for x, y, *_ in geom.coords])
+                if geom.has_z
+                else geom
+            )
+
         # expected columns in gdf
         cols = {
             "weir": ["name", "elevation", "par1", "geometry"],
@@ -269,10 +285,7 @@ class SfincsWeirs(ModelComponent):
         gdf = gdf[[c for c in cols["weir"] if c in gdf.columns]]
 
         # check whether elevation values are part of the gdf, or need to be calculated
-        gdf_has_elevation = (
-            gdf.geometry.apply(lambda geom: geom.has_z).all()
-            or "elevation" in gdf.columns
-        )
+        gdf_has_elevation = "elevation" in gdf.columns
 
         # check if elevation values are provided or can be calculated
         if not gdf_has_elevation and (dep is None and dz is None):

@@ -16,7 +16,7 @@ from hydromt.readers import read_workflow_yaml
 
 # from hydromt.log import setuplog
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers
 from hydromt_sfincs.sfincs import SfincsModel
 
 from .conftest import TESTDATADIR, TESTMODELDIR
@@ -433,8 +433,8 @@ def test_drainage_structures(model_config, tmp_dir):
     drnfile_2 = model_config.root.path / "sfincs.drn"
 
     # check whether the files are the same
-    gdf1 = utils.read_drn(drnfile_1)
-    gdf2 = utils.read_drn(drnfile_2)
+    gdf1 = readers.read_drn(drnfile_1)
+    gdf2 = readers.read_drn(drnfile_2)
     assert_geodataframe_equal(
         gdf1,
         gdf2,

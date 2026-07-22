@@ -8,6 +8,46 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
+v2.0.0-rc4 (unreleased)
+=============================
+**This release contains minor bugfixes and improvements to the v2.0.0-rc3 release.**
+
+Added
+-----
+- Added reusable pre-processing (``adjust_zsmax_dilation``, ``adjust_zsmax_energyhead``) and post-processing (``remove_disconnected_flooding``) helpers as separate functions.
+- Added optional argument to ``elevation.create()`` to skip extrapolation of the DEM (#392)
+
+Fixed
+-----
+- Fixed plot_basemap() for very flat and/or below-sea-level Models (#394)
+- Always write ``manning_land``, ``manning_sea`` and ``rgh_lev_land`` to config when they are set by the user (#398)
+- Fixed writing of infiltration layers in Quadtree models (#397)
+
+Changed
+-------
+- Moved the downscaling utilities from ``hydromt_sfincs.utils`` to a dedicated ``hydromt_sfincs.workflows.downscaling`` submodule (re-exported via ``hydromt_sfincs.workflows``).
+- ``downscale_floodmap`` is now parameterised by ``reproj_method`` (``nearest`` or ``bilinear``) and a ``subtract_dem`` flag (flood depth vs. raw water level), and works on both regular and quadtree grids.
+- Moved readers and writers from ``utils.py`` to dedicated ``readers.py`` and ``writers.py`` modules (#390)
+
+v2.0.0-rc3 (22-5-2026)
+=============================
+**This release contains minor bugfixes and improvements to the v2.0.0-rc2 release.**
+
+Added
+-----
+- introduced deepcopy so we can make a full copy of a model instance (#377)
+
+Fixed
+-----
+- fixed visualization of the sfincs.nc-file in QGIS (#381)
+- fixed writing observation points when they had 3D coodinates (#382)
+
+Changed
+-------
+- changed back default value of dtmapout to 3600 (was 0) in sfincs.inp ens (#378)
+- dtout is now automatically renamed to dtmapout when writing sfincs.inp (#378)
+
+
 v2.0.0-rc2 (16-4-2026)
 =============================
 **This release contains minor bugfixes and improvements to the v2.0.0-rc1 release.**

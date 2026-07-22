@@ -16,7 +16,7 @@ from shapely.geometry import LineString
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers, utils, writers
 
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel
@@ -98,7 +98,7 @@ class SfincsRunupGauges(ModelComponent):
         if not abs_file_path.exists():
             raise FileNotFoundError(f"Runup gauges file not found: {abs_file_path}")
 
-        struct = utils.read_geoms(abs_file_path)
+        struct = readers.read_geoms(abs_file_path)
         gdf = utils.linestring2gdf(struct, crs=self.model.crs)
 
         self.set(gdf, merge=False)
@@ -112,7 +112,7 @@ class SfincsRunupGauges(ModelComponent):
             Output file path. Defaults to ``sfincs.rug``.
         """
         if self.data.empty:
-            logger.info("No runup gauges available to write.")
+            logger.debug("No runup gauges available to write.")
             return
 
         abs_file_path = self.model.config.get_set_file_variable(
@@ -129,14 +129,13 @@ class SfincsRunupGauges(ModelComponent):
             fmt = "%11.1f"
 
         struct = utils.gdf2linestring(self.data)
-        utils.write_geoms(abs_file_path, struct, stype="rug", fmt=fmt)
+        writers.write_geoms(abs_file_path, struct, stype="rug", fmt=fmt)
 
         if self.model.write_gis:
-            utils.write_vector(
+            writers.write_vector(
                 self.data,
                 name="rug",
                 root=join(self.root.path, "gis"),
-                logger=logger,
             )
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True) -> None:
