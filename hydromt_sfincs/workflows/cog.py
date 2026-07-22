@@ -5,11 +5,10 @@ from pathlib import Path
 from typing import List, Optional, Union, TYPE_CHECKING
 
 import numpy as np
-from pyproj import CRS, Transformer
+from pyproj import Transformer
 import rasterio
 from rasterio.enums import Resampling
 from rasterio.windows import Window
-from rasterio.transform import from_origin
 from rasterio.rio.overview import get_maximum_overview_level
 
 from hydromt_sfincs import utils, workflows
@@ -19,7 +18,7 @@ if TYPE_CHECKING:
 
 __all__ = ["create_index_cog", "create_topobathy_cog", "build_overviews"]
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 def create_topobathy_cog(

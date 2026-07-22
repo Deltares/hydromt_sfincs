@@ -27,7 +27,7 @@ __all__ = [
     "create_topobathy_tiles",
 ]
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 def write_html(
@@ -306,7 +306,6 @@ def create_index_tiles(
     fmt: str = "png",
     write_html_viewer: bool = True,
     max_workers: Optional[int] = None,
-    logger: logging.Logger = logger,
 ) -> None:
     """Create webmercator index tiles for an SFINCS grid.
 
@@ -462,7 +461,6 @@ def create_topobathy_tiles(
     fmt: str = "png",
     write_html_viewer: bool = True,
     max_workers: Optional[int] = None,
-    logger: logging.Logger = logger,
 ) -> None:
     """Create webmercator topobathy tiles for a given region.
 
