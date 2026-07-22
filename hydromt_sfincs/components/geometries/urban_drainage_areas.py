@@ -39,7 +39,7 @@ except ImportError:  # Python < 3.11
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import utils, readers, writers
 
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel
@@ -180,7 +180,7 @@ class SfincsUrbanDrainageAreas(ModelComponent):
 
             poly_path = (urb_root / polygon_file).resolve()
             if poly_path not in poly_cache:
-                feats = utils.read_geoms(poly_path)
+                feats = readers.read_geoms(poly_path)
                 poly_cache[poly_path] = {
                     str(f["name"]): np.column_stack([f["x"], f["y"]])
                     for f in feats
@@ -237,7 +237,7 @@ class SfincsUrbanDrainageAreas(ModelComponent):
         fmt = "%.6f" if self.model.crs is not None and self.model.crs.is_geographic else "%.1f"
         for poly_path, feats in poly_groups.items():
             poly_path.parent.mkdir(parents=True, exist_ok=True)
-            utils.write_geoms(poly_path, feats, stype="pol", fmt=fmt)
+            writers.write_geoms(poly_path, feats, stype="pol", fmt=fmt)
 
         # tomli_w always wraps arrays across multiple lines. Collapse
         # the two-element ``outfall`` array back onto one line for
@@ -253,7 +253,7 @@ class SfincsUrbanDrainageAreas(ModelComponent):
             f.write(doc)
 
         if self.model.write_gis:
-            utils.write_vector(
+            writers.write_vector(
                 self._data,
                 name="urb",
                 root=join(self.model.root.path, "gis"),
