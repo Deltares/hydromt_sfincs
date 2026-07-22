@@ -161,7 +161,7 @@ class SfincsDrainageStructures(ModelComponent):
             is_toml = False
 
         if is_toml:
-            readers.read_toml(abs_file_path)
+            self.read_toml(abs_file_path)
             return
 
         # Legacy fixed-column reader → translate par1..par6 into the
