@@ -59,6 +59,10 @@ def test_grid_io(model_config, tmp_path):
     # assert the grid is the same
     assert model.grid.data.equals(model1.grid.data)
 
+    # check that the quadtree grid was created
+    assert isinstance(model.quadtree_grid.data, UgridDataArray)
+    assert model.quadtree_grid.crs == model.grid.crs
+
 
 def test_grid_create(model_init):
     model = model_init
@@ -122,33 +126,3 @@ def test_grid_create_from_region_rotated(model_init):
     assert np.isclose(model.grid.x0, 318650.0, atol=1e-3)
     assert np.isclose(model.grid.y0, 5040000.0, atol=1e-3)
     assert np.isclose(model.grid.rotation, 27.0, atol=1e-3)
-
-
-@patch("hydromt_sfincs.grid.UgridDataArray.from_structured2d")
-def test_read_sets_quadtree_grid(mock_from_structured2d):
-    uda = MagicMock(spec=UgridDataArray)
-    uda.grid = MagicMock()
-    mock_from_structured2d.return_value = uda
-
-    model = SfincsModel(TESTMODELDIR, mode="r")
-    model.grid.read(data_vars=["mask"])
-
-    mock_from_structured2d.assert_called_once_with(model.grid.mask)
-    uda.grid.set_crs.assert_called_once_with(model.grid.crs)
-    assert model.quadtree_grid.data is uda
-
-
-@patch("hydromt_sfincs.grid.UgridDataArray.from_structured2d")
-def test_read_sets_quadtree_grid_rotated(mock_from_structured2d):
-    uda = MagicMock(spec=UgridDataArray)
-    uda.grid = MagicMock()
-    mock_from_structured2d.return_value = uda
-
-    model = SfincsModel(TESTMODELDIR, mode="r")
-    model.config["rotation"] = 10.0
-
-    model.grid.read(data_vars=["mask"])
-
-    mock_from_structured2d.assert_called_once_with(model.grid.mask, "xc", "yc")
-    uda.grid.set_crs.assert_called_once_with(model.grid.crs)
-    assert model.quadtree_grid.data is uda
