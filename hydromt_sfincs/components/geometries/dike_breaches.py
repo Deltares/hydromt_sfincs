@@ -190,8 +190,22 @@ class SfincsDikeBreaches(ModelComponent):
             if "obs_2" in entry:
                 gdf.at[idx, "obs_2_x"] = float(entry["obs_2"][0])
                 gdf.at[idx, "obs_2_y"] = float(entry["obs_2"][1])
-            gdf.at[idx, "rules_open"]  = str(entry.get("rules_open",  "") or "")
-            gdf.at[idx, "rules_close"] = str(entry.get("rules_close", "") or "")
+            # Trigger rules: read the ordered "rule" array of tables
+            # ({operation, when}); fall back to legacy scalar keys.
+            rule_open, rule_close = "", ""
+            for r in entry.get("rule", []) or []:
+                op = str(r.get("operation", "")).lower()
+                when = str(r.get("when", "") or "")
+                if op == "open" and not rule_open:
+                    rule_open = when
+                elif op == "close" and not rule_close:
+                    rule_close = when
+            if not rule_open:
+                rule_open = str(entry.get("rules_open", "") or "")
+            if not rule_close:
+                rule_close = str(entry.get("rules_close", "") or "")
+            gdf.at[idx, "rules_open"]  = rule_open
+            gdf.at[idx, "rules_close"] = rule_close
 
         self.set(gdf, merge=False)
 
@@ -259,8 +273,17 @@ class SfincsDikeBreaches(ModelComponent):
                 entry["obs_1"] = [obs_1_x, obs_1_y]
             if not (math.isnan(obs_2_x) or math.isnan(obs_2_y)):
                 entry["obs_2"] = [obs_2_x, obs_2_y]
-            entry["rules_open"]  = str(row.get("rules_open",  "") or "")
-            entry["rules_close"] = str(row.get("rules_close", "") or "")
+            # Trigger rules go in the ordered "rule" array of tables
+            # ({operation, when}); SFINCS ignores scalar rules_open/close.
+            rules: list[dict] = []
+            rule_open = str(row.get("rules_open", "") or "").strip()
+            rule_close = str(row.get("rules_close", "") or "").strip()
+            if rule_open:
+                rules.append({"operation": "open", "when": rule_open})
+            if rule_close:
+                rules.append({"operation": "close", "when": rule_close})
+            if rules:
+                entry["rule"] = rules
             tables.append(entry)
         return tables
 
