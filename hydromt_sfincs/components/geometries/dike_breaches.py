@@ -18,7 +18,7 @@ except ImportError:  # Python < 3.11
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import utils, readers, writers
 
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel
@@ -236,11 +236,10 @@ class SfincsDikeBreaches(ModelComponent):
             tomli_w.dump({"src_structure": self._to_toml_tables()}, f)
 
         if self.model.write_gis:
-            utils.write_vector(
+            writers.write_vector(
                 self.data,
                 name="dike_breach",
                 root=join(self.model.root.path, "gis"),
-                logger=logger,
             )
 
     def _to_toml_tables(self) -> list[dict]:
