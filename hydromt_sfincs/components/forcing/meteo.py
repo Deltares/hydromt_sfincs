@@ -237,18 +237,11 @@ class SfincsMeteo(ModelComponent):
         # Get the start and end time of the data
         time_start = data.indexes["time"][0].to_pydatetime()
         time_end = data.indexes["time"][-1].to_pydatetime()
-        if time_start > model_start:
-            raise ValueError(
-                f"{name} forcing starts after the model start time. "
-                f"Model starts at {model_start}, {name} starts at "
-                f"{time_start}."
-            )
-
-        if time_end < model_end:
+        if time_start > model_start or time_end < model_end:
             logger.warning(
-                f"{name} forcing does not cover the full model period. "
-                f"Model ends at {model_end}, {name} ends at "
-                f"{time_end}."
+                f"{name} forcing does not cover the full model period."
+                f"Model runs from {model_start} to {model_end}, {name} spans"
+                f"from {time_start} to {time_end}."
             )
 
         # TODO: don't we always want to reset the data when setting new data?

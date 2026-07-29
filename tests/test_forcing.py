@@ -101,11 +101,13 @@ def test_create_meteo_time_bounds(model_config, caplog):
     # get the forcing data from the data catalog
     ds = model_config.data_catalog.get_rasterdataset("era5_hourly_zarr")
 
-    # forcing starts too late -> should raise
+    # forcing starts too late -> should warn
     ds_late = ds.sel(time=slice("2010-02-06", None))
 
-    with pytest.raises(ValueError, match="starts after the model start time"):
+    with caplog.at_level(logging.WARNING):
         model_config.precipitation.create(precip=ds_late)
+
+    assert "forcing does not cover the full model period" in caplog.text
 
     # forcing covers tstart but ends before tstop -> should warn
     ds_short = ds.sel(time=slice("2010-02-01", "2010-02-06"))
