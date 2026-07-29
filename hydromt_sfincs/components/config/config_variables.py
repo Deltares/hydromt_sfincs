@@ -661,7 +661,6 @@ class SfincsConfigVariables(BaseSettings):
     depfile: str | None = Field(None, description="Depth file")
     inifile: str | None = Field(None, description="Initial water level file")
     rstfile: str | None = Field(None, description="Restart file")
-    ncinifile: str | None = Field(None, description="Netcdf initial water level file")
     mskfile: str | None = Field(None, description="Mask file")
     indexfile: str | None = Field(None, description="Index file")
     sbgfile: str | None = Field(None, description="Subgrid file")

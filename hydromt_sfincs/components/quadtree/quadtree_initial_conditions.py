@@ -16,9 +16,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 
-_ATTRS = {
-    "initial_conditions": {"standard_name": "initial water level", "unit": "m+ref"}
-}
+_ATTRS = {"zs": {"standard_name": "initial water level", "unit": "m+ref"}}
 
 
 class SfincsQuadtreeInitialConditions(ModelComponent):
@@ -63,7 +61,7 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
     @hydromt_step
     def create(
         self,
-        ini: Union[str, Path] = None,
+        zsini: Union[str, Path],
         fill_value: float = -9999.0,
         reproj_method="average",
     ):
@@ -71,11 +69,11 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
 
         Adds and overwrites model layers to SfincsModel.quadtree_grid.data:
 
-        * **ini** map: initial water level [m+ref]
+        * **zs** map: initial water level [m+ref]
 
         Parameters
         ----------
-        ini : str, Path, RasterDataset
+        zsini : str, Path, RasterDataset
             Spatially varying initial water level [m+ref]
         fill_value: float, optional
             Fill value for areas outside the polygon, by default -9999.0.
@@ -85,14 +83,14 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
 
         """
 
-        mname = "ini"
+        mname = "zs"
 
         # Add logger info
         logger.info("Creating spatially varying initial water level.")
 
         # get rasterdataset with initial water level data
         da_ini = self.data_catalog.get_rasterdataset(
-            ini,
+            zsini,
             bbox=self.model.bbox,
             buffer=10,
             variables=[mname],
@@ -126,7 +124,7 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
         # self.model.quadtree_grid.set(da_ini, name=mname)
 
         # update config: remove default zsini and set inifile
-        self.model.config.set(f"nc{mname}file", f"sfincs_ini.nc")
+        self.model.config.set(f"inifile", f"sfincs_ini.nc")
         # set spatially uniform zsini to None in config
         self.model.config.set("zsini", 0.0)
 
@@ -134,26 +132,26 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
     @hydromt_step
     def create_from_polygon(
         self,
-        ini: Union[str, Path, gpd.GeoDataFrame] = None,
-        ini_buffer: float = 0.0,
-        ini_value: Union[float, List[float]] = None,
+        zsini: Union[str, Path, gpd.GeoDataFrame],
+        zsini_buffer: float = 0.0,
+        zsini_value: Union[float, List[float]] = None,
         fill_value: float = -9999.0,
-        reset_ini: bool = True,
+        reset_zsini: bool = True,
     ):
         """Setup spatially varying initial water level (ncinifile).
 
         Adds model layers to SfincsModel.quadtree_grid.data:
 
-        * **ini** map: initial water level [m+ref]
+        * **zs** map: initial water level [m+ref]
 
         Parameters
         ----------
-        ini : str, Path, GeoDataFrame with 'ini' column
+        zsini : str, Path, GeoDataFrame with 'zsini' column
             Spatially varying initial water level [m+ref]
-        ini_buffer: float, optional
-            If larger than zero, extend the `ini` gdf geometry with a buffer [m],
+        zsini_buffer: float, optional
+            If larger than zero, extend the `zsini` gdf geometry with a buffer [m],
             by default 0.
-        ini_value: float or list of float, optional
+        zsini_value: float or list of float, optional
             If provided, use this value(s) for the initial water level within the polygon(s),
         fill_value: float, optional
             Fill value for areas outside the polygon, by default -9999.0.
@@ -162,81 +160,83 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
 
         """
 
-        mname = "ini"
+        mname = "zs"
 
         # Add logger info
         logger.info("Creating spatially varying initial water level.")
 
         # get initial water level data geodataframe,
         # with a value 'ini' to rasterize
-        gdf_ini = self.data_catalog.get_geodataframe(
-            ini,
+        gdf_zsini = self.data_catalog.get_geodataframe(
+            zsini,
             bbox=self.model.bbox,
         )
 
         # check if input is polygon or multipolygon
-        if not gdf_ini.geometry.geom_type.isin(["Polygon", "MultiPolygon"]).all():
+        if not gdf_zsini.geometry.geom_type.isin(["Polygon", "MultiPolygon"]).all():
             raise ValueError(
-                "Input geodataframe 'ini' should contain only Polygon or MultiPolygon geometries."
+                "Input geodataframe 'zsini' should contain only Polygon or MultiPolygon geometries."
             )
 
         # apply buffer if requested
-        if ini_buffer > 0:  # NOTE assumes model in projected CRS!
-            gdf_ini["geometry"] = gdf_ini.to_crs(self.model.crs).buffer(ini_buffer)
+        if zsini_buffer > 0:  # NOTE assumes model in projected CRS!
+            gdf_zsini["geometry"] = gdf_zsini.to_crs(self.model.crs).buffer(
+                zsini_buffer
+            )
 
-        # check if 'ini' values are provided or ini column is present
-        if ini_value is not None:
+        # check if 'zsini' values are provided or ini column is present
+        if zsini_value is not None:
             # use provided value(s)
-            if isinstance(ini_value, list):
-                if len(ini_value) != len(gdf_ini):
+            if isinstance(zsini_value, list):
+                if len(zsini_value) != len(gdf_zsini):
                     raise ValueError(
-                        "Length of 'ini_value' list should match number of polygons in input geodataframe 'ini'."
+                        "Length of 'zsini_value' list should match number of polygons in input geodataframe 'zsini'."
                     )
-                gdf_ini["ini"] = ini_value
+                gdf_zsini["zsini"] = zsini_value
             else:
-                gdf_ini["ini"] = ini_value
-        elif "ini" not in gdf_ini.columns:
+                gdf_zsini["zsini"] = zsini_value
+        elif "zsini" not in gdf_zsini.columns:
             raise ValueError(
-                "Input geodataframe 'ini' should contain a column 'ini' with initial water level values per polygon."
+                "Input geodataframe 'zsini' should contain a column 'zsini' with initial water level values per polygon."
             )
 
         # if reset_ini = True start empty, otherwise start with existing ini layer
-        if reset_ini:
+        if reset_zsini:
             # start with empty ini layer
-            da_ini = xu.full_like(
+            da_zsini = xu.full_like(
                 self.mask,
                 fill_value=np.nan,
                 dtype="float32",
             )
         else:
             # start with existing ini layer
-            da_ini = self.data[mname]
+            da_zsini = self.data[mname]
 
         # loop over polygons and rasterize initial water level values
-        for gdf in gdf_ini.iterrows():
+        for _, gdf in gdf_zsini.iterrows():
             # Parse wanted value within polygon:
-            inival = float(gdf["ini"])
+            inival = float(gdf["zsini"])
             # Burn the polygon into the raster: pixels inside polygon get 1, others get 0
             burned = xu.burn_vector_geometry(
                 gdf["geometry"], self.data, fill=0, all_touched=True
             )
-            da_ini = xr.where(burned > 0, inival, da_ini)
+            da_zsini = xr.where(burned > 0, inival, da_zsini)
 
         # check on nan values
-        if np.logical_and(np.isnan(da_ini), self.mask >= 1).any():
+        if np.logical_and(np.isnan(da_zsini), self.mask >= 1).any():
             logger.warning(
                 "NaN values found in initial water level data; filled with fill_value (default -9999.0)"
             )
-            da_ini = da_ini.fillna(fill_value)
+            da_zsini = da_zsini.fillna(fill_value)
             # FIXME - should we still set the nodata value? if so to what?
 
         # set grid
-        da_ini.attrs.update(**_ATTRS.get(mname, {}))
-        self.model.quadtree_grid.data[mname] = da_ini
+        da_zsini.attrs.update(**_ATTRS.get(mname, {}))
+        self.model.quadtree_grid.data[mname] = da_zsini
         # FIXME: ideally we would use the set method, but that's not working here properly
         # self.model.quadtree_grid.set(da_ini, name=mname)
 
         # update config: remove default zsini and set inifile
-        self.model.config.set(f"nc{mname}file", f"sfincs_ini.nc")
+        self.model.config.set(f"inifile", f"sfincs_ini.nc")
         # set spatially uniform zsini to 0.0 in config
         self.model.config.set("zsini", 0.0)

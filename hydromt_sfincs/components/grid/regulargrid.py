@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 
-_MAPS = ["mask", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol", "ini"]
+_MAPS = ["mask", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol", "zs"]
 
 
 class SfincsGrid(GridComponent):
@@ -199,9 +199,14 @@ class SfincsGrid(GridComponent):
                 # mask is special, it is always read
                 fn = self.model.config.get_set_file_variable("mskfile", "sfincs.msk")
             else:
-                fn = self.model.config.get(
-                    f"{name}file", fallback=f"sfincs.{name}", abs_path=True
-                )
+                if name == "zs":
+                    fn = self.model.config.get_set_file_variable(
+                        f"inifile", fallback=f"sfincs.ini", abs_path=True
+                    )
+                else:
+                    fn = self.model.config.get(
+                        f"{name}file", fallback=f"sfincs.{name}", abs_path=True
+                    )
             if not isfile(fn):
                 if provide_warnings:
                     logger.warning(f"{name}file not found at {fn}")
@@ -289,10 +294,15 @@ class SfincsGrid(GridComponent):
                         "mskfile", "sfincs.msk"
                     )
                 else:
-                    abs_file_path = self.model.config.get_set_file_variable(
-                        f"{name}file",
-                        f"sfincs.{name}",
-                    )
+                    if name == "zs":
+                        abs_file_path = self.model.config.get_set_file_variable(
+                            f"inifile", f"sfincs.ini"
+                        )
+                    else:
+                        abs_file_path = self.model.config.get_set_file_variable(
+                            f"{name}file",
+                            f"sfincs.{name}",
+                        )
 
                 # write to binary model files
                 self.write_map(

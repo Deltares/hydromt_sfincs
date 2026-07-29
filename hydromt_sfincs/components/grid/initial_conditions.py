@@ -14,9 +14,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 
-_ATTRS = {
-    "initial_conditions": {"standard_name": "initial water level", "unit": "m+ref"}
-}
+_ATTRS = {"zs": {"standard_name": "initial water level", "unit": "m+ref"}}
 
 
 class SfincsInitialConditions(ModelComponent):
@@ -76,7 +74,7 @@ class SfincsInitialConditions(ModelComponent):
     @hydromt_step
     def create(
         self,
-        ini: Union[str, Path, xr.DataArray],
+        zsini: Union[str, Path, xr.DataArray],
         fill_value: float = -9999.0,
         reproj_method="average",
     ):
@@ -84,11 +82,11 @@ class SfincsInitialConditions(ModelComponent):
 
         Adds and overwrites model layers to SfincsModel.grid.data:
 
-        * **ini** map: initial water level [m+ref]
+        * **zs** map: initial water level [m+ref]
 
         Parameters
         ----------
-        ini : str, Path, RasterDataset
+        zsini : str, Path, xr.DataArray
             Spatially varying initial water level [m+ref]
         reproj_method : str, optional
             Resampling method for reprojecting the initial water level data to the model grid.
@@ -98,38 +96,38 @@ class SfincsInitialConditions(ModelComponent):
             the SFINCS kernel will set the initial water level to the bed level.
         """
 
-        mname = "ini"
+        mname = "zs"
 
         # Add logger info
         logger.info("Creating spatially varying initial water level.")
 
         # get initial water level data
-        da_ini = self.data_catalog.get_rasterdataset(
-            ini,
+        da_zsini = self.data_catalog.get_rasterdataset(
+            zsini,
             bbox=self.model.bbox,
             buffer=10,
         )
 
         # reproject initial water level data to model grid
-        da_ini = da_ini.raster.mask_nodata()  # set nodata to nan
-        da_ini = da_ini.raster.reproject_like(self.mask, method=reproj_method)
+        da_zsini = da_zsini.raster.mask_nodata()  # set nodata to nan
+        da_zsini = da_zsini.raster.reproject_like(self.mask, method=reproj_method)
 
         # check on nan values
-        if np.logical_and(np.isnan(da_ini), self.mask >= 1).any():
+        if np.logical_and(np.isnan(da_zsini), self.mask >= 1).any():
             logger.warning(
                 "NaN values found in initial water level data; filled with fill_value {}".format(
                     fill_value
                 )
             )
-            da_ini = da_ini.fillna(fill_value)
-        da_ini.raster.set_nodata(np.nan)
+            da_zsini = da_zsini.fillna(fill_value)
+        da_zsini.raster.set_nodata(np.nan)
 
         # set grid
-        da_ini.attrs.update(**_ATTRS.get(mname, {}))
-        self.model.grid.set(da_ini, name=mname)
+        da_zsini.attrs.update(**_ATTRS.get(mname, {}))
+        self.model.grid.set(da_zsini, name=mname)
 
         # update config: remove default zsini and set inifile
-        self.model.config.set(f"{mname}file", f"sfincs.{mname}")
+        self.model.config.set(f"inifile", f"sfincs.ini")
         # set spatially uniform zsini to 0.0 in config
         self.model.config.set("zsini", 0.0)
 
@@ -137,110 +135,112 @@ class SfincsInitialConditions(ModelComponent):
     @hydromt_step
     def create_from_polygon(
         self,
-        ini: Union[str, Path, gpd.GeoDataFrame],
-        ini_value: Union[float, List[float]] = None,
-        ini_buffer: int = 0,
+        zsini: Union[str, Path, gpd.GeoDataFrame],
+        zsini_value: Union[float, List[float]] = None,
+        zsini_buffer: int = 0,
         fill_value: float = -9999.0,
-        reset_ini: bool = True,
+        reset_zsini: bool = True,
     ):
         """Setup spatially varying initial water level (inifile).
 
         Adds model layers to SfincsModel.grid.data:
 
-        * **ini** map: initial water level [m+ref]
+        * **zs** map: initial water level [m+ref]
 
         Parameters
         ----------
-        ini : str, Path, GeoDataFrame with optional 'ini' column
+        zsini : str, Path, GeoDataFrame with optional 'zs' column
             Spatially varying initial water level [m+ref]
-        ini_value: float or List[float], optional
+        zsini_value: float or List[float], optional
             If provided, use this value (or list of values) for the initial water level inside the polygon(s).
-        ini_buffer: float, optional
-            If larger than zero, extend the `ini` gdf geometry with a buffer [m],
+        zsini_buffer: float, optional
+            If larger than zero, extend the `zsini` gdf geometry with a buffer [m],
             by default 0.
         fill_value: float, optional
             Fill value for areas outside the polygon, by default -9999.0. For cells with initial water levels of -9999.0,
             the SFINCS kernel will set the initial water level to the bed level.
-        reset_ini: bool, optional
-            If True (default), reset existing ini layer. If False updating existing ini layer.
+        reset_zsini: bool, optional
+            If True (default), reset existing zs layer. If False updating existing zs layer.
 
         """
 
-        mname = "ini"
+        mname = "zs"
 
         # Add logger info
         logger.info("Creating spatially varying initial water level.")
 
         # get initial water level data geodataframe,
-        # with a value 'ini' to rasterize
-        gdf_ini = self.data_catalog.get_geodataframe(
-            ini,
+        # with a value 'zsini' to rasterize
+        gdf_zsini = self.data_catalog.get_geodataframe(
+            zsini,
             bbox=self.model.bbox,
         )
 
-        if ini_buffer > 0:  # NOTE assumes model in projected CRS!
-            gdf_ini["geometry"] = gdf_ini.to_crs(self.model.crs).buffer(ini_buffer)
+        if zsini_buffer > 0:  # NOTE assumes model in projected CRS!
+            gdf_zsini["geometry"] = gdf_zsini.to_crs(self.model.crs).buffer(
+                zsini_buffer
+            )
 
         # check if input is polygon or multipolygon
-        if not gdf_ini.geometry.geom_type.isin(["Polygon", "MultiPolygon"]).all():
+        if not gdf_zsini.geometry.geom_type.isin(["Polygon", "MultiPolygon"]).all():
             raise ValueError(
-                "Input geodataframe 'ini' should contain only Polygon or MultiPolygon geometries."
+                "Input geodataframe 'zsini' should contain only Polygon or MultiPolygon geometries."
             )
 
         # if ini_value is provided, use this value (or list of values) for the initial water level inside the polygon(s).
-        if ini_value is not None:
-            if isinstance(ini_value, list):
-                if len(ini_value) != len(gdf_ini):
+        if zsini_value is not None:
+            if isinstance(zsini_value, list):
+                if len(zsini_value) != len(gdf_zsini):
                     raise ValueError(
-                        "If ini_value is a list, its length should match the number of polygons in 'ini'."
+                        "If zsini_value is a list, its length should match the number of polygons in 'zsini'."
                     )
-                gdf_ini["ini"] = ini_value
+                gdf_zsini["zsini"] = zsini_value
             else:
-                gdf_ini["ini"] = float(ini_value)
+                gdf_zsini["zsini"] = float(zsini_value)
 
         # check if 'ini' column is present
-        if "ini" not in gdf_ini.columns:
+        if "zsini" not in gdf_zsini.columns:
             raise ValueError(
-                "Input geodataframe 'ini' should contain a column 'ini' with initial water level values per polygon."
+                "Input geodataframe 'zsini' should contain a column 'zsini' with initial water level values per polygon."
             )
 
         # if reset_ini = True start empty, otherwise start with existing ini layer
-        if reset_ini:
+        if reset_zsini:
             # start with empty ini layer
-            da_ini = xr.full_like(
+            da_zsini = xr.full_like(
                 self.mask,
                 fill_value=np.nan,
                 dtype="float32",
             )
         else:
             # start with existing ini layer
-            da_ini = self.data[mname]
+            da_zsini = self.data[mname]
 
         # loop over all polygons and rasterize
-        for _, row in gdf_ini.iterrows():
-            ini_single = row["ini"]
-            gdf_ini_single = gpd.GeoDataFrame(
-                [row], columns=gdf_ini.columns, crs=gdf_ini.crs
+        for _, row in gdf_zsini.iterrows():
+            zsini_single = row["zsini"]
+            gdf_zsini_single = gpd.GeoDataFrame(
+                [row], columns=gdf_zsini.columns, crs=gdf_zsini.crs
             )
-            da_ini0 = self.mask.raster.geometry_mask(gdf_ini_single)
-            # where da_ini0 is True, set values of da_ini to ini_single:
-            da_ini = xr.where(da_ini0, ini_single, da_ini)
+            da_zsini0 = self.mask.raster.geometry_mask(gdf_zsini_single)
+            # where da_zsini0 is True, set values of da_zsini to zsini_single:
+            da_zsini = xr.where(da_zsini0, zsini_single, da_zsini)
 
         # check on nan values
-        if np.logical_and(np.isnan(da_ini), self.mask >= 1).any():
+        if np.logical_and(np.isnan(da_zsini), self.mask >= 1).any():
             logger.warning(
                 "NaN values found in initial water level data; filled with fill_value {}".format(
                     fill_value
                 )
             )
-            da_ini = da_ini.fillna(fill_value)
-        da_ini.raster.set_nodata(np.nan)
+            da_zsini = da_zsini.fillna(fill_value)
+        da_zsini.raster.set_nodata(np.nan)
 
         # set grid
-        da_ini.attrs.update(**_ATTRS.get(mname, {}))
-        self.model.grid.set(da_ini, name=mname)
+        da_zsini.attrs.update(**_ATTRS.get(mname, {}))
+        self.model.grid.set(da_zsini, name=mname)
 
         # update config: remove default zsini and set inifile
-        self.model.config.set(f"{mname}file", f"sfincs.{mname}")
+        self.model.config.set(f"inifile", f"sfincs.ini")
         # set spatially uniform zsini to 0.0 in config
         self.model.config.set("zsini", 0.0)
