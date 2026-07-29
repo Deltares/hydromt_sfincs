@@ -16,6 +16,7 @@ Added
 -----
 - Added reusable pre-processing (``adjust_zsmax_dilation``, ``adjust_zsmax_energyhead``) and post-processing (``remove_disconnected_flooding``) helpers as separate functions.
 - Added optional argument to ``elevation.create()`` to skip extrapolation of the DEM (#392)
+- re-introduced snap_to_grid of relevant geometries for regular grids (#400)
 
 Fixed
 -----
