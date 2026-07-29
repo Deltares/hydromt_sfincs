@@ -128,8 +128,8 @@ class SfincsInitialConditions(ModelComponent):
 
         # update config: remove default zsini and set inifile
         self.model.config.set(f"inifile", f"sfincs.ini")
-        # set spatially uniform zsini to 0.0 in config
-        self.model.config.set("zsini", 0.0)
+        # set spatially uniform zsini to None in config (not written anymore)
+        self.model.config.set("zsini", None)
 
     # Initial water level from polygon
     @hydromt_step
@@ -242,5 +242,5 @@ class SfincsInitialConditions(ModelComponent):
 
         # update config: remove default zsini and set inifile
         self.model.config.set(f"inifile", f"sfincs.ini")
-        # set spatially uniform zsini to 0.0 in config
-        self.model.config.set("zsini", 0.0)
+        # set spatially uniform zsini to None in config
+        self.model.config.set("zsini", None)

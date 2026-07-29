@@ -126,7 +126,7 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
         # update config: remove default zsini and set inifile
         self.model.config.set(f"inifile", f"sfincs_ini.nc")
         # set spatially uniform zsini to None in config
-        self.model.config.set("zsini", 0.0)
+        self.model.config.set("zsini", None)
 
     # Initial water level
     @hydromt_step
@@ -238,5 +238,5 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
 
         # update config: remove default zsini and set inifile
         self.model.config.set(f"inifile", f"sfincs_ini.nc")
-        # set spatially uniform zsini to 0.0 in config
-        self.model.config.set("zsini", 0.0)
+        # set spatially uniform zsini to None in config
+        self.model.config.set("zsini", None)

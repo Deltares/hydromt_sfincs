@@ -175,8 +175,8 @@ class SfincsInfiltration(ModelComponent):
 
         # update config: remove default inf and set qinf map
         self.model.config.set(f"{mname}file", f"sfincs.{mname}")
-        # set spatially uniform qinf to 0.0 in config
-        self.model.config.set("qinf", 0.0)
+        # set spatially uniform qinf to None in config
+        self.model.config.set("qinf", None)
 
         # loop over other infiltration methods ATTRS and remove them from config when present
         for name in _ATTRS.keys():
@@ -242,8 +242,8 @@ class SfincsInfiltration(ModelComponent):
         self.model.grid.set(da_scs, name=mname)
         # update config:
         self.model.config.set(f"{mname}file", f"sfincs.{mname}")
-        # set spatially unfiform qinf to 0.0 in config
-        self.model.config.set("qinf", 0.0)
+        # set spatially unfiform qinf to None in config
+        self.model.config.set("qinf", None)
 
         # loop over other infiltration methods ATTRS and remove them from config when present
         for name in _ATTRS.keys():
@@ -390,8 +390,8 @@ class SfincsInfiltration(ModelComponent):
             # update config: set maps
             self.model.config.set(f"{name}file", f"sfincs.{name}")  # give it to SFINCS
 
-        # set spatially unfiform qinf to 0.0 in config
-        self.model.config.set("qinf", 0.0)
+        # set spatially unfiform qinf to None in config
+        self.model.config.set("qinf", None)
 
         # loop over other infiltration methods ATTRS and remove them from config when present
         for name in _ATTRS.keys():
