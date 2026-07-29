@@ -160,7 +160,7 @@ def test_infiltration(model):
     qinf.raster.set_nodata(-9999.0)
     qinf.raster.set_crs(model.crs)
     model.infiltration.create_constant(qinf, reproj_method="nearest")
-    assert model.config.get("qinf") == 0.0  # qinf reset to default in config
+    assert model.config.get("qinf") is None  # qinf reset to default in config
     assert model.config.get("qinffile") is not None  # qinf file set
     assert "qinf" in model.grid.data
 
@@ -217,7 +217,7 @@ def test_initial_conditions(model):
     # ini.raster.set_nodata(-9999.0)
     ini.raster.set_crs(model.crs)
     model.initial_conditions.create(ini, reproj_method="nearest")
-    assert model.config.get("zsini") == 0.0  # zsini reset to default in config
+    assert model.config.get("zsini") is None  # zsini reset to default in config
     assert model.config.get("inifile") is not None  # inifile set
     assert "zs" in model.grid.data
 
@@ -249,7 +249,7 @@ def test_initial_conditions_from_polygon(model):
     model.initial_conditions.create_from_polygon(region, reset_zsini=True)
 
     # check if values are correctly set
-    assert model.config.get("zsini") == 0.0  # zsini back to default in config
+    assert model.config.get("zsini") is None  # zsini back to default in config
     assert model.config.get("inifile") is not None  # inifile set
     assert "zs" in model.grid.data
 
