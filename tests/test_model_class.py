@@ -244,9 +244,9 @@ def test_initial_conditions_from_polygon(model):
     region = model.data_catalog.get_geodataframe(
         join(TESTDATADIR, "region.geojson"),
     )
-    region["ini"] = 0.5
+    region["zsini"] = 0.5
 
-    model.initial_conditions.create_from_polygon(region, reset_ini=True)
+    model.initial_conditions.create_from_polygon(region, reset_zsini=True)
 
     # check if values are correctly set
     assert model.config.get("zsini") == 0.0  # zsini back to default in config
