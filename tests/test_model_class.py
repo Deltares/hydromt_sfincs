@@ -219,7 +219,7 @@ def test_initial_conditions(model):
     model.initial_conditions.create(ini, reproj_method="nearest")
     assert model.config.get("zsini") == 0.0  # zsini reset to default in config
     assert model.config.get("inifile") is not None  # inifile set
-    assert "ini" in model.grid.data
+    assert "zs" in model.grid.data
 
     # Write model
     model.grid.write()
@@ -232,8 +232,8 @@ def test_initial_conditions(model):
 
     # assure the sum of ini is close to earlier calculated value
     assert np.isclose(
-        mod1.grid.data["ini"]
-        .where((mod1.grid.mask > 0) & (mod1.grid.data["ini"].values > 0))
+        mod1.grid.data["zs"]
+        .where((mod1.grid.mask > 0) & (mod1.grid.data["zs"].values > 0))
         .sum(),
         890.5,
     )
@@ -251,7 +251,7 @@ def test_initial_conditions_from_polygon(model):
     # check if values are correctly set
     assert model.config.get("zsini") == 0.0  # zsini back to default in config
     assert model.config.get("inifile") is not None  # inifile set
-    assert "ini" in model.grid.data
+    assert "zs" in model.grid.data
 
     # Write model
     model.grid.write()
@@ -264,8 +264,8 @@ def test_initial_conditions_from_polygon(model):
 
     # assure the sum of ini is close to earlier calculated value
     assert np.isclose(
-        mod1.grid.data["ini"]
-        .where((mod1.grid.mask > 0) & (mod1.grid.data["ini"].values > 0))
+        mod1.grid.data["zs"]
+        .where((mod1.grid.mask > 0) & (mod1.grid.data["zs"].values > 0))
         .sum(),
         1139.5,
     )
