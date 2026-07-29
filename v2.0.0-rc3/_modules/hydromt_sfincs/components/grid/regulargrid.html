@@ -652,30 +652,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span></div>
 
 
-        <span class="c1"># # TODO - fix this properly; but to create overlays in GUIs,</span>
-        <span class="c1"># # we always convert regular grids to a UgridDataArray</span>
-        <span class="c1"># self.quadtree = QuadtreeGrid(logger=logger)</span>
-        <span class="c1"># if self.config.get(&quot;rotation&quot;, 0) != 0:  # This is a rotated regular grid</span>
-        <span class="c1">#     self.quadtree.data = UgridDataArray.from_structured(</span>
-        <span class="c1">#         self.mask, &quot;xc&quot;, &quot;yc&quot;</span>
-        <span class="c1">#     )</span>
-        <span class="c1"># else:</span>
-        <span class="c1">#     self.quadtree.data = UgridDataArray.from_structured(self.mask)</span>
-        <span class="c1"># self.quadtree.data.grid.set_crs(self.crs)</span>
-
-        <span class="c1"># keep some metadata maps from gis directory</span>
-
-        <span class="c1"># fns = glob.glob(join(self.root, &quot;gis&quot;, &quot;*.tif&quot;))</span>
-        <span class="c1"># fns = [</span>
-        <span class="c1">#     fn</span>
-        <span class="c1">#     for fn in fns</span>
-        <span class="c1">#     if basename(fn).split(&quot;.&quot;)[0] not in self.grid.data_vars</span>
-        <span class="c1"># ]</span>
-        <span class="c1"># if fns:</span>
-        <span class="c1">#     ds = hydromt.open_mfraster(fns).load()</span>
-        <span class="c1">#     self.set_grid(ds)</span>
-        <span class="c1">#     ds.close()</span>
-
 <div class="viewcode-block" id="SfincsGrid.write">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsGrid.write.html#hydromt_sfincs.components.grid.SfincsGrid.write">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span>

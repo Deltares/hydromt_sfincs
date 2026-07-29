@@ -711,9 +711,6 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the grid properties from the configuration. This method determines the grid type</span>
 <span class="sd">        based on the presence of the &#39;qtrfile&#39; variable in the configuration. If &#39;qtrfile&#39; is set,</span>
 <span class="sd">        the grid type is set to &#39;quadtree&#39;; otherwise, it is set to &#39;regular&#39;.</span>
-
-<span class="sd">        Depending on the grid type, it updates the grid properties of the SfincsModel and removes</span>
-<span class="sd">        the irrelevant grid component.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># Determine grid type based on configuration</span>
@@ -721,14 +718,7 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span><span class="p">:</span>
             <span class="c1"># update the regular grid properties from the configuration</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">update_grid_from_config</span><span class="p">()</span>
-            <span class="c1"># drop quadtree component</span>
-            <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_QUADTREE_GRID_NAMES</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
-            <span class="c1"># drop regular component</span>
-            <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_REGULAR_GRID_NAMES</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">update_grid_from_config</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="SfincsConfig.get_set_file_variable">
