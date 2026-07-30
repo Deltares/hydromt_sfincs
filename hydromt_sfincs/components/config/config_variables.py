@@ -330,7 +330,7 @@ class SfincsConfigVariables(BaseSettings):
     # ================================================================
     # Initial and boundary conditions
     # ================================================================
-    zsini: float = Field(
+    zsini: float | None = Field(
         0.0,
         description="Initial water level in entire domain (meters)",
         json_schema_extra={"always": True},
@@ -356,10 +356,11 @@ class SfincsConfigVariables(BaseSettings):
     # ================================================================
     # Infiltration
     # ================================================================
-    qinf: float = Field(
+    qinf: float | None = Field(
         0.0,
         ge=0.0,
         description="Infiltration rate, spatially uniform (mm/hr)",
+        json_schema_extra={"always": True},
     )
     qinf_zmin: float = Field(
         0.0,
@@ -661,7 +662,6 @@ class SfincsConfigVariables(BaseSettings):
     depfile: str | None = Field(None, description="Depth file")
     inifile: str | None = Field(None, description="Initial water level file")
     rstfile: str | None = Field(None, description="Restart file")
-    ncinifile: str | None = Field(None, description="Netcdf initial water level file")
     mskfile: str | None = Field(None, description="Mask file")
     indexfile: str | None = Field(None, description="Index file")
     sbgfile: str | None = Field(None, description="Subgrid file")

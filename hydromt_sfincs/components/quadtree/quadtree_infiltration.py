@@ -204,7 +204,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             {
                 "infiltration_file": "infiltration.nc",
                 "infiltration_type": "c2d",
-                "qinf": 0.0,
+                "qinf": None,
             }
         )
 
@@ -286,7 +286,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             {
                 "infiltration_file": "infiltration.nc",
                 "infiltration_type": "cna",
-                "qinf": 0.0,
+                "qinf": None,
             }
         )
 
@@ -392,6 +392,6 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             {
                 "infiltration_file": "infiltration.nc",
                 "infiltration_type": "cnb",
-                "qinf": 0.0,
+                "qinf": None,
             }
         )
