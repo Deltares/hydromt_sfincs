@@ -610,8 +610,8 @@
 
         <span class="c1"># update config: remove default inf and set qinf map</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="c1"># set spatially uniform qinf to 0.0 in config</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="c1"># set spatially uniform qinf to None in config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
         <span class="c1"># loop over other infiltration methods ATTRS and remove them from config when present</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_ATTRS</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
@@ -680,8 +680,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">da_scs</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">mname</span><span class="p">)</span>
         <span class="c1"># update config:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="c1"># set spatially unfiform qinf to 0.0 in config</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="c1"># set spatially unfiform qinf to None in config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
         <span class="c1"># loop over other infiltration methods ATTRS and remove them from config when present</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_ATTRS</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
@@ -831,8 +831,8 @@
             <span class="c1"># update config: set maps</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># give it to SFINCS</span>
 
-        <span class="c1"># set spatially unfiform qinf to 0.0 in config</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="c1"># set spatially unfiform qinf to None in config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
         <span class="c1"># loop over other infiltration methods ATTRS and remove them from config when present</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_ATTRS</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>

@@ -442,9 +442,7 @@
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-<span class="n">_ATTRS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;initial_conditions&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;initial water level&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;m+ref&quot;</span><span class="p">}</span>
-<span class="p">}</span>
+<span class="n">_ATTRS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;zs&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;initial water level&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;m+ref&quot;</span><span class="p">}}</span>
 
 
 <div class="viewcode-block" id="SfincsInitialConditions">
@@ -511,7 +509,7 @@
     <span class="nd">@hydromt_step</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">ini</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span>
+        <span class="n">zsini</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span>
         <span class="n">fill_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">9999.0</span><span class="p">,</span>
         <span class="n">reproj_method</span><span class="o">=</span><span class="s2">&quot;average&quot;</span><span class="p">,</span>
     <span class="p">):</span>
@@ -519,11 +517,11 @@
 
 <span class="sd">        Adds and overwrites model layers to SfincsModel.grid.data:</span>
 
-<span class="sd">        * **ini** map: initial water level [m+ref]</span>
+<span class="sd">        * **zs** map: initial water level [m+ref]</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        ini : str, Path, RasterDataset</span>
+<span class="sd">        zsini : str, Path, xr.DataArray</span>
 <span class="sd">            Spatially varying initial water level [m+ref]</span>
 <span class="sd">        reproj_method : str, optional</span>
 <span class="sd">            Resampling method for reprojecting the initial water level data to the model grid.</span>
@@ -533,153 +531,155 @@
 <span class="sd">            the SFINCS kernel will set the initial water level to the bed level.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="n">mname</span> <span class="o">=</span> <span class="s2">&quot;ini&quot;</span>
+        <span class="n">mname</span> <span class="o">=</span> <span class="s2">&quot;zs&quot;</span>
 
         <span class="c1"># Add logger info</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Creating spatially varying initial water level.&quot;</span><span class="p">)</span>
 
         <span class="c1"># get initial water level data</span>
-        <span class="n">da_ini</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
-            <span class="n">ini</span><span class="p">,</span>
+        <span class="n">da_zsini</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+            <span class="n">zsini</span><span class="p">,</span>
             <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
             <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># reproject initial water level data to model grid</span>
-        <span class="n">da_ini</span> <span class="o">=</span> <span class="n">da_ini</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>  <span class="c1"># set nodata to nan</span>
-        <span class="n">da_ini</span> <span class="o">=</span> <span class="n">da_ini</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">)</span>
+        <span class="n">da_zsini</span> <span class="o">=</span> <span class="n">da_zsini</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>  <span class="c1"># set nodata to nan</span>
+        <span class="n">da_zsini</span> <span class="o">=</span> <span class="n">da_zsini</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">)</span>
 
         <span class="c1"># check on nan values</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_ini</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_zsini</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                 <span class="s2">&quot;NaN values found in initial water level data; filled with fill_value </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                     <span class="n">fill_value</span>
                 <span class="p">)</span>
             <span class="p">)</span>
-            <span class="n">da_ini</span> <span class="o">=</span> <span class="n">da_ini</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">fill_value</span><span class="p">)</span>
-        <span class="n">da_ini</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+            <span class="n">da_zsini</span> <span class="o">=</span> <span class="n">da_zsini</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">fill_value</span><span class="p">)</span>
+        <span class="n">da_zsini</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
 
         <span class="c1"># set grid</span>
-        <span class="n">da_ini</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">_ATTRS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mname</span><span class="p">,</span> <span class="p">{}))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">da_ini</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">mname</span><span class="p">)</span>
+        <span class="n">da_zsini</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">_ATTRS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mname</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">da_zsini</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">mname</span><span class="p">)</span>
 
         <span class="c1"># update config: remove default zsini and set inifile</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="c1"># set spatially uniform zsini to 0.0 in config</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;zsini&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;inifile&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.ini&quot;</span><span class="p">)</span>
+        <span class="c1"># set spatially uniform zsini to None in config (not written anymore)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;zsini&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
 
 
     <span class="c1"># Initial water level from polygon</span>
     <span class="nd">@hydromt_step</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">create_from_polygon</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">ini</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">],</span>
-        <span class="n">ini_value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">ini_buffer</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">zsini</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">],</span>
+        <span class="n">zsini_value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">zsini_buffer</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">fill_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">9999.0</span><span class="p">,</span>
-        <span class="n">reset_ini</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">reset_zsini</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup spatially varying initial water level (inifile).</span>
 
 <span class="sd">        Adds model layers to SfincsModel.grid.data:</span>
 
-<span class="sd">        * **ini** map: initial water level [m+ref]</span>
+<span class="sd">        * **zs** map: initial water level [m+ref]</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        ini : str, Path, GeoDataFrame with optional &#39;ini&#39; column</span>
+<span class="sd">        zsini : str, Path, GeoDataFrame with optional &#39;zs&#39; column</span>
 <span class="sd">            Spatially varying initial water level [m+ref]</span>
-<span class="sd">        ini_value: float or List[float], optional</span>
+<span class="sd">        zsini_value: float or List[float], optional</span>
 <span class="sd">            If provided, use this value (or list of values) for the initial water level inside the polygon(s).</span>
-<span class="sd">        ini_buffer: float, optional</span>
-<span class="sd">            If larger than zero, extend the `ini` gdf geometry with a buffer [m],</span>
+<span class="sd">        zsini_buffer: float, optional</span>
+<span class="sd">            If larger than zero, extend the `zsini` gdf geometry with a buffer [m],</span>
 <span class="sd">            by default 0.</span>
 <span class="sd">        fill_value: float, optional</span>
 <span class="sd">            Fill value for areas outside the polygon, by default -9999.0. For cells with initial water levels of -9999.0,</span>
 <span class="sd">            the SFINCS kernel will set the initial water level to the bed level.</span>
-<span class="sd">        reset_ini: bool, optional</span>
-<span class="sd">            If True (default), reset existing ini layer. If False updating existing ini layer.</span>
+<span class="sd">        reset_zsini: bool, optional</span>
+<span class="sd">            If True (default), reset existing zs layer. If False updating existing zs layer.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="n">mname</span> <span class="o">=</span> <span class="s2">&quot;ini&quot;</span>
+        <span class="n">mname</span> <span class="o">=</span> <span class="s2">&quot;zs&quot;</span>
 
         <span class="c1"># Add logger info</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Creating spatially varying initial water level.&quot;</span><span class="p">)</span>
 
         <span class="c1"># get initial water level data geodataframe,</span>
-        <span class="c1"># with a value &#39;ini&#39; to rasterize</span>
-        <span class="n">gdf_ini</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
-            <span class="n">ini</span><span class="p">,</span>
+        <span class="c1"># with a value &#39;zsini&#39; to rasterize</span>
+        <span class="n">gdf_zsini</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
+            <span class="n">zsini</span><span class="p">,</span>
             <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">ini_buffer</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># NOTE assumes model in projected CRS!</span>
-            <span class="n">gdf_ini</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_ini</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">ini_buffer</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">zsini_buffer</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># NOTE assumes model in projected CRS!</span>
+            <span class="n">gdf_zsini</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_zsini</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span>
+                <span class="n">zsini_buffer</span>
+            <span class="p">)</span>
 
         <span class="c1"># check if input is polygon or multipolygon</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf_ini</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">geom_type</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">&quot;Polygon&quot;</span><span class="p">,</span> <span class="s2">&quot;MultiPolygon&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf_zsini</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">geom_type</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">&quot;Polygon&quot;</span><span class="p">,</span> <span class="s2">&quot;MultiPolygon&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Input geodataframe &#39;ini&#39; should contain only Polygon or MultiPolygon geometries.&quot;</span>
+                <span class="s2">&quot;Input geodataframe &#39;zsini&#39; should contain only Polygon or MultiPolygon geometries.&quot;</span>
             <span class="p">)</span>
 
         <span class="c1"># if ini_value is provided, use this value (or list of values) for the initial water level inside the polygon(s).</span>
-        <span class="k">if</span> <span class="n">ini_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ini_value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ini_value</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gdf_ini</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">zsini_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">zsini_value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">zsini_value</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gdf_zsini</span><span class="p">):</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                        <span class="s2">&quot;If ini_value is a list, its length should match the number of polygons in &#39;ini&#39;.&quot;</span>
+                        <span class="s2">&quot;If zsini_value is a list, its length should match the number of polygons in &#39;zsini&#39;.&quot;</span>
                     <span class="p">)</span>
-                <span class="n">gdf_ini</span><span class="p">[</span><span class="s2">&quot;ini&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ini_value</span>
+                <span class="n">gdf_zsini</span><span class="p">[</span><span class="s2">&quot;zsini&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">zsini_value</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">gdf_ini</span><span class="p">[</span><span class="s2">&quot;ini&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">ini_value</span><span class="p">)</span>
+                <span class="n">gdf_zsini</span><span class="p">[</span><span class="s2">&quot;zsini&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">zsini_value</span><span class="p">)</span>
 
         <span class="c1"># check if &#39;ini&#39; column is present</span>
-        <span class="k">if</span> <span class="s2">&quot;ini&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_ini</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;zsini&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_zsini</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Input geodataframe &#39;ini&#39; should contain a column &#39;ini&#39; with initial water level values per polygon.&quot;</span>
+                <span class="s2">&quot;Input geodataframe &#39;zsini&#39; should contain a column &#39;zsini&#39; with initial water level values per polygon.&quot;</span>
             <span class="p">)</span>
 
         <span class="c1"># if reset_ini = True start empty, otherwise start with existing ini layer</span>
-        <span class="k">if</span> <span class="n">reset_ini</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">reset_zsini</span><span class="p">:</span>
             <span class="c1"># start with empty ini layer</span>
-            <span class="n">da_ini</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span>
+            <span class="n">da_zsini</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span>
                 <span class="n">fill_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
                 <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># start with existing ini layer</span>
-            <span class="n">da_ini</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">mname</span><span class="p">]</span>
+            <span class="n">da_zsini</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">mname</span><span class="p">]</span>
 
         <span class="c1"># loop over all polygons and rasterize</span>
-        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">gdf_ini</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-            <span class="n">ini_single</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;ini&quot;</span><span class="p">]</span>
-            <span class="n">gdf_ini_single</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">row</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="n">gdf_ini</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">gdf_ini</span><span class="o">.</span><span class="n">crs</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">gdf_zsini</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">zsini_single</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;zsini&quot;</span><span class="p">]</span>
+            <span class="n">gdf_zsini_single</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">row</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="n">gdf_zsini</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">gdf_zsini</span><span class="o">.</span><span class="n">crs</span>
             <span class="p">)</span>
-            <span class="n">da_ini0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_ini_single</span><span class="p">)</span>
-            <span class="c1"># where da_ini0 is True, set values of da_ini to ini_single:</span>
-            <span class="n">da_ini</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_ini0</span><span class="p">,</span> <span class="n">ini_single</span><span class="p">,</span> <span class="n">da_ini</span><span class="p">)</span>
+            <span class="n">da_zsini0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_zsini_single</span><span class="p">)</span>
+            <span class="c1"># where da_zsini0 is True, set values of da_zsini to zsini_single:</span>
+            <span class="n">da_zsini</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_zsini0</span><span class="p">,</span> <span class="n">zsini_single</span><span class="p">,</span> <span class="n">da_zsini</span><span class="p">)</span>
 
         <span class="c1"># check on nan values</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_ini</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_zsini</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                 <span class="s2">&quot;NaN values found in initial water level data; filled with fill_value </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                     <span class="n">fill_value</span>
                 <span class="p">)</span>
             <span class="p">)</span>
-            <span class="n">da_ini</span> <span class="o">=</span> <span class="n">da_ini</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">fill_value</span><span class="p">)</span>
-        <span class="n">da_ini</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+            <span class="n">da_zsini</span> <span class="o">=</span> <span class="n">da_zsini</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">fill_value</span><span class="p">)</span>
+        <span class="n">da_zsini</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
 
         <span class="c1"># set grid</span>
-        <span class="n">da_ini</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">_ATTRS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mname</span><span class="p">,</span> <span class="p">{}))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">da_ini</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">mname</span><span class="p">)</span>
+        <span class="n">da_zsini</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">_ATTRS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mname</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">da_zsini</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">mname</span><span class="p">)</span>
 
         <span class="c1"># update config: remove default zsini and set inifile</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="c1"># set spatially uniform zsini to 0.0 in config</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;zsini&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;inifile&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.ini&quot;</span><span class="p">)</span>
+        <span class="c1"># set spatially uniform zsini to None in config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;zsini&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
 
 </pre></div>
 
