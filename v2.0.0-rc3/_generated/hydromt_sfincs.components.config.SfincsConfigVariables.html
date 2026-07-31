@@ -2477,8 +2477,8 @@ validated to form a valid model.</p>
 <span class="w">         </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;integer&quot;</span>
 <span class="w">      </span><span class="p">},</span>
 <span class="w">      </span><span class="nt">&quot;regular_output_on_mesh&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">         </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
-<span class="w">         </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Write regular grid on quadtree mesh output (1: yes, 0: no)&quot;</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Write quadtree without refinement on quadtree mesh (1: yes) or regular grid (0: no)&quot;</span><span class="p">,</span>
 <span class="w">         </span><span class="nt">&quot;maximum&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
 <span class="w">         </span><span class="nt">&quot;minimum&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
 <span class="w">         </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Regular Output On Mesh&quot;</span><span class="p">,</span>
@@ -3625,8 +3625,8 @@ validated to form a valid model.</p>
 
 <dl class="py attribute pydantic_field">
 <dt class="sig sig-object py" id="hydromt_sfincs.components.config.SfincsConfigVariables.regular_output_on_mesh">
-<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">regular_output_on_mesh</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#hydromt_sfincs.components.config.SfincsConfigVariables.regular_output_on_mesh" title="Link to this definition">#</a></dt>
-<dd><p>Write regular grid on quadtree mesh output (1: yes, 0: no)</p>
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">regular_output_on_mesh</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#hydromt_sfincs.components.config.SfincsConfigVariables.regular_output_on_mesh" title="Link to this definition">#</a></dt>
+<dd><p>Write quadtree without refinement on quadtree mesh (1: yes) or regular grid (0: no)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Constraints<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -4505,7 +4505,7 @@ validated to form a valid model.</p>
 
 <dl class="py method pydantic_validator">
 <dt class="sig sig-object py" id="hydromt_sfincs.components.config.SfincsConfigVariables.parse_custom_datetime">
-<em class="property"><span class="pre">validator</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_custom_datetime</span></span><em class="autodoc_pydantic_validator_arrow property">&#160; <span class="pre">»</span>&#160; </em><em class="xref py py-obj"><span class="pre">tstart</span></em><em class="property"><span class="pre">,</span> </em><em class="xref py py-obj"><span class="pre">tref</span></em><em class="property"><span class="pre">,</span> </em><em class="xref py py-obj"><span class="pre">tstop</span></em><a class="reference internal" href="../_modules/hydromt_sfincs/components/config/config_variables.html#SfincsConfigVariables.parse_custom_datetime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.components.config.SfincsConfigVariables.parse_custom_datetime" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">validator</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_custom_datetime</span></span><em class="autodoc_pydantic_validator_arrow property">&#160; <span class="pre">»</span>&#160; </em><em class="xref py py-obj"><span class="pre">tref</span></em><em class="property"><span class="pre">,</span> </em><em class="xref py py-obj"><span class="pre">tstart</span></em><em class="property"><span class="pre">,</span> </em><em class="xref py py-obj"><span class="pre">tstop</span></em><a class="reference internal" href="../_modules/hydromt_sfincs/components/config/config_variables.html#SfincsConfigVariables.parse_custom_datetime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.components.config.SfincsConfigVariables.parse_custom_datetime" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
