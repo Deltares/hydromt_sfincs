@@ -436,7 +436,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt</span><span class="w"> </span><span class="kn">import</span> <span class="n">hydromt_step</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelComponent</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.model.processes.meteo</span><span class="w"> </span><span class="kn">import</span> <span class="n">da_to_timedelta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.model.processes.meteo</span><span class="w"> </span><span class="kn">import</span> <span class="n">da_to_timedelta</span><span class="p">,</span> <span class="n">precip</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">readers</span><span class="p">,</span> <span class="n">utils</span><span class="p">,</span> <span class="n">writers</span>
 
@@ -659,6 +659,18 @@
             <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">to_dataset</span><span class="p">()</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cannot set data of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Check if the time coordinates of the data match the model</span>
+        <span class="n">model_start</span><span class="p">,</span> <span class="n">model_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">()</span>
+        <span class="c1"># Get the start and end time of the data</span>
+        <span class="n">time_start</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">indexes</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_pydatetime</span><span class="p">()</span>
+        <span class="n">time_end</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">indexes</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">to_pydatetime</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">time_start</span> <span class="o">&gt;</span> <span class="n">model_start</span> <span class="ow">or</span> <span class="n">time_end</span> <span class="o">&lt;</span> <span class="n">model_end</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> forcing does not cover the full model period.&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Model runs from </span><span class="si">{</span><span class="n">model_start</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">model_end</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> spans&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;from </span><span class="si">{</span><span class="n">time_start</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">time_end</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
 
         <span class="c1"># TODO: don&#39;t we always want to reset the data when setting new data?</span>
         <span class="c1"># that would mean that you can never have 1D and 2D data at the same time</span>
