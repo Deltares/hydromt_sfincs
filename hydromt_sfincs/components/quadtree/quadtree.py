@@ -282,9 +282,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             # infiltration uses a non-standard config key ("infiltration_file");
             # other variables follow the default "{var}file" pattern.
             key = _QT_MAPS.get(var) or f"{var}file"
-            abs_file_path = self.model.config.get_set_file_variable(
-                key, default=f"{var}.nc"
-            )
+            abs_file_path = self.model.config.get(key, abs_path=True)
             if abs_file_path is not None:
                 abs_file_path.parent.mkdir(parents=True, exist_ok=True)
                 variables.append({"variable": var, "file_name": abs_file_path})
