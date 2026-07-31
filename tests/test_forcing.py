@@ -1,5 +1,7 @@
-from os.path import abspath, dirname, join, isfile
 from datetime import datetime
+from os.path import abspath, dirname, join, isfile
+import logging
+import pytest
 
 from hydromt_sfincs.sfincs import SfincsModel
 
@@ -93,3 +95,24 @@ def test_create_meteo_latlon(tmp_dir):
         assert comp.data is not None
         assert comp.data.raster.dims == ("y", "x")
         assert comp.data.raster.crs == "EPSG:4326"
+
+
+def test_create_meteo_time_bounds(model_config, caplog):
+    # get the forcing data from the data catalog
+    ds = model_config.data_catalog.get_rasterdataset("era5_hourly_zarr")
+
+    # forcing starts too late -> should warn
+    ds_late = ds.sel(time=slice("2010-02-06", None))
+
+    with caplog.at_level(logging.WARNING):
+        model_config.precipitation.create(precip=ds_late)
+
+    assert "forcing does not cover the full model period" in caplog.text
+
+    # forcing covers tstart but ends before tstop -> should warn
+    ds_short = ds.sel(time=slice("2010-02-01", "2010-02-06"))
+
+    with caplog.at_level(logging.WARNING):
+        model_config.precipitation.create(precip=ds_short)
+
+    assert "forcing does not cover the full model period" in caplog.text
