@@ -252,12 +252,21 @@ class SfincsGrid(GridComponent):
             # Write index file
             self.write_ind(ind_fn=abs_file_path, mask=mask)
 
-            if data_vars is None:  # write all maps
+            if data_vars is None:  # write all maps that are present in the dataset
                 data_vars = [v for v in _MAPS if v in ds_out]
+            elif isinstance(data_vars, list):
+                # check which data_vars are not defined, remove them, and provide warning
+                for name in data_vars:
+                    if name not in ds_out:
+                        logger.warning(f"{name} not found in data, skipping.")
+                        data_vars.remove(name)
             elif isinstance(data_vars, str):
+                # check if data_vars is defined
+                if data_vars not in ds_out:
+                    raise ValueError(f"{data_vars} not found in data.")
                 data_vars = list(data_vars)
-                # always rewrite the mask
-                data_vars.append("mask") if "mask" not in data_vars else data_vars
+            # always rewrite the mask
+            data_vars.append("mask") if "mask" not in data_vars else data_vars
 
             logger.debug(f"Write binary map files: {data_vars}.")
             for name in data_vars:
