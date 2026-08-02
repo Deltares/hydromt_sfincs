@@ -19,6 +19,7 @@ import shapely
 
 import xarray as xr
 import xugrid as xu
+from xugrid.core.wrap import UgridDataArray
 
 from hydromt import hydromt_step
 from hydromt.model.components import MeshComponent
@@ -44,7 +45,7 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 _QT_MAPS = {
     "manning": None,
     "vol": None,
-    "ini": None,
+    "zs": "inifile",
     "infiltration": "infiltration_file",
 }
 
@@ -66,7 +67,31 @@ class SfincsQuadtreeGrid(MeshComponent):
             model=model,
         )
 
-    # NOTE @data and @initialize are inherited from the MeshComponent
+    @property
+    def data(self) -> xu.UgridDataArray | xu.UgridDataset:
+        """
+        Model static mesh data. It returns a xugrid.UgridDataset.
+
+        Mesh can contain several grids (1D, 2D, 3D) defined according
+        to UGRID conventions. To extract a specific grid, use get_mesh
+        method.
+        """
+        # XU grid data type Xarray dataset with xu sampling.
+        if self._data is None and self.model.grid_type == "quadtree":
+            self._initialize()
+        elif self._data is None and self.model.grid_type == "regular":
+            self._initialize_from_regular()
+        return self._data
+
+    def _initialize_from_regular(self):
+        """Initialize the quadtree grid from the regular grid."""
+        # we convert regular grids to a UgridDataArray to be able to use the grid_snapper
+        if self.model.config.get("rotation", 0) != 0:
+            uda = UgridDataArray.from_structured2d(self.model.grid.mask, "xc", "yc")
+        else:
+            uda = UgridDataArray.from_structured2d(self.model.grid.mask)
+        uda.grid.set_crs(self.model.crs)
+        self._data = uda
 
     @property
     def crs(self) -> CRS:
@@ -257,10 +282,12 @@ class SfincsQuadtreeGrid(MeshComponent):
             # infiltration uses a non-standard config key ("infiltration_file");
             # other variables follow the default "{var}file" pattern.
             key = _QT_MAPS.get(var) or f"{var}file"
-            fn_var = self.model.config.get(key, abs_path=True)
-            if fn_var is not None:
-                fn_var.parent.mkdir(parents=True, exist_ok=True)
-                variables.append({"variable": var, "file_name": fn_var})
+            abs_file_path = self.model.config.get_set_file_variable(
+                key, default=f"{var}.nc"
+            )
+            if abs_file_path is not None:
+                abs_file_path.parent.mkdir(parents=True, exist_ok=True)
+                variables.append({"variable": var, "file_name": abs_file_path})
 
         if len(variables) > 0:
             for var in variables:
