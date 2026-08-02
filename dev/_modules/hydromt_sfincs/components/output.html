@@ -26,8 +26,8 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=7f76b32a3354e82990f2" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=7f76b32a3354e82990f2" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../../_static/autodoc_pydantic.css" />
@@ -35,10 +35,10 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/theme-deltares.css?v=a3fd7a5a" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="../../../_static/scripts/fontawesome.js?digest=7f76b32a3354e82990f2"></script>
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=7f76b32a3354e82990f2" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=7f76b32a3354e82990f2" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
@@ -47,9 +47,9 @@
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/hydromt_sfincs/components/output';</script>
     <script>
-        DOCUMENTATION_OPTIONS.theme_version = '0.17.0';
+        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0-rc';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -59,7 +59,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.0.0-dev" />
+  <meta name="docsearch:version" content="2.0.0-rc4dev" />
   
     
     <script src="../../../_static/searchtools.js"></script>
@@ -77,7 +77,9 @@
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -432,10 +434,9 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">xugrid</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xu</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt</span><span class="w"> </span><span class="kn">import</span> <span class="n">hydromt_step</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelComponent</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">readers</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
@@ -546,7 +547,7 @@
         <span class="n">chunksize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Read the sfincs_his.nc file and return it as an xarray Dataset.&quot;&quot;&quot;</span>
-        <span class="n">ds_his</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">read_sfincs_his_results</span><span class="p">(</span>
+        <span class="n">ds_his</span> <span class="o">=</span> <span class="n">readers</span><span class="o">.</span><span class="n">read_sfincs_his_results</span><span class="p">(</span>
             <span class="n">fn_his</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">chunksize</span><span class="o">=</span><span class="n">chunksize</span>
         <span class="p">)</span>
         <span class="c1"># drop double vars (map files has priority)</span>
@@ -566,7 +567,7 @@
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Grid type not known, trying to read from config file. &quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span><span class="p">:</span>
-            <span class="n">ds_face</span><span class="p">,</span> <span class="n">ds_edge</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">read_sfincs_map_results</span><span class="p">(</span>
+            <span class="n">ds_face</span><span class="p">,</span> <span class="n">ds_edge</span> <span class="o">=</span> <span class="n">readers</span><span class="o">.</span><span class="n">read_sfincs_map_results</span><span class="p">(</span>
                 <span class="n">fn_map</span><span class="p">,</span>
                 <span class="n">ds_like</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span>
                 <span class="n">drop</span><span class="o">=</span><span class="n">drop</span><span class="p">,</span>
@@ -581,9 +582,16 @@
                 <span class="c1"># set coords</span>
                 <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">set_coords</span><span class="p">([</span><span class="s2">&quot;mesh2d_node_x&quot;</span><span class="p">,</span> <span class="s2">&quot;mesh2d_node_y&quot;</span><span class="p">])</span>
                 <span class="c1"># get crs variable, drop it and set it correctly</span>
-                <span class="n">crs</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
-                <span class="n">ds</span><span class="o">.</span><span class="n">drop_vars</span><span class="p">(</span><span class="s2">&quot;crs&quot;</span><span class="p">)</span>
-                <span class="n">ds</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">CRS</span><span class="o">.</span><span class="n">from_user_input</span><span class="p">(</span><span class="n">crs</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">ds</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">crs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="s2">&quot;CRS not found in grid, trying to read from crs variable. &quot;</span>
+                    <span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">crs</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+                        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">drop_vars</span><span class="p">(</span><span class="s2">&quot;crs&quot;</span><span class="p">)</span>
+                        <span class="n">ds</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">CRS</span><span class="o">.</span><span class="n">from_user_input</span><span class="p">(</span><span class="n">crs</span><span class="p">))</span>
+                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to set CRS from variable: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">split_dataset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span>
@@ -705,8 +713,8 @@
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../_static/scripts/bootstrap.js?digest=7f76b32a3354e82990f2"></script>
-<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=7f76b32a3354e82990f2"></script>
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -740,7 +748,7 @@
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.17.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
 </p></div>
       
     </div>

@@ -26,8 +26,8 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../../_static/styles/theme.css?digest=7f76b32a3354e82990f2" rel="stylesheet" />
-<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=7f76b32a3354e82990f2" rel="stylesheet" />
+  <link href="../../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/autodoc_pydantic.css" />
@@ -35,10 +35,10 @@
     <link rel="stylesheet" type="text/css" href="../../../../_static/theme-deltares.css?v=a3fd7a5a" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="../../../../_static/scripts/fontawesome.js?digest=7f76b32a3354e82990f2"></script>
+  <script defer src="../../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=7f76b32a3354e82990f2" />
-<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=7f76b32a3354e82990f2" />
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
@@ -47,9 +47,9 @@
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/hydromt_sfincs/components/grid/regulargrid';</script>
     <script>
-        DOCUMENTATION_OPTIONS.theme_version = '0.17.0';
+        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0-rc';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -59,7 +59,7 @@
     <link rel="search" title="Search" href="../../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.0.0-dev" />
+  <meta name="docsearch:version" content="2.0.0-rc4dev" />
   
     
     <script src="../../../../_static/searchtools.js"></script>
@@ -77,7 +77,9 @@
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -438,14 +440,13 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">affine</span><span class="w"> </span><span class="kn">import</span> <span class="n">Affine</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyproj</span><span class="w"> </span><span class="kn">import</span> <span class="n">CRS</span><span class="p">,</span> <span class="n">Transformer</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">shapely.geometry</span><span class="w"> </span><span class="kn">import</span> <span class="n">LineString</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt</span><span class="w"> </span><span class="kn">import</span> <span class="n">hydromt_step</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">GridComponent</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.model.processes.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_grid_from_region</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">writers</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.workflows.tiling</span><span class="w"> </span><span class="kn">import</span> <span class="n">int2png</span><span class="p">,</span> <span class="n">tile_window</span><span class="p">,</span> <span class="n">write_html</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
@@ -453,7 +454,8 @@
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-<span class="n">_MAPS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">,</span> <span class="s2">&quot;dep&quot;</span><span class="p">,</span> <span class="s2">&quot;scs&quot;</span><span class="p">,</span> <span class="s2">&quot;manning&quot;</span><span class="p">,</span> <span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="s2">&quot;smax&quot;</span><span class="p">,</span> <span class="s2">&quot;seff&quot;</span><span class="p">,</span> <span class="s2">&quot;ks&quot;</span><span class="p">,</span> <span class="s2">&quot;vol&quot;</span><span class="p">,</span> <span class="s2">&quot;ini&quot;</span><span class="p">]</span>
+<span class="n">_MAPS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">,</span> <span class="s2">&quot;dep&quot;</span><span class="p">,</span> <span class="s2">&quot;scs&quot;</span><span class="p">,</span> <span class="s2">&quot;manning&quot;</span><span class="p">,</span> <span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="s2">&quot;smax&quot;</span><span class="p">,</span> <span class="s2">&quot;seff&quot;</span><span class="p">,</span> <span class="s2">&quot;ks&quot;</span><span class="p">,</span> <span class="s2">&quot;vol&quot;</span><span class="p">,</span> <span class="s2">&quot;zs&quot;</span><span class="p">]</span>
+<span class="n">_MAP_EXCEPTIONS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;zs&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;inifile&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs.ini&quot;</span><span class="p">)}</span>
 
 
 <div class="viewcode-block" id="SfincsGrid">
@@ -633,9 +635,10 @@
                 <span class="c1"># mask is special, it is always read</span>
                 <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span><span class="s2">&quot;mskfile&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs.msk&quot;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span>
+                <span class="n">config_key</span><span class="p">,</span> <span class="n">fallback</span> <span class="o">=</span> <span class="n">_MAP_EXCEPTIONS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="p">)</span>
+                <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">config_key</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="n">fallback</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">isfile</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">provide_warnings</span><span class="p">:</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file not found at </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -650,30 +653,6 @@
             <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">epsg</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span></div>
 
-
-        <span class="c1"># # TODO - fix this properly; but to create overlays in GUIs,</span>
-        <span class="c1"># # we always convert regular grids to a UgridDataArray</span>
-        <span class="c1"># self.quadtree = QuadtreeGrid(logger=logger)</span>
-        <span class="c1"># if self.config.get(&quot;rotation&quot;, 0) != 0:  # This is a rotated regular grid</span>
-        <span class="c1">#     self.quadtree.data = UgridDataArray.from_structured(</span>
-        <span class="c1">#         self.mask, &quot;xc&quot;, &quot;yc&quot;</span>
-        <span class="c1">#     )</span>
-        <span class="c1"># else:</span>
-        <span class="c1">#     self.quadtree.data = UgridDataArray.from_structured(self.mask)</span>
-        <span class="c1"># self.quadtree.data.grid.set_crs(self.crs)</span>
-
-        <span class="c1"># keep some metadata maps from gis directory</span>
-
-        <span class="c1"># fns = glob.glob(join(self.root, &quot;gis&quot;, &quot;*.tif&quot;))</span>
-        <span class="c1"># fns = [</span>
-        <span class="c1">#     fn</span>
-        <span class="c1">#     for fn in fns</span>
-        <span class="c1">#     if basename(fn).split(&quot;.&quot;)[0] not in self.grid.data_vars</span>
-        <span class="c1"># ]</span>
-        <span class="c1"># if fns:</span>
-        <span class="c1">#     ds = hydromt.open_mfraster(fns).load()</span>
-        <span class="c1">#     self.set_grid(ds)</span>
-        <span class="c1">#     ds.close()</span>
 
 <div class="viewcode-block" id="SfincsGrid.write">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsGrid.write.html#hydromt_sfincs.components.grid.SfincsGrid.write">[docs]</a>
@@ -711,24 +690,35 @@
             <span class="c1"># Write index file</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">write_ind</span><span class="p">(</span><span class="n">ind_fn</span><span class="o">=</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">data_vars</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># write all maps</span>
+            <span class="k">if</span> <span class="n">data_vars</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># write all maps that are present in the dataset</span>
                 <span class="n">data_vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">_MAPS</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ds_out</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_vars</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="c1"># check which data_vars are not defined, remove them, and provide warning</span>
+                <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">data_vars</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds_out</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> not found in data, skipping.&quot;</span><span class="p">)</span>
+                        <span class="n">data_vars</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_vars</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="c1"># check if data_vars is defined</span>
+                <span class="k">if</span> <span class="n">data_vars</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds_out</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_vars</span><span class="si">}</span><span class="s2"> not found in data.&quot;</span><span class="p">)</span>
                 <span class="n">data_vars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">data_vars</span><span class="p">)</span>
-                <span class="c1"># always rewrite the mask</span>
-                <span class="n">data_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;mask&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="s2">&quot;mask&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data_vars</span> <span class="k">else</span> <span class="n">data_vars</span>
+            <span class="c1"># always rewrite the mask</span>
+            <span class="n">data_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;mask&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="s2">&quot;mask&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data_vars</span> <span class="k">else</span> <span class="n">data_vars</span>
 
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Write binary map files: </span><span class="si">{</span><span class="n">data_vars</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">data_vars</span><span class="p">:</span>
                 <span class="c1"># Set file name and get absolute path</span>
                 <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;mask&quot;</span><span class="p">:</span>
                     <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
-                        <span class="s2">&quot;mskfile&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs.msk&quot;</span>
+                        <span class="s2">&quot;mskfile&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;sfincs.msk&quot;</span>
                     <span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
+                    <span class="n">config_key</span><span class="p">,</span> <span class="n">default</span> <span class="o">=</span> <span class="n">_MAP_EXCEPTIONS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                        <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="p">)</span>
                     <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span>
-                        <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">config_key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">default</span>
                     <span class="p">)</span>
 
                 <span class="c1"># write to binary model files</span>
@@ -741,20 +731,18 @@
 
                 <span class="c1"># write to gis-files for visualization</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">write_gis</span><span class="p">:</span>
-                    <span class="n">utils</span><span class="o">.</span><span class="n">write_raster</span><span class="p">(</span>
+                    <span class="n">writers</span><span class="o">.</span><span class="n">write_raster</span><span class="p">(</span>
                         <span class="n">ds_out</span><span class="p">[</span><span class="n">name</span><span class="p">],</span>
                         <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;gis&quot;</span><span class="p">),</span>
                         <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span>
-                        <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
                     <span class="p">)</span>
 
             <span class="c1"># write the model region to a geojson file for visualization</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">write_gis</span><span class="p">:</span>
-                <span class="n">utils</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span>
+                <span class="n">writers</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
                     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;region&quot;</span><span class="p">,</span>
                     <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;gis&quot;</span><span class="p">),</span>
-                    <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
                 <span class="p">)</span></div>
 
 
@@ -944,6 +932,9 @@
             <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span>
             <span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;_FillValue&quot;</span><span class="p">:</span> <span class="n">mv</span><span class="p">},</span>
         <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;mask&quot;</span><span class="p">:</span>
+            <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">da</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write_ind</span><span class="p">(</span>
@@ -967,7 +958,14 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write one of the grid variables of the SFINCS model map to a binary file.&quot;&quot;&quot;</span>
 
-        <span class="n">data_out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">transpose</span><span class="p">()[</span><span class="n">mask</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">data_masked</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">transpose</span><span class="p">()[</span><span class="n">mask</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># make sure there is no NaN in the data to be written, otherwise SFINCS will crash</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">data_masked</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Data to be written to </span><span class="si">{</span><span class="n">map_fn</span><span class="si">}</span><span class="s2"> contains NaN values. &quot;</span>
+                <span class="s2">&quot;Please replace NaN values with a valid value before writing.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">data_out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data_masked</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
         <span class="n">data_out</span><span class="o">.</span><span class="n">tofile</span><span class="p">(</span><span class="n">map_fn</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">update_grid_from_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1284,8 +1282,8 @@
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../../_static/scripts/bootstrap.js?digest=7f76b32a3354e82990f2"></script>
-<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=7f76b32a3354e82990f2"></script>
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1319,7 +1317,7 @@
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.17.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
 </p></div>
       
     </div>
