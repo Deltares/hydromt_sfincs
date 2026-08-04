@@ -1,3 +1,4 @@
+import json
 import logging
 from os.path import join
 from pathlib import Path
@@ -41,9 +42,13 @@ _DEFAULTS: dict = {
     "submergence_ratio": 0.67,
     "opening_duration": 0.0,
     "closing_duration": 0.0,
-    "rules_open": "",
-    "rules_close": "",
 }
+
+# Valid gate-rule operations (see sfincs_src_structures.f90): each rule is
+# an {"operation": ..., "when": ...} dict; rules are evaluated in order and
+# the first whose "when" expression fires sets the gate target
+# (open -> 1.0, close -> 0.0, hold -> freeze). If none fires the gate holds.
+_RULE_OPERATIONS = ("open", "close", "hold")
 
 
 class SfincsDrainageStructures(ModelComponent):
@@ -128,6 +133,9 @@ class SfincsDrainageStructures(ModelComponent):
         """
         for col, default in _DEFAULTS.items():
             gdf[col] = default
+        # Ordered list of gate control rules per row; each entry is an
+        # {"operation": "open"/"close"/"hold", "when": "<expr>"} dict.
+        gdf["rules"] = [[] for _ in range(len(gdf))]
         return gdf
 
     def read(self, filename: str | Path = None):
@@ -203,7 +211,9 @@ class SfincsDrainageStructures(ModelComponent):
                 gdf.at[idx, "mannings_n"] = float(row["par3"])
                 zmin = float(row["par4"])
                 zmax = float(row["par5"])
-                gdf.at[idx, "rules_open"] = f"z1>{zmin} & z1<{zmax}"
+                gdf.at[idx, "rules"] = [
+                    {"operation": "open", "when": f"z1>{zmin} & z1<{zmax}"}
+                ]
                 closing = float(row["par6"])
                 gdf.at[idx, "closing_duration"] = closing
                 gdf.at[idx, "opening_duration"] = closing
@@ -235,9 +245,11 @@ class SfincsDrainageStructures(ModelComponent):
         into ``culvert_simple`` + ``direction="positive"``.
 
         Gate control rules are read from the ordered ``[[src_structure.rule]]``
-        tables (``operation`` + ``when``) into the internal ``rules_open`` /
-        ``rules_close`` columns. Legacy files using scalar ``rules_open`` /
-        ``rules_close`` keys are still accepted as a fallback.
+        tables (``operation`` = ``"open"``/``"close"``/``"hold"`` + ``when``)
+        into the ``rules`` column: an ordered list of
+        ``{"operation": ..., "when": ...}`` dicts per structure. Legacy files
+        using scalar ``rules_open`` / ``rules_close`` keys are still accepted
+        as a fallback and converted into that list.
         """
         with open(filename, "rb") as f:
             doc = tomllib.load(f)
@@ -342,25 +354,35 @@ class SfincsDrainageStructures(ModelComponent):
 
             # Rules apply to all non-pump types. The SFINCS TOML format
             # carries them as an ordered array of tables under "rule"
-            # (each {operation = "open"/"close", when = "<expr>"}). Older
-            # files used scalar rules_open / rules_close keys; accept both,
-            # mapping into the internal rules_open / rules_close columns.
+            # (each {operation = "open"/"close"/"hold", when = "<expr>"}).
+            # Order matters: SFINCS evaluates the rules in order and the
+            # first whose "when" fires wins. Older files used scalar
+            # rules_open / rules_close keys; accept those as a fallback.
             if t != 1:
-                rule_open, rule_close = "", ""
-                for r in entry.get("rule", []) or []:
-                    op = str(r.get("operation", "")).lower()
-                    when = str(r.get("when", "") or "")
-                    if op == "open" and not rule_open:
-                        rule_open = when
-                    elif op == "close" and not rule_close:
-                        rule_close = when
+                rules: list[dict] = []
+                for j, r in enumerate(entry.get("rule", []) or []):
+                    op = str(r.get("operation", "")).lower().strip()
+                    when = str(r.get("when", "") or "").strip()
+                    if op not in _RULE_OPERATIONS or not when:
+                        logger.warning(
+                            "Skipping invalid rule %d of src_structure %r "
+                            "(operation=%r, when=%r)",
+                            j + 1,
+                            entry.get("name", idx),
+                            op,
+                            when,
+                        )
+                        continue
+                    rules.append({"operation": op, "when": when})
                 # Fall back to legacy scalar keys when no rule tables present.
-                if not rule_open:
-                    rule_open = str(entry.get("rules_open", "") or "")
-                if not rule_close:
-                    rule_close = str(entry.get("rules_close", "") or "")
-                gdf.at[idx, "rules_open"] = rule_open
-                gdf.at[idx, "rules_close"] = rule_close
+                if not rules:
+                    rule_open = str(entry.get("rules_open", "") or "").strip()
+                    rule_close = str(entry.get("rules_close", "") or "").strip()
+                    if rule_open:
+                        rules.append({"operation": "open", "when": rule_open})
+                    if rule_close:
+                        rules.append({"operation": "close", "when": rule_close})
+                gdf.at[idx, "rules"] = rules
 
         self.set(gdf, merge=False)
 
@@ -421,8 +443,15 @@ class SfincsDrainageStructures(ModelComponent):
             self.model.config.set("drnfile", drnfile_backup)
 
         if self.model.write_gis:
+            # GeoJSON fields cannot hold lists — serialize the rules
+            # column to a JSON string for the gis sidecar only.
+            gis_gdf = self.data.copy()
+            if "rules" in gis_gdf.columns:
+                gis_gdf["rules"] = gis_gdf["rules"].apply(
+                    lambda r: json.dumps(r) if isinstance(r, list) else ""
+                )
             writers.write_vector(
-                self.data,
+                gis_gdf,
                 name="drn",
                 root=join(self.model.root.path, "gis"),
             )
@@ -485,11 +514,11 @@ class SfincsDrainageStructures(ModelComponent):
 
         Default filename is ``sfincs.toml.drn``. Emits all per-type
         parameters for each ``[[src_structure]]`` entry. For non-pump
-        structures, any ``rules_open`` / ``rules_close`` expressions are
-        written as an ordered list of ``[[src_structure.rule]]`` tables
-        (``operation`` = ``"open"``/``"close"``, ``when`` = expression),
-        which is the format the SFINCS reader expects. Structures with no
-        rules get no ``rule`` tables (SFINCS treats them as always open).
+        structures, the ``rules`` list is written in order as
+        ``[[src_structure.rule]]`` tables (``operation`` =
+        ``"open"``/``"close"``/``"hold"``, ``when`` = expression), which is
+        the format the SFINCS reader expects. Structures with no rules get
+        no ``rule`` tables (SFINCS treats them as always open).
         """
         self.root._assert_write_mode()
 
@@ -561,17 +590,18 @@ class SfincsDrainageStructures(ModelComponent):
 
             # Rules apply to every non-pump type. SFINCS reads them as an
             # ordered array of tables under the "rule" sub-key
-            # (each -> [[src_structure.rule]] with "operation" + "when");
-            # the scalar rules_open/rules_close keys are ignored by the reader.
-            # Emit an "open" rule then a "close" rule, skipping empty ones.
+            # (each -> [[src_structure.rule]] with "operation" + "when").
+            # Emit the stored rules list in order — order matters, the
+            # first rule whose "when" fires wins.
             if t != 1:
+                stored = row.get("rules")
                 rules: list[dict] = []
-                rule_open = str(row.get("rules_open", "") or "").strip()
-                rule_close = str(row.get("rules_close", "") or "").strip()
-                if rule_open:
-                    rules.append({"operation": "open", "when": rule_open})
-                if rule_close:
-                    rules.append({"operation": "close", "when": rule_close})
+                if isinstance(stored, list):
+                    for r in stored:
+                        op = str(r.get("operation", "")).lower().strip()
+                        when = str(r.get("when", "") or "").strip()
+                        if op in _RULE_OPERATIONS and when:
+                            rules.append({"operation": op, "when": when})
                 if rules:
                     entry["rule"] = rules
 
@@ -639,8 +669,7 @@ class SfincsDrainageStructures(ModelComponent):
         submergence_ratio: float = 0.67,
         opening_duration: float = 0.0,
         closing_duration: float = 0.0,
-        rules_open: str = "",
-        rules_close: str = "",
+        rules: list = None,
         merge: bool = True,
         **kwargs,
     ):
@@ -677,8 +706,11 @@ class SfincsDrainageStructures(ModelComponent):
             Detailed culvert submergence ratio, by default 0.67.
         opening_duration, closing_duration : float, optional
             Gate opening/closing ramp durations (s), by default 0.0.
-        rules_open, rules_close : str, optional
-            Logical expressions triggering opening/closing, by default "".
+        rules : list of dict, optional
+            Ordered gate control rules, each an
+            ``{"operation": "open"/"close"/"hold", "when": "<expr>"}`` dict.
+            Rules are evaluated in order; the first whose ``when`` expression
+            fires wins. By default no rules (structure stays fully open).
         merge : bool, optional
             If True, merge with existing drainage locations, by default True.
         """
@@ -753,8 +785,7 @@ class SfincsDrainageStructures(ModelComponent):
                 gdf.at[idx, "submergence_ratio"] = float(submergence_ratio)
 
             if row_t != 1:
-                gdf.at[idx, "rules_open"] = rules_open
-                gdf.at[idx, "rules_close"] = rules_close
+                gdf.at[idx, "rules"] = list(rules) if rules else []
 
         # Let any explicit columns in the input gdf override the scalars.
         for col in _DEFAULTS:

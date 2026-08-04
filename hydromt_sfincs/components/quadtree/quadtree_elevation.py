@@ -60,6 +60,7 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
         nrmax: int = 2000,
         buffer_cells: int = 0,
         interp_method: str = "linear",
+        fill_missing: bool = True,
         zmin: float = -1.0e9,
         zmax: float = 1.0e9,
     ):
@@ -99,7 +100,7 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
         ]
 
         # Generic workflow using compute_quadtree
-        def compute_elevation(da_like, ilev=None):
+        def compute_elevation(da_like, ilev=None, fill_missing=True):
             da_dep = merge_multi_dataarrays(
                 da_list=elevation_list_per_level[ilev],
                 da_like=da_like,
@@ -109,8 +110,8 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
             )
 
             # check if no nan data is present in the bed levels
-            nmissing = int(np.sum(np.isnan(da_dep.values)))
-            if nmissing > 0:
+            nmissing = int(np.sum(np.isnan(da_dep.values)))            
+            if nmissing > 0 and fill_missing:
                 logger.warning(f"Interpolate elevation at {nmissing} cells")
                 da_dep = da_dep.raster.interpolate_na(
                     method="rio_idw", extrapolate=True
@@ -122,12 +123,13 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
             zz,
             nrmax=nrmax,
             clip=(zmin, zmax),
+            fill_missing=fill_missing,
         )
 
         # Convert elevation to ugrid-dataarray and set in self.data
         da = xr.DataArray(zz, dims=[self.data.grid.face_dimension])
         uda = xu.UgridDataArray(da, self.data.grid)
-        self.model.quadtree_grid.set(uda, name="z")
+        self.model.quadtree_grid.set(uda, name="z", overwrite_grid=True)
 
     @hydromt_step
     def create_uniform(self, zb):
