@@ -8,7 +8,7 @@ import xarray as xr
 
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
-from hydromt.model.processes.meteo import da_to_timedelta
+from hydromt.model.processes.meteo import da_to_timedelta, precip
 
 from hydromt_sfincs import readers, utils, writers
 
@@ -231,6 +231,18 @@ class SfincsMeteo(ModelComponent):
             data = data.to_dataset()
         elif not isinstance(data, xr.Dataset):
             raise ValueError(f"cannot set data of type {type(data).__name__}")
+
+        # Check if the time coordinates of the data match the model
+        model_start, model_end = self.model.get_model_time()
+        # Get the start and end time of the data
+        time_start = data.indexes["time"][0].to_pydatetime()
+        time_end = data.indexes["time"][-1].to_pydatetime()
+        if time_start > model_start or time_end < model_end:
+            logger.warning(
+                f"{name} forcing does not cover the full model period."
+                f"Model runs from {model_start} to {model_end}, {name} spans"
+                f"from {time_start} to {time_end}."
+            )
 
         # TODO: don't we always want to reset the data when setting new data?
         # that would mean that you can never have 1D and 2D data at the same time

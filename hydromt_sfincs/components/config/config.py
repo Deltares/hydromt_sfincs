@@ -261,9 +261,6 @@ class SfincsConfig(ModelComponent):
         """Update the grid properties from the configuration. This method determines the grid type
         based on the presence of the 'qtrfile' variable in the configuration. If 'qtrfile' is set,
         the grid type is set to 'quadtree'; otherwise, it is set to 'regular'.
-
-        Depending on the grid type, it updates the grid properties of the SfincsModel and removes
-        the irrelevant grid component.
         """
 
         # Determine grid type based on configuration
@@ -272,13 +269,6 @@ class SfincsConfig(ModelComponent):
         if self.model.grid_type == "regular":
             # update the regular grid properties from the configuration
             self.model.grid.update_grid_from_config()
-            # drop quadtree component
-            for comp in self.model._QUADTREE_GRID_NAMES:
-                self.model.components.pop(comp, None)
-        elif self.model.grid_type == "quadtree":
-            # drop regular component
-            for comp in self.model._REGULAR_GRID_NAMES:
-                self.model.components.pop(comp, None)
 
     def get_set_file_variable(
         self, key: str, value: str | Path = None, default: str = None

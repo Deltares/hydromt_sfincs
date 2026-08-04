@@ -281,8 +281,8 @@ class SfincsThinDams(ModelComponent):
     def snap_to_grid(self):
         """Returns GeoDataFrame with thin dams snapped to model grid."""
         if self.model.grid_type != "quadtree":
-            raise NotImplementedError(
-                "Snap to grid is only implemented for quadtree grids."
+            logger.info(
+                "Snapping to grid uses the quadtree representation. Regular grid will be converted to a quadtree grid first."
             )
         snap_gdf = self.model.quadtree_grid.snap_to_grid(self.data)
         return snap_gdf

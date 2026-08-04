@@ -26,7 +26,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 
-_MAPS = ["mask", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol", "ini"]
+_MAPS = ["mask", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol", "zs"]
+_MAP_EXCEPTIONS = {"zs": ("inifile", "sfincs.ini")}
 
 
 class SfincsGrid(GridComponent):
@@ -199,9 +200,10 @@ class SfincsGrid(GridComponent):
                 # mask is special, it is always read
                 fn = self.model.config.get_set_file_variable("mskfile", "sfincs.msk")
             else:
-                fn = self.model.config.get(
-                    f"{name}file", fallback=f"sfincs.{name}", abs_path=True
+                config_key, fallback = _MAP_EXCEPTIONS.get(
+                    name, (f"{name}file", f"sfincs.{name}")
                 )
+                fn = self.model.config.get(config_key, fallback=fallback, abs_path=True)
             if not isfile(fn):
                 if provide_warnings:
                     logger.warning(f"{name}file not found at {fn}")
@@ -215,30 +217,6 @@ class SfincsGrid(GridComponent):
         if epsg is not None:
             ds.raster.set_crs(epsg)
         self.set(ds)
-
-        # # TODO - fix this properly; but to create overlays in GUIs,
-        # # we always convert regular grids to a UgridDataArray
-        # self.quadtree = QuadtreeGrid(logger=logger)
-        # if self.config.get("rotation", 0) != 0:  # This is a rotated regular grid
-        #     self.quadtree.data = UgridDataArray.from_structured(
-        #         self.mask, "xc", "yc"
-        #     )
-        # else:
-        #     self.quadtree.data = UgridDataArray.from_structured(self.mask)
-        # self.quadtree.data.grid.set_crs(self.crs)
-
-        # keep some metadata maps from gis directory
-
-        # fns = glob.glob(join(self.root, "gis", "*.tif"))
-        # fns = [
-        #     fn
-        #     for fn in fns
-        #     if basename(fn).split(".")[0] not in self.grid.data_vars
-        # ]
-        # if fns:
-        #     ds = hydromt.open_mfraster(fns).load()
-        #     self.set_grid(ds)
-        #     ds.close()
 
     def write(
         self,
@@ -274,24 +252,35 @@ class SfincsGrid(GridComponent):
             # Write index file
             self.write_ind(ind_fn=abs_file_path, mask=mask)
 
-            if data_vars is None:  # write all maps
+            if data_vars is None:  # write all maps that are present in the dataset
                 data_vars = [v for v in _MAPS if v in ds_out]
+            elif isinstance(data_vars, list):
+                # check which data_vars are not defined, remove them, and provide warning
+                for name in data_vars:
+                    if name not in ds_out:
+                        logger.warning(f"{name} not found in data, skipping.")
+                        data_vars.remove(name)
             elif isinstance(data_vars, str):
+                # check if data_vars is defined
+                if data_vars not in ds_out:
+                    raise ValueError(f"{data_vars} not found in data.")
                 data_vars = list(data_vars)
-                # always rewrite the mask
-                data_vars.append("mask") if "mask" not in data_vars else data_vars
+            # always rewrite the mask
+            data_vars.append("mask") if "mask" not in data_vars else data_vars
 
             logger.debug(f"Write binary map files: {data_vars}.")
             for name in data_vars:
                 # Set file name and get absolute path
                 if name == "mask":
                     abs_file_path = self.model.config.get_set_file_variable(
-                        "mskfile", "sfincs.msk"
+                        "mskfile", default="sfincs.msk"
                     )
                 else:
+                    config_key, default = _MAP_EXCEPTIONS.get(
+                        name, (f"{name}file", f"sfincs.{name}")
+                    )
                     abs_file_path = self.model.config.get_set_file_variable(
-                        f"{name}file",
-                        f"sfincs.{name}",
+                        config_key, default=default
                     )
 
                 # write to binary model files
