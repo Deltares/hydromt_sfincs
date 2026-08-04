@@ -139,6 +139,33 @@ def make_map_overlay(
         return False
 
 
+def _dilate_bool_agg(agg, px: int):
+    """Spread True pixels of a boolean aggregation by ``px`` pixels.
+
+    Drop-in replacement for ``tf.spread(agg, px=px)`` for boolean (``ds.any()``)
+    aggregations, using a scipy binary dilation with datashader's circular
+    footprint instead of datashader's numba-jitted spread kernel. The jitted
+    kernel is compiled per marker size, which takes minutes inside a frozen
+    (Nuitka) executable; the dilation is numba-free and operates on the small
+    aggregated image, so its cost is independent of the number of points.
+    """
+    if not px or px <= 0:
+        return agg
+    import xarray as xr
+    from scipy.ndimage import binary_dilation
+
+    # Same circular footprint as datashader's tf.spread(shape="circle"),
+    # which uses sqrt(x^2 + y^2) <= px + 0.5 (see datashader._circle_mask).
+    yy, xx = np.ogrid[-px : px + 1, -px : px + 1]
+    footprint = (xx * xx + yy * yy) <= (px + 0.5) ** 2
+
+    values = np.nan_to_num(agg.values).astype(bool)
+    dilated = binary_dilation(values, structure=footprint)
+    return xr.DataArray(
+        dilated, coords=agg.coords, dims=agg.dims, name=agg.name, attrs=agg.attrs
+    )
+
+
 def make_mask_dataframe(
     x: np.ndarray,
     y: np.ndarray,
@@ -243,12 +270,14 @@ def make_mask_overlay(
         for mask_val, color in colors.items():
             df_sub = dataframe[dataframe["mask"] == mask_val]
             if len(df_sub) > 0:
-                images.append(
-                    tf.shade(
-                        tf.spread(cvs.points(df_sub, "x", "y", ds.any()), px=px),
-                        cmap=color,
-                    )
-                )
+                agg = cvs.points(df_sub, "x", "y", ds.any())
+                # Marker spreading. NOTE: deliberately NOT tf.spread - that
+                # numba-jit-compiles a kernel per marker size, which takes
+                # minutes in a frozen (Nuitka) build. The aggregation is a
+                # small boolean image here (height x width, independent of the
+                # number of points), so a scipy binary dilation with the same
+                # circular footprint is equivalent and instant.
+                images.append(tf.shade(_dilate_bool_agg(agg, px), cmap=color))
 
         if not images:
             return False

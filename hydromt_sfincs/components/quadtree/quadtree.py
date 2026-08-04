@@ -279,6 +279,22 @@ class SfincsQuadtreeGrid(MeshComponent):
             data_vars = list(data_vars)
         variables = []
         for var in data_vars:
+            # Skip map variables that are not (yet) present in the grid dataset,
+            # e.g. manning/vol/zs while still building a model. There is nothing
+            # to write, and calling get_set_file_variable below would store a
+            # config key (e.g. "manningfile = manning.nc") referencing a file
+            # that is never written.
+            if var == "infiltration":
+                # Infiltration is represented by several possible variables
+                # (qinf, scs, smax, ... - see quadtree_infiltration._ATTRS).
+                # Skip when none of them exist: otherwise an "infiltration_file"
+                # entry would be added to sfincs.inp (and an empty file written)
+                # for models without infiltration.
+                inf_vars = getattr(self.model.quadtree_infiltration, "attrs", {})
+                if not any(v in self.data for v in inf_vars):
+                    continue
+            elif var not in self.data:
+                continue
             # infiltration uses a non-standard config key ("infiltration_file");
             # other variables follow the default "{var}file" pattern.
             key = _QT_MAPS.get(var) or f"{var}file"
