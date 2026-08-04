@@ -233,6 +233,27 @@ class SfincsModel(Model):
         elif self.grid_type == "quadtree":
             return self.quadtree_grid.crs
 
+    def clear_spatial_attributes(self) -> None:
+        """Reset all spatial model components to their empty defaults.
+
+        Re-instantiates every component except ``config``, so all grids,
+        masks, geometries and forcing are dropped while the model settings
+        (numerics, time frame, epsg, ...) are kept. Used e.g. when the
+        coordinate system is changed and existing spatial data becomes
+        invalid.
+        """
+        for name, cls in self._ALL_COMPONENTS.items():
+            if name == "config":
+                continue
+            self.components[name] = cls(self)
+        # Drop the reference to the (cleared) quadtree grid file, then
+        # re-derive the grid type and regular-grid properties from the kept
+        # config. Doing this here (rather than leaving _grid_type None) also
+        # prevents the grid_type getter from re-reading a stale sfincs.inp
+        # from disk in reading mode.
+        self.config.set("qtrfile", None, skip_validation=True)
+        self.config.update_grid_from_config()
+
     @property
     def region(self) -> gpd.GeoDataFrame:
         """Returns the geometry of the active model cells."""

@@ -128,20 +128,32 @@ class SfincsQuadtreeGrid(MeshComponent):
         """
         if self.data is None:
             return gpd.GeoDataFrame()
+
+        # Cached: computing the exterior takes seconds for large grids (it is
+        # called on e.g. every model.region access). The exterior only changes
+        # with the grid topology, i.e. when a new Ugrid2d is built or read, so
+        # the identity of the grid object is a safe cache key.
+        grid_id = id(self.data.grid)
+        if getattr(self, "_exterior_cache_id", None) == grid_id:
+            return self._exterior_cache
+
         indx = self.data.grid.edge_node_connectivity[self.data.grid.exterior_edges, :]
         x = self.data.grid.node_x[indx]
         y = self.data.grid.node_y[indx]
 
-        # Make linestrings from numpy arrays x and y
-        linestrings = [
-            shapely.LineString(np.column_stack((x[i], y[i]))) for i in range(len(x))
-        ]
-        # Merge linestrings
-        merged = shapely.ops.linemerge(linestrings)
-        # Merge polygons
+        # Bulk-create one two-point linestring per exterior edge (vectorised -
+        # a Python loop of shapely.LineString objects is orders of magnitude
+        # slower for the tens of thousands of edges of a real grid)
+        coords = np.stack((x, y), axis=-1)  # (n_edges, 2 nodes, 2)
+        linestrings = shapely.linestrings(coords)
+        # Merge linestrings and build polygons
+        merged = shapely.ops.linemerge(shapely.MultiLineString(list(linestrings)))
         polygons = shapely.ops.polygonize(merged)
 
-        return gpd.GeoDataFrame(geometry=list(polygons), crs=self.crs)
+        gdf = gpd.GeoDataFrame(geometry=list(polygons), crs=self.crs)
+        self._exterior_cache = gdf
+        self._exterior_cache_id = grid_id
+        return gdf
 
     @property
     def empty_mask(self) -> Optional[xu.UgridDataArray]:

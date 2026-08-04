@@ -106,15 +106,17 @@ class SfincsUrbanDrainageAreas(ModelComponent):
 
     @property
     def nr_areas(self) -> int:
-        if self._data is None or self._data.empty:
+        # Go through self.data (not self._data) so a saved urb file is
+        # lazily read on first access in reading mode.
+        if self.data is None or self.data.empty:
             return 0
-        return len(self._data.index)
+        return len(self.data.index)
 
     @property
     def list_names(self) -> List[str]:
-        if self._data is None or self._data.empty:
+        if self.data is None or self.data.empty:
             return []
-        return list(self._data["name"].astype(str).values)
+        return list(self.data["name"].astype(str).values)
 
     def _initialize(self, skip_read: bool = False) -> None:
         if self._data is None:
