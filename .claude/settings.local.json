@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -lah \"C:\\\\projects\\\\help_Daan\\\\Haasje\\\\\")",
+      "Bash(ls -lah \"C:\\\\projects\\\\help_Daan\\\\\")",
+      "Bash(python -m pip list)",
+      "Bash(conda env *)",
+      "Bash(where python3 *)",
+      "Bash(where conda *)",
+      "Bash(where mamba *)",
+      "Bash(where python *)",
+      "PowerShell(& \"C:\\\\Users\\\\asselt\\\\AppData\\\\Local\\\\miniforge3\\\\python.exe\" -c \"import rasterio; import numpy; from scipy import ndimage; print\\('rasterio:', rasterio.__version__\\); print\\('numpy:', numpy.__version__\\); print\\('scipy: ok'\\)\" 2>&1)"
+    ]
+  }
+}
