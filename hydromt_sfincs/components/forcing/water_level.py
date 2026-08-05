@@ -635,6 +635,17 @@ class SfincsWaterLevel(SfincsBoundaryBase):
         # Call set_timeseries to update your object's data
         self.set_timeseries(df)
 
+        # A synthetic time series replaces any astronomic forcing: drop the
+        # astro components so downstream consumers (e.g. the DDB time-series
+        # popup) stop preferring them, and clear the bca reference from the
+        # config so SFINCS does not read the stale file.
+        drop = [v for v in ("amplitude", "phase") if v in self.data]
+        if drop:
+            self._data = self.data.drop_vars(drop)
+            if "constituent" in self._data.coords:
+                self._data = self._data.drop_vars("constituent")
+            self.model.config.set("bcafile", None)
+
     @hydromt_step
     def create_timeseries_from_astro(
         self,

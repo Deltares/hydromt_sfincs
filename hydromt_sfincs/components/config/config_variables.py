@@ -26,6 +26,9 @@ class SfincsConfigVariables(BaseSettings):
 
     class Config:
         extra = "allow"
+        # Accept both the field name (global_model) and the legacy alias
+        # (global) when reading config files
+        populate_by_name = True
 
     # ================================================================
     # Grid
@@ -413,6 +416,22 @@ class SfincsConfigVariables(BaseSettings):
         0.1,
         description="Wavemaker minimum water depth (m)",
     )
+    wavemaker_tpmin: float = Field(
+        1.0,
+        description="Wavemaker minimum peak wave period (s)",
+    )
+    wavemaker_hig: int = Field(
+        1,
+        ge=0,
+        le=1,
+        description="Wavemaker include infragravity waves (1: on, 0: off)",
+    )
+    wavemaker_hinc: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="Wavemaker include incident waves (1: on, 0: off)",
+    )
 
     # ================================================================
     # Meteo
@@ -584,10 +603,12 @@ class SfincsConfigVariables(BaseSettings):
     # ================================================================
     # Other settings
     # ================================================================
-    global_: int = Field(
+    global_model: int = Field(
         0,
         ge=0,
         le=1,
+        # Legacy keyword name in old sfincs.inp files ("global" itself is a
+        # reserved word in Python, hence the rename). SFINCS accepts both.
         alias="global",
         description="Global spherical model that wraps over the edge (1: on, 0: off)",
     )

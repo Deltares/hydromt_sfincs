@@ -99,8 +99,9 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
             for ilev in range(nlev)
         ]
 
-        # Generic workflow using compute_quadtree
-        def compute_elevation(da_like, ilev=None, fill_missing=True):
+        # Generic workflow using compute_quadtree; fill_missing is taken
+        # from the enclosing create() call
+        def compute_elevation(da_like, ilev=None):
             da_dep = merge_multi_dataarrays(
                 da_list=elevation_list_per_level[ilev],
                 da_like=da_like,
@@ -123,7 +124,6 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
             zz,
             nrmax=nrmax,
             clip=(zmin, zmax),
-            fill_missing=fill_missing,
         )
 
         # Convert elevation to ugrid-dataarray and set in self.data
