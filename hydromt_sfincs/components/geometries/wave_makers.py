@@ -9,7 +9,7 @@ from shapely.geometry import LineString
 
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers, utils, writers
 
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel
@@ -101,7 +101,7 @@ class SfincsWaveMakers(ModelComponent):
             raise FileNotFoundError(f"Wave makers file not found: {abs_file_path}")
 
         # Read wvm file
-        struct = utils.read_geoms(abs_file_path)
+        struct = readers.read_geoms(abs_file_path)
         gdf = utils.linestring2gdf(struct, crs=self.model.crs)
 
         # Add to self._data
@@ -112,7 +112,7 @@ class SfincsWaveMakers(ModelComponent):
 
         # Check that data is not empty
         if self.data.empty:
-            logger.info("No wave makers available to write.")
+            logger.debug("No wave makers available to write.")
             return
 
         # Set file name and get absolute path
@@ -135,15 +135,14 @@ class SfincsWaveMakers(ModelComponent):
         struct = utils.gdf2linestring(self.data)
 
         # Write to wvm file
-        utils.write_geoms(abs_file_path, struct, stype="wvm", fmt=fmt)
+        writers.write_geoms(abs_file_path, struct, stype="wvm", fmt=fmt)
 
         # write also as geojson:
         if self.model.write_gis:
-            utils.write_vector(
+            writers.write_vector(
                 self.data,
                 name="wvm",
                 root=join(self.root.path, "gis"),
-                logger=logger,
             )
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
@@ -278,10 +277,9 @@ class SfincsWaveMakers(ModelComponent):
 
     def snap_to_grid(self):
         """Returns GeoDataFrame with wave makers snapped to model grid."""
-        # FIXME - this probably only works for quadtree grids for now
         if self.model.grid_type != "quadtree":
-            raise NotImplementedError(
-                "Snap to grid is only implemented for quadtree grids."
+            logger.info(
+                "Snapping to grid uses the quadtree representation. Regular grid will be converted to a quadtree grid first."
             )
         snap_gdf = self.model.quadtree_grid.snap_to_grid(self.data)
         return snap_gdf

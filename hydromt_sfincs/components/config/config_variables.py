@@ -108,7 +108,7 @@ class SfincsConfigVariables(BaseSettings):
         json_schema_extra={"always": True},
     )
     dtmapout: float = Field(
-        0.0,
+        3600.0,
         ge=0.0,
         description="Spatial map output interval (seconds)",
         json_schema_extra={"always": True},
@@ -274,16 +274,20 @@ class SfincsConfigVariables(BaseSettings):
         lt=0.5,
         description="Manning's n coefficient for spatially uniform roughness (s/m^(1/3))",
     )
-    manning_land: float = Field(
-        0.04,
-        description="Manning's n for land areas; -999 = not set (s/m^(1/3))",
+    manning_land: float | None = Field(
+        None,
+        gt=0.0,
+        lt=0.5,
+        description="Manning's n for land areas; 0.04 recommended, -999 = not set (s/m^(1/3))",
     )
-    manning_sea: float = Field(
-        0.02,
-        description="Manning's n for sea areas; -999 = not set (s/m^(1/3))",
+    manning_sea: float | None = Field(
+        None,
+        gt=0.0,
+        lt=0.5,
+        description="Manning's n for sea areas; 0.02 recommended, -999 = not set (s/m^(1/3))",
     )
-    rgh_lev_land: float = Field(
-        0.0,
+    rgh_lev_land: float | None = Field(
+        None,
         description="Elevation level to distinguish land and sea roughness (m)",
     )
 
@@ -326,7 +330,7 @@ class SfincsConfigVariables(BaseSettings):
     # ================================================================
     # Initial and boundary conditions
     # ================================================================
-    zsini: float = Field(
+    zsini: float | None = Field(
         0.0,
         description="Initial water level in entire domain (meters)",
         json_schema_extra={"always": True},
@@ -352,10 +356,11 @@ class SfincsConfigVariables(BaseSettings):
     # ================================================================
     # Infiltration
     # ================================================================
-    qinf: float = Field(
+    qinf: float | None = Field(
         0.0,
         ge=0.0,
         description="Infiltration rate, spatially uniform (mm/hr)",
+        json_schema_extra={"always": True},
     )
     qinf_zmin: float = Field(
         0.0,
@@ -657,7 +662,6 @@ class SfincsConfigVariables(BaseSettings):
     depfile: str | None = Field(None, description="Depth file")
     inifile: str | None = Field(None, description="Initial water level file")
     rstfile: str | None = Field(None, description="Restart file")
-    ncinifile: str | None = Field(None, description="Netcdf initial water level file")
     mskfile: str | None = Field(None, description="Mask file")
     indexfile: str | None = Field(None, description="Index file")
     sbgfile: str | None = Field(None, description="Subgrid file")
@@ -854,10 +858,10 @@ class SfincsConfigVariables(BaseSettings):
         0, ge=0, le=1, description="Write dynamic bed level output (1: yes, 0: no)"
     )
     regular_output_on_mesh: int = Field(
-        0,
+        1,
         ge=0,
         le=1,
-        description="Write regular grid on quadtree mesh output (1: yes, 0: no)",
+        description="Write quadtree without refinement on quadtree mesh (1: yes) or regular grid (0: no)",
     )
     twet_threshold: float = Field(
         0.01, ge=0.0, description="Time-wet minimum depth threshold (m)"

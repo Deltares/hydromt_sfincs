@@ -1,14 +1,13 @@
 import logging
-from ast import literal_eval
-from datetime import datetime
-from os.path import abspath, exists, isabs, join
+from os.path import abspath, isabs, join
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from .config_variables import SfincsConfigVariables
+from hydromt_sfincs.readers import read_config
+from hydromt_sfincs.components.config.config_variables import SfincsConfigVariables
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -33,7 +32,13 @@ class SfincsConfig(ModelComponent):
     def __init__(self, model: "SfincsModel"):
         self._filename = "sfincs.inp"
         self._data: SfincsConfigVariables = None
+        self._read_root: Path = None
         super().__init__(model=model)
+        # Lock the read root and filename at init time so that lazy reads
+        # triggered after a root change still find the original files.
+        if self.root.is_reading_mode():
+            self._read_root = model.root.path.resolve()
+            self._filename = self._read_root / "sfincs.inp"
 
     @property
     def data(self):
@@ -45,13 +50,11 @@ class SfincsConfig(ModelComponent):
         return self._data
 
     @property
-    def filename(self) -> str:
-        """Return the filename of the SFINCS input file."""
+    def filename(self) -> Path:
+        """Return the absolute filename of the SFINCS input file."""
         if not Path(self._filename).is_absolute():
-            # If not absolute, join with the model root path
-            root_path = self.model.root.path.resolve()
-            self._filename = root_path / "sfincs.inp"
-        return self._filename
+            self._filename = self.model.root.path.resolve() / "sfincs.inp"
+        return Path(self._filename)
 
     def read(self) -> None:
         """Read a text file with the sfincs configuration from the root folder and populate
@@ -60,48 +63,8 @@ class SfincsConfig(ModelComponent):
 
         self.root._assert_read_mode
 
-        if not exists(self.filename):
-            raise FileNotFoundError(
-                f"SFINCS input file '{self.filename}' does not exist."
-            )
-
-        # Read the file line by line
-        with open(self.filename, "r") as fid:
-            lines = fid.readlines()
-
-        inp_dict = {}
-        for line in lines:
-            # Check if first character is #
-            if line.strip().startswith("#"):
-                # Full line comment
-                continue
-            # Find last character before #
-            comment_idx = line.find("#")
-            if comment_idx >= 0:
-                line = line[:comment_idx]
-            line = [x.strip() for x in line.split("=")]
-            if len(line) != 2:
-                continue
-            name, val = line
-            if name in ["tref", "tstart", "tstop"]:
-                try:
-                    val = datetime.strptime(val, "%Y%m%d %H%M%S")
-                except ValueError:
-                    ValueError(f'"{name} = {val}" not understood.')
-            elif name in ["cdwnd", "cdval"]:
-                val = [float(x) for x in val.split()]
-            elif name == "utmzone":
-                val = str(val)
-            else:
-                try:
-                    val = literal_eval(val)
-                except Exception:
-                    pass
-
-            if name == "crs":
-                name = "epsg"
-
-            inp_dict[name] = val
+        # Read the config file
+        inp_dict = read_config(filename=self.filename)
 
         # FIXME: when reading an existing config, you don't want to start with all possible variables?
         # Convert dictionary to SfincsConfig instance
@@ -214,7 +177,16 @@ class SfincsConfig(ModelComponent):
         if abs_path and isinstance(value, (str, Path)):
             value = Path(value)
             if not isabs(value):
-                value = Path(abspath(join(self.root.path, value)))
+                # Use the root that was active when the config was read so that
+                # a later root change (e.g. cloning the model) does not redirect
+                # reads to the new, empty root.  Fall back to the current root
+                # when no read root is recorded (write-only mode) or when the
+                # caller did not supply a fallback (write context).
+                read_root = getattr(self, "_read_root", None)
+                if read_root is not None and fallback is not None:
+                    value = (read_root / value).resolve()
+                else:
+                    value = Path(abspath(join(self.root.path, value)))
 
         return value
 
@@ -289,9 +261,6 @@ class SfincsConfig(ModelComponent):
         """Update the grid properties from the configuration. This method determines the grid type
         based on the presence of the 'qtrfile' variable in the configuration. If 'qtrfile' is set,
         the grid type is set to 'quadtree'; otherwise, it is set to 'regular'.
-
-        Depending on the grid type, it updates the grid properties of the SfincsModel and removes
-        the irrelevant grid component.
         """
 
         # Determine grid type based on configuration
@@ -300,13 +269,6 @@ class SfincsConfig(ModelComponent):
         if self.model.grid_type == "regular":
             # update the regular grid properties from the configuration
             self.model.grid.update_grid_from_config()
-            # drop quadtree component
-            for comp in self.model._QUADTREE_GRID_NAMES:
-                self.model.components.pop(comp, None)
-        elif self.model.grid_type == "quadtree":
-            # drop regular component
-            for comp in self.model._REGULAR_GRID_NAMES:
-                self.model.components.pop(comp, None)
 
     def get_set_file_variable(
         self, key: str, value: str | Path = None, default: str = None
@@ -377,8 +339,15 @@ class SfincsConfig(ModelComponent):
         else:
             return None  # Nothing to return
 
-        # Make sure the value is an absolute path
+        # Make sure the value is an absolute path.
+        # When the caller did not supply an explicit value or a write-mode
+        # default, the path came from the original sfincs.inp and should be
+        # resolved against the root that was active at read time so that a
+        # later root change does not redirect reads to the wrong directory.
         if not value_path.is_absolute():
+            read_root = getattr(self, "_read_root", None)
+            if read_root is not None and value is None and default is None:
+                return (read_root / value_path).resolve()
             return (root_path / value_path).resolve()
         else:
             return value_path

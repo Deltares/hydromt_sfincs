@@ -1,7 +1,6 @@
 import logging
-from os.path import isfile
 from pathlib import Path
-from typing import List, Literal, Optional, Union, TYPE_CHECKING
+from typing import Literal, Optional, Union, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -9,9 +8,9 @@ import xarray as xr
 
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
-from hydromt.model.processes.meteo import da_to_timedelta
+from hydromt.model.processes.meteo import da_to_timedelta, precip
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers, utils, writers
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -114,7 +113,7 @@ class SfincsMeteo(ModelComponent):
         """Read in spatially uniform precipitation data."""
         tref = utils.parse_datetime(self.model.config.get("tref"))
 
-        df = utils.read_timeseries(filename, tref)
+        df = readers.read_timeseries(filename, tref)
         df.index.name = "time"
 
         # spatially uniform forcing
@@ -199,7 +198,7 @@ class SfincsMeteo(ModelComponent):
         df = da[variable].to_pandas()
 
         # write timeseries
-        utils.write_timeseries(filename, df, tref, fmt=fmt)
+        writers.write_timeseries(filename, df, tref, fmt=fmt)
 
     def set(
         self,
@@ -232,6 +231,18 @@ class SfincsMeteo(ModelComponent):
             data = data.to_dataset()
         elif not isinstance(data, xr.Dataset):
             raise ValueError(f"cannot set data of type {type(data).__name__}")
+
+        # Check if the time coordinates of the data match the model
+        model_start, model_end = self.model.get_model_time()
+        # Get the start and end time of the data
+        time_start = data.indexes["time"][0].to_pydatetime()
+        time_end = data.indexes["time"][-1].to_pydatetime()
+        if time_start > model_start or time_end < model_end:
+            logger.warning(
+                f"{name} forcing does not cover the full model period."
+                f"Model runs from {model_start} to {model_end}, {name} spans"
+                f"from {time_start} to {time_end}."
+            )
 
         # TODO: don't we always want to reset the data when setting new data?
         # that would mean that you can never have 1D and 2D data at the same time

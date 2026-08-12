@@ -12,13 +12,13 @@ from hydromt_sfincs.sfincs import SfincsModel
 
 def test_quadtree_infiltration(model, quadtree_model):
     # set constant infiltration based on regular grid model elevation
-    qinf = xr.where(model.grid.data["dep"] < -0.5, -9999, 0.1)
-    qinf.raster.set_nodata(-9999.0)
+    qinf = xr.where(model.grid.data["dep"] < -0.5, 0, 0.1)
+    qinf.raster.set_nodata(np.nan)
     qinf.raster.set_crs(model.crs)
 
     # add to quadtree model
     quadtree_model.quadtree_infiltration.create_constant(qinf, reproj_method="nearest")
-    assert quadtree_model.config.get("qinf") == 0.0  # qinf removed from config
+    assert quadtree_model.config.get("qinf") is None  # qinf removed from config
     assert quadtree_model.config.get("infiltration_file") is not None  # qinf file set
     assert (
         quadtree_model.config.get("infiltration_type") == "c2d"
@@ -80,15 +80,15 @@ def test_quadtree_infiltration(model, quadtree_model):
     # assure the sum of smax is close to earlier calculated value
     assert np.isclose(
         mod1.quadtree_grid.data["smax"].where(mod1.quadtree_grid.mask > 0).sum(),
-        72.46283083,
+        73.48905783,
     )
     assert np.isclose(
         mod1.quadtree_grid.data["seff"].where(mod1.quadtree_grid.mask > 0).sum(),
-        72.46283083 * effective,
+        73.48905783 * effective,
     )
     assert np.isclose(
         mod1.quadtree_grid.data["ks"].where(mod1.quadtree_grid.mask > 0).sum(),
-        733.27316619,
+        736.79039946,
     )
 
 
