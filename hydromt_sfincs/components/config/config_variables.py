@@ -699,13 +699,13 @@ class SfincsConfigVariables(BaseSettings):
     amprfile: str | None = Field(None, description="Precipitation file")
     z0lfile: str | None = Field(None, description="Wind reduction over land file")
     wvmfile: str | None = Field(None, description="Wave maker input points file")
-    infiltrationfile: str | None = Field(
+    infiltration_file: str | None = Field(
         None,
         description="Name of the Netcdf infiltration input file for SFINCS infiltration flavors",
     )
-    infiltrationtype: str | None = Field(
+    infiltration_type: str | None = Field(
         None,
-        description="SFINCS infiltration flavor used with infiltrationfile (c2d, cna, cnb, gai, hor, or bkt)",
+        description="SFINCS infiltration flavor used with infiltration_file (c2d, cna, cnb, gai, hor, or bkt)",
     )
     bucketfile: str | None = Field(
         None,

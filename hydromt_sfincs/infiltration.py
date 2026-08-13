@@ -210,9 +210,9 @@ def configured_flavor(config) -> str | None:
     """Infer the configured infiltration flavor from model config."""
     if config.get("bucketfile") not in (None, "none"):
         return "bkt"
-    inffile = config.get("infiltrationfile")
+    inffile = config.get("infiltration_file")
     if inffile not in (None, "none"):
-        return config.get("infiltrationtype")
+        return config.get("infiltration_type")
     if config.get("qinf") not in (None, 0.0):
         return "con"
     if config.get("qinffile") not in (None, "none"):
@@ -240,8 +240,8 @@ def clear_data(ds: xr.Dataset, keep: Iterable[str] = ()) -> xr.Dataset:
 def reset_config(config) -> None:
     """Remove all infiltration-related configuration except defaults."""
     config.set("qinf", None)
-    config.set("infiltrationfile", None)
-    config.set("infiltrationtype", None)
+    config.set("infiltration_file", None)
+    config.set("infiltration_type", None)
     config.set("bucketfile", None)
     config.set("bucket_loss_frac", None)
     for meta in VARIABLES.values():
@@ -261,8 +261,8 @@ def configure(config, flavor: str, grid_type: str) -> None:
         for name in flavor_variables(flavor):
             config.set(VARIABLES[name].config_key, VARIABLES[name].default_filename)
     elif grid_type == "quadtree":
-        config.set("infiltrationfile", DEFAULT_INFILTRATIONFILE)
-        config.set("infiltrationtype", flavor)
+        config.set("infiltration_file", DEFAULT_INFILTRATIONFILE)
+        config.set("infiltration_type", flavor)
     else:
         raise ValueError(f"Unsupported grid_type: {grid_type}")
 

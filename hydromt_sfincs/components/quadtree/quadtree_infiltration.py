@@ -9,7 +9,6 @@ import xugrid as xu
 
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
-from hydromt.model.processes.mesh import mesh2d_from_rasterdataset
 
 from hydromt_sfincs import DATADIR, workflows
 from hydromt_sfincs.components.quadtree import SfincsQuadtreeMixin
@@ -87,6 +86,13 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         raise ValueError(f"Could not determine raster variable '{variable}'.")
 
     def _sample(self, source, *, variable=None, method="mean"):
+        """Sample a raster onto the quadtree faces.
+
+        Uses the fast per-refinement-level path (:meth:`compute_quadtree` +
+        ``raster.reproject_like``) — the same approach the roughness and
+        elevation components use — rather than per-face unstructured mesh
+        sampling, which is much slower on large quadtree grids.
+        """
         da = self._as_dataarray(self._read_rasterdataset(source), variable=variable)
         if isinstance(da, xu.UgridDataArray):
             return da
@@ -94,12 +100,29 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             da = da.raster.mask_nodata()
         except Exception:
             pass
-        sampled = mesh2d_from_rasterdataset(
-            ds=da,
-            mesh2d=self.model.quadtree_grid.data.grid,
-            resampling_method=method,
+
+        # Translate mesh-sampling method names to reproject_like (rasterio) names.
+        reproj_method = {
+            "mean": "average",
+            "median": "med",
+            "med": "med",
+            "average": "average",
+            "mode": "mode",
+            "nearest": "nearest",
+            "bilinear": "bilinear",
+        }.get(method, method)
+
+        out = np.full(self.data.grid.n_face, np.nan)
+
+        def _chunk(da_like, ilev=None):
+            return da.raster.reproject_like(da_like, method=reproj_method)
+
+        self.compute_quadtree(_chunk, out)
+
+        return xu.UgridDataArray(
+            xr.DataArray(out, dims=[self.data.grid.face_dimension], name=da.name),
+            self.data.grid,
         )
-        return self._as_dataarray(sampled, variable=da.name)
 
     def _sample_from_dataset(self, ds: xr.Dataset, name: str, method="mean"):
         return self._sample(ds[name], method=method)
@@ -172,22 +195,22 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         if flavor == "bkt":
             bucketfile = self.model.config.get("bucketfile", abs_path=True)
             if bucketfile is None:
-                bucketfile = self.model.config.get("infiltrationfile", abs_path=True)
+                bucketfile = self.model.config.get("infiltration_file", abs_path=True)
             if bucketfile is None:
                 return
             layers = self._read_sidecar(bucketfile, BUCKET_VARS)
             self._set_layers(layers, flavor="bkt")
             if self.model.config.get("bucketfile") is not None:
                 self.model.config.set("bucketfile", Path(bucketfile).name)
-            elif self.model.config.get("infiltrationfile") is not None:
-                self.model.config.set("infiltrationfile", Path(bucketfile).name)
+            elif self.model.config.get("infiltration_file") is not None:
+                self.model.config.set("infiltration_file", Path(bucketfile).name)
             return
-        inffile = self.model.config.get("infiltrationfile", abs_path=True)
+        inffile = self.model.config.get("infiltration_file", abs_path=True)
         if inffile is None:
             return
         layers = self._read_sidecar(inffile, flavor_variables(flavor))
         self._set_layers(layers, flavor=flavor)
-        self.model.config.set("infiltrationfile", Path(inffile).name)
+        self.model.config.set("infiltration_file", Path(inffile).name)
 
     def write(self):
         """Write quadtree infiltration sidecars."""
@@ -201,7 +224,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             variables = BUCKET_VARS
         else:
             filename = self.model.config.get_set_file_variable(
-                "infiltrationfile", default=DEFAULT_INFILTRATIONFILE
+                "infiltration_file", default=DEFAULT_INFILTRATIONFILE
             )
             variables = flavor_variables(flavor)
         filename.parent.mkdir(parents=True, exist_ok=True)
