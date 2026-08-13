@@ -41,9 +41,15 @@ class SnapWaveQuadtreeMask(SfincsQuadtreeMask):
         mask = self.data["snapwave_mask"]
         return (mask == 2).any().item()
 
+    @staticmethod
+    def _validate_model(model: str) -> None:
+        if model != "snapwave":
+            raise ValueError("SnapWaveQuadtreeMask only supports model='snapwave'.")
+
     @hydromt_step
     def create(
         self,
+        model: str = "snapwave",
         zmin: float = None,
         zmax: float = None,
         include_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
@@ -86,8 +92,9 @@ class SnapWaveQuadtreeMask(SfincsQuadtreeMask):
         * `create_boundary` method to setup boundary cells of a specific type
 
         """
+        self._validate_model(model)
         super().create(
-            model="snapwave",
+            model=model,
             zmin=zmin,
             zmax=zmax,
             include_polygon=include_polygon,
@@ -108,6 +115,7 @@ class SnapWaveQuadtreeMask(SfincsQuadtreeMask):
     @hydromt_step
     def create_active(
         self,
+        model: str = "snapwave",
         zmin: float = None,
         zmax: float = None,
         include_polygon: Union[str, Path, gpd.GeoDataFrame] = None,
@@ -152,9 +160,10 @@ class SnapWaveQuadtreeMask(SfincsQuadtreeMask):
         copy_sfincsmask: bool, optional
             If True, ccopy the SFINCS mask to the SnapWave mask.
         """
+        self._validate_model(model)
 
         super().create_active(
-            model="snapwave",
+            model=model,
             zmin=zmin,
             zmax=zmax,
             include_polygon=include_polygon,
@@ -171,6 +180,7 @@ class SnapWaveQuadtreeMask(SfincsQuadtreeMask):
     @hydromt_step
     def create_boundary(
         self,
+        model: str = "snapwave",
         btype: str = "waves",
         zmin: float = None,
         zmax: float = None,
@@ -222,8 +232,9 @@ class SnapWaveQuadtreeMask(SfincsQuadtreeMask):
             The connectivity used to detect the model edge, if 4 only horizontal and vertical
             connections are used, if 8 (default) also diagonal connections.
         """
+        self._validate_model(model)
         super().create_boundary(
-            model="snapwave",
+            model=model,
             btype=btype,
             zmin=zmin,
             zmax=zmax,
