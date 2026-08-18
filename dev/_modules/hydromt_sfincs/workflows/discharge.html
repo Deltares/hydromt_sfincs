@@ -426,7 +426,7 @@
                 <article class="bd-article">
                   
   <h1>Source code for hydromt_sfincs.workflows.discharge</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Workflows for discharge boundary conditions.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Workflows for discharge boundary conditions."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 
@@ -437,7 +437,7 @@
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;snap_discharge&quot;</span><span class="p">,</span>
+    <span class="s2">"snap_discharge"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -449,11 +449,11 @@
     <span class="n">wdw</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">rel_error</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
     <span class="n">abs_error</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
-    <span class="n">uparea_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;uparea&quot;</span><span class="p">,</span>
-    <span class="n">discharge_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;discharge&quot;</span><span class="p">,</span>
+    <span class="n">uparea_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"uparea"</span><span class="p">,</span>
+    <span class="n">discharge_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"discharge"</span><span class="p">,</span>
     <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Snaps point locations to grid cell with smallest difference in upstream area</span>
 <span class="sd">    within `wdw` around the original location if the local cell does not meet the</span>
 <span class="sd">    error criteria. Both the upstream area variable named ``uparea_name`` in</span>
@@ -471,47 +471,47 @@
 <span class="sd">    rel_error, abs_error: float, optional</span>
 <span class="sd">        Maximum relative error (default 0.05) and absolute error (default 50 km2)</span>
 <span class="sd">        between the discharge boundary location upstream area and the upstream area of</span>
-<span class="sd">        the best fit grid cell, only used if &quot;discharge&quot; staticgeoms has a &quot;uparea&quot; column.</span>
+<span class="sd">        the best fit grid cell, only used if "discharge" staticgeoms has a "uparea" column.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    ds: xarray.Dataset</span>
 <span class="sd">        snapped dataset</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">ds_wdw</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">wdw</span><span class="o">=</span><span class="n">wdw</span><span class="p">)</span>
     <span class="c1"># check if valid discharge</span>
-    <span class="n">valid</span> <span class="o">=</span> <span class="n">ds_wdw</span><span class="p">[</span><span class="n">discharge_name</span><span class="p">]</span><span class="o">.</span><span class="n">notnull</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
+    <span class="n">valid</span> <span class="o">=</span> <span class="n">ds_wdw</span><span class="p">[</span><span class="n">discharge_name</span><span class="p">]</span><span class="o">.</span><span class="n">notnull</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="s2">"time"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">uparea_name</span> <span class="ow">in</span> <span class="n">ds</span> <span class="ow">and</span> <span class="n">uparea_name</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Snapping </span><span class="si">{</span><span class="n">discharge_name</span><span class="si">}</span><span class="s2"> points to best matching uparea cell within wdw (size=</span><span class="si">{</span><span class="n">wdw</span><span class="si">}</span><span class="s2">).&quot;</span>
+            <span class="sa">f</span><span class="s2">"Snapping </span><span class="si">{</span><span class="n">discharge_name</span><span class="si">}</span><span class="s2"> points to best matching uparea cell within wdw (size=</span><span class="si">{</span><span class="n">wdw</span><span class="si">}</span><span class="s2">)."</span>
         <span class="p">)</span>
         <span class="c1"># find cells in window with smallest difference in uparea</span>
-        <span class="n">upa0</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">gdf</span><span class="p">[</span><span class="n">uparea_name</span><span class="p">],</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;index&quot;</span><span class="p">))</span>
+        <span class="n">upa0</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">gdf</span><span class="p">[</span><span class="n">uparea_name</span><span class="p">],</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">"index"</span><span class="p">))</span>
         <span class="n">upa_dff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span>
             <span class="n">ds_wdw</span><span class="p">[</span><span class="n">uparea_name</span><span class="p">]</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ds_wdw</span><span class="p">[</span><span class="n">uparea_name</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span> <span class="o">-</span> <span class="n">upa0</span>
         <span class="p">)</span>
-        <span class="n">i_wdw</span> <span class="o">=</span> <span class="n">upa_dff</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="s2">&quot;wdw&quot;</span><span class="p">)</span>
+        <span class="n">i_wdw</span> <span class="o">=</span> <span class="n">upa_dff</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="s2">"wdw"</span><span class="p">)</span>
         <span class="c1"># find valid cells based on error criteria</span>
         <span class="n">upa_check</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">((</span><span class="n">upa_dff</span> <span class="o">/</span> <span class="n">upa0</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">rel_error</span><span class="p">,</span> <span class="n">upa_dff</span> <span class="o">&lt;=</span> <span class="n">abs_error</span><span class="p">)</span>
         <span class="n">valid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">valid</span><span class="p">,</span> <span class="n">upa_check</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;No </span><span class="si">{</span><span class="n">uparea_name</span><span class="si">}</span><span class="s2"> variable found in ds or gdf; &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;sampling </span><span class="si">{</span><span class="n">discharge_name</span><span class="si">}</span><span class="s2"> points from nearest grid cell.&quot;</span>
+            <span class="sa">f</span><span class="s2">"No </span><span class="si">{</span><span class="n">uparea_name</span><span class="si">}</span><span class="s2"> variable found in ds or gdf; "</span>
+            <span class="sa">f</span><span class="s2">"sampling </span><span class="si">{</span><span class="n">discharge_name</span><span class="si">}</span><span class="s2"> points from nearest grid cell."</span>
         <span class="p">)</span>
         <span class="c1"># calculate distance to center cell (measured in cells)</span>
         <span class="n">ar_wdw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="n">wdw</span><span class="p">,</span> <span class="n">wdw</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
         <span class="n">dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">ar_wdw</span><span class="p">,</span> <span class="n">ar_wdw</span><span class="p">))</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
-        <span class="n">ds_wdw</span><span class="p">[</span><span class="s2">&quot;dist&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span>
-            <span class="p">(</span><span class="s2">&quot;index&quot;</span><span class="p">,</span> <span class="s2">&quot;wdw&quot;</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="p">(</span><span class="n">ds_wdw</span><span class="p">[</span><span class="s2">&quot;index&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">ds_wdw</span><span class="p">[</span><span class="s2">"dist"</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span>
+            <span class="p">(</span><span class="s2">"index"</span><span class="p">,</span> <span class="s2">"wdw"</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="p">(</span><span class="n">ds_wdw</span><span class="p">[</span><span class="s2">"index"</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
         <span class="p">)</span>
         <span class="c1"># find nearest valid cell in window</span>
-        <span class="n">i_wdw</span> <span class="o">=</span> <span class="n">ds_wdw</span><span class="p">[</span><span class="s2">&quot;dist&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">valid</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="s2">&quot;wdw&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+        <span class="n">i_wdw</span> <span class="o">=</span> <span class="n">ds_wdw</span><span class="p">[</span><span class="s2">"dist"</span><span class="p">]</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">valid</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="s2">"wdw"</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
     <span class="c1"># filter valid cells</span>
     <span class="n">idx_valid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">valid</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">wdw</span><span class="o">=</span><span class="n">i_wdw</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">idx_valid</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="n">gdf</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">idx_valid</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">gdf</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">discharge_name</span><span class="si">}</span><span class="s2"> points successfully snapped.&quot;</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx_valid</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">gdf</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">discharge_name</span><span class="si">}</span><span class="s2"> points successfully snapped."</span>
         <span class="p">)</span>
     <span class="n">i_wdw</span> <span class="o">=</span> <span class="n">i_wdw</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">idx_valid</span><span class="p">)</span>
     <span class="c1"># return discharge at valid cells</span>

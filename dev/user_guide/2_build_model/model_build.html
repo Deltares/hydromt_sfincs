@@ -527,9 +527,9 @@ in its corresponding section. See the HydroMT core documentation for more info a
 
 <span class="nt">steps</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">config.update</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">tref</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;20100201</span><span class="nv"> </span><span class="s">000000&quot;</span>
-<span class="w">      </span><span class="nt">tstart</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;20100201</span><span class="nv"> </span><span class="s">000000&quot;</span>
-<span class="w">      </span><span class="nt">tstop</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;20100202</span><span class="nv"> </span><span class="s">000000&quot;</span>
+<span class="w">      </span><span class="nt">tref</span><span class="p">:</span><span class="w"> </span><span class="s">"20100201</span><span class="nv"> </span><span class="s">000000"</span>
+<span class="w">      </span><span class="nt">tstart</span><span class="p">:</span><span class="w"> </span><span class="s">"20100201</span><span class="nv"> </span><span class="s">000000"</span>
+<span class="w">      </span><span class="nt">tstop</span><span class="p">:</span><span class="w"> </span><span class="s">"20100202</span><span class="nv"> </span><span class="s">000000"</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">grid.create_from_region</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">region</span><span class="p">:</span><span class="w">                         </span><span class="c1"># define model region</span>
 <span class="w">        </span><span class="nt">geom</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">region</span><span class="w">                  </span><span class="c1"># Note that this is defined in the data catalog</span>
@@ -578,18 +578,18 @@ The main advantage of this approach is that you can work with in-memory datasets
 </ul>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
 
-<span class="n">sf</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">data_libs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;artifact_data&quot;</span><span class="p">],</span> <span class="n">root</span><span class="o">=</span><span class="s2">&quot;sfincs_compound&quot;</span><span class="p">)</span>
+<span class="n">sf</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">data_libs</span><span class="o">=</span><span class="p">[</span><span class="s2">"artifact_data"</span><span class="p">],</span> <span class="n">root</span><span class="o">=</span><span class="s2">"sfincs_compound"</span><span class="p">)</span>
 
 <span class="n">sf</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">x0</span><span class="o">=</span><span class="mi">318650</span><span class="p">,</span> <span class="n">y0</span><span class="o">=</span><span class="mi">5040000</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span> <span class="n">dy</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span> <span class="n">nmax</span><span class="o">=</span><span class="mi">107</span><span class="p">,</span> <span class="n">mmax</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">27</span><span class="p">,</span> <span class="n">epsg</span><span class="o">=</span><span class="mi">32633</span><span class="p">)</span>
 
 <span class="c1"># retrieve GEBCO elevation data from data catalog</span>
-<span class="n">da</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="s2">&quot;gebco&quot;</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="n">sf</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">da</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="s2">"gebco"</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="n">sf</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 
 <span class="c1"># modify elevation data by adding 1 m</span>
 <span class="n">da</span> <span class="o">=</span> <span class="n">da</span> <span class="o">+</span> <span class="mi">1</span>
 
 <span class="c1"># use modifed (in-memory) elevation data to create model</span>
-<span class="n">sf</span><span class="o">.</span><span class="n">elevation</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">elevation_list</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;da&quot;</span><span class="p">:</span><span class="n">da</span><span class="p">}])</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">elevation</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">elevation_list</span><span class="o">=</span><span class="p">[{</span><span class="s2">"da"</span><span class="p">:</span><span class="n">da</span><span class="p">}])</span>
 
 <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">()</span>
 

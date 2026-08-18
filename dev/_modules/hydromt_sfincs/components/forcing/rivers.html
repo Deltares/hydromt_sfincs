@@ -450,16 +450,16 @@
 <div class="viewcode-block" id="SfincsRivers">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsRivers.html#hydromt_sfincs.components.forcing.SfincsRivers">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SfincsRivers</span><span class="p">(</span><span class="n">ModelComponent</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;This class contains functions to create and manage river inflow/outflow points in the SFINCS model.</span>
+<span class="w">    </span><span class="sd">"""This class contains functions to create and manage river inflow/outflow points in the SFINCS model.</span>
 <span class="sd">    The methods in this class change the model mask and add discharge points where rivers enter the model domain.</span>
 <span class="sd">    The rivers themselves are not used by the SFINCS model, but useful for visualization.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="SfincsRivers.__init__">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsRivers.html#hydromt_sfincs.components.forcing.SfincsRivers.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;SfincsModel&quot;</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="s2">"SfincsModel"</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
@@ -469,20 +469,20 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;River geometry data.</span>
+<span class="w">        </span><span class="sd">"""River geometry data.</span>
 
 <span class="sd">        Return gpd.GeoDataFrame</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_initialize</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the SfincsRivers component.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Initialize the SfincsRivers component."""</span>
         <span class="c1"># get the data from the model</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">()</span>
-            <span class="c1"># self._data[&quot;downstream_boundary_points&quot;] = gpd.GeoDataFrame()</span>
+            <span class="c1"># self._data["downstream_boundary_points"] = gpd.GeoDataFrame()</span>
 
     <span class="c1"># Original HydroMT-SFINCS setup_ functions:</span>
     <span class="c1"># setup_river_inflow</span>
@@ -499,9 +499,9 @@
 <div class="viewcode-block" id="SfincsRivers.write">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsRivers.write.html#hydromt_sfincs.components.forcing.SfincsRivers.write">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write the river inflow data to a gis-file. Note: this is not used by SFINCS, but useful for model visualization.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Write the river inflow data to a gis-file. Note: this is not used by SFINCS, but useful for model visualization."""</span>
 
-        <span class="c1"># bdrpts = self.data[&quot;downstream_boundary_points&quot;]</span>
+        <span class="c1"># bdrpts = self.data["downstream_boundary_points"]</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
             <span class="k">return</span>
@@ -510,8 +510,8 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">write_gis</span><span class="p">:</span>
             <span class="n">writers</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
-                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;river_centerlines&quot;</span><span class="p">,</span>
-                <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;gis&quot;</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"river_centerlines"</span><span class="p">,</span>
+                <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">"gis"</span><span class="p">),</span>
             <span class="p">)</span></div>
 
 
@@ -530,9 +530,9 @@
         <span class="n">first_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="n">keep_rivers_geom</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">reverse_river_geom</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">src_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;inflow&quot;</span><span class="p">,</span>
+        <span class="n">src_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"inflow"</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup discharge (src) points where a river enters the model domain.</span>
+<span class="w">        </span><span class="sd">"""Setup discharge (src) points where a river enters the model domain.</span>
 
 <span class="sd">        If `rivers` is not provided, river centerlines are extracted from the</span>
 <span class="sd">        `hydrography` dataset based on the `river_upa` threshold.</span>
@@ -556,11 +556,11 @@
 <span class="sd">        ----------</span>
 <span class="sd">        rivers : str, Path, gpd.GeoDataFrame, optional</span>
 <span class="sd">            Path, data source name, or geopandas object for river centerline data.</span>
-<span class="sd">            If present, the &#39;uparea&#39; and &#39;rivlen&#39; attributes are used.</span>
+<span class="sd">            If present, the 'uparea' and 'rivlen' attributes are used.</span>
 <span class="sd">        hydrography: str, Path, xr.Dataset optional</span>
 <span class="sd">            Path, data source name, or a xarray raster object for hydrography data.</span>
 
-<span class="sd">            * Required layers: [&#39;uparea&#39;, &#39;flwdir&#39;].</span>
+<span class="sd">            * Required layers: ['uparea', 'flwdir'].</span>
 <span class="sd">        buffer: float, optional</span>
 <span class="sd">            Buffer around the model region boundary to define in/outflow points [m],</span>
 <span class="sd">            by default 200 m. We suggest to use a buffer of at least twice the hydrography</span>
@@ -578,20 +578,20 @@
 <span class="sd">        first_index: int, optional</span>
 <span class="sd">            First index for the river source points, by default 1.</span>
 <span class="sd">        keep_rivers_geom: bool, optional</span>
-<span class="sd">            If True, keep a geometry of the rivers &quot;rivers_inflow&quot; in geoms. By default False.</span>
+<span class="sd">            If True, keep a geometry of the rivers "rivers_inflow" in geoms. By default False.</span>
 <span class="sd">        reverse_river_geom: bool, optional</span>
-<span class="sd">            If True, assume that segments in &#39;rivers&#39; are drawn from downstream to upstream.</span>
-<span class="sd">            Only used if &#39;rivers&#39; is not None, By default False</span>
-<span class="sd">        src_type: {&#39;inflow&#39;, &#39;headwater&#39;}, optional</span>
-<span class="sd">            Source type, by default &#39;inflow&#39;</span>
-<span class="sd">            If &#39;inflow&#39;, return points where the river flows into the model domain.</span>
-<span class="sd">            If &#39;headwater&#39;, return all headwater (including inflow) points within the model domain.</span>
+<span class="sd">            If True, assume that segments in 'rivers' are drawn from downstream to upstream.</span>
+<span class="sd">            Only used if 'rivers' is not None, By default False</span>
+<span class="sd">        src_type: {'inflow', 'headwater'}, optional</span>
+<span class="sd">            Source type, by default 'inflow'</span>
+<span class="sd">            If 'inflow', return points where the river flows into the model domain.</span>
+<span class="sd">            If 'headwater', return all headwater (including inflow) points within the model domain.</span>
 
 <span class="sd">        See Also</span>
 <span class="sd">        --------</span>
 <span class="sd">        setup_discharge_forcing</span>
 <span class="sd">        setup_discharge_forcing_from_grid</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="c1"># FIXME what to do with these variables</span>
         <span class="n">all_touched</span> <span class="o">=</span> <span class="kc">False</span>
@@ -602,16 +602,16 @@
             <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
                 <span class="n">hydrography</span><span class="p">,</span>
                 <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
-                <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">,</span> <span class="s2">&quot;flwdir&quot;</span><span class="p">],</span>
+                <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">"uparea"</span><span class="p">,</span> <span class="s2">"flwdir"</span><span class="p">],</span>
                 <span class="n">buffer</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">da_uparea</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span>  <span class="c1"># reused in river_source_points</span>
+            <span class="n">da_uparea</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">"uparea"</span><span class="p">]</span>  <span class="c1"># reused in river_source_points</span>
 
         <span class="c1"># FIXME reuse from inflow/outflow and get from self.data</span>
         <span class="c1"># get river centerlines</span>
         <span class="c1"># if (</span>
         <span class="c1">#     isinstance(rivers, str)</span>
-        <span class="c1">#     and rivers == &quot;rivers_outflow&quot;</span>
+        <span class="c1">#     and rivers == "rivers_outflow"</span>
         <span class="c1">#     and rivers in self.geoms</span>
         <span class="c1"># ):</span>
         <span class="c1">#     # reuse rivers from setup_river_in/outflow</span>
@@ -623,14 +623,14 @@
             <span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">hydrography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">river_centerline_from_hydrography</span><span class="p">(</span>
-                <span class="n">da_flwdir</span><span class="o">=</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;flwdir&quot;</span><span class="p">],</span>
+                <span class="n">da_flwdir</span><span class="o">=</span><span class="n">ds</span><span class="p">[</span><span class="s2">"flwdir"</span><span class="p">],</span>
                 <span class="n">da_uparea</span><span class="o">=</span><span class="n">da_uparea</span><span class="p">,</span>
                 <span class="n">river_upa</span><span class="o">=</span><span class="n">river_upa</span><span class="p">,</span>
                 <span class="n">river_len</span><span class="o">=</span><span class="n">river_len</span><span class="p">,</span>
                 <span class="n">gdf_mask</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">hydrography</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Either hydrography or rivers must be provided.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Either hydrography or rivers must be provided."</span><span class="p">)</span>
 
         <span class="c1"># get river inflow / headwater source points</span>
         <span class="n">gdf_src</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">river_source_points</span><span class="p">(</span>
@@ -645,7 +645,7 @@
             <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">gdf_src</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No river source points found.&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"No river source points found."</span><span class="p">)</span>
             <span class="k">return</span>
 
         <span class="c1"># set forcing src pnts</span>
@@ -660,19 +660,19 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">gdf_riv</span>
 
         <span class="c1"># update mask if river_width &gt; 0</span>
-        <span class="k">if</span> <span class="s2">&quot;rivwth&quot;</span> <span class="ow">in</span> <span class="n">gdf_src</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="n">river_width</span> <span class="o">=</span> <span class="n">gdf_src</span><span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">river_width</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">"rivwth"</span> <span class="ow">in</span> <span class="n">gdf_src</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">river_width</span> <span class="o">=</span> <span class="n">gdf_src</span><span class="p">[</span><span class="s2">"rivwth"</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">river_width</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"quadtree"</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="s2">&quot;For quadtree grids, the mask is not updated around river source points.&quot;</span>
-                <span class="s2">&quot;Please carefully check the model mask.&quot;</span>
+                <span class="s2">"For quadtree grids, the mask is not updated around river source points."</span>
+                <span class="s2">"Please carefully check the model mask."</span>
             <span class="p">)</span>
             <span class="c1"># TODO - add for quadtree grids</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">river_width</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
                 <span class="c1"># apply buffer</span>
-                <span class="n">gdf_src</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_src</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">river_width</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="n">gdf_src</span><span class="p">[</span><span class="s2">"geometry"</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_src</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">river_width</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
                 <span class="c1"># find intersect of buffer and model grid</span>
                 <span class="n">da_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span>
                 <span class="n">da_include</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span>
@@ -683,8 +683,8 @@
                 <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">reset_msk</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
                 <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">reset_msk</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="s2">&quot;msk&quot;</span><span class="p">)</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Boundary cells (n=</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">) updated around src points.&quot;</span><span class="p">)</span></div>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">da_mask</span><span class="p">,</span> <span class="s2">"msk"</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Boundary cells (n=</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">) updated around src points."</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_river_outflow</span><span class="p">(</span>
@@ -702,7 +702,7 @@
         <span class="n">reset_bounds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">reverse_river_geom</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup open boundary cells (mask=5) where a river flows</span>
+<span class="w">        </span><span class="sd">"""Setup open boundary cells (mask=5) where a river flows</span>
 <span class="sd">        out of the model domain.</span>
 
 <span class="sd">        If `rivers` is not provided, river centerlines are extracted from the</span>
@@ -724,11 +724,11 @@
 <span class="sd">        ----------</span>
 <span class="sd">        rivers : str, Path, gpd.GeoDataFrame, optional</span>
 <span class="sd">            Path, data source name, or geopandas object for river centerline data.</span>
-<span class="sd">            If present, the &#39;uparea&#39; and &#39;rivlen&#39; attributes are used.</span>
+<span class="sd">            If present, the 'uparea' and 'rivlen' attributes are used.</span>
 <span class="sd">        hydrography: str, Path, xr.Dataset optional</span>
 <span class="sd">            Path, data source name, or a xarray raster object for hydrography data.</span>
 
-<span class="sd">            * Required layers: [&#39;uparea&#39;, &#39;flwdir&#39;].</span>
+<span class="sd">            * Required layers: ['uparea', 'flwdir'].</span>
 <span class="sd">        river_upa : float, optional</span>
 <span class="sd">            Minimum upstream area threshold for rivers [km2], by default 10.0</span>
 <span class="sd">        river_len: float, optional</span>
@@ -749,41 +749,41 @@
 <span class="sd">            If True, write new outflow boundary cells on top of existing. If False (default),</span>
 <span class="sd">            first reset existing outflow boundary cells to normal active cells.</span>
 <span class="sd">        keep_rivers_geom: bool, optional</span>
-<span class="sd">            If True, keep a geometry of the rivers &quot;rivers_outflow&quot; in geoms. By default False.</span>
+<span class="sd">            If True, keep a geometry of the rivers "rivers_outflow" in geoms. By default False.</span>
 <span class="sd">        reset_bounds: bool, optional</span>
 <span class="sd">            If True, reset existing outlfow boundary cells before setting new boundary cells,</span>
 <span class="sd">            by default False.</span>
-<span class="sd">        btype: {&#39;waterlevel&#39;, &#39;outflow&#39;, &#39;downstream&#39;}, optional</span>
+<span class="sd">        btype: {'waterlevel', 'outflow', 'downstream'}, optional</span>
 <span class="sd">            Boundary type</span>
 <span class="sd">        reverse_river_geom: bool, optional</span>
-<span class="sd">            If True, assume that segments in &#39;rivers&#39; are drawn from downstream to upstream.</span>
+<span class="sd">            If True, assume that segments in 'rivers' are drawn from downstream to upstream.</span>
 <span class="sd">            Only used if rivers is not None, By default False</span>
 
 <span class="sd">        See Also</span>
 <span class="sd">        --------</span>
 <span class="sd">        setup_mask_bounds</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="c1"># get hydrography data</span>
         <span class="n">da_uparea</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">hydrography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
                 <span class="n">hydrography</span><span class="p">,</span>
                 <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
-                <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">,</span> <span class="s2">&quot;flwdir&quot;</span><span class="p">],</span>
+                <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">"uparea"</span><span class="p">,</span> <span class="s2">"flwdir"</span><span class="p">],</span>
                 <span class="n">buffer</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">da_uparea</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span>  <span class="c1"># reused in river_source_points</span>
+            <span class="n">da_uparea</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">"uparea"</span><span class="p">]</span>  <span class="c1"># reused in river_source_points</span>
         <span class="c1"># get river centerlines</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">empty</span> <span class="ow">and</span> <span class="n">rivers</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">hydrography</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">gdf_riv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reusing existing river centerlines.&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Reusing existing river centerlines."</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">rivers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">gdf_riv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
                 <span class="n">rivers</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">region</span>
             <span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">hydrography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">gdf_riv</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">river_centerline_from_hydrography</span><span class="p">(</span>
-                <span class="n">da_flwdir</span><span class="o">=</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;flwdir&quot;</span><span class="p">],</span>
+                <span class="n">da_flwdir</span><span class="o">=</span><span class="n">ds</span><span class="p">[</span><span class="s2">"flwdir"</span><span class="p">],</span>
                 <span class="n">da_uparea</span><span class="o">=</span><span class="n">da_uparea</span><span class="p">,</span>
                 <span class="n">river_upa</span><span class="o">=</span><span class="n">river_upa</span><span class="p">,</span>
                 <span class="n">river_len</span><span class="o">=</span><span class="n">river_len</span><span class="p">,</span>
@@ -791,14 +791,14 @@
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">hydrography</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;No centerlines present in component.Either hydrography or rivers must be provided.&quot;</span>
+                <span class="s2">"No centerlines present in component.Either hydrography or rivers must be provided."</span>
             <span class="p">)</span>
 
         <span class="c1"># get river inflow / headwater source points</span>
         <span class="n">gdf_out</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">river_outflow_points</span><span class="p">(</span>
             <span class="n">gdf_riv</span><span class="o">=</span><span class="n">gdf_riv</span><span class="p">,</span>
             <span class="n">gdf_mask</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
-            <span class="n">src_type</span><span class="o">=</span><span class="s2">&quot;outflow&quot;</span><span class="p">,</span>
+            <span class="n">src_type</span><span class="o">=</span><span class="s2">"outflow"</span><span class="p">,</span>
             <span class="n">buffer</span><span class="o">=</span><span class="n">buffer</span><span class="p">,</span>
             <span class="n">river_upa</span><span class="o">=</span><span class="n">river_upa</span><span class="p">,</span>
             <span class="n">river_len</span><span class="o">=</span><span class="n">river_len</span><span class="p">,</span>
@@ -809,35 +809,35 @@
         <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">gdf_out</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No river outflow points found.&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"No river outflow points found."</span><span class="p">)</span>
             <span class="k">return</span>
 
         <span class="n">gdf_out_lines</span> <span class="o">=</span> <span class="n">gdf_out</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
-        <span class="n">gdf_out</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_out</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+        <span class="n">gdf_out</span><span class="p">[</span><span class="s2">"geometry"</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_out</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
             <span class="k">lambda</span> <span class="n">geom</span><span class="p">:</span> <span class="n">Point</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="k">if</span> <span class="n">geom</span><span class="o">.</span><span class="n">geom_type</span> <span class="o">==</span> <span class="s2">&quot;LineString&quot;</span>
+            <span class="k">if</span> <span class="n">geom</span><span class="o">.</span><span class="n">geom_type</span> <span class="o">==</span> <span class="s2">"LineString"</span>
             <span class="k">else</span> <span class="n">geom</span>
         <span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gdf_out</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">if</span> <span class="s2">&quot;rivwth&quot;</span> <span class="ow">in</span> <span class="n">gdf_out</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-                <span class="n">river_width</span> <span class="o">=</span> <span class="n">gdf_out</span><span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">river_width</span><span class="p">)</span>
-            <span class="n">gdf_out</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_out</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">river_width</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">"rivwth"</span> <span class="ow">in</span> <span class="n">gdf_out</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">river_width</span> <span class="o">=</span> <span class="n">gdf_out</span><span class="p">[</span><span class="s2">"rivwth"</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">river_width</span><span class="p">)</span>
+            <span class="n">gdf_out</span><span class="p">[</span><span class="s2">"geometry"</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_out</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">river_width</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
 
         <span class="c1"># update mask</span>
         <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gdf_out</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> valid river outflow points.&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> valid river outflow points."</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"regular"</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">create_boundary</span><span class="p">(</span>
-                    <span class="n">btype</span><span class="o">=</span><span class="s2">&quot;downstream&quot;</span><span class="p">,</span>
+                    <span class="n">btype</span><span class="o">=</span><span class="s2">"downstream"</span><span class="p">,</span>
                     <span class="n">include_polygon</span><span class="o">=</span><span class="n">gdf_out</span><span class="p">,</span>
                     <span class="n">reset_bounds</span><span class="o">=</span><span class="n">reset_bounds</span><span class="p">,</span>
                 <span class="p">)</span>
-            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"quadtree"</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_mask</span><span class="o">.</span><span class="n">create_boundary</span><span class="p">(</span>
-                    <span class="n">btype</span><span class="o">=</span><span class="s2">&quot;downstream&quot;</span><span class="p">,</span>
+                    <span class="n">btype</span><span class="o">=</span><span class="s2">"downstream"</span><span class="p">,</span>
                     <span class="n">include_polygon</span><span class="o">=</span><span class="n">gdf_out</span><span class="p">,</span>
                     <span class="n">reset_bounds</span><span class="o">=</span><span class="n">reset_bounds</span><span class="p">,</span>
                 <span class="p">)</span>

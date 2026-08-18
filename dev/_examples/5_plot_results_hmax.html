@@ -529,8 +529,8 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sfincs_root</span> <span class="o">=</span> <span class="s2">&quot;sfincs_compound&quot;</span>  <span class="c1"># (relative) path to sfincs root</span>
-<span class="n">mod</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">sfincs_root</span><span class="p">,</span> <span class="n">data_libs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;artifact_data&quot;</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sfincs_root</span> <span class="o">=</span> <span class="s2">"sfincs_compound"</span>  <span class="c1"># (relative) path to sfincs root</span>
+<span class="n">mod</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">sfincs_root</span><span class="p">,</span> <span class="n">data_libs</span><span class="o">=</span><span class="p">[</span><span class="s2">"artifact_data"</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"r"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -600,7 +600,7 @@ Replacing result: status
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot the model layout</span>
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">fn_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">7</span><span class="p">))</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">fn_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">"sat"</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">7</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -628,12 +628,12 @@ The provided timeseries does not cover the entire model time period.
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># uncomment to write hmax to &lt;mod.root&gt;/gis/hmax.tif</span>
 <span class="c1"># from hydromt_sfincs import utils</span>
-<span class="c1"># hmax = mod.output.data[&quot;hmax&quot;].max(dim=&quot;timemax&quot;)</span>
-<span class="c1"># hmax.attrs.update(long_name=&quot;maximum water depth&quot;, unit=&quot;m&quot;)</span>
+<span class="c1"># hmax = mod.output.data["hmax"].max(dim="timemax")</span>
+<span class="c1"># hmax.attrs.update(long_name="maximum water depth", unit="m")</span>
 <span class="c1"># writers.write_raster(</span>
 <span class="c1">#     hmax,</span>
-<span class="c1">#     join(mod.root, &quot;gis&quot;, &quot;hmax.tif&quot;),</span>
-<span class="c1">#     compress=&quot;LZW&quot;</span>
+<span class="c1">#     join(mod.root, "gis", "hmax.tif"),</span>
+<span class="c1">#     compress="LZW"</span>
 <span class="c1">#     )</span>
 </pre></div>
 </div>
@@ -647,13 +647,13 @@ The provided timeseries does not cover the entire model time period.
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># read global surface water occurance (GSWO) data to mask permanent water</span>
-<span class="n">gswo</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="s2">&quot;gswo&quot;</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="n">mod</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">gswo</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="s2">"gswo"</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="n">mod</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 
 <span class="c1"># NOTE to read data for a different region than Northen Italy add this data to the data catalog:</span>
-<span class="c1"># mod.data_catalog.from_yml(&#39;/path/to/data_catalog.yml&#39;)</span>
+<span class="c1"># mod.data_catalog.from_yml('/path/to/data_catalog.yml')</span>
 
 <span class="c1"># permanent water where water occurence &gt; 5%</span>
-<span class="n">gswo_mask</span> <span class="o">=</span> <span class="n">gswo</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">mod</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;max&quot;</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">5</span>
+<span class="n">gswo_mask</span> <span class="o">=</span> <span class="n">gswo</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">mod</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"max"</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">5</span>
 </pre></div>
 </div>
 </div>
@@ -664,13 +664,13 @@ The provided timeseries does not cover the entire model time period.
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">hmin</span> <span class="o">=</span> <span class="mf">0.05</span>  <span class="c1"># minimum flood depth [m] to plot</span>
 
 <span class="c1"># hmax is computed by SFINCS and read-in from the sfincs_map.nc file</span>
-<span class="n">da_hmax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;hmax&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;timemax&quot;</span><span class="p">)</span>
+<span class="n">da_hmax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"hmax"</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s2">"timemax"</span><span class="p">)</span>
 
 <span class="c1"># get overland flood depth with GSWO and set minimum flood depth</span>
 <span class="n">da_hmax</span> <span class="o">=</span> <span class="n">da_hmax</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">gswo_mask</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_hmax</span> <span class="o">&gt;</span> <span class="n">hmin</span><span class="p">)</span>
 
 <span class="c1"># update attributes for colorbar label later</span>
-<span class="n">da_hmax</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">long_name</span><span class="o">=</span><span class="s2">&quot;flood depth&quot;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;m&quot;</span><span class="p">)</span>
+<span class="n">da_hmax</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">long_name</span><span class="o">=</span><span class="s2">"flood depth"</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">"m"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -686,15 +686,15 @@ The provided timeseries does not cover the entire model time period.
     <span class="n">variable</span><span class="o">=</span><span class="n">da_hmax</span><span class="p">,</span>
     <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">plot_geoms</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span>
+    <span class="n">bmap</span><span class="o">=</span><span class="s2">"sat"</span><span class="p">,</span>
     <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
     <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
     <span class="n">vmax</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span>
     <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">viridis</span><span class="p">,</span>
-    <span class="n">cbar_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;shrink&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s2">&quot;anchor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)},</span>
+    <span class="n">cbar_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"shrink"</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s2">"anchor"</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)},</span>
 <span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SFINCS maximum water depth&quot;</span><span class="p">)</span>
-<span class="c1"># plt.savefig(join(mod.root, &#39;figs&#39;, &#39;hmax.png&#39;), dpi=225, bbox_inches=&quot;tight&quot;)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"SFINCS maximum water depth"</span><span class="p">)</span>
+<span class="c1"># plt.savefig(join(mod.root, 'figs', 'hmax.png'), dpi=225, bbox_inches="tight")</span>
 </pre></div>
 </div>
 </div>
@@ -732,8 +732,8 @@ The process of interpolating the water levels onto the higher-resolution elevati
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># select the example model</span>
-<span class="n">sfincs_root</span> <span class="o">=</span> <span class="s2">&quot;sfincs_compound&quot;</span>  <span class="c1"># (relative) path to sfincs root</span>
-<span class="n">mod</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">sfincs_root</span><span class="p">,</span> <span class="n">data_libs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;artifact_data&quot;</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">)</span>
+<span class="n">sfincs_root</span> <span class="o">=</span> <span class="s2">"sfincs_compound"</span>  <span class="c1"># (relative) path to sfincs root</span>
+<span class="n">mod</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">sfincs_root</span><span class="p">,</span> <span class="n">data_libs</span><span class="o">=</span><span class="p">[</span><span class="s2">"artifact_data"</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"r"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -752,10 +752,10 @@ No region component found in components.
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># first we are going to select our highest-resolution elevation dataset</span>
-<span class="n">depfile</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">sfincs_root</span><span class="p">,</span> <span class="s2">&quot;gis&quot;</span><span class="p">,</span> <span class="s2">&quot;dep.tif&quot;</span><span class="p">)</span>
+<span class="n">depfile</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">sfincs_root</span><span class="p">,</span> <span class="s2">"gis"</span><span class="p">,</span> <span class="s2">"dep.tif"</span><span class="p">)</span>
 
 <span class="c1"># with the depfile on subgrid resolution this would be:</span>
-<span class="c1"># depfile = join(sfincs_root, &quot;subgrid&quot;, &quot;dep_subgrid.tif&quot;)</span>
+<span class="c1"># depfile = join(sfincs_root, "subgrid", "dep_subgrid.tif")</span>
 
 <span class="n">da_dep</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="n">depfile</span><span class="p">)</span>
 </pre></div>
@@ -777,9 +777,9 @@ No region component found in components.
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># secondly we are reading in the model results</span>
 <span class="n">mod</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 
-<span class="c1"># now assuming we have a subgrid model, we don&#39;t have hmax available, so we are using zsmax (maximum water levels)</span>
+<span class="c1"># now assuming we have a subgrid model, we don't have hmax available, so we are using zsmax (maximum water levels)</span>
 <span class="c1"># compute the maximum over all time steps</span>
-<span class="n">da_zsmax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;zsmax&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;timemax&quot;</span><span class="p">)</span>
+<span class="n">da_zsmax</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"zsmax"</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s2">"timemax"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -815,7 +815,7 @@ Replacing result: status
 
 <span class="c1"># alternatively we could use a geodataframe (e.g. OpenStreetMap landareas) to mask water bodies</span>
 <span class="c1"># NOTE: small rivers are not masked with this geodataframe</span>
-<span class="n">gdf_osm</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span><span class="s2">&quot;osm_landareas&quot;</span><span class="p">)</span>
+<span class="n">gdf_osm</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span><span class="s2">"osm_landareas"</span><span class="p">)</span>
 
 <span class="c1"># and again, we can use a threshold to mask minimum flood depth</span>
 <span class="n">hmin</span> <span class="o">=</span> <span class="mf">0.05</span>
@@ -832,7 +832,7 @@ Replacing result: status
     <span class="n">dep</span><span class="o">=</span><span class="n">da_dep</span><span class="p">,</span>
     <span class="n">hmin</span><span class="o">=</span><span class="n">hmin</span><span class="p">,</span>
     <span class="n">gdf_mask</span><span class="o">=</span><span class="n">gdf_osm</span><span class="p">,</span>
-    <span class="c1"># floodmap_fn=join(sfincs_root, &quot;floodmap.tif&quot;) # uncomment to save to &lt;mod.root&gt;/floodmap.tif</span>
+    <span class="c1"># floodmap_fn=join(sfincs_root, "floodmap.tif") # uncomment to save to &lt;mod.root&gt;/floodmap.tif</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -848,14 +848,14 @@ Replacing result: status
     <span class="n">variable</span><span class="o">=</span><span class="n">da_hmax</span><span class="p">,</span>
     <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">plot_geoms</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span>
+    <span class="n">bmap</span><span class="o">=</span><span class="s2">"sat"</span><span class="p">,</span>
     <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span>
     <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
     <span class="n">vmax</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span>
-    <span class="n">cbar_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;shrink&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s2">&quot;anchor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)},</span>
+    <span class="n">cbar_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"shrink"</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s2">"anchor"</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)},</span>
 <span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SFINCS maximum water depth&quot;</span><span class="p">)</span>
-<span class="c1"># plt.savefig(join(mod.root, &#39;figs&#39;, &#39;hmax.png&#39;), dpi=225, bbox_inches=&quot;tight&quot;)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"SFINCS maximum water depth"</span><span class="p">)</span>
+<span class="c1"># plt.savefig(join(mod.root, 'figs', 'hmax.png'), dpi=225, bbox_inches="tight")</span>
 </pre></div>
 </div>
 </div>

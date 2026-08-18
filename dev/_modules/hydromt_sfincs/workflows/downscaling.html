@@ -426,10 +426,10 @@
                 <article class="bd-article">
                   
   <h1>Source code for hydromt_sfincs.workflows.downscaling</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Downscaling workflows: high-resolution floodmap generation, WSE</span>
+<span></span><span class="sd">"""Downscaling workflows: high-resolution floodmap generation, WSE</span>
 <span class="sd">dilation, velocity-head correction, and index-COG builder for</span>
 <span class="sd">SFINCS quadtree/regular subgrid outputs.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -457,16 +457,16 @@
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="c1"># ordered by pipeline step (see MODULE MAP below)</span>
-    <span class="s2">&quot;make_index_cog&quot;</span><span class="p">,</span>  <span class="c1"># Step 0  — build the cell-index COG</span>
-    <span class="s2">&quot;adjust_zsmax_dilation&quot;</span><span class="p">,</span>  <span class="c1"># Step 1a — pre-step</span>
-    <span class="s2">&quot;adjust_zsmax_energyhead&quot;</span><span class="p">,</span>  <span class="c1"># Step 1b — pre-step</span>
-    <span class="s2">&quot;downscale_floodmap&quot;</span><span class="p">,</span>  <span class="c1"># Step 2  — downscale</span>
-    <span class="s2">&quot;remove_disconnected_flooding&quot;</span><span class="p">,</span>  <span class="c1"># Step 3a — post-process</span>
-    <span class="s2">&quot;compute_flow_connected_mask&quot;</span><span class="p">,</span>  <span class="c1"># Step 3b — post-process helper</span>
+    <span class="s2">"make_index_cog"</span><span class="p">,</span>  <span class="c1"># Step 0  — build the cell-index COG</span>
+    <span class="s2">"adjust_zsmax_dilation"</span><span class="p">,</span>  <span class="c1"># Step 1a — pre-step</span>
+    <span class="s2">"adjust_zsmax_energyhead"</span><span class="p">,</span>  <span class="c1"># Step 1b — pre-step</span>
+    <span class="s2">"downscale_floodmap"</span><span class="p">,</span>  <span class="c1"># Step 2  — downscale</span>
+    <span class="s2">"remove_disconnected_flooding"</span><span class="p">,</span>  <span class="c1"># Step 3a — post-process</span>
+    <span class="s2">"compute_flow_connected_mask"</span><span class="p">,</span>  <span class="c1"># Step 3b — post-process helper</span>
 <span class="p">]</span>
 
 
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
 <span class="c1"># =============================================================================</span>
@@ -497,13 +497,13 @@
 <div class="viewcode-block" id="make_index_cog">
 <a class="viewcode-back" href="../../../_generated/hydromt_sfincs.workflows.downscaling.make_index_cog.html#hydromt_sfincs.workflows.downscaling.make_index_cog">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">make_index_cog</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;SfincsModel&quot;</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="s2">"SfincsModel"</span><span class="p">,</span>
     <span class="n">indices_fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">topobathy_fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">nrmax</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">,</span>
     <span class="n">nodata</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2147483647</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Make a Cloud Optimzied Geotiff (COG) file with the correspodning indices of the SFINCS</span>
+<span class="w">    </span><span class="sd">"""Make a Cloud Optimzied Geotiff (COG) file with the correspodning indices of the SFINCS</span>
 <span class="sd">    grid cells to the high-resolution DEM COG.</span>
 
 <span class="sd">    Parameters</span>
@@ -525,7 +525,7 @@
 <span class="sd">    ----------</span>
 <span class="sd">    hydromt_sfincs.utils.build_overviews : Function to build overviews for the COG file.</span>
 <span class="sd">    hydromt_sfincs.workflows.downscaling.downscale_floodmap : Workflow to downscale flood maps</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1"># Read coordinates from topobathy file</span>
     <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">topobathy_fn</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
@@ -553,7 +553,7 @@
             <span class="n">merge_last_row</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="n">profile</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
-            <span class="n">driver</span><span class="o">=</span><span class="s2">&quot;GTiff&quot;</span><span class="p">,</span>
+            <span class="n">driver</span><span class="o">=</span><span class="s2">"GTiff"</span><span class="p">,</span>
             <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">,</span>
             <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span>
             <span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
@@ -562,19 +562,19 @@
             <span class="n">tiled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">blockxsize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
             <span class="n">blockysize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
-            <span class="n">compress</span><span class="o">=</span><span class="s2">&quot;deflate&quot;</span><span class="p">,</span>
+            <span class="n">compress</span><span class="o">=</span><span class="s2">"deflate"</span><span class="p">,</span>
             <span class="n">transform</span><span class="o">=</span><span class="n">dem_transform</span><span class="p">,</span>
             <span class="n">nodata</span><span class="o">=</span><span class="n">nodata</span><span class="p">,</span>
             <span class="n">predictor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-            <span class="n">profile</span><span class="o">=</span><span class="s2">&quot;COG&quot;</span><span class="p">,</span>
-            <span class="n">BIGTIFF</span><span class="o">=</span><span class="s2">&quot;YES&quot;</span><span class="p">,</span>  <span class="c1"># Add the BIGTIFF option here</span>
+            <span class="n">profile</span><span class="o">=</span><span class="s2">"COG"</span><span class="p">,</span>
+            <span class="n">BIGTIFF</span><span class="o">=</span><span class="s2">"YES"</span><span class="p">,</span>  <span class="c1"># Add the BIGTIFF option here</span>
         <span class="p">)</span>
 
-    <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">indices_fn</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">profile</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">indices_fn</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="o">**</span><span class="n">profile</span><span class="p">):</span>
         <span class="k">pass</span>
 
     <span class="c1"># Get the computational grid component of the model</span>
-    <span class="n">grid_comp</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span> <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span> <span class="k">else</span> <span class="n">model</span><span class="o">.</span><span class="n">grid</span>
+    <span class="n">grid_comp</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span> <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"quadtree"</span> <span class="k">else</span> <span class="n">model</span><span class="o">.</span><span class="n">grid</span>
 
     <span class="c1">## Loop through blocks</span>
     <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nrbm</span><span class="p">):</span>
@@ -598,7 +598,7 @@
             <span class="n">y_coords</span> <span class="o">=</span> <span class="n">dem_transform</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">bn0</span><span class="p">,</span> <span class="n">bn1</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">dem_transform</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
             <span class="n">xx</span><span class="p">,</span> <span class="n">yy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x_coords</span><span class="p">,</span> <span class="n">y_coords</span><span class="p">)</span>
 
-            <span class="c1"># Transform the coordinates to the model&#39;s CRS and get the corresponding indices</span>
+            <span class="c1"># Transform the coordinates to the model's CRS and get the corresponding indices</span>
             <span class="n">proj</span> <span class="o">=</span> <span class="n">Transformer</span><span class="o">.</span><span class="n">from_crs</span><span class="p">(</span><span class="n">dem_crs</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">always_xy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">xx</span><span class="p">,</span> <span class="n">yy</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">xx</span><span class="p">,</span> <span class="n">yy</span><span class="p">)</span>
             <span class="n">indices</span> <span class="o">=</span> <span class="n">grid_comp</span><span class="o">.</span><span class="n">get_indices_at_points</span><span class="p">(</span><span class="n">xx</span><span class="p">,</span> <span class="n">yy</span><span class="p">)</span>
@@ -608,14 +608,14 @@
             <span class="n">ii</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">bn1</span> <span class="o">-</span> <span class="n">bn0</span><span class="p">,</span> <span class="n">bm1</span> <span class="o">-</span> <span class="n">bm0</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span>
             <span class="n">ii</span><span class="p">[:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">indices</span>
 
-            <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">indices_fn</span><span class="p">,</span> <span class="s2">&quot;r+&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fm_tif</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">indices_fn</span><span class="p">,</span> <span class="s2">"r+"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fm_tif</span><span class="p">:</span>
                 <span class="n">fm_tif</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
                     <span class="n">ii</span><span class="p">,</span>
                     <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span>
                     <span class="n">indexes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                 <span class="p">)</span>
     <span class="c1"># add overviews</span>
-    <span class="n">build_overviews</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">indices_fn</span><span class="p">,</span> <span class="n">resample_method</span><span class="o">=</span><span class="s2">&quot;nearest&quot;</span><span class="p">)</span></div>
+    <span class="n">build_overviews</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">indices_fn</span><span class="p">,</span> <span class="n">resample_method</span><span class="o">=</span><span class="s2">"nearest"</span><span class="p">)</span></div>
 
 
 
@@ -625,14 +625,14 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_reduce_extra_dims</span><span class="p">(</span><span class="n">da</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collapse any non-spatial dims (e.g. ``time``/``timemax``) to their max.</span>
+<span class="w">    </span><span class="sd">"""Collapse any non-spatial dims (e.g. ``time``/``timemax``) to their max.</span>
 
 <span class="sd">    The pre-steps operate on a single 2-D (regular) or 1-D (quadtree) field;</span>
 <span class="sd">    a caller that passes a time-dimensioned ``zsmax``/``qmax`` would otherwise</span>
 <span class="sd">    get a per-timestep result.  Reducing to the temporal maximum here mirrors</span>
 <span class="sd">    the reduction the downscaler used to do internally and keeps the wet-cell</span>
 <span class="sd">    invariants meaningful.  Returns ``None`` unchanged.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">da</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">da</span><span class="p">,</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">):</span>
@@ -652,7 +652,7 @@
     <span class="n">zsmax</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span>
     <span class="n">factor</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Cell-space WSE dilation pre-step — works on both quadtree and regular grids.</span>
+<span class="w">    </span><span class="sd">"""Cell-space WSE dilation pre-step — works on both quadtree and regular grids.</span>
 
 <span class="sd">    For each *already-wet* cell/pixel, raise its zsmax to the max of (own,</span>
 <span class="sd">    wet-neighbour values) within a radius of ``(0.5 + factor)`` cell widths.</span>
@@ -660,8 +660,8 @@
 <span class="sd">    no new cells are flooded).</span>
 
 <span class="sd">    Typical use is to close 1 m-DEM connectivity gaps behind coarse-cell</span>
-<span class="sd">    levees, where the parent cell&#39;s single WSE sits below the levee crest</span>
-<span class="sd">    on the fine DEM.  Expanding each cell&#39;s WSE plateau by a modest</span>
+<span class="sd">    levees, where the parent cell's single WSE sits below the levee crest</span>
+<span class="sd">    on the fine DEM.  Expanding each cell's WSE plateau by a modest</span>
 <span class="sd">    fraction of its own size lets the flood cross the crest continuously</span>
 <span class="sd">    without introducing new wet cells elsewhere.</span>
 
@@ -684,15 +684,15 @@
 <span class="sd">    xu.UgridDataArray or xr.DataArray</span>
 <span class="sd">        Dilated zsmax on the same grid and with the same wet-cell set as</span>
 <span class="sd">        the input.  ``dilated &gt;= zsmax`` on every wet cell.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">zsmax</span> <span class="o">=</span> <span class="n">_reduce_extra_dims</span><span class="p">(</span><span class="n">zsmax</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">zsmax</span><span class="p">,</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">_dilate_zsmax_quadtree</span><span class="p">(</span><span class="n">zsmax</span><span class="p">,</span> <span class="n">factor</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">zsmax</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">_dilate_zsmax_regular</span><span class="p">(</span><span class="n">zsmax</span><span class="p">,</span> <span class="n">factor</span><span class="p">)</span>
     <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-        <span class="s2">&quot;zsmax must be xu.UgridDataArray or xr.DataArray; &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">zsmax</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span>
+        <span class="s2">"zsmax must be xu.UgridDataArray or xr.DataArray; "</span>
+        <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">zsmax</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">."</span>
     <span class="p">)</span></div>
 
 
@@ -701,7 +701,7 @@
     <span class="n">zsmax</span><span class="p">:</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">,</span>
     <span class="n">factor</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Quadtree-grid dilation via cKDTree (see :func:`adjust_zsmax_dilation`).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Quadtree-grid dilation via cKDTree (see :func:`adjust_zsmax_dilation`)."""</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.spatial</span><span class="w"> </span><span class="kn">import</span> <span class="n">cKDTree</span>
 
     <span class="n">grid</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">ugrid</span><span class="o">.</span><span class="n">grid</span>
@@ -755,12 +755,12 @@
     <span class="n">zsmax</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
     <span class="n">factor</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Regular-grid dilation via a disk footprint max-filter.</span>
+<span class="w">    </span><span class="sd">"""Regular-grid dilation via a disk footprint max-filter.</span>
 
 <span class="sd">    Footprint radius is ``(0.5 + factor)`` pixels (Euclidean), matching</span>
 <span class="sd">    the quadtree convention: ``factor=0.5`` reaches edge neighbours,</span>
 <span class="sd">    ``factor=1.0`` reaches diagonal (full 3×3 stencil).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">maximum_filter</span>
 
     <span class="n">vals</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -779,7 +779,7 @@
 
     <span class="c1"># Fill NaN with -inf so the max ignores dry cells</span>
     <span class="n">filled</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">wet_before</span><span class="p">,</span> <span class="n">vals</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
-    <span class="n">dilated</span> <span class="o">=</span> <span class="n">maximum_filter</span><span class="p">(</span><span class="n">filled</span><span class="p">,</span> <span class="n">footprint</span><span class="o">=</span><span class="n">footprint</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;constant&quot;</span><span class="p">,</span> <span class="n">cval</span><span class="o">=-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+    <span class="n">dilated</span> <span class="o">=</span> <span class="n">maximum_filter</span><span class="p">(</span><span class="n">filled</span><span class="p">,</span> <span class="n">footprint</span><span class="o">=</span><span class="n">footprint</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"constant"</span><span class="p">,</span> <span class="n">cval</span><span class="o">=-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
 
     <span class="c1"># Enforce no-new-wet-cells: dry cells stay dry</span>
     <span class="n">dilated</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">wet_before</span><span class="p">,</span> <span class="n">dilated</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
@@ -794,17 +794,17 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_check_dilation_invariants</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">dilated</span><span class="p">,</span> <span class="n">wet_before</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Assert wet-set preservation + monotonic lift for dilation helpers.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Assert wet-set preservation + monotonic lift for dilation helpers."""</span>
     <span class="n">wet_after</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">dilated</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">wet_before</span><span class="p">,</span> <span class="n">wet_after</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;dilation changed the wet-cell set&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"dilation changed the wet-cell set"</span><span class="p">)</span>
     <span class="n">raised</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
         <span class="n">wet_before</span><span class="p">,</span>
         <span class="n">dilated</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">wet_before</span><span class="p">,</span> <span class="n">vals</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
         <span class="mf">0.0</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">raised</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mf">1e-9</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;dilation lowered zsmax on some cell&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"dilation lowered zsmax on some cell"</span><span class="p">)</span>
 
 
 <span class="c1"># ---- 1b. adjust_zsmax_energyhead : per-cell Bernoulli velocity head ---------</span>
@@ -817,7 +817,7 @@
     <span class="n">hmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
     <span class="n">q_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add the velocity head v²/(2g) to zsmax (Bernoulli correction).</span>
+<span class="w">    </span><span class="sd">"""Add the velocity head v²/(2g) to zsmax (Bernoulli correction).</span>
 
 <span class="sd">    Lifts the water level on wet cells where the unit discharge exceeds</span>
 <span class="sd">    ``q_threshold``, converting zsmax to the total-energy head</span>
@@ -861,7 +861,7 @@
 <span class="sd">        zsmax with the velocity head added on qualifying cells.  Same grid</span>
 <span class="sd">        and same wet-cell set as the input.  ``result &gt;= zsmax`` on every</span>
 <span class="sd">        wet cell (velocity head is always non-negative).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">GRAVITY</span> <span class="o">=</span> <span class="mf">9.81</span>
 
     <span class="n">zsmax</span> <span class="o">=</span> <span class="n">_reduce_extra_dims</span><span class="p">(</span><span class="n">zsmax</span><span class="p">)</span>
@@ -891,14 +891,14 @@
     <span class="c1"># Invariants</span>
     <span class="n">wet_after</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">zs_new</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">wet_before</span><span class="p">,</span> <span class="n">wet_after</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;energy-head correction changed the wet-cell set&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"energy-head correction changed the wet-cell set"</span><span class="p">)</span>
     <span class="n">raised</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
         <span class="n">wet_before</span><span class="p">,</span>
         <span class="n">zs_new</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">wet_before</span><span class="p">,</span> <span class="n">zs_vals</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
         <span class="mf">0.0</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">raised</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mf">1e-9</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;energy-head correction lowered zsmax on some cell&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"energy-head correction lowered zsmax on some cell"</span><span class="p">)</span>
 
     <span class="n">out</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">out</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">zs_new</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">zsmax</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
@@ -917,7 +917,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">downscale_floodmap</span><span class="p">(</span>
     <span class="n">zsmax</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">],</span>
     <span class="n">dep</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span>
-    <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;nearest&quot;</span><span class="p">,</span>
+    <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"nearest"</span><span class="p">,</span>
     <span class="n">subtract_dem</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">indices</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">hmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
@@ -929,7 +929,7 @@
     <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a downscaled floodmap for (model) region.</span>
+<span class="w">    </span><span class="sd">"""Create a downscaled floodmap for (model) region.</span>
 
 <span class="sd">    The downscaler assigns every high-resolution DEM pixel a water-surface</span>
 <span class="sd">    elevation (WSE) interpolated from the SFINCS ``zsmax`` field and — by</span>
@@ -937,8 +937,8 @@
 <span class="sd">    two orthogonal knobs:</span>
 
 <span class="sd">    * ``reproj_method`` -- how the WSE is interpolated onto the DEM grid:</span>
-<span class="sd">      ``&quot;nearest&quot;`` (each pixel takes the WSE of the SFINCS cell that contains</span>
-<span class="sd">      it — the classic bathtub) or ``&quot;bilinear&quot;`` (interpolate between</span>
+<span class="sd">      ``"nearest"`` (each pixel takes the WSE of the SFINCS cell that contains</span>
+<span class="sd">      it — the classic bathtub) or ``"bilinear"`` (interpolate between</span>
 <span class="sd">      surrounding cell centres, Sanders &amp; Schubert 2019).</span>
 <span class="sd">    * ``subtract_dem`` -- when ``True`` (default) the DEM is subtracted to</span>
 <span class="sd">      return flood depth ``hmax``; when ``False`` the raw interpolated water</span>
@@ -955,16 +955,16 @@
 <span class="sd">        maximum over all timesteps is used.</span>
 <span class="sd">    dep : Path, str, or xr.DataArray</span>
 <span class="sd">        High-resolution DEM (m) of the model region.</span>
-<span class="sd">    reproj_method : {&quot;nearest&quot;, &quot;bilinear&quot;}, optional</span>
-<span class="sd">        WSE interpolation onto the DEM grid, by default ``&quot;nearest&quot;``.  On a</span>
-<span class="sd">        regular grid ``&quot;bilinear&quot;`` uses the reproject engine; on a quadtree it</span>
+<span class="sd">    reproj_method : {"nearest", "bilinear"}, optional</span>
+<span class="sd">        WSE interpolation onto the DEM grid, by default ``"nearest"``.  On a</span>
+<span class="sd">        regular grid ``"bilinear"`` uses the reproject engine; on a quadtree it</span>
 <span class="sd">        uses a scattered interpolator over the cell centres.</span>
 <span class="sd">    subtract_dem : bool, optional</span>
 <span class="sd">        Subtract the DEM to return flood depth (``True``, default) or return</span>
 <span class="sd">        the raw interpolated water level (``False``).</span>
 <span class="sd">    indices : Path, str, or xr.DataArray, optional</span>
 <span class="sd">        Pre-computed cell-index raster (exact containment; used for</span>
-<span class="sd">        ``reproj_method=&quot;nearest&quot;`` and to mask pixels outside the domain).</span>
+<span class="sd">        ``reproj_method="nearest"`` and to mask pixels outside the domain).</span>
 <span class="sd">    hmin : float, optional</span>
 <span class="sd">        Minimum water depth (m) to be considered flooded, by default 0.05.</span>
 <span class="sd">        Ignored when ``subtract_dem`` is ``False``.</span>
@@ -994,10 +994,10 @@
 <span class="sd">        no flooding yields an all-NaN array).  File-based calls also write it to</span>
 <span class="sd">        *floodmap_fn* / *zsmap_fn* and return a lazy (dask-backed) view re-opened</span>
 <span class="sd">        from that file; the in-memory path returns the array directly.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">reproj_method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;nearest&quot;</span><span class="p">,</span> <span class="s2">&quot;bilinear&quot;</span><span class="p">):</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">reproj_method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"nearest"</span><span class="p">,</span> <span class="s2">"bilinear"</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Unknown reproj_method </span><span class="si">{</span><span class="n">reproj_method</span><span class="si">!r}</span><span class="s2">. Choose &#39;nearest&#39; or &#39;bilinear&#39;.&quot;</span>
+            <span class="sa">f</span><span class="s2">"Unknown reproj_method </span><span class="si">{</span><span class="n">reproj_method</span><span class="si">!r}</span><span class="s2">. Choose 'nearest' or 'bilinear'."</span>
         <span class="p">)</span>
 
     <span class="c1"># --- Reduce time dimension -----------------------------------------------</span>
@@ -1006,7 +1006,7 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">timedim</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">zsmax</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">zsmax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">timedim</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Taking maximum water level over </span><span class="si">{</span><span class="n">timedim</span><span class="si">}</span><span class="s2"> dimension(s).&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Taking maximum water level over </span><span class="si">{</span><span class="n">timedim</span><span class="si">}</span><span class="s2"> dimension(s)."</span><span class="p">)</span>
         <span class="n">zsmax</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">timedim</span><span class="p">)</span>
 
     <span class="c1"># --- In-memory path (xr.DataArray dep) -----------------------------------</span>
@@ -1014,7 +1014,7 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="n">Path</span><span class="p">):</span>
             <span class="n">floodmap_fn</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">floodmap_fn</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">)):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;index should be xr.DataArray when dep is xr.DataArray.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"index should be xr.DataArray when dep is xr.DataArray."</span><span class="p">)</span>
         <span class="n">out</span> <span class="o">=</span> <span class="n">_downscale_floodmap_da</span><span class="p">(</span>
             <span class="n">zsmax</span><span class="o">=</span><span class="n">zsmax</span><span class="p">,</span>
             <span class="n">dep</span><span class="o">=</span><span class="n">dep</span><span class="p">,</span>
@@ -1027,23 +1027,23 @@
         <span class="k">if</span> <span class="n">subtract_dem</span> <span class="ow">and</span> <span class="n">floodmap_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">kwargs</span><span class="p">:</span>
                 <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
-                    <span class="n">driver</span><span class="o">=</span><span class="s2">&quot;GTiff&quot;</span><span class="p">,</span>
+                    <span class="n">driver</span><span class="o">=</span><span class="s2">"GTiff"</span><span class="p">,</span>
                     <span class="n">tiled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                     <span class="n">blockxsize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
                     <span class="n">blockysize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
-                    <span class="n">compress</span><span class="o">=</span><span class="s2">&quot;deflate&quot;</span><span class="p">,</span>
+                    <span class="n">compress</span><span class="o">=</span><span class="s2">"deflate"</span><span class="p">,</span>
                     <span class="n">predictor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-                    <span class="n">profile</span><span class="o">=</span><span class="s2">&quot;COG&quot;</span><span class="p">,</span>
+                    <span class="n">profile</span><span class="o">=</span><span class="s2">"COG"</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="n">out</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">to_raster</span><span class="p">(</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-            <span class="n">build_overviews</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="n">resample_method</span><span class="o">=</span><span class="s2">&quot;nearest&quot;</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">)</span>
-        <span class="n">out</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;hmax&quot;</span> <span class="k">if</span> <span class="n">subtract_dem</span> <span class="k">else</span> <span class="s2">&quot;zsmax&quot;</span>
+            <span class="n">build_overviews</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="n">resample_method</span><span class="o">=</span><span class="s2">"nearest"</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">"hmax"</span> <span class="k">if</span> <span class="n">subtract_dem</span> <span class="k">else</span> <span class="s2">"zsmax"</span>
         <span class="n">out</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
             <span class="p">{</span>
-                <span class="s2">&quot;long_name&quot;</span><span class="p">:</span> <span class="p">(</span>
-                    <span class="s2">&quot;Maximum flood depth&quot;</span> <span class="k">if</span> <span class="n">subtract_dem</span> <span class="k">else</span> <span class="s2">&quot;Maximum water level&quot;</span>
+                <span class="s2">"long_name"</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="s2">"Maximum flood depth"</span> <span class="k">if</span> <span class="n">subtract_dem</span> <span class="k">else</span> <span class="s2">"Maximum water level"</span>
                 <span class="p">),</span>
-                <span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;m&quot;</span><span class="p">,</span>
+                <span class="s2">"units"</span><span class="p">:</span> <span class="s2">"m"</span><span class="p">,</span>
             <span class="p">}</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">out</span>
@@ -1051,10 +1051,10 @@
     <span class="c1"># --- File-based path (dep is str/Path) -----------------------------------</span>
     <span class="k">if</span> <span class="n">subtract_dem</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">floodmap_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;floodmap_fn is required when dep is a file path.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"floodmap_fn is required when dep is a file path."</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">zsmap_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;zsmap_fn is required for a raw water-level map (subtract_dem=False).&quot;</span>
+            <span class="s2">"zsmap_fn is required for a raw water-level map (subtract_dem=False)."</span>
         <span class="p">)</span>
 
     <span class="c1"># One streamer handles every case; it selects exact containment (index COG),</span>
@@ -1080,41 +1080,41 @@
     <span class="n">out_fn</span> <span class="o">=</span> <span class="n">floodmap_fn</span> <span class="k">if</span> <span class="n">subtract_dem</span> <span class="k">else</span> <span class="n">zsmap_fn</span>
     <span class="k">if</span> <span class="n">out_fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">out_fn</span><span class="p">))</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="k">return</span> <span class="kc">None</span>
-    <span class="n">out_name</span> <span class="o">=</span> <span class="s2">&quot;hmax&quot;</span> <span class="k">if</span> <span class="n">subtract_dem</span> <span class="k">else</span> <span class="s2">&quot;zsmax&quot;</span>
-    <span class="n">long_name</span> <span class="o">=</span> <span class="s2">&quot;Maximum flood depth&quot;</span> <span class="k">if</span> <span class="n">subtract_dem</span> <span class="k">else</span> <span class="s2">&quot;Maximum water level&quot;</span>
+    <span class="n">out_name</span> <span class="o">=</span> <span class="s2">"hmax"</span> <span class="k">if</span> <span class="n">subtract_dem</span> <span class="k">else</span> <span class="s2">"zsmax"</span>
+    <span class="n">long_name</span> <span class="o">=</span> <span class="s2">"Maximum flood depth"</span> <span class="k">if</span> <span class="n">subtract_dem</span> <span class="k">else</span> <span class="s2">"Maximum water level"</span>
     <span class="n">da</span> <span class="o">=</span> <span class="n">_open_result_da</span><span class="p">(</span><span class="n">out_fn</span><span class="p">,</span> <span class="n">out_name</span><span class="p">)</span>
-    <span class="n">da</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;long_name&quot;</span><span class="p">:</span> <span class="n">long_name</span><span class="p">,</span> <span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;m&quot;</span><span class="p">})</span>
+    <span class="n">da</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"long_name"</span><span class="p">:</span> <span class="n">long_name</span><span class="p">,</span> <span class="s2">"units"</span><span class="p">:</span> <span class="s2">"m"</span><span class="p">})</span>
     <span class="k">return</span> <span class="n">da</span></div>
 
 
 
 <span class="c1"># ---- 2b. helpers : block streaming + output-raster plumbing -----------------</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_open_result_da</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Re-open a written GeoTIFF as a (lazy) DataArray for the return value.</span>
+<span class="w">    </span><span class="sd">"""Re-open a written GeoTIFF as a (lazy) DataArray for the return value.</span>
 
 <span class="sd">    Uses dask-backed chunks so the array is not eagerly loaded — large domains</span>
 <span class="sd">    stay memory-bounded and the caller computes only what it needs.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">rioxarray</span>
 
     <span class="n">da</span> <span class="o">=</span> <span class="n">rioxarray</span><span class="o">.</span><span class="n">open_rasterio</span><span class="p">(</span>
-        <span class="nb">str</span><span class="p">(</span><span class="n">fn</span><span class="p">),</span> <span class="n">masked</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;band&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="mi">2048</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="mi">2048</span><span class="p">}</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">fn</span><span class="p">),</span> <span class="n">masked</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">{</span><span class="s2">"band"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">:</span> <span class="mi">2048</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">:</span> <span class="mi">2048</span><span class="p">}</span>
     <span class="p">)</span>
-    <span class="k">if</span> <span class="s2">&quot;band&quot;</span> <span class="ow">in</span> <span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
-        <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="s2">&quot;band&quot;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">"band"</span> <span class="ow">in</span> <span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+        <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="s2">"band"</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">da</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
     <span class="k">return</span> <span class="n">da</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_stream_blocks</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">nrmax</span><span class="p">,</span> <span class="n">merge_singletons</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Yield ``(window, bm0, bm1, bn0, bn1)`` tiles over a raster of size</span>
+<span class="w">    </span><span class="sd">"""Yield ``(window, bm0, bm1, bn0, bn1)`` tiles over a raster of size</span>
 <span class="sd">    ``width`` x ``height`` in blocks of ``nrmax`` pixels.</span>
 
 <span class="sd">    ``bm`` indexes columns (x / width), ``bn`` indexes rows (y / height).</span>
 <span class="sd">    When ``merge_singletons`` is True a trailing 1-pixel column/row is merged</span>
 <span class="sd">    into the previous block (avoids degenerate 1-px tiles) — matching the</span>
 <span class="sd">    constant-method behaviour.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">nrbm</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">width</span> <span class="o">/</span> <span class="n">nrmax</span><span class="p">))</span>
     <span class="n">nrbn</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">height</span> <span class="o">/</span> <span class="n">nrmax</span><span class="p">))</span>
     <span class="n">merge_last_col</span> <span class="o">=</span> <span class="n">merge_singletons</span> <span class="ow">and</span> <span class="p">(</span><span class="n">width</span> <span class="o">%</span> <span class="n">nrmax</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
@@ -1137,20 +1137,20 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_block_pixel_centres</span><span class="p">(</span><span class="n">transform</span><span class="p">,</span> <span class="n">bm0</span><span class="p">,</span> <span class="n">bm1</span><span class="p">,</span> <span class="n">bn0</span><span class="p">,</span> <span class="n">bn1</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Map coordinates of pixel centres for a block window, rotation-aware.</span>
+<span class="w">    </span><span class="sd">"""Map coordinates of pixel centres for a block window, rotation-aware.</span>
 
 <span class="sd">    Applies the full affine ``transform`` so the rotation terms</span>
 <span class="sd">    (``transform[1]``, ``transform[3]``) are honoured; for an axis-aligned</span>
 <span class="sd">    DEM this reduces to the usual ``origin + (col + 0.5) * dx`` grid.  Returns</span>
 <span class="sd">    2-D ``(xx, yy)`` arrays of shape ``(bn1 - bn0, bm1 - bm0)``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">cols</span><span class="p">,</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">bm0</span><span class="p">,</span> <span class="n">bm1</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">bn0</span><span class="p">,</span> <span class="n">bn1</span><span class="p">))</span>
     <span class="n">xx</span><span class="p">,</span> <span class="n">yy</span> <span class="o">=</span> <span class="n">transform</span> <span class="o">*</span> <span class="p">(</span><span class="n">cols</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">rows</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">xx</span><span class="p">,</span> <span class="n">yy</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_canonical_cellfield</span><span class="p">(</span><span class="n">zsmax</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reorder a regular ``zsmax`` to SFINCS-canonical ``(y, x)`` south-up layout.</span>
+<span class="w">    </span><span class="sd">"""Reorder a regular ``zsmax`` to SFINCS-canonical ``(y, x)`` south-up layout.</span>
 
 <span class="sd">    The index COG stores, per pixel, the flat cell index ``iind*nmax + jind``</span>
 <span class="sd">    (Fortran order over the ``(nmax, mmax)`` cell grid, with ``iind`` the</span>
@@ -1160,7 +1160,7 @@
 <span class="sd">    field as ``(y, x)`` with ``y`` ascending (south-up).  This normalises a</span>
 <span class="sd">    transposed or north-up regular field to that layout so the flat lookup</span>
 <span class="sd">    cannot silently scramble.  Quadtree (1-D) fields are returned unchanged.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">zsmax</span><span class="p">,</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">zsmax</span>
     <span class="k">if</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
@@ -1190,20 +1190,20 @@
     <span class="n">nrmax</span><span class="p">,</span>
     <span class="n">logger</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stream a DEM in blocks, downscaling each block through the shared core.</span>
+<span class="w">    </span><span class="sd">"""Stream a DEM in blocks, downscaling each block through the shared core.</span>
 
 <span class="sd">    Every variant (nearest/bilinear, depth/raw) uses this one block loop; they</span>
 <span class="sd">    differ only in how :func:`_downscale_floodmap_da` interpolates the water</span>
 <span class="sd">    level.  A quadtree scattered interpolant is built once and reused across</span>
 <span class="sd">    blocks.  Flood depth is written to ``floodmap_fn`` (when ``subtract_dem``)</span>
 <span class="sd">    and the interpolated water level to ``zsmap_fn`` (when given).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="n">Path</span><span class="p">):</span>
         <span class="n">floodmap_fn</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">floodmap_fn</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">zsmap_fn</span><span class="p">,</span> <span class="n">Path</span><span class="p">):</span>
         <span class="n">zsmap_fn</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">zsmap_fn</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">)):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;indices should be str/Path when dep is str/Path.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"indices should be str/Path when dep is str/Path."</span><span class="p">)</span>
 
     <span class="n">is_quadtree</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">zsmax</span><span class="p">,</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">)</span>
     <span class="n">write_floodmap</span> <span class="o">=</span> <span class="n">subtract_dem</span> <span class="ow">and</span> <span class="n">floodmap_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -1214,13 +1214,13 @@
     <span class="c1"># core (index-COG lookup, or rasterize_like when no index).  Regular grids</span>
     <span class="c1"># reproject per block, so they need no pre-built interpolant.</span>
     <span class="n">interpolator</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="n">is_quadtree</span> <span class="ow">and</span> <span class="n">reproj_method</span> <span class="o">==</span> <span class="s2">&quot;bilinear&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">is_quadtree</span> <span class="ow">and</span> <span class="n">reproj_method</span> <span class="o">==</span> <span class="s2">"bilinear"</span><span class="p">:</span>
         <span class="n">wet</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">zsmax</span><span class="o">.</span><span class="n">values</span><span class="p">)))</span>
         <span class="k">if</span> <span class="n">wet</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="s2">&quot;Fewer than 3 wet cells; cannot interpolate. Writing empty maps.&quot;</span>
+                <span class="s2">"Fewer than 3 wet cells; cannot interpolate. Writing empty maps."</span>
             <span class="p">)</span>
-        <span class="n">interpolator</span> <span class="o">=</span> <span class="n">_build_scatter_interpolator</span><span class="p">(</span><span class="n">zsmax</span><span class="p">,</span> <span class="s2">&quot;bilinear&quot;</span><span class="p">)</span>
+        <span class="n">interpolator</span> <span class="o">=</span> <span class="n">_build_scatter_interpolator</span><span class="p">(</span><span class="n">zsmax</span><span class="p">,</span> <span class="s2">"bilinear"</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">zoom_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">zls_dict</span><span class="p">,</span> <span class="n">crs</span> <span class="o">=</span> <span class="n">RasterioDriver</span><span class="o">.</span><span class="n">_get_zoom_levels_and_crs</span><span class="p">(</span><span class="n">dep</span><span class="p">)</span>
@@ -1231,7 +1231,7 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">overview_level</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_open_kwargs</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="p">{</span><span class="s2">&quot;overview_level&quot;</span><span class="p">:</span> <span class="n">overview_level</span><span class="p">}</span> <span class="k">if</span> <span class="n">overview_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="p">{</span><span class="s2">"overview_level"</span><span class="p">:</span> <span class="n">overview_level</span><span class="p">}</span> <span class="k">if</span> <span class="n">overview_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
     <span class="p">)</span>
 
     <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">dep</span><span class="p">,</span> <span class="o">**</span><span class="n">_open_kwargs</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
@@ -1241,7 +1241,7 @@
         <span class="n">n1</span><span class="p">,</span> <span class="n">m1</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span>  <span class="c1"># rows (height), cols (width); used in the log below</span>
 
         <span class="n">profile</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
-            <span class="n">driver</span><span class="o">=</span><span class="s2">&quot;GTiff&quot;</span><span class="p">,</span>
+            <span class="n">driver</span><span class="o">=</span><span class="s2">"GTiff"</span><span class="p">,</span>
             <span class="n">width</span><span class="o">=</span><span class="n">src</span><span class="o">.</span><span class="n">width</span><span class="p">,</span>
             <span class="n">height</span><span class="o">=</span><span class="n">src</span><span class="o">.</span><span class="n">height</span><span class="p">,</span>
             <span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
@@ -1251,17 +1251,17 @@
             <span class="n">tiled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">blockxsize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
             <span class="n">blockysize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
-            <span class="n">compress</span><span class="o">=</span><span class="s2">&quot;deflate&quot;</span><span class="p">,</span>
+            <span class="n">compress</span><span class="o">=</span><span class="s2">"deflate"</span><span class="p">,</span>
             <span class="n">predictor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-            <span class="n">profile</span><span class="o">=</span><span class="s2">&quot;COG&quot;</span><span class="p">,</span>
+            <span class="n">profile</span><span class="o">=</span><span class="s2">"COG"</span><span class="p">,</span>
             <span class="n">nodata</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
-            <span class="n">BIGTIFF</span><span class="o">=</span><span class="s2">&quot;YES&quot;</span><span class="p">,</span>
+            <span class="n">BIGTIFF</span><span class="o">=</span><span class="s2">"YES"</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">write_floodmap</span><span class="p">:</span>
-            <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">profile</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="o">**</span><span class="n">profile</span><span class="p">):</span>
                 <span class="k">pass</span>
         <span class="k">if</span> <span class="n">write_zsmap</span><span class="p">:</span>
-            <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">zsmap_fn</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">profile</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">zsmap_fn</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="o">**</span><span class="n">profile</span><span class="p">):</span>
                 <span class="k">pass</span>
 
         <span class="n">windows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
@@ -1271,8 +1271,8 @@
         <span class="n">done</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">skipped</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Downscaling (</span><span class="si">{</span><span class="n">reproj_method</span><span class="si">}</span><span class="s2">, subtract_dem=</span><span class="si">{</span><span class="n">subtract_dem</span><span class="si">}</span><span class="s2">): &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> blocks (</span><span class="si">{</span><span class="n">m1</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">n1</span><span class="si">}</span><span class="s2"> pixels, block size </span><span class="si">{</span><span class="n">nrmax</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="sa">f</span><span class="s2">"Downscaling (</span><span class="si">{</span><span class="n">reproj_method</span><span class="si">}</span><span class="s2">, subtract_dem=</span><span class="si">{</span><span class="n">subtract_dem</span><span class="si">}</span><span class="s2">): "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> blocks (</span><span class="si">{</span><span class="n">m1</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">n1</span><span class="si">}</span><span class="s2"> pixels, block size </span><span class="si">{</span><span class="n">nrmax</span><span class="si">}</span><span class="s2">)"</span>
         <span class="p">)</span>
 
         <span class="k">for</span> <span class="n">window</span><span class="p">,</span> <span class="n">bm0</span><span class="p">,</span> <span class="n">bm1</span><span class="p">,</span> <span class="n">bn0</span><span class="p">,</span> <span class="n">bn1</span> <span class="ow">in</span> <span class="n">windows</span><span class="p">:</span>
@@ -1285,7 +1285,7 @@
                     <span class="k">continue</span>
 
             <span class="n">block_data</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-            <span class="c1"># Mask the DEM&#39;s own nodata sentinel (e.g. -9999) to NaN so it is</span>
+            <span class="c1"># Mask the DEM's own nodata sentinel (e.g. -9999) to NaN so it is</span>
             <span class="c1"># never treated as bathymetry (h = zsmax - (-9999) would explode).</span>
             <span class="k">if</span> <span class="n">src</span><span class="o">.</span><span class="n">nodata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">nodata</span><span class="p">):</span>
                 <span class="n">block_data</span><span class="p">[</span><span class="n">block_data</span> <span class="o">==</span> <span class="n">src</span><span class="o">.</span><span class="n">nodata</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
@@ -1304,28 +1304,28 @@
                 <span class="p">)</span>
                 <span class="n">block_dep</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
                     <span class="n">block_data</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(),</span>
-                    <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span>
-                    <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">y_coords</span><span class="p">),</span> <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">x_coords</span><span class="p">)},</span>
+                    <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">),</span>
+                    <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">"y"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"y"</span><span class="p">,</span> <span class="n">y_coords</span><span class="p">),</span> <span class="s2">"x"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="n">x_coords</span><span class="p">)},</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">indices_src</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">block_idx</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
                         <span class="n">block_idx</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(),</span>
-                        <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span>
-                        <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">y_coords</span><span class="p">),</span> <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">x_coords</span><span class="p">)},</span>
+                        <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">),</span>
+                        <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">"y"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"y"</span><span class="p">,</span> <span class="n">y_coords</span><span class="p">),</span> <span class="s2">"x"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="n">x_coords</span><span class="p">)},</span>
                     <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">cols</span><span class="p">,</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">bm0</span><span class="p">,</span> <span class="n">bm1</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">bn0</span><span class="p">,</span> <span class="n">bn1</span><span class="p">))</span>
                 <span class="n">xc</span><span class="p">,</span> <span class="n">yc</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">transform</span> <span class="o">*</span> <span class="p">(</span><span class="n">cols</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">rows</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span>
                 <span class="n">block_dep</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
                     <span class="n">block_data</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(),</span>
-                    <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span>
-                    <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;yc&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span> <span class="n">yc</span><span class="p">),</span> <span class="s2">&quot;xc&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span> <span class="n">xc</span><span class="p">)},</span>
+                    <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">),</span>
+                    <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">"yc"</span><span class="p">:</span> <span class="p">((</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">),</span> <span class="n">yc</span><span class="p">),</span> <span class="s2">"xc"</span><span class="p">:</span> <span class="p">((</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">),</span> <span class="n">xc</span><span class="p">)},</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">indices_src</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">block_idx</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
                         <span class="n">block_idx</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(),</span>
-                        <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span>
-                        <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;yc&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span> <span class="n">yc</span><span class="p">),</span> <span class="s2">&quot;xc&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span> <span class="n">xc</span><span class="p">)},</span>
+                        <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">),</span>
+                        <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">"yc"</span><span class="p">:</span> <span class="p">((</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">),</span> <span class="n">yc</span><span class="p">),</span> <span class="s2">"xc"</span><span class="p">:</span> <span class="p">((</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">),</span> <span class="n">xc</span><span class="p">)},</span>
                     <span class="p">)</span>
 
             <span class="n">block_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">to_wkt</span><span class="p">())</span>
@@ -1346,39 +1346,39 @@
             <span class="p">)</span>
 
             <span class="k">if</span> <span class="n">write_floodmap</span><span class="p">:</span>
-                <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="s2">&quot;r+&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fm</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="s2">"r+"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fm</span><span class="p">:</span>
                     <span class="n">fm</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
                         <span class="n">block_out</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span> <span class="n">indexes</span><span class="o">=</span><span class="mi">1</span>
                     <span class="p">)</span>
             <span class="k">if</span> <span class="n">write_zsmap</span><span class="p">:</span>
-                <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">zsmap_fn</span><span class="p">,</span> <span class="s2">&quot;r+&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">zs</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">zsmap_fn</span><span class="p">,</span> <span class="s2">"r+"</span><span class="p">)</span> <span class="k">as</span> <span class="n">zs</span><span class="p">:</span>
                     <span class="n">zs</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
                         <span class="n">block_zs</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span> <span class="n">indexes</span><span class="o">=</span><span class="mi">1</span>
                     <span class="p">)</span>
 
             <span class="n">done</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">if</span> <span class="n">done</span> <span class="o">%</span> <span class="mi">25</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">done</span> <span class="o">==</span> <span class="n">total</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Block </span><span class="si">{</span><span class="n">done</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="mi">100</span><span class="o">*</span><span class="n">done</span><span class="o">/</span><span class="n">total</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">%)&quot;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Block </span><span class="si">{</span><span class="n">done</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="mi">100</span><span class="o">*</span><span class="n">done</span><span class="o">/</span><span class="n">total</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">%)"</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">skipped</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Skipped </span><span class="si">{</span><span class="n">skipped</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> empty blocks&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Skipped </span><span class="si">{</span><span class="n">skipped</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> empty blocks"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">indices_src</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">indices_src</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="n">write_floodmap</span><span class="p">:</span>
-        <span class="n">build_overviews</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="n">resample_method</span><span class="o">=</span><span class="s2">&quot;nearest&quot;</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">)</span>
+        <span class="n">build_overviews</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="n">resample_method</span><span class="o">=</span><span class="s2">"nearest"</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">write_zsmap</span><span class="p">:</span>
-        <span class="n">build_overviews</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">zsmap_fn</span><span class="p">,</span> <span class="n">resample_method</span><span class="o">=</span><span class="s2">&quot;nearest&quot;</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">)</span>
+        <span class="n">build_overviews</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">zsmap_fn</span><span class="p">,</span> <span class="n">resample_method</span><span class="o">=</span><span class="s2">"nearest"</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">)</span>
 
 
 <span class="c1">#  core helpers — interpolate a SFINCS zsmax field onto a DEM grid ------------</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_scatter_interpolator</span><span class="p">(</span><span class="n">zsmax</span><span class="p">:</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">,</span> <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Scattered interpolant over the wet quadtree cell centres.</span>
+<span class="w">    </span><span class="sd">"""Scattered interpolant over the wet quadtree cell centres.</span>
 
-<span class="sd">    ``&quot;bilinear&quot;`` -&gt; linear barycentric interpolation (Sanders &amp; Schubert</span>
+<span class="sd">    ``"bilinear"`` -&gt; linear barycentric interpolation (Sanders &amp; Schubert</span>
 <span class="sd">    2019); anything else -&gt; nearest cell centre.  Built once over the whole</span>
 <span class="sd">    mesh so the file-based streamer can reuse it across every block.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearNDInterpolator</span><span class="p">,</span> <span class="n">NearestNDInterpolator</span>
 
     <span class="n">grid</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">ugrid</span><span class="o">.</span><span class="n">grid</span>
@@ -1386,18 +1386,18 @@
     <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">zsmax</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
     <span class="n">wet</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>
     <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">face_x</span><span class="p">[</span><span class="n">wet</span><span class="p">],</span> <span class="n">face_y</span><span class="p">[</span><span class="n">wet</span><span class="p">]])</span>
-    <span class="k">if</span> <span class="n">reproj_method</span> <span class="o">==</span> <span class="s2">&quot;bilinear&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">reproj_method</span> <span class="o">==</span> <span class="s2">"bilinear"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">LinearNDInterpolator</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">vals</span><span class="p">[</span><span class="n">wet</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">NearestNDInterpolator</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">vals</span><span class="p">[</span><span class="n">wet</span><span class="p">])</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_scatter_zs_on_dep</span><span class="p">(</span><span class="n">interpolator</span><span class="p">,</span> <span class="n">dep</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">model_crs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Query a scattered interpolant at every DEM pixel centre.</span>
+<span class="w">    </span><span class="sd">"""Query a scattered interpolant at every DEM pixel centre.</span>
 
-<span class="sd">    Pixel centres are computed in the DEM&#39;s CRS and transformed to the model</span>
+<span class="sd">    Pixel centres are computed in the DEM's CRS and transformed to the model</span>
 <span class="sd">    CRS before querying — otherwise a DEM and model in different projections</span>
-<span class="sd">    silently return all-NaN (the query lands outside the interpolant&#39;s hull).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    silently return all-NaN (the query lands outside the interpolant's hull).</span>
+<span class="sd">    """</span>
     <span class="n">x_dim</span><span class="p">,</span> <span class="n">y_dim</span> <span class="o">=</span> <span class="n">dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">x_dim</span><span class="p">,</span> <span class="n">dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">y_dim</span>
     <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">dep</span><span class="p">[</span><span class="n">x_dim</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">dep</span><span class="p">[</span><span class="n">y_dim</span><span class="p">]</span><span class="o">.</span><span class="n">size</span>
     <span class="n">xx</span><span class="p">,</span> <span class="n">yy</span> <span class="o">=</span> <span class="n">_block_pixel_centres</span><span class="p">(</span><span class="n">dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
@@ -1413,7 +1413,7 @@
     <span class="n">vals</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">interpolator</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">xx</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">yy</span><span class="p">)]))</span>
         <span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">xx</span><span class="p">))</span>
-        <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"float32"</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="n">zs</span> <span class="o">=</span> <span class="n">dep</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">vals</span><span class="p">)</span>
     <span class="n">zs</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
@@ -1426,13 +1426,13 @@
     <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">interpolator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Interpolate ``zsmax`` (regular or quadtree) onto the DEM grid.</span>
+<span class="w">    </span><span class="sd">"""Interpolate ``zsmax`` (regular or quadtree) onto the DEM grid.</span>
 
 <span class="sd">    * a pre-built ``interpolator`` (file-based streamer) -&gt; scattered query;</span>
 <span class="sd">    * regular grid -&gt; reproject engine (nearest/bilinear, CRS-aware);</span>
 <span class="sd">    * quadtree + bilinear -&gt; scattered linear interpolant over cell centres;</span>
 <span class="sd">    * quadtree + nearest -&gt; exact containment via xugrid rasterize/regrid.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">interpolator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">model_crs</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">zsmax</span><span class="o">.</span><span class="n">ugrid</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">crs</span>
@@ -1446,15 +1446,15 @@
         <span class="k">return</span> <span class="n">zs_on_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
 
     <span class="c1"># quadtree (xu.UgridDataArray)</span>
-    <span class="k">if</span> <span class="n">reproj_method</span> <span class="o">==</span> <span class="s2">&quot;bilinear&quot;</span><span class="p">:</span>
-        <span class="n">interp</span> <span class="o">=</span> <span class="n">_build_scatter_interpolator</span><span class="p">(</span><span class="n">zsmax</span><span class="p">,</span> <span class="s2">&quot;bilinear&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">reproj_method</span> <span class="o">==</span> <span class="s2">"bilinear"</span><span class="p">:</span>
+        <span class="n">interp</span> <span class="o">=</span> <span class="n">_build_scatter_interpolator</span><span class="p">(</span><span class="n">zsmax</span><span class="p">,</span> <span class="s2">"bilinear"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_scatter_zs_on_dep</span><span class="p">(</span><span class="n">interp</span><span class="p">,</span> <span class="n">dep</span><span class="p">,</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">ugrid</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
 
     <span class="c1"># nearest: exact cell containment</span>
     <span class="k">if</span> <span class="n">dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">zs_on_dep</span> <span class="o">=</span> <span class="n">zsmax</span><span class="o">.</span><span class="n">ugrid</span><span class="o">.</span><span class="n">rasterize_like</span><span class="p">(</span><span class="n">dep</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">uda_dep</span> <span class="o">=</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="o">.</span><span class="n">from_structured2d</span><span class="p">(</span><span class="n">dep</span><span class="p">,</span> <span class="s2">&quot;xc&quot;</span><span class="p">,</span> <span class="s2">&quot;yc&quot;</span><span class="p">)</span>
+        <span class="n">uda_dep</span> <span class="o">=</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="o">.</span><span class="n">from_structured2d</span><span class="p">(</span><span class="n">dep</span><span class="p">,</span> <span class="s2">"xc"</span><span class="p">,</span> <span class="s2">"yc"</span><span class="p">)</span>
         <span class="n">regridder</span> <span class="o">=</span> <span class="n">xu</span><span class="o">.</span><span class="n">CentroidLocatorRegridder</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">zsmax</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="n">uda_dep</span><span class="p">)</span>
         <span class="n">zs_on_dep</span> <span class="o">=</span> <span class="n">dep</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">regridder</span><span class="o">.</span><span class="n">regrid</span><span class="p">(</span><span class="n">zsmax</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dep</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">zs_on_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
@@ -1467,12 +1467,12 @@
     <span class="n">indices</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">hmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
     <span class="n">gdf_mask</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;nearest&quot;</span><span class="p">,</span>
+    <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"nearest"</span><span class="p">,</span>
     <span class="n">subtract_dem</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">return_zs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">interpolator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Downscale a SFINCS ``zsmax`` field onto a DEM grid (in-memory / per-block).</span>
+<span class="w">    </span><span class="sd">"""Downscale a SFINCS ``zsmax`` field onto a DEM grid (in-memory / per-block).</span>
 
 <span class="sd">    This is the single interpolation core shared by the in-memory and</span>
 <span class="sd">    file-based paths.  It interpolates the water level onto the DEM grid</span>
@@ -1486,14 +1486,14 @@
 <span class="sd">    dep : xr.DataArray</span>
 <span class="sd">        High-resolution DEM (m) of the model region (a single block).</span>
 <span class="sd">    indices : xr.DataArray, optional</span>
-<span class="sd">        Cell-index raster for exact containment (``reproj_method=&quot;nearest&quot;``)</span>
+<span class="sd">        Cell-index raster for exact containment (``reproj_method="nearest"``)</span>
 <span class="sd">        and/or to mask pixels outside the domain.</span>
 <span class="sd">    hmin : float, optional</span>
 <span class="sd">        Minimum flood depth (m), by default 0.05.  Only applied when</span>
 <span class="sd">        ``subtract_dem`` is ``True``.</span>
 <span class="sd">    gdf_mask : gpd.GeoDataFrame, optional</span>
 <span class="sd">        Polygons to mask the output (area outside set to nodata).</span>
-<span class="sd">    reproj_method : {&quot;nearest&quot;, &quot;bilinear&quot;}, optional</span>
+<span class="sd">    reproj_method : {"nearest", "bilinear"}, optional</span>
 <span class="sd">        WSE interpolation onto the DEM grid.</span>
 <span class="sd">    subtract_dem : bool, optional</span>
 <span class="sd">        Subtract the DEM to return flood depth (``True``, default) or return</span>
@@ -1509,18 +1509,18 @@
 <span class="sd">    xr.DataArray or tuple[xr.DataArray, xr.DataArray]</span>
 <span class="sd">        The downscaled product (flood depth or water level); when ``return_zs``</span>
 <span class="sd">        is ``True`` a ``(product, water_level)`` tuple is returned instead.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">idx_outside</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="c1"># Fast path: exact containing-cell lookup via the index COG.  Only valid</span>
     <span class="c1"># for nearest sampling — bilinear needs neighbouring cell centres, so it</span>
     <span class="c1"># falls through to the interpolation path and uses the index only to mask.</span>
-    <span class="k">if</span> <span class="n">indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">reproj_method</span> <span class="o">!=</span> <span class="s2">&quot;bilinear&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">reproj_method</span> <span class="o">!=</span> <span class="s2">"bilinear"</span><span class="p">:</span>
         <span class="c1"># Squeeze a possible band dim (rioxarray hands back (1, ny, nx)).</span>
         <span class="n">idx_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">indices</span><span class="o">.</span><span class="n">values</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">idx_arr</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">dep</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Indices shape </span><span class="si">{}</span><span class="s2"> does not match dep shape </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="s2">"Indices shape </span><span class="si">{}</span><span class="s2"> does not match dep shape </span><span class="si">{}</span><span class="s2">."</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                     <span class="n">idx_arr</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dep</span><span class="o">.</span><span class="n">shape</span>
                 <span class="p">)</span>
             <span class="p">)</span>
@@ -1537,12 +1537,12 @@
         <span class="c1"># match the SFINCS index convention (get_indices_at_points returns</span>
         <span class="c1"># iind*nmax + jind; quadtree zsmax is already 1-D so both are a no-op).</span>
         <span class="n">zs_cell</span> <span class="o">=</span> <span class="n">_canonical_cellfield</span><span class="p">(</span><span class="n">zsmax</span><span class="p">)</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
-        <span class="n">zs_numpy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">zs_cell</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="p">)</span>
+        <span class="n">zs_numpy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">zs_cell</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s2">"F"</span><span class="p">)</span>
         <span class="n">zs_vals</span> <span class="o">=</span> <span class="n">zs_numpy</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
         <span class="n">zs_vals</span><span class="p">[</span><span class="n">no_data_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
 
         <span class="n">zs_on_dep</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
-            <span class="n">zs_vals</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">],</span> <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">dep</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">dep</span><span class="o">.</span><span class="n">x</span><span class="p">}</span>
+            <span class="n">zs_vals</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">],</span> <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">"y"</span><span class="p">:</span> <span class="n">dep</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">:</span> <span class="n">dep</span><span class="o">.</span><span class="n">x</span><span class="p">}</span>
         <span class="p">)</span>
         <span class="n">zs_on_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
         <span class="n">zs_on_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
@@ -1554,8 +1554,8 @@
             <span class="n">idx_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">indices</span><span class="o">.</span><span class="n">values</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">idx_vals</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">dep</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Indices shape </span><span class="si">{</span><span class="n">idx_vals</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> does not match &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;dep shape </span><span class="si">{</span><span class="n">dep</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">.&quot;</span>
+                    <span class="sa">f</span><span class="s2">"Indices shape </span><span class="si">{</span><span class="n">idx_vals</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> does not match "</span>
+                    <span class="sa">f</span><span class="s2">"dep shape </span><span class="si">{</span><span class="n">dep</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">."</span>
                 <span class="p">)</span>
             <span class="n">idx_nodata</span> <span class="o">=</span> <span class="n">indices</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span>
             <span class="k">if</span> <span class="n">idx_nodata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1567,16 +1567,16 @@
             <span class="k">if</span> <span class="n">inside</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
                 <span class="n">zs_flat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
                     <span class="n">_canonical_cellfield</span><span class="p">(</span><span class="n">zsmax</span><span class="p">)</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span><span class="o">.</span><span class="n">values</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="p">)</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s2">"F"</span><span class="p">)</span>
                 <span class="n">dry</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">idx_vals</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
                 <span class="n">dry</span><span class="p">[</span><span class="n">inside</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">zs_flat</span><span class="p">[</span><span class="n">idx_vals</span><span class="p">[</span><span class="n">inside</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)])</span>
                 <span class="n">idx_outside</span> <span class="o">=</span> <span class="n">idx_outside</span> <span class="o">|</span> <span class="n">dry</span>
 
     <span class="c1"># Subtract the DEM for flood depth, or keep the raw water level.</span>
     <span class="k">if</span> <span class="n">subtract_dem</span><span class="p">:</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="p">(</span><span class="n">zs_on_dep</span> <span class="o">-</span> <span class="n">dep</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">(</span><span class="n">zs_on_dep</span> <span class="o">-</span> <span class="n">dep</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"float32"</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="n">zs_on_dep</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">zs_on_dep</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"float32"</span><span class="p">)</span>
     <span class="n">out</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">idx_outside</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1609,7 +1609,7 @@
     <span class="n">output_fns</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove disconnected flooding from a downscaled depth raster.</span>
+<span class="w">    </span><span class="sd">"""Remove disconnected flooding from a downscaled depth raster.</span>
 
 <span class="sd">    Identifies wet pixels reachable from SFINCS boundary points via BFS</span>
 <span class="sd">    flood-fill (8-connectivity), then masks pixels that are wet but</span>
@@ -1642,7 +1642,7 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    None</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="c1"># --- 1. Get raster metadata without loading the full array ---------------</span>
     <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">depth_fn</span><span class="p">))</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
         <span class="n">height</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">height</span>
@@ -1660,7 +1660,7 @@
 
     <span class="n">n_wet</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">wet</span><span class="p">))</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;Disconnected-flooding removal: </span><span class="si">{</span><span class="n">n_wet</span><span class="si">}</span><span class="s2"> wet pixels &quot;</span> <span class="sa">f</span><span class="s2">&quot;(hmin=</span><span class="si">{</span><span class="n">hmin</span><span class="si">}</span><span class="s2"> m)&quot;</span>
+        <span class="sa">f</span><span class="s2">"Disconnected-flooding removal: </span><span class="si">{</span><span class="n">n_wet</span><span class="si">}</span><span class="s2"> wet pixels "</span> <span class="sa">f</span><span class="s2">"(hmin=</span><span class="si">{</span><span class="n">hmin</span><span class="si">}</span><span class="s2"> m)"</span>
     <span class="p">)</span>
 
     <span class="c1"># --- 3. Read boundary points and map to pixel coordinates ----------------</span>
@@ -1690,8 +1690,8 @@
             <span class="n">n_bnd_wet</span> <span class="o">+=</span> <span class="mi">1</span>
 
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bnd_gdf</span><span class="p">)</span><span class="si">}</span><span class="s2"> boundary points, </span><span class="si">{</span><span class="n">n_bnd_wet</span><span class="si">}</span><span class="s2"> on wet pixels, &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">seed_indices</span><span class="p">)</span><span class="si">}</span><span class="s2"> seed pixels for BFS&quot;</span>
+        <span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bnd_gdf</span><span class="p">)</span><span class="si">}</span><span class="s2"> boundary points, </span><span class="si">{</span><span class="n">n_bnd_wet</span><span class="si">}</span><span class="s2"> on wet pixels, "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">seed_indices</span><span class="p">)</span><span class="si">}</span><span class="s2"> seed pixels for BFS"</span>
     <span class="p">)</span>
 
     <span class="c1"># Vectorised level-set BFS: expand frontier one ring at a time using numpy</span>
@@ -1729,16 +1729,16 @@
 
         <span class="k">if</span> <span class="n">iteration</span> <span class="o">%</span> <span class="mi">500</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;  BFS iteration </span><span class="si">{</span><span class="n">iteration</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">total_processed</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> pixels &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;reached, frontier </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">frontier</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"  BFS iteration </span><span class="si">{</span><span class="n">iteration</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">total_processed</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> pixels "</span>
+                <span class="sa">f</span><span class="s2">"reached, frontier </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">frontier</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
 
     <span class="n">n_connected</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">connected</span><span class="p">))</span>
     <span class="n">n_disconnected</span> <span class="o">=</span> <span class="n">n_wet</span> <span class="o">-</span> <span class="n">n_connected</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">n_connected</span><span class="si">}</span><span class="s2"> connected pixels, &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n_disconnected</span><span class="si">}</span><span class="s2"> disconnected pixels removed &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n_disconnected</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">n_wet</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%)&quot;</span>
+        <span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">n_connected</span><span class="si">}</span><span class="s2"> connected pixels, "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_disconnected</span><span class="si">}</span><span class="s2"> disconnected pixels removed "</span>
+        <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n_disconnected</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">n_wet</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%)"</span>
     <span class="p">)</span>
 
     <span class="c1"># Free wet mask — connected mask is all we need from here</span>
@@ -1747,21 +1747,21 @@
     <span class="c1"># --- 5. Write connection mask raster (optional) --------------------------</span>
     <span class="k">if</span> <span class="n">connection_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">conn_profile</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
-            <span class="n">driver</span><span class="o">=</span><span class="s2">&quot;GTiff&quot;</span><span class="p">,</span>
+            <span class="n">driver</span><span class="o">=</span><span class="s2">"GTiff"</span><span class="p">,</span>
             <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">,</span>
             <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span>
             <span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-            <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int32&quot;</span><span class="p">,</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="s2">"int32"</span><span class="p">,</span>
             <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span>
             <span class="n">transform</span><span class="o">=</span><span class="n">transform</span><span class="p">,</span>
             <span class="n">tiled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">blockxsize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
             <span class="n">blockysize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
-            <span class="n">compress</span><span class="o">=</span><span class="s2">&quot;deflate&quot;</span><span class="p">,</span>
+            <span class="n">compress</span><span class="o">=</span><span class="s2">"deflate"</span><span class="p">,</span>
             <span class="n">nodata</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">depth_fn</span><span class="p">))</span> <span class="k">as</span> <span class="n">src_dep</span><span class="p">:</span>
-            <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">connection_fn</span><span class="p">),</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">conn_profile</span><span class="p">)</span> <span class="k">as</span> <span class="n">dst</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">connection_fn</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">,</span> <span class="o">**</span><span class="n">conn_profile</span><span class="p">)</span> <span class="k">as</span> <span class="n">dst</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">window</span> <span class="ow">in</span> <span class="n">dst</span><span class="o">.</span><span class="n">block_windows</span><span class="p">(</span><span class="mi">1</span><span class="p">):</span>
                     <span class="n">r0</span> <span class="o">=</span> <span class="n">window</span><span class="o">.</span><span class="n">row_off</span>
                     <span class="n">c0</span> <span class="o">=</span> <span class="n">window</span><span class="o">.</span><span class="n">col_off</span>
@@ -1774,7 +1774,7 @@
                     <span class="n">blk</span><span class="p">[</span><span class="n">wet_blk</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
                     <span class="n">blk</span><span class="p">[</span><span class="n">conn_blk</span> <span class="o">&amp;</span> <span class="n">wet_blk</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
                     <span class="n">dst</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">blk</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Connection mask written: </span><span class="si">{</span><span class="n">connection_fn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Connection mask written: </span><span class="si">{</span><span class="n">connection_fn</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="c1"># --- 6. Mask additional rasters (optional) -------------------------------</span>
     <span class="k">if</span> <span class="n">output_fns</span><span class="p">:</span>
@@ -1782,15 +1782,15 @@
             <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">input_fn</span><span class="p">))</span> <span class="k">as</span> <span class="n">src_var</span><span class="p">:</span>
                 <span class="n">out_meta</span> <span class="o">=</span> <span class="n">src_var</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
                 <span class="n">out_meta</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
-                    <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">,</span>
+                    <span class="n">dtype</span><span class="o">=</span><span class="s2">"float32"</span><span class="p">,</span>
                     <span class="n">nodata</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
                     <span class="n">tiled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                     <span class="n">blockxsize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
                     <span class="n">blockysize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
-                    <span class="n">compress</span><span class="o">=</span><span class="s2">&quot;deflate&quot;</span><span class="p">,</span>
+                    <span class="n">compress</span><span class="o">=</span><span class="s2">"deflate"</span><span class="p">,</span>
                     <span class="n">predictor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">output_fn</span><span class="p">),</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">out_meta</span><span class="p">)</span> <span class="k">as</span> <span class="n">dst</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">output_fn</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">,</span> <span class="o">**</span><span class="n">out_meta</span><span class="p">)</span> <span class="k">as</span> <span class="n">dst</span><span class="p">:</span>
                     <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">window</span> <span class="ow">in</span> <span class="n">dst</span><span class="o">.</span><span class="n">block_windows</span><span class="p">(</span><span class="mi">1</span><span class="p">):</span>
                         <span class="n">r0</span> <span class="o">=</span> <span class="n">window</span><span class="o">.</span><span class="n">row_off</span>
                         <span class="n">c0</span> <span class="o">=</span> <span class="n">window</span><span class="o">.</span><span class="n">col_off</span>
@@ -1802,7 +1802,7 @@
                             <span class="n">np</span><span class="o">.</span><span class="n">float32</span>
                         <span class="p">)</span>
                         <span class="n">dst</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">masked_block</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">)</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Masked raster written: </span><span class="si">{</span><span class="n">output_fn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Masked raster written: </span><span class="si">{</span><span class="n">output_fn</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="kc">None</span></div>
 
@@ -1817,7 +1817,7 @@
     <span class="n">strict_downhill</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute a boolean mask of cells reachable from boundary/source cells</span>
+<span class="w">    </span><span class="sd">"""Compute a boolean mask of cells reachable from boundary/source cells</span>
 <span class="sd">    via the quadtree neighbor connectivity.</span>
 
 <span class="sd">    Uses the neighbor connectivity arrays (mu1/md1/nu1/nd1) from sfincs.nc.</span>
@@ -1860,7 +1860,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    reachable : np.ndarray of bool, shape (n_faces,)</span>
 <span class="sd">        True for cells that are connected to boundary sources.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">deque</span>
 
     <span class="c1"># --- Reduce time dimension ---</span>
@@ -1872,12 +1872,12 @@
 
     <span class="c1"># --- Read neighbor connectivity from sfincs.nc ---</span>
     <span class="n">uds</span> <span class="o">=</span> <span class="n">xu</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">sfincs_nc</span><span class="p">))</span>
-    <span class="n">mask_arr</span> <span class="o">=</span> <span class="n">uds</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span> <span class="k">if</span> <span class="s2">&quot;mask&quot;</span> <span class="ow">in</span> <span class="n">uds</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_faces</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">mask_arr</span> <span class="o">=</span> <span class="n">uds</span><span class="p">[</span><span class="s2">"mask"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span> <span class="k">if</span> <span class="s2">"mask"</span> <span class="ow">in</span> <span class="n">uds</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_faces</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
 
     <span class="c1"># Neighbor arrays: 1-based indices, 0 = no neighbor</span>
     <span class="n">nb_keys</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">neighbors</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;mu1&quot;</span><span class="p">,</span> <span class="s2">&quot;md1&quot;</span><span class="p">,</span> <span class="s2">&quot;nu1&quot;</span><span class="p">,</span> <span class="s2">&quot;nd1&quot;</span><span class="p">,</span> <span class="s2">&quot;mu2&quot;</span><span class="p">,</span> <span class="s2">&quot;md2&quot;</span><span class="p">,</span> <span class="s2">&quot;nu2&quot;</span><span class="p">,</span> <span class="s2">&quot;nd2&quot;</span><span class="p">]:</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"mu1"</span><span class="p">,</span> <span class="s2">"md1"</span><span class="p">,</span> <span class="s2">"nu1"</span><span class="p">,</span> <span class="s2">"nd1"</span><span class="p">,</span> <span class="s2">"mu2"</span><span class="p">,</span> <span class="s2">"md2"</span><span class="p">,</span> <span class="s2">"nu2"</span><span class="p">,</span> <span class="s2">"nd2"</span><span class="p">]:</span>
         <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">uds</span><span class="p">:</span>
             <span class="n">arr</span> <span class="o">=</span> <span class="n">uds</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># 0-based; original 0 -&gt; -1</span>
             <span class="n">neighbors</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">arr</span>
@@ -1890,7 +1890,7 @@
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sources</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="c1"># Fallback: cells with no upstream wet neighbor</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No boundary cells found; using local-maximum WSE cells.&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"No boundary cells found; using local-maximum WSE cells."</span><span class="p">)</span>
         <span class="n">is_source</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_faces</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_faces</span><span class="p">):</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">wet</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
@@ -1906,8 +1906,8 @@
         <span class="n">sources</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">is_source</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;Flow connectivity: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sources</span><span class="p">)</span><span class="si">}</span><span class="s2"> source cells, &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">wet</span><span class="p">)</span><span class="si">}</span><span class="s2"> wet cells, strict_downhill=</span><span class="si">{</span><span class="n">strict_downhill</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">"Flow connectivity: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sources</span><span class="p">)</span><span class="si">}</span><span class="s2"> source cells, "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">wet</span><span class="p">)</span><span class="si">}</span><span class="s2"> wet cells, strict_downhill=</span><span class="si">{</span><span class="n">strict_downhill</span><span class="si">}</span><span class="s2">"</span>
     <span class="p">)</span>
 
     <span class="c1"># --- BFS from sources ---</span>
@@ -1933,9 +1933,9 @@
     <span class="n">n_reachable</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">reachable</span><span class="p">)</span>
     <span class="n">n_disconnected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">wet</span><span class="p">)</span> <span class="o">-</span> <span class="n">n_reachable</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">n_reachable</span><span class="si">}</span><span class="s2"> cells reachable, &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n_disconnected</span><span class="si">}</span><span class="s2"> wet cells disconnected &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="mi">100</span><span class="o">*</span><span class="n">n_disconnected</span><span class="o">/</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">wet</span><span class="p">))</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%)&quot;</span>
+        <span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">n_reachable</span><span class="si">}</span><span class="s2"> cells reachable, "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_disconnected</span><span class="si">}</span><span class="s2"> wet cells disconnected "</span>
+        <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="mi">100</span><span class="o">*</span><span class="n">n_disconnected</span><span class="o">/</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">wet</span><span class="p">))</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%)"</span>
     <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">reachable</span>

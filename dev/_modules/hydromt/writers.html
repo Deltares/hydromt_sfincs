@@ -426,7 +426,7 @@
                 <article class="bd-article">
                   
   <h1>Source code for hydromt.writers</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Implementations for all of the necessary IO writing for HydroMT.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Implementations for all of the necessary IO writing for HydroMT."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
@@ -448,30 +448,30 @@
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;write_nc&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_region&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_toml&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_xy&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_yaml&quot;</span><span class="p">,</span>
+    <span class="s2">"write_nc"</span><span class="p">,</span>
+    <span class="s2">"write_region"</span><span class="p">,</span>
+    <span class="s2">"write_toml"</span><span class="p">,</span>
+    <span class="s2">"write_xy"</span><span class="p">,</span>
+    <span class="s2">"write_yaml"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">write_yaml</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write a dictionary to a yaml formatted file.&quot;&quot;&quot;</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write a dictionary to a yaml formatted file."""</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="n">dump_yaml</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">write_toml</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write a dictionary to a toml formatted file.&quot;&quot;&quot;</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write a dictionary to a toml formatted file."""</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="n">dump_toml</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="write_xy">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.writers.write_xy.html#hydromt_sfincs.writers.write_xy">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">write_xy</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gdf</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%.4f</span><span class="s2">&quot;</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write geopandas.GeoDataFrame with Point geometries to point xy files.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_xy</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gdf</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"</span><span class="si">%.4f</span><span class="s2">"</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Write geopandas.GeoDataFrame with Point geometries to point xy files.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -480,12 +480,12 @@
 <span class="sd">    gdf: geopandas.GeoDataFrame</span>
 <span class="sd">        GeoDataFrame to write to point file.</span>
 <span class="sd">    fmt: fmt</span>
-<span class="sd">        String formatting. By default &quot;%.4f&quot;.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">gdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;Point&quot;</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;gdf should contain only Point geometries.&quot;</span><span class="p">)</span>
+<span class="sd">        String formatting. By default "%.4f".</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">gdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"Point"</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"gdf should contain only Point geometries."</span><span class="p">)</span>
     <span class="n">xy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">((</span><span class="n">gdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">gdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">values</span><span class="p">))</span><span class="o">.</span><span class="n">T</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">xy</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span></div>
 
 
@@ -502,7 +502,7 @@
     <span class="n">progressbar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">to_netcdf_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeferredFileClose</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write xarray.Dataset and/or xarray.DataArray to netcdf file.</span>
+<span class="w">    </span><span class="sd">"""Write xarray.Dataset and/or xarray.DataArray to netcdf file.</span>
 
 <span class="sd">    Possibility to update the xarray objects attributes to get GDAL compliant NetCDF</span>
 <span class="sd">    files, using :py:meth:`~hydromt.raster.gdal_compliant`.</span>
@@ -537,10 +537,10 @@
 <span class="sd">        using dask. By default False</span>
 <span class="sd">    to_netcdf_kwargs : dict</span>
 <span class="sd">        Additional keyword arguments that are passed to the `to_netcdf` function.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="c1"># Check the typing</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="p">(</span><span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dataset object of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> not recognized&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Dataset object of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> not recognized"</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">ds</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -548,13 +548,13 @@
         <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">to_dataset</span><span class="p">()</span>
     <span class="c1"># Check whether the file already exists</span>
     <span class="k">if</span> <span class="n">file_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force_overwrite</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">file_path</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span><span class="si">}</span><span class="s2"> already exists&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"File </span><span class="si">{</span><span class="n">file_path</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span><span class="si">}</span><span class="s2"> already exists"</span><span class="p">)</span>
     <span class="n">file_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># Focus on the encoding and set these for all dims, coords and data vars</span>
     <span class="n">to_netcdf_kwargs</span> <span class="o">=</span> <span class="n">to_netcdf_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
     <span class="n">to_netcdf_kwargs</span> <span class="o">=</span> <span class="n">to_netcdf_kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">encoding</span> <span class="o">=</span> <span class="n">to_netcdf_kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;encoding&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">encoding</span> <span class="o">=</span> <span class="n">to_netcdf_kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"encoding"</span><span class="p">,</span> <span class="p">{})</span>
 
     <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">data_vars</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">encoding</span><span class="p">:</span>
@@ -562,14 +562,14 @@
 
     <span class="c1"># Remove the nodata val specifier for the dimensions, CF compliant that is</span>
     <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
-        <span class="n">ds</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;_FillValue&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">ds</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"_FillValue"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">encoding</span><span class="p">:</span>
-            <span class="n">encoding</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;_FillValue&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">})</span>
+            <span class="n">encoding</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"_FillValue"</span><span class="p">:</span> <span class="kc">None</span><span class="p">})</span>
 
     <span class="c1"># Set compression if True</span>
     <span class="k">if</span> <span class="n">compress</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">data_vars</span><span class="p">:</span>
-            <span class="n">encoding</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;zlib&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+            <span class="n">encoding</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"zlib"</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
 
     <span class="c1"># Make gdal compliant if True, only in case of a spatial dataset</span>
     <span class="k">if</span> <span class="n">gdal_compliant</span><span class="p">:</span>
@@ -579,7 +579,7 @@
         <span class="n">encoding</span><span class="p">[</span><span class="n">y_dim</span><span class="p">]</span> <span class="o">=</span> <span class="n">encoding</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">y_old</span><span class="p">)</span>
         <span class="n">encoding</span><span class="p">[</span><span class="n">x_dim</span><span class="p">]</span> <span class="o">=</span> <span class="n">encoding</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">x_old</span><span class="p">)</span>
 
-    <span class="n">to_netcdf_kwargs</span><span class="p">[</span><span class="s2">&quot;encoding&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">encoding</span>
+    <span class="n">to_netcdf_kwargs</span><span class="p">[</span><span class="s2">"encoding"</span><span class="p">]</span> <span class="o">=</span> <span class="n">encoding</span>
 
     <span class="c1"># Try to write the file</span>
     <span class="k">try</span><span class="p">:</span>
@@ -590,10 +590,10 @@
             <span class="n">to_netcdf_kwargs</span><span class="o">=</span><span class="n">to_netcdf_kwargs</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not write to file </span><span class="si">{</span><span class="n">file_path</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span><span class="si">}</span><span class="s2">, deferring write&quot;</span><span class="p">)</span>
-        <span class="n">unique_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not write to file </span><span class="si">{</span><span class="n">file_path</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span><span class="si">}</span><span class="s2">, deferring write"</span><span class="p">)</span>
+        <span class="n">unique_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
         <span class="n">hash_str</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">unique_str</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">8</span><span class="p">]</span>
-        <span class="n">temp_filepath</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">with_stem</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">file_path</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">hash_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">temp_filepath</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">with_stem</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">file_path</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">hash_str</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">_nc_progress</span><span class="p">(</span>
             <span class="n">ds</span><span class="p">,</span>
             <span class="n">file_path</span><span class="o">=</span><span class="n">temp_filepath</span><span class="p">,</span>
@@ -612,7 +612,7 @@
     <span class="n">to_wgs84</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">to_file_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write the model region to a file.</span>
+<span class="w">    </span><span class="sd">"""Write the model region to a file.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -622,15 +622,15 @@
 <span class="sd">        If True, the region is reprojected to WGS84 before writing. default is False.</span>
 <span class="sd">    to_file_kwargs: dict, optional</span>
 <span class="sd">        Additional keyword arguments passed to the `geopandas.GeoDataFrame.to_file` function.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">file_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">to_file_kwargs</span> <span class="o">=</span> <span class="n">to_file_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
 
     <span class="n">gdf</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">region</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
 
     <span class="k">if</span> <span class="n">to_wgs84</span> <span class="ow">and</span> <span class="p">(</span>
-        <span class="n">to_file_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;driver&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;GeoJSON&quot;</span>
-        <span class="ow">or</span> <span class="n">file_path</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;.geojson&quot;</span>
+        <span class="n">to_file_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"driver"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"GeoJSON"</span>
+        <span class="ow">or</span> <span class="n">file_path</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">".geojson"</span>
     <span class="p">):</span>
         <span class="n">gdf</span> <span class="o">=</span> <span class="n">gdf</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span>
 
@@ -644,9 +644,9 @@
     <span class="n">progressbar</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="n">to_netcdf_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">):</span>
-    <span class="k">if</span> <span class="s2">&quot;compute&quot;</span> <span class="ow">in</span> <span class="n">to_netcdf_kwargs</span><span class="p">:</span>
+    <span class="k">if</span> <span class="s2">"compute"</span> <span class="ow">in</span> <span class="n">to_netcdf_kwargs</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;&#39;compute&#39; argument is ignored in ds.to_netcdf function. Did you mean to use &#39;progressbar&#39;?&quot;</span>
+            <span class="s2">"'compute' argument is ignored in ds.to_netcdf function. Did you mean to use 'progressbar'?"</span>
         <span class="p">)</span>
     <span class="n">ds</span> <span class="o">=</span> <span class="n">_normalize</span><span class="o">.</span><span class="n">normalize_xarray_dtypes</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
     <span class="n">obj</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">compute</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">to_netcdf_kwargs</span><span class="p">)</span>

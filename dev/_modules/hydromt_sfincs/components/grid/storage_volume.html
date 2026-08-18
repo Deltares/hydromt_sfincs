@@ -442,36 +442,36 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
 
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-<span class="n">_ATTRS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;vol&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;storage volume&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;m3&quot;</span><span class="p">}}</span>
+<span class="n">_ATTRS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"vol"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"standard_name"</span><span class="p">:</span> <span class="s2">"storage volume"</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"m3"</span><span class="p">}}</span>
 
 
 <div class="viewcode-block" id="SfincsStorageVolume">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsStorageVolume.html#hydromt_sfincs.components.grid.SfincsStorageVolume">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SfincsStorageVolume</span><span class="p">(</span><span class="n">ModelComponent</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;SFINCS Storage Volume Component.</span>
+<span class="w">    </span><span class="sd">"""SFINCS Storage Volume Component.</span>
 
 <span class="sd">    This component contains methods to add storage volume data to the SFINCS model</span>
 <span class="sd">    on regular grids. Storage volume can be used to represent the effect of green-</span>
 <span class="sd">    infrastructure in urban environments, such as retention basins or rain barrels.</span>
 
 <span class="sd">    .. note::</span>
-<span class="sd">        The storage volume data is stored in the model grid&#39;s data dataset under the key &quot;vol&quot;.</span>
+<span class="sd">        The storage volume data is stored in the model grid's data dataset under the key "vol".</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
 <span class="sd">    :py:class:`~hydromt_sfincs.components.grid.regulargrid.SfincsGrid`</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="SfincsStorageVolume.__init__">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsStorageVolume.html#hydromt_sfincs.components.grid.SfincsStorageVolume.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;SfincsModel&quot;</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="s2">"SfincsModel"</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="c1"># The data for the mask is stored in the model.grid.data[&quot;mask&quot;]</span>
+        <span class="c1"># The data for the mask is stored in the model.grid.data["mask"]</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
         <span class="p">)</span></div>
@@ -479,22 +479,22 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the data from the model grid.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Get the data from the model grid."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">mask</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get an empty mask with the same shape as the model grid.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Get an empty mask with the same shape as the model grid."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Not implemented, storage volume data is read when the grid is read.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Not implemented, storage volume data is read when the grid is read."""</span>
         <span class="c1"># TODO discuss what we want to return/read here, pass is not so informative ..</span>
         <span class="c1"># The mask values are read when the quadtree grid is read</span>
         <span class="k">pass</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Not implemented, storage volume data is written when the grid is written.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Not implemented, storage volume data is written when the grid is written."""</span>
         <span class="c1"># The mask values are written when the quadtree grid is written</span>
         <span class="k">pass</span>
 
@@ -508,7 +508,7 @@
         <span class="n">height</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create storage volume.</span>
+<span class="w">        </span><span class="sd">"""Create storage volume.</span>
 
 <span class="sd">        Adds model layer:</span>
 <span class="sd">        * **vol** map: storage volume for green infrastructure</span>
@@ -517,7 +517,7 @@
 <span class="sd">        ----------</span>
 <span class="sd">        storage_locs : str, Path</span>
 <span class="sd">            Path, data source name, or geopandas object to storage location polygon or point geometry file.</span>
-<span class="sd">            Optional &quot;volume&quot; or &quot;height&quot; attributes can be provided to set the storage volume.</span>
+<span class="sd">            Optional "volume" or "height" attributes can be provided to set the storage volume.</span>
 <span class="sd">        volume : float, optional</span>
 <span class="sd">            Storage volume [m3], by default None</span>
 <span class="sd">        height : float, optional</span>
@@ -525,7 +525,7 @@
 <span class="sd">        merge : bool, optional</span>
 <span class="sd">            If True, merge with existing storage volumes, by default True.</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="c1"># read, clip and reproject</span>
         <span class="n">gdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
@@ -535,8 +535,8 @@
         <span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
 
         <span class="c1"># if merge, add new storage volumes to existing ones</span>
-        <span class="k">if</span> <span class="n">merge</span> <span class="ow">and</span> <span class="s2">&quot;vol&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
-            <span class="n">da_vol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;vol&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">merge</span> <span class="ow">and</span> <span class="s2">"vol"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+            <span class="n">da_vol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"vol"</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">da_vol</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 
@@ -550,11 +550,11 @@
         <span class="p">)</span>
 
         <span class="c1"># set grid</span>
-        <span class="n">mname</span> <span class="o">=</span> <span class="s2">&quot;vol&quot;</span>
+        <span class="n">mname</span> <span class="o">=</span> <span class="s2">"vol"</span>
         <span class="n">da_vol</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">_ATTRS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mname</span><span class="p">,</span> <span class="p">{}))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">da_vol</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">mname</span><span class="p">)</span>
         <span class="c1"># update config</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

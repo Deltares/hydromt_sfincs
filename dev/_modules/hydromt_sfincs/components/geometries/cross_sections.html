@@ -450,22 +450,22 @@
 <div class="viewcode-block" id="SfincsCrossSections">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.geometries.SfincsCrossSections.html#hydromt_sfincs.components.geometries.SfincsCrossSections">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SfincsCrossSections</span><span class="p">(</span><span class="n">ModelComponent</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;SFINCS Cross-Sections Component.</span>
+<span class="w">    </span><span class="sd">"""SFINCS Cross-Sections Component.</span>
 
 <span class="sd">    This component handles the reading, writing, and creation of cross-section lines,</span>
-<span class="sd">    which are used to &quot;measure&quot; discharges in the SFINCS model.</span>
+<span class="sd">    which are used to "measure" discharges in the SFINCS model.</span>
 
 <span class="sd">    The data is stored as a GeoDataFrame containing LineString geometries, and written</span>
 <span class="sd">    to an ascii SFINCS cross-sections (.crs) file.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="SfincsCrossSections.__init__">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.geometries.SfincsCrossSections.html#hydromt_sfincs.components.geometries.SfincsCrossSections.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;SfincsModel&quot;</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="s2">"SfincsModel"</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sfincs.crs&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"sfincs.crs"</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
@@ -474,31 +474,31 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Cross-section lines data, returned as a GeoDataFrame.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Cross-section lines data, returned as a GeoDataFrame."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_initialize</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">gdf</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Cross-section lines data, returned as a GeoDataFrame.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Cross-section lines data, returned as a GeoDataFrame."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">nr_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Return the number of line locations currently stored.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;index&quot;</span><span class="p">):</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">"index"</span><span class="p">):</span>
             <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
         <span class="k">return</span> <span class="mi">0</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">list_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return list of names of cross sections.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return list of names of cross sections."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"name"</span><span class="p">])</span>
 
     <span class="c1"># %% core HydroMT-SFINCS functions:</span>
     <span class="c1"># _initialize</span>
@@ -510,7 +510,7 @@
     <span class="c1"># clear</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">skip_read</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize cross-section lines.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Initialize cross-section lines."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">()</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">is_reading_mode</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">skip_read</span><span class="p">:</span>
@@ -519,22 +519,22 @@
 <div class="viewcode-block" id="SfincsCrossSections.read">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.geometries.SfincsCrossSections.read.html#hydromt_sfincs.components.geometries.SfincsCrossSections.read">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read ascii SFINCS cross-sections (.crs) file.</span>
-<span class="sd">        Filename is obtained from config if not provided.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Read ascii SFINCS cross-sections (.crs) file.</span>
+<span class="sd">        Filename is obtained from config if not provided."""</span>
 
         <span class="c1"># Check that read mode is on</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_read_mode</span><span class="p">()</span>
 
         <span class="c1"># Get absolute file path and set it in config if crsfile is not None</span>
         <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
-            <span class="s2">&quot;crsfile&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span>
+            <span class="s2">"crsfile"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span>
         <span class="p">)</span>
 
         <span class="c1"># check if abs_file_path is None or does not exist</span>
         <span class="k">if</span> <span class="n">abs_file_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="n">abs_file_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cross-sections file not found: </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cross-sections file not found: </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="c1"># Read crs file</span>
         <span class="n">struct</span> <span class="o">=</span> <span class="n">readers</span><span class="o">.</span><span class="n">read_geoms</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">)</span>
@@ -547,19 +547,19 @@
 <div class="viewcode-block" id="SfincsCrossSections.write">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.geometries.SfincsCrossSections.write.html#hydromt_sfincs.components.geometries.SfincsCrossSections.write">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write ascii SFINCS cross-sections (.crs) file,</span>
-<span class="sd">        and set crsfile in config (if it was not already set).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Write ascii SFINCS cross-sections (.crs) file,</span>
+<span class="sd">        and set crsfile in config (if it was not already set)."""</span>
 
         <span class="c1"># Check that data is not empty</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;No cross-sections available to write.&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"No cross-sections available to write."</span><span class="p">)</span>
             <span class="k">return</span>
 
         <span class="c1"># Set file name and get absolute path</span>
         <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
-            <span class="s2">&quot;crsfile&quot;</span><span class="p">,</span>
+            <span class="s2">"crsfile"</span><span class="p">,</span>
             <span class="n">value</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
-            <span class="n">default</span><span class="o">=</span><span class="s2">&quot;sfincs.crs&quot;</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="s2">"sfincs.crs"</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># Create parent directories if they do not exist</span>
@@ -567,27 +567,27 @@
 
         <span class="c1"># Change precision of coordinates according to crs</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
-            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%11.6f</span><span class="s2">&quot;</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">"</span><span class="si">%11.6f</span><span class="s2">"</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%11.1f</span><span class="s2">&quot;</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">"</span><span class="si">%11.1f</span><span class="s2">"</span>
 
         <span class="c1"># Get linestring geometries from gdf</span>
         <span class="n">struct</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">gdf2linestring</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
 
         <span class="c1"># Write to crs file</span>
-        <span class="n">writers</span><span class="o">.</span><span class="n">write_geoms</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">struct</span><span class="p">,</span> <span class="n">stype</span><span class="o">=</span><span class="s2">&quot;crs&quot;</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
+        <span class="n">writers</span><span class="o">.</span><span class="n">write_geoms</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">struct</span><span class="p">,</span> <span class="n">stype</span><span class="o">=</span><span class="s2">"crs"</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
 
         <span class="c1"># write also as geojson:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">write_gis</span><span class="p">:</span>
             <span class="n">writers</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
-                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;crs&quot;</span><span class="p">,</span>
-                <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;gis&quot;</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"crs"</span><span class="p">,</span>
+                <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">"gis"</span><span class="p">),</span>
             <span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gdf</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set SFINCS cross-sections.</span>
+<span class="w">        </span><span class="sd">"""Set SFINCS cross-sections.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -598,23 +598,23 @@
 
 <span class="sd">        .. note::</span>
 <span class="sd">            When directly using the set method, the GeoDataFrame needs to be in the same CRS as SFINCS model.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">&quot;LineString&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cross-sections must be of type LineString.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">"LineString"</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Cross-sections must be of type LineString."</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf</span><span class="o">.</span><span class="n">crs</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Cross-section CRS </span><span class="si">{</span><span class="n">gdf</span><span class="o">.</span><span class="n">crs</span><span class="si">}</span><span class="s2"> does not match model CRS </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="si">}</span><span class="s2">.&quot;</span>
+                <span class="sa">f</span><span class="s2">"Cross-section CRS </span><span class="si">{</span><span class="n">gdf</span><span class="o">.</span><span class="n">crs</span><span class="si">}</span><span class="s2"> does not match model CRS </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="si">}</span><span class="s2">."</span>
             <span class="p">)</span>
 
         <span class="c1"># Check that gdf has a name column</span>
-        <span class="c1"># if &quot;name&quot; not in gdf.columns:</span>
-        <span class="c1">#     raise ValueError(&quot;Cross-sections must have a &#39;name&#39; column.&quot;)</span>
+        <span class="c1"># if "name" not in gdf.columns:</span>
+        <span class="c1">#     raise ValueError("Cross-sections must have a 'name' column.")</span>
         <span class="c1"># FIXME - TL: should we check on this for cross-sections, observation points, weirs and thin dams (too)?</span>
 
         <span class="c1"># Check that all rows have a unique name</span>
-        <span class="c1"># if not gdf[&quot;name&quot;].is_unique:</span>
-        <span class="c1"># raise ValueError(&quot;Cross-section names must be unique.&quot;)</span>
+        <span class="c1"># if not gdf["name"].is_unique:</span>
+        <span class="c1"># raise ValueError("Cross-section names must be unique.")</span>
         <span class="c1"># FIXME - TL: should we check on this for cross-sections, observation points, weirs and thin dams (too)?</span>
 
         <span class="c1"># Check if any of the cross sections fall completely outside the model domain</span>
@@ -622,21 +622,21 @@
         <span class="n">outside</span> <span class="o">=</span> <span class="n">gdf</span><span class="o">.</span><span class="n">disjoint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">region</span><span class="o">.</span><span class="n">union_all</span><span class="p">())</span>
         <span class="k">if</span> <span class="n">outside</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="s2">&quot;Some cross-sections fall outside model domain. Removing these lines.&quot;</span>
+                <span class="s2">"Some cross-sections fall outside model domain. Removing these lines."</span>
             <span class="p">)</span>
             <span class="n">gdf</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="o">~</span><span class="n">outside</span><span class="p">]</span>
 
         <span class="c1"># Check if there are any cross sections left</span>
         <span class="k">if</span> <span class="n">gdf</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-            <span class="c1"># logger.warning(&quot;All cross-sections fall outside model domain!&quot;)</span>
+            <span class="c1"># logger.warning("All cross-sections fall outside model domain!")</span>
             <span class="c1"># return</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;All cross-sections fall outside model domain!&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"All cross-sections fall outside model domain!"</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">merge</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">gdf0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
             <span class="c1"># add the new data behind the original</span>
             <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">gdf0</span><span class="p">,</span> <span class="n">gdf</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Adding new cross-sections to existing ones.&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Adding new cross-sections to existing ones."</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">gdf</span>  <span class="c1"># set gdf in self._data</span>
 
@@ -649,7 +649,7 @@
         <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create model cross-sections (old name: setup_observation_lines)</span>
+<span class="w">        </span><span class="sd">"""Create model cross-sections (old name: setup_observation_lines)</span>
 
 <span class="sd">        Adds model layers:</span>
 
@@ -661,7 +661,7 @@
 <span class="sd">            Path, data source name, or geopandas object for thin cross-section locations.</span>
 <span class="sd">        merge: bool, optional</span>
 <span class="sd">            If True, merge the new cross-sections with the existing ones. By default True.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">gdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
             <span class="n">locations</span><span class="p">,</span>
             <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
@@ -671,27 +671,27 @@
         <span class="c1"># make sure MultiLineString are converted to LineString</span>
         <span class="n">gdf</span> <span class="o">=</span> <span class="n">gdf</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">index_parts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">&quot;LineString&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Thin dams must be of type LineString.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">"LineString"</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Thin dams must be of type LineString."</span><span class="p">)</span>
 
         <span class="c1"># If Linestring z, e.g. when you put in a geojson with height from a weirfile</span>
         <span class="c1"># then get rid of the z component</span>
         <span class="k">if</span> <span class="n">gdf</span><span class="o">.</span><span class="n">has_z</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-            <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="n">gdf</span><span class="p">[</span><span class="s2">"geometry"</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="s2">"geometry"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
                 <span class="k">lambda</span> <span class="n">geom</span><span class="p">:</span> <span class="n">LineString</span><span class="p">([(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="ow">in</span> <span class="n">geom</span><span class="o">.</span><span class="n">coords</span><span class="p">])</span>
             <span class="p">)</span>
 
         <span class="c1"># set data</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">merge</span><span class="p">)</span>
         <span class="c1"># set config</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;crsfile&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs.crs&quot;</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"crsfile"</span><span class="p">,</span> <span class="s2">"sfincs.crs"</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">delete</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">index</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove one or more cross-sections.</span>
+<span class="w">        </span><span class="sd">"""Remove one or more cross-sections.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ---------</span>
@@ -699,30 +699,30 @@
 <span class="sd">            Specify cross-sections to be dropped from GeoDataFrame.</span>
 <span class="sd">            If int, drop a single cross-section based on index.</span>
 <span class="sd">            If list, drop multiple cross-sections based on index.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="c1"># Turn int or str into list</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
             <span class="n">index</span> <span class="o">=</span> <span class="p">[</span><span class="n">index</span><span class="p">]</span>
 
         <span class="c1"># Check that any integer in list is not larger than the number of lines</span>
         <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="o">&gt;</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">min</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;One of the indices exceeds length of index range!&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"One of the indices exceeds length of index range!"</span><span class="p">)</span>
 
         <span class="c1"># Drop lines from GeoDataFrame</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Dropping line(s) from cross-sections&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Dropping line(s) from cross-sections"</span><span class="p">)</span>
 
         <span class="c1"># Check if any cross sections are left</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;All cross-sections have been removed!&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"All cross-sections have been removed!"</span><span class="p">)</span>
             <span class="c1"># Set crsfile to None</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;crsfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"crsfile"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clean GeoDataFrame with cross sections.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Clean GeoDataFrame with cross sections."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">()</span>
         <span class="c1"># Set crsfile to None in config</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;crsfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>  <span class="c1"># FIXME - TL: do we want that?</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"crsfile"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>  <span class="c1"># FIXME - TL: do we want that?</span>
 
     <span class="c1"># %% DDB GUI focused additional functions:</span>
     <span class="c1"># snap_to_grid</span>
@@ -730,23 +730,23 @@
     <span class="c1"># delete_line - FIXME - do we want to have this as option to remove a single on by name (string) for weir/observation point/wavemaker?</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">snap_to_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns GeoDataFrame with cross-sections snapped to model grid.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">!=</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Returns GeoDataFrame with cross-sections snapped to model grid."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">!=</span> <span class="s2">"quadtree"</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="s2">&quot;Snapping to grid uses the quadtree representation. Regular grid will be converted to a quadtree grid first.&quot;</span>
+                <span class="s2">"Snapping to grid uses the quadtree representation. Regular grid will be converted to a quadtree grid first."</span>
             <span class="p">)</span>
         <span class="n">snap_gdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">snap_to_grid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">snap_gdf</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">delete_line</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove one cross-section based on index or name.</span>
+<span class="w">        </span><span class="sd">"""Remove one cross-section based on index or name.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ---------</span>
 <span class="sd">        index: int, str</span>
 <span class="sd">            Specify cross-section to be dropped from GeoDataFrame.</span>
 <span class="sd">            If int or str, drop a single cross-section based on index or name.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="c1"># Replace names with indices</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
@@ -754,7 +754,7 @@
             <span class="n">names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">index</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cross section &quot;</span> <span class="o">+</span> <span class="n">index</span> <span class="o">+</span> <span class="s2">&quot; not found!&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Cross section "</span> <span class="o">+</span> <span class="n">index</span> <span class="o">+</span> <span class="s2">" not found!"</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
         <span class="k">return</span></div>

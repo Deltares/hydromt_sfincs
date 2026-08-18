@@ -519,7 +519,7 @@
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/tmp/ipykernel_4797/36717968.py:4: DeprecationWarning: importing &#39;log&#39; from &#39;hydromt._utils&#39; is deprecated. use &#39;from hydromt import log&#39; instead.
+/tmp/ipykernel_4912/36717968.py:4: DeprecationWarning: importing &#39;log&#39; from &#39;hydromt._utils&#39; is deprecated. use &#39;from hydromt import log&#39; instead.
   from hydromt._utils import log
 </pre></div></div>
 </div>
@@ -538,7 +538,7 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model_root</span> <span class="o">=</span> <span class="s2">&quot;tmp_sfincs_compound&quot;</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model_root</span> <span class="o">=</span> <span class="s2">"tmp_sfincs_compound"</span>
 
 <span class="c1"># Initialize logging, the lower the log level number, the more verbose (more info) the output</span>
 <span class="c1"># NOTSET=0-9, DEBUG=10, INFO=20, WARNING=30, ERROR=40, CRITICAL=50</span>
@@ -546,14 +546,14 @@
 <span class="n">log</span><span class="o">.</span><span class="n">set_log_level</span><span class="p">(</span><span class="n">log_level</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
 
 <span class="c1"># Add file handler to log to a file</span>
-<span class="n">log_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">model_root</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;hydromt_sfincs.log&quot;</span>
+<span class="n">log_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">model_root</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"hydromt_sfincs.log"</span>
 <span class="n">logger</span> <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">_add_filehandler</span><span class="p">(</span><span class="n">log_file</span><span class="p">)</span>
 
 <span class="c1"># Initialize SfincsModel Python class with the artifact data catalog which contains publically available data for North Italy</span>
 <span class="n">sf</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span>
-    <span class="n">data_libs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;artifact_data&quot;</span><span class="p">],</span>  <span class="c1"># specify which data libraries to use</span>
+    <span class="n">data_libs</span><span class="o">=</span><span class="p">[</span><span class="s2">"artifact_data"</span><span class="p">],</span>  <span class="c1"># specify which data libraries to use</span>
     <span class="n">root</span><span class="o">=</span><span class="n">model_root</span><span class="p">,</span>  <span class="c1"># specify the root directory for the model</span>
-    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r+&quot;</span><span class="p">,</span>  <span class="c1"># specify the mode for opening the model (r=read only, r+=append, w=write, w+=overwrite</span>
+    <span class="n">mode</span><span class="o">=</span><span class="s2">"r+"</span><span class="p">,</span>  <span class="c1"># specify the mode for opening the model (r=read only, r+=append, w=write, w+=overwrite</span>
     <span class="n">write_gis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># specify whether to write GIS data</span>
 <span class="p">)</span>
 </pre></div>
@@ -564,7 +564,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-08-02 10:26:40,668 - hydromt - log - INFO - HydroMT version: 1.4.0
+2026-08-18 09:58:56,020 - hydromt - log - INFO - HydroMT version: 1.4.1
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -597,12 +597,12 @@
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># optionally, points can be added manually</span>
 <span class="n">sf</span><span class="o">.</span><span class="n">discharge_points</span><span class="o">.</span><span class="n">add_point</span><span class="p">(</span>
-    <span class="n">x</span><span class="o">=</span><span class="mf">321483.2</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">5047503.0</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">1000.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Piave_inflow&quot;</span>
+    <span class="n">x</span><span class="o">=</span><span class="mf">321483.2</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">5047503.0</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">1000.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"Piave_inflow"</span>
 <span class="p">)</span>
 
 <span class="n">sf</span><span class="o">.</span><span class="n">discharge_points</span><span class="o">.</span><span class="n">create_timeseries</span><span class="p">(</span>
     <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-    <span class="n">shape</span><span class="o">=</span><span class="s2">&quot;gaussian&quot;</span><span class="p">,</span>
+    <span class="n">shape</span><span class="o">=</span><span class="s2">"gaussian"</span><span class="p">,</span>
     <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
     <span class="n">peak</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
     <span class="n">tpeak</span><span class="o">=</span><span class="mi">86400</span><span class="p">,</span>
@@ -611,7 +611,7 @@
 <span class="p">)</span>
 <span class="c1"># and plot</span>
 <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span>
-    <span class="n">variable</span><span class="o">=</span><span class="s2">&quot;dep&quot;</span><span class="p">,</span> <span class="n">plot_geoms</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span>
+    <span class="n">variable</span><span class="o">=</span><span class="s2">"dep"</span><span class="p">,</span> <span class="n">plot_geoms</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">"sat"</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span>
 <span class="p">)</span>
 <span class="n">sf</span><span class="o">.</span><span class="n">plot_forcing</span><span class="p">()</span>
 </pre></div>
@@ -641,11 +641,11 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># # hourly rainfall rates of ECMWF&#39; ERA5 data for the specific area and period have been made available for this period in the artefact data</span>
-<span class="n">sf</span><span class="o">.</span><span class="n">precipitation</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">precip</span><span class="o">=</span><span class="s2">&quot;era5_hourly&quot;</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># # hourly rainfall rates of ECMWF' ERA5 data for the specific area and period have been made available for this period in the artefact data</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">precipitation</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">precip</span><span class="o">=</span><span class="s2">"era5_hourly"</span><span class="p">,</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 <span class="c1"># NOTE: when specifying an output name, the image is also saved to file</span>
-<span class="n">sf</span><span class="o">.</span><span class="n">plot_forcing</span><span class="p">(</span><span class="n">fn_out</span><span class="o">=</span><span class="s2">&quot;forcing.png&quot;</span><span class="p">)</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">plot_forcing</span><span class="p">(</span><span class="n">fn_out</span><span class="o">=</span><span class="s2">"forcing.png"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -677,9 +677,9 @@
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># independent from subgrid files</span>
 <span class="c1"># curve number infiltration based on global CN dataset</span>
-<span class="n">sf</span><span class="o">.</span><span class="n">infiltration</span><span class="o">.</span><span class="n">create_cn</span><span class="p">(</span><span class="s2">&quot;gcn250&quot;</span><span class="p">,</span> <span class="n">antecedent_moisture</span><span class="o">=</span><span class="s2">&quot;avg&quot;</span><span class="p">)</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">infiltration</span><span class="o">.</span><span class="n">create_cn</span><span class="p">(</span><span class="s2">"gcn250"</span><span class="p">,</span> <span class="n">antecedent_moisture</span><span class="o">=</span><span class="s2">"avg"</span><span class="p">)</span>
 
-<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="s2">&quot;scs&quot;</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="s2">"scs"</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">"sat"</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

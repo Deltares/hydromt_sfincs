@@ -439,36 +439,36 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
 
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-<span class="n">_ATTRS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;dep&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;elevation&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;m+ref&quot;</span><span class="p">}}</span>
+<span class="n">_ATTRS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dep"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"standard_name"</span><span class="p">:</span> <span class="s2">"elevation"</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"m+ref"</span><span class="p">}}</span>
 
 
 <div class="viewcode-block" id="SfincsElevation">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsElevation.html#hydromt_sfincs.components.grid.SfincsElevation">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SfincsElevation</span><span class="p">(</span><span class="n">ModelComponent</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;SFINCS Elevation Component.</span>
+<span class="w">    </span><span class="sd">"""SFINCS Elevation Component.</span>
 
 <span class="sd">    This component contains methods to add elevation (bed level) data to the SFINCS model</span>
 <span class="sd">    on regular grids. Multiple elevation datasets can be merged together to create a complete</span>
 <span class="sd">    bed level representation interpolated onto the model grid.</span>
 
 <span class="sd">    .. note::</span>
-<span class="sd">        The elevation data is stored in the model grid&#39;s data dataset under the key &quot;z&quot;.</span>
+<span class="sd">        The elevation data is stored in the model grid's data dataset under the key "z".</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
 <span class="sd">    :py:class:`~hydromt_sfincs.components.grid.regulargrid.SfincsGrid`</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="SfincsElevation.__init__">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsElevation.html#hydromt_sfincs.components.grid.SfincsElevation.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;SfincsModel&quot;</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="s2">"SfincsModel"</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="c1"># The data for the elevation is stored in the model.grid.data[&quot;z&quot;]</span>
+        <span class="c1"># The data for the elevation is stored in the model.grid.data["z"]</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
         <span class="p">)</span></div>
@@ -476,20 +476,20 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the data from the model grid.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Get the data from the model grid."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">mask</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get an empty mask with the same shape as the model grid.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Get an empty mask with the same shape as the model grid."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Not implemented, elevation data is read when the grid is read.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Not implemented, elevation data is read when the grid is read."""</span>
         <span class="k">pass</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Not implemented, elevation data is written when the grid is written.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Not implemented, elevation data is written when the grid is written."""</span>
         <span class="k">pass</span>
 
 <div class="viewcode-block" id="SfincsElevation.create">
@@ -499,10 +499,10 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">elevation_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
         <span class="n">buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># not in list</span>
-        <span class="n">interp_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;linear&quot;</span><span class="p">,</span>  <span class="c1"># used for buffer cells only</span>
+        <span class="n">interp_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>  <span class="c1"># used for buffer cells only</span>
         <span class="n">interpolate_na</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Interpolate topobathy (dep) data to the model grid.</span>
+<span class="w">        </span><span class="sd">"""Interpolate topobathy (dep) data to the model grid.</span>
 
 <span class="sd">        Adds model grid layers:</span>
 
@@ -512,15 +512,15 @@
 <span class="sd">        ----------</span>
 <span class="sd">        elevation_list : List[dict]</span>
 <span class="sd">            List of dictionaries with topobathy data, each containing a dataset name or Path (elevation) and optional merge arguments e.g.:</span>
-<span class="sd">            [{&#39;elevation&#39;: merit_hydro, &#39;zmin&#39;: 0.01}, {&#39;elevation&#39;: gebco, &#39;offset&#39;: 0, &#39;merge_method&#39;: &#39;first&#39;, &#39;reproj_method&#39;: &#39;bilinear&#39;}]</span>
+<span class="sd">            [{'elevation': merit_hydro, 'zmin': 0.01}, {'elevation': gebco, 'offset': 0, 'merge_method': 'first', 'reproj_method': 'bilinear'}]</span>
 <span class="sd">            For a complete overview of all merge options, see :py:func:`hydromt.workflows.merge_multi_dataarrays`</span>
 <span class="sd">        buffer_cells : int, optional</span>
 <span class="sd">            Number of cells between datasets to ensure smooth transition of bed levels, by default 0</span>
 <span class="sd">        interp_method : str, optional</span>
-<span class="sd">            Interpolation method used to fill the buffer cells , by default &quot;linear&quot;</span>
+<span class="sd">            Interpolation method used to fill the buffer cells , by default "linear"</span>
 <span class="sd">        interpolate_na : bool, optional</span>
 <span class="sd">            If True, interpolate missing values in the final bed level dataset, by default True</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="c1"># retrieve model resolution to determine zoom level for xyz-datasets</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
@@ -541,18 +541,18 @@
         <span class="c1"># check if no nan data is present in the bed levels</span>
         <span class="n">nmissing</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_dep</span><span class="o">.</span><span class="n">values</span><span class="p">)))</span>
         <span class="k">if</span> <span class="n">nmissing</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">interpolate_na</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Interpolate elevation at </span><span class="si">{</span><span class="n">nmissing</span><span class="si">}</span><span class="s2"> cells&quot;</span><span class="p">)</span>
-            <span class="n">da_dep</span> <span class="o">=</span> <span class="n">da_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">interpolate_na</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;rio_idw&quot;</span><span class="p">,</span> <span class="n">extrapolate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Interpolate elevation at </span><span class="si">{</span><span class="n">nmissing</span><span class="si">}</span><span class="s2"> cells"</span><span class="p">)</span>
+            <span class="n">da_dep</span> <span class="o">=</span> <span class="n">da_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">interpolate_na</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">"rio_idw"</span><span class="p">,</span> <span class="n">extrapolate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">nmissing</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Elevation has </span><span class="si">{</span><span class="n">nmissing</span><span class="si">}</span><span class="s2"> missing cells; leaving them as NaN&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Elevation has </span><span class="si">{</span><span class="n">nmissing</span><span class="si">}</span><span class="s2"> missing cells; leaving them as NaN"</span><span class="p">)</span>
 
         <span class="c1"># set the dep layer in the model data</span>
-        <span class="n">mname</span> <span class="o">=</span> <span class="s2">&quot;dep&quot;</span>
+        <span class="n">mname</span> <span class="o">=</span> <span class="s2">"dep"</span>
         <span class="n">da_dep</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">_ATTRS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mname</span><span class="p">,</span> <span class="p">{}))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">da_dep</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">mname</span><span class="p">)</span>
 
         <span class="c1"># TODO add to config, or is that only done when writing?</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;depfile&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs.dep&quot;</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"depfile"</span><span class="p">,</span> <span class="s2">"sfincs.dep"</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

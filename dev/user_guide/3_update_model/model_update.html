@@ -505,11 +505,11 @@ Once the configuration and data libraries are set, you can update a model by usi
 
 <span class="nt">steps</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">config.update</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">tref</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;20100201</span><span class="nv"> </span><span class="s">000000&quot;</span>
-<span class="w">      </span><span class="nt">tstart</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;20100201</span><span class="nv"> </span><span class="s">000000&quot;</span>
-<span class="w">      </span><span class="nt">tstop</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;20100202</span><span class="nv"> </span><span class="s">000000&quot;</span>
+<span class="w">      </span><span class="nt">tref</span><span class="p">:</span><span class="w"> </span><span class="s">"20100201</span><span class="nv"> </span><span class="s">000000"</span>
+<span class="w">      </span><span class="nt">tstart</span><span class="p">:</span><span class="w"> </span><span class="s">"20100201</span><span class="nv"> </span><span class="s">000000"</span>
+<span class="w">      </span><span class="nt">tstop</span><span class="p">:</span><span class="w"> </span><span class="s">"20100202</span><span class="nv"> </span><span class="s">000000"</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">precipitation.create</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">precip</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;era5_hourly&quot;</span>
+<span class="w">      </span><span class="nt">precip</span><span class="p">:</span><span class="w"> </span><span class="s">"era5_hourly"</span>
 </pre></div>
 </div>
 </section>
@@ -527,22 +527,22 @@ see example below.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
 
 <span class="c1"># open existing model in read-only mode</span>
-<span class="n">sf</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">data_libs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;artifact_data&quot;</span><span class="p">],</span> <span class="n">root</span><span class="o">=</span><span class="s2">&quot;sfincs_compound&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">)</span>
+<span class="n">sf</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">data_libs</span><span class="o">=</span><span class="p">[</span><span class="s2">"artifact_data"</span><span class="p">],</span> <span class="n">root</span><span class="o">=</span><span class="s2">"sfincs_compound"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"r"</span><span class="p">)</span>
 <span class="c1"># read the model</span>
 <span class="n">sf</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 
 <span class="c1"># change the root and mode to write the updated model to a new location</span>
-<span class="n">sf</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;sfincs_compound_precip&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w+&quot;</span><span class="p">)</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"sfincs_compound_precip"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"w+"</span><span class="p">)</span>
 
 <span class="c1"># update the configuration</span>
 <span class="n">sf</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
-    <span class="p">{</span><span class="s2">&quot;tref&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-    <span class="s2">&quot;tstart&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-    <span class="s2">&quot;tstop&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)}</span>
+    <span class="p">{</span><span class="s2">"tref"</span><span class="p">:</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="s2">"tstart"</span><span class="p">:</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="s2">"tstop"</span><span class="p">:</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)}</span>
 <span class="p">)</span>
 
 <span class="c1"># update the precipitation component</span>
-<span class="n">sf</span><span class="o">.</span><span class="n">precipitation</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">precip</span><span class="o">=</span><span class="s2">&quot;era5_hourly&quot;</span><span class="p">)</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">precipitation</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">precip</span><span class="o">=</span><span class="s2">"era5_hourly"</span><span class="p">)</span>
 
 <span class="c1"># write the model</span>
 <span class="n">sf</span><span class="o">.</span><span class="n">write</span><span class="p">()</span>

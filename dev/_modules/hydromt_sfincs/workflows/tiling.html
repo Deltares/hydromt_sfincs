@@ -426,7 +426,7 @@
                 <article class="bd-article">
                   
   <h1>Source code for hydromt_sfincs.workflows.tiling</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Tiling functions for fast visualization of the SFINCS model in- and output data.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Tiling functions for fast visualization of the SFINCS model in- and output data."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
@@ -446,10 +446,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.merge</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_multi_dataarrays</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;create_topobathy_tiles&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;downscale_floodmap_webmercator&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;make_index_tiles&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_html&quot;</span><span class="p">,</span>
+    <span class="s2">"create_topobathy_tiles"</span><span class="p">,</span>
+    <span class="s2">"downscale_floodmap_webmercator"</span><span class="p">,</span>
+    <span class="s2">"make_index_tiles"</span><span class="p">,</span>
+    <span class="s2">"write_html"</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -457,11 +457,11 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">write_html</span><span class="p">(</span>
     <span class="n">file_name</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
-    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;hydromt-sfincs tiles&quot;</span><span class="p">,</span>
-    <span class="n">legend_title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Legend&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"hydromt-sfincs tiles"</span><span class="p">,</span>
+    <span class="n">legend_title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Legend"</span><span class="p">,</span>
     <span class="n">max_native_zoom</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">19</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write a standalone Leaflet HTML viewer for a tiled map layer.</span>
+<span class="w">    </span><span class="sd">"""Write a standalone Leaflet HTML viewer for a tiled map layer.</span>
 
 <span class="sd">    The generated page loads OpenStreetMap and Esri World Imagery base</span>
 <span class="sd">    layers and overlays tiles from the URL pattern ``{z}/{x}/{y}.png``</span>
@@ -474,145 +474,145 @@
 <span class="sd">        Output HTML file path.</span>
 <span class="sd">    title : str, optional</span>
 <span class="sd">        Page heading shown above the map, by default</span>
-<span class="sd">        ``&quot;hydromt-sfincs tiles&quot;``.</span>
+<span class="sd">        ``"hydromt-sfincs tiles"``.</span>
 <span class="sd">    legend_title : str, optional</span>
-<span class="sd">        Text displayed inside the legend box, by default ``&quot;Legend&quot;``.</span>
+<span class="sd">        Text displayed inside the legend box, by default ``"Legend"``.</span>
 <span class="sd">    max_native_zoom : int, optional</span>
 <span class="sd">        Maximum native zoom level of the tile layer, by default ``19``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;!DOCTYPE html&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;head&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="sd">    """</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"&lt;!DOCTYPE html&gt;</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"&lt;head&gt;</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="s2">&quot;  &lt;meta http-equiv=&#39;content-type&#39; content=&#39;text/html; charset=UTF-8&#39; /&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span>
+            <span class="s2">"  &lt;meta http-equiv='content-type' content='text/html; charset=UTF-8' /&gt;</span><span class="se">\r\n</span><span class="s2">"</span>
         <span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;  &lt;script&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;    L_NO_TOUCH = false;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;    L_DISABLE_3D = false;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;  &lt;/script&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"  &lt;script&gt;</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"    L_NO_TOUCH = false;</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"    L_DISABLE_3D = false;</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"  &lt;/script&gt;</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="s2">&quot;  &lt;style&gt;html, body {width: 100%;height: 100%;margin: 0;padding: 0;}&lt;/style&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span>
-        <span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="s2">&quot;  &lt;script src=&#39;https://cdn.jsdelivr.net/npm/leaflet@1.6.0/dist/leaflet.js&#39;&gt;&lt;/script&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span>
+            <span class="s2">"  &lt;style&gt;html, body {width: 100%;height: 100%;margin: 0;padding: 0;}&lt;/style&gt;</span><span class="se">\r\n</span><span class="s2">"</span>
         <span class="p">)</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="s2">&quot;  &lt;script src=&#39;https://code.jquery.com/jquery-1.12.4.min.js&#39;&gt;&lt;/script&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span>
+            <span class="s2">"  &lt;script src='https://cdn.jsdelivr.net/npm/leaflet@1.6.0/dist/leaflet.js'&gt;&lt;/script&gt;</span><span class="se">\r\n</span><span class="s2">"</span>
         <span class="p">)</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="s2">&quot;  &lt;script src=&#39;https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js&#39;&gt;&lt;/script&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span>
+            <span class="s2">"  &lt;script src='https://code.jquery.com/jquery-1.12.4.min.js'&gt;&lt;/script&gt;</span><span class="se">\r\n</span><span class="s2">"</span>
         <span class="p">)</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="s2">&quot;  &lt;script src=&#39;https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js&#39;&gt;&lt;/script&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span>
+            <span class="s2">"  &lt;script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js'&gt;&lt;/script&gt;</span><span class="se">\r\n</span><span class="s2">"</span>
         <span class="p">)</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="s2">&quot;  &lt;link rel=&#39;stylesheet&#39; href=&#39;https://cdn.jsdelivr.net/npm/leaflet@1.6.0/dist/leaflet.css&#39;/&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span>
+            <span class="s2">"  &lt;script src='https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js'&gt;&lt;/script&gt;</span><span class="se">\r\n</span><span class="s2">"</span>
         <span class="p">)</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="s2">&quot;  &lt;link rel=&#39;stylesheet&#39; href=&#39;https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css&#39;/&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span>
+            <span class="s2">"  &lt;link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/leaflet@1.6.0/dist/leaflet.css'/&gt;</span><span class="se">\r\n</span><span class="s2">"</span>
         <span class="p">)</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="s2">&quot;  &lt;link rel=&#39;stylesheet&#39; href=&#39;https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css&#39;/&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span>
+            <span class="s2">"  &lt;link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css'/&gt;</span><span class="se">\r\n</span><span class="s2">"</span>
         <span class="p">)</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="s2">&quot;  &lt;link rel=&#39;stylesheet&#39; href=&#39;https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css&#39;/&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span>
+            <span class="s2">"  &lt;link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css'/&gt;</span><span class="se">\r\n</span><span class="s2">"</span>
         <span class="p">)</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="s2">&quot;  &lt;link rel=&#39;stylesheet&#39; href=&#39;https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css&#39;/&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span>
+            <span class="s2">"  &lt;link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css'/&gt;</span><span class="se">\r\n</span><span class="s2">"</span>
         <span class="p">)</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="s2">&quot;  &lt;link rel=&#39;stylesheet&#39; href=&#39;https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css&#39;/&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span>
+            <span class="s2">"  &lt;link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css'/&gt;</span><span class="se">\r\n</span><span class="s2">"</span>
         <span class="p">)</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="s2">&quot;  &lt;meta name=&#39;viewport&#39; content=&#39;width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no&#39; /&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span>
-        <span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;  &lt;style&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;      #map { width: 800px; height: 500px; }</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="s2">&quot;      .info { padding: 6px 8px; font: 17px/19px Arial, Helvetica, sans-serif; background: white; background: rgba(255,255,255,0.8); box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; } .info h4 { margin: 0 0 5px; color: #777; }</span><span class="se">\r\n</span><span class="s2">&quot;</span>
+            <span class="s2">"  &lt;link rel='stylesheet' href='https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css'/&gt;</span><span class="se">\r\n</span><span class="s2">"</span>
         <span class="p">)</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="s2">&quot;      .legend     { text-align: center; line-height: 18px; color: #555; } .legend i     { width: 20px; height: 15px; float: left; margin-right: 8px; opacity: 0.7; border-style: solid; border-width: 1px;}</span><span class="se">\r\n</span><span class="s2">&quot;</span>
+            <span class="s2">"  &lt;meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' /&gt;</span><span class="se">\r\n</span><span class="s2">"</span>
         <span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;  &lt;/style&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;/head&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;body&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  &lt;h3&gt; </span><span class="si">{</span><span class="n">title</span><span class="si">}</span><span class="s2">&lt;/h3&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;  &lt;div id=&#39;map&#39; style=&#39;width: 100%; height: 90%;&#39;&gt;&lt;/div&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;/body&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;script&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;// Base layers</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"  &lt;style&gt;</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"      #map { width: 800px; height: 500px; }</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="s2">&quot;var tile_layer_osm = L.tileLayer(&#39;https://</span><span class="si">{s}</span><span class="s2">.tile.openstreetmap.org/</span><span class="si">{z}</span><span class="s2">/</span><span class="si">{x}</span><span class="s2">/</span><span class="si">{y}</span><span class="s2">.png&#39;,</span><span class="se">\r\n</span><span class="s2">&quot;</span>
+            <span class="s2">"      .info { padding: 6px 8px; font: 17px/19px Arial, Helvetica, sans-serif; background: white; background: rgba(255,255,255,0.8); box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; } .info h4 { margin: 0 0 5px; color: #777; }</span><span class="se">\r\n</span><span class="s2">"</span>
         <span class="p">)</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="s2">&quot;    {&#39;attribution&#39;: &#39;Data by http://openstreetmap.org href=http://www.openstreetmap.org&#39;,</span><span class="se">\r\n</span><span class="s2">&quot;</span>
+            <span class="s2">"      .legend     { text-align: center; line-height: 18px; color: #555; } .legend i     { width: 20px; height: 15px; float: left; margin-right: 8px; opacity: 0.7; border-style: solid; border-width: 1px;}</span><span class="se">\r\n</span><span class="s2">"</span>
         <span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;     &#39;detectRetina&#39;: false,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;     &#39;maxZoom&#39;: 19,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;     &#39;minZoom&#39;: 0,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;     &#39;noWrap&#39;: false,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;     &#39;opacity&#39;: 1,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;     &#39;maxNativeZoom&#39;: 13,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;     &#39;subdomains&#39;: &#39;abc&#39;,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;     &#39;tms&#39;: false});</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"  &lt;/style&gt;</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"&lt;/head&gt;</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"&lt;body&gt;</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  &lt;h3&gt; </span><span class="si">{</span><span class="n">title</span><span class="si">}</span><span class="s2">&lt;/h3&gt;</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"  &lt;div id='map' style='width: 100%; height: 90%;'&gt;&lt;/div&gt;</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"&lt;/body&gt;</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"&lt;script&gt;</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"// Base layers</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="s2">&quot;var Esri_WorldImagery = L.tileLayer(&#39;https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/</span><span class="si">{z}</span><span class="s2">/</span><span class="si">{y}</span><span class="s2">/</span><span class="si">{x}</span><span class="s2">&#39;, {</span><span class="se">\r\n</span><span class="s2">&quot;</span>
+            <span class="s2">"var tile_layer_osm = L.tileLayer('https://</span><span class="si">{s}</span><span class="s2">.tile.openstreetmap.org/</span><span class="si">{z}</span><span class="s2">/</span><span class="si">{x}</span><span class="s2">/</span><span class="si">{y}</span><span class="s2">.png',</span><span class="se">\r\n</span><span class="s2">"</span>
         <span class="p">)</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="s2">&quot;	attribution: &#39;Tiles &amp;copy; Esri &amp;mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community&#39;</span><span class="se">\r\n</span><span class="s2">&quot;</span>
+            <span class="s2">"    {'attribution': 'Data by http://openstreetmap.org href=http://www.openstreetmap.org',</span><span class="se">\r\n</span><span class="s2">"</span>
         <span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;});</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;// Data layer</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;var tile_layer = L.tileLayer(</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;    &#39;</span><span class="si">{z}</span><span class="s2">/</span><span class="si">{x}</span><span class="s2">/</span><span class="si">{y}</span><span class="s2">.png&#39;,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;    {&#39;attribution&#39;: &#39;hydromt-sfincs&#39;,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;     &#39;detectRetina&#39;: false,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;     &#39;opacity&#39;: 0.7,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;     &#39;maxNativeZoom&#39;: </span><span class="si">{</span><span class="n">max_native_zoom</span><span class="si">}</span><span class="s2">,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;     &#39;maxZoom&#39;: 19,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;     &#39;minZoom&#39;: 0,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;     &#39;noWrap&#39;: false,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;     &#39;subdomains&#39;: &#39;abc&#39;,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;     &#39;zIndex&#39;:10,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;     &#39;tms&#39;: false}</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;);</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;var legend = L.control({position: &#39;bottomright&#39;});</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;legend.onAdd = function (map) {</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;        var div = L.DomUtil.create(&#39;div&#39;, &#39;info legend&#39;)</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;        div.innerHTML += &#39;</span><span class="si">{</span><span class="n">legend_title</span><span class="si">}</span><span class="s2">&lt;br&gt;&#39;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;        return div;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;};</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;// Map</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;var map = L.map(&#39;map&#39;,{</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;    center: [0, 0],</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;    crs: L.CRS.EPSG3857,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;    zoom: 2,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;    zoomControl: true,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;    preferCanvas: false,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;    layers: [tile_layer_osm, tile_layer]</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;    }</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;);</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;legend.addTo(map);</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;// Layer control</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;var baseMaps = {</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;    &#39;Open Street Map&#39;: tile_layer_osm,</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;    &#39;Satellite&#39;: Esri_WorldImagery</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;};</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;var overlayMaps = </span><span class="si">{}</span><span class="s2">;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;L.control.layers(baseMaps, overlayMaps).addTo(map);</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&lt;/script&gt;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"     'detectRetina': false,</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"     'maxZoom': 19,</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"     'minZoom': 0,</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"     'noWrap': false,</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"     'opacity': 1,</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"     'maxNativeZoom': 13,</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"     'subdomains': 'abc',</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"     'tms': false});</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+            <span class="s2">"var Esri_WorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/</span><span class="si">{z}</span><span class="s2">/</span><span class="si">{y}</span><span class="s2">/</span><span class="si">{x}</span><span class="s2">', {</span><span class="se">\r\n</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+            <span class="s2">"	attribution: 'Tiles &amp;copy; Esri &amp;mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'</span><span class="se">\r\n</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"});</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"// Data layer</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"var tile_layer = L.tileLayer(</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"    '</span><span class="si">{z}</span><span class="s2">/</span><span class="si">{x}</span><span class="s2">/</span><span class="si">{y}</span><span class="s2">.png',</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"    {'attribution': 'hydromt-sfincs',</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"     'detectRetina': false,</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"     'opacity': 0.7,</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">"     'maxNativeZoom': </span><span class="si">{</span><span class="n">max_native_zoom</span><span class="si">}</span><span class="s2">,</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"     'maxZoom': 19,</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"     'minZoom': 0,</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"     'noWrap': false,</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"     'subdomains': 'abc',</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"     'zIndex':10,</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"     'tms': false}</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">");</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"var legend = L.control({position: 'bottomright'});</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"legend.onAdd = function (map) {</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"        var div = L.DomUtil.create('div', 'info legend')</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">"        div.innerHTML += '</span><span class="si">{</span><span class="n">legend_title</span><span class="si">}</span><span class="s2">&lt;br&gt;'</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"        return div;</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"};</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"// Map</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"var map = L.map('map',{</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"    center: [0, 0],</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"    crs: L.CRS.EPSG3857,</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"    zoom: 2,</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"    zoomControl: true,</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"    preferCanvas: false,</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"    layers: [tile_layer_osm, tile_layer]</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"    }</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">");</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"legend.addTo(map);</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"// Layer control</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"var baseMaps = {</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"    'Open Street Map': tile_layer_osm,</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"    'Satellite': Esri_WorldImagery</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"};</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"var overlayMaps = </span><span class="si">{}</span><span class="s2">;</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"L.control.layers(baseMaps, overlayMaps).addTo(map);</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"&lt;/script&gt;</span><span class="se">\r\n</span><span class="s2">"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="downscale_floodmap_webmercator">
@@ -624,11 +624,11 @@
     <span class="n">floodmap_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">hmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
     <span class="n">zoom_range</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span>
-    <span class="n">fmt_in</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;bin&quot;</span><span class="p">,</span>
-    <span class="n">fmt_out</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;png&quot;</span><span class="p">,</span>
+    <span class="n">fmt_in</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bin"</span><span class="p">,</span>
+    <span class="n">fmt_out</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"png"</span><span class="p">,</span>
     <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># FIXME: this is not implemented yet</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a downscaled floodmap for (model) region in webmercator tile format</span>
+<span class="w">    </span><span class="sd">"""Create a downscaled floodmap for (model) region in webmercator tile format</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -641,18 +641,18 @@
 <span class="sd">    floodmap_path : str</span>
 <span class="sd">        Directory where floodmap files will be stored</span>
 <span class="sd">    hmin : float, optional</span>
-<span class="sd">        Minimum water depth considered as &quot;flooded&quot;, by default 0.05 m</span>
+<span class="sd">        Minimum water depth considered as "flooded", by default 0.05 m</span>
 <span class="sd">    zoom_range : Union[int, List[int]], optional</span>
 <span class="sd">        Range of zoom levels, by default [0, 13]</span>
 <span class="sd">    fmt_in : str, optional</span>
-<span class="sd">        Format of the index and topobathy tiles, by default &quot;bin&quot;</span>
+<span class="sd">        Format of the index and topobathy tiles, by default "bin"</span>
 <span class="sd">    fmt_out : str, optional</span>
-<span class="sd">        Format of the floodmap tiles to be created, by default &quot;png&quot;</span>
+<span class="sd">        Format of the floodmap tiles to be created, by default "png"</span>
 <span class="sd">    merge : bool, optional</span>
 <span class="sd">        Merge floodmap tiles with existing floodmap tiles</span>
 <span class="sd">        (this could for example happen when there is overlap between models),</span>
 <span class="sd">        by default True</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1"># if zsmax is an xarray, convert to numpy array</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">zsmax</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
@@ -687,16 +687,16 @@
             <span class="k">for</span> <span class="n">y_file</span> <span class="ow">in</span> <span class="n">y_files</span><span class="p">:</span>
                 <span class="c1"># read the index file</span>
                 <span class="n">index_fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x_folder</span><span class="p">,</span> <span class="n">y_file</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">fmt_in</span> <span class="o">==</span> <span class="s2">&quot;bin&quot;</span><span class="p">:</span>
-                    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">index_fn</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;i4&quot;</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="n">fmt_in</span> <span class="o">==</span> <span class="s2">&quot;png&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">fmt_in</span> <span class="o">==</span> <span class="s2">"bin"</span><span class="p">:</span>
+                    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">index_fn</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"i4"</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">fmt_in</span> <span class="o">==</span> <span class="s2">"png"</span><span class="p">:</span>
                     <span class="n">ind</span> <span class="o">=</span> <span class="n">png2int</span><span class="p">(</span><span class="n">index_fn</span><span class="p">)</span>
 
                 <span class="c1"># read the topobathy file</span>
                 <span class="n">dep_fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">topobathy_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">),</span> <span class="n">x</span><span class="p">,</span> <span class="n">y_file</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">fmt_in</span> <span class="o">==</span> <span class="s2">&quot;bin&quot;</span><span class="p">:</span>
-                    <span class="n">dep</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">dep_fn</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;f4&quot;</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="n">fmt_in</span> <span class="o">==</span> <span class="s2">&quot;png&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">fmt_in</span> <span class="o">==</span> <span class="s2">"bin"</span><span class="p">:</span>
+                    <span class="n">dep</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">dep_fn</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"f4"</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">fmt_in</span> <span class="o">==</span> <span class="s2">"png"</span><span class="p">:</span>
                     <span class="n">dep</span> <span class="o">=</span> <span class="n">png2elevation</span><span class="p">(</span><span class="n">dep_fn</span><span class="p">)</span>
 
                 <span class="c1"># create the floodmap</span>
@@ -716,12 +716,12 @@
                 <span class="n">floodmap_fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
                     <span class="n">floodmap_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">),</span> <span class="n">x</span><span class="p">,</span> <span class="n">y_file</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">fmt_in</span><span class="p">,</span> <span class="n">fmt_out</span><span class="p">)</span>
                 <span class="p">)</span>
-                <span class="k">if</span> <span class="n">fmt_out</span> <span class="o">==</span> <span class="s2">&quot;bin&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">fmt_out</span> <span class="o">==</span> <span class="s2">"bin"</span><span class="p">:</span>
                     <span class="c1"># And write indices to file</span>
-                    <span class="n">fid</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span>
+                    <span class="n">fid</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">floodmap_fn</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span>
                     <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">hmax</span><span class="p">)</span>
                     <span class="n">fid</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-                <span class="k">elif</span> <span class="n">fmt_out</span> <span class="o">==</span> <span class="s2">&quot;png&quot;</span><span class="p">:</span>
+                <span class="k">elif</span> <span class="n">fmt_out</span> <span class="o">==</span> <span class="s2">"png"</span><span class="p">:</span>
                     <span class="n">elevation2png</span><span class="p">(</span><span class="n">hmax</span><span class="p">,</span> <span class="n">floodmap_fn</span><span class="p">)</span></div>
 
 
@@ -731,12 +731,12 @@
     <span class="n">root</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">zoom_range</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span>
-    <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;png&quot;</span><span class="p">,</span>
+    <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"png"</span><span class="p">,</span>
     <span class="n">write_html_viewer</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">max_workers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logger</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create webmercator index tiles for an SFINCS quadtree grid.</span>
+<span class="w">    </span><span class="sd">"""Create webmercator index tiles for an SFINCS quadtree grid.</span>
 
 <span class="sd">    Index tiles map each pixel of a webmercator XYZ tile to the index of</span>
 <span class="sd">    the corresponding SFINCS quadtree cell (``-999`` where there is no</span>
@@ -756,20 +756,20 @@
 <span class="sd">        Range of zoom levels, by default ``[0, 13]``. A single int is</span>
 <span class="sd">        treated as ``[0, zoom_range]``.</span>
 <span class="sd">    fmt : str, optional</span>
-<span class="sd">        Output format: ``&quot;png&quot;`` (default) or ``&quot;bin&quot;`` (raw int32).</span>
+<span class="sd">        Output format: ``"png"`` (default) or ``"bin"`` (raw int32).</span>
 <span class="sd">    write_html_viewer : bool, optional</span>
-<span class="sd">        If True (default) and ``fmt == &quot;png&quot;``, write a Leaflet</span>
+<span class="sd">        If True (default) and ``fmt == "png"``, write a Leaflet</span>
 <span class="sd">        ``index.html`` alongside the tiles.</span>
 <span class="sd">    max_workers : int, optional</span>
 <span class="sd">        Number of worker threads used to render tiles concurrently.</span>
 <span class="sd">        Defaults to ``os.cpu_count()``. Pass ``1`` to disable parallelism.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">region</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">region</span> <span class="o">=</span> <span class="n">quadtree_grid</span><span class="o">.</span><span class="n">exterior</span>
 
-    <span class="n">index_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">&quot;indices&quot;</span><span class="p">)</span>
+    <span class="n">index_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">)</span>
     <span class="n">npix</span> <span class="o">=</span> <span class="mi">256</span>
-    <span class="n">extension</span> <span class="o">=</span> <span class="s2">&quot;dat&quot;</span> <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;bin&quot;</span> <span class="k">else</span> <span class="n">fmt</span>
+    <span class="n">extension</span> <span class="o">=</span> <span class="s2">"dat"</span> <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"bin"</span> <span class="k">else</span> <span class="n">fmt</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">zoom_range</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
         <span class="n">zoom_range</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">zoom_range</span><span class="p">]</span>
@@ -797,7 +797,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_process_tile</span><span class="p">(</span><span class="n">izoom</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">transform</span><span class="p">:</span> <span class="n">Affine</span><span class="p">,</span> <span class="n">col</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">zoom_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">index_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">))</span>
-        <span class="n">file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">zoom_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">col</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">extension</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">zoom_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">col</span><span class="p">),</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">row</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">extension</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">npix</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">npix</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span>
@@ -809,10 +809,10 @@
 
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">ind</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">):</span>
             <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">zoom_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">col</span><span class="p">)),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;bin&quot;</span><span class="p">:</span>
-                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"bin"</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
                     <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ind</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">))</span>
-            <span class="k">elif</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;png&quot;</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"png"</span><span class="p">:</span>
                 <span class="n">ind</span> <span class="o">=</span> <span class="n">ind</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
                 <span class="n">ind</span><span class="p">[</span><span class="n">ind</span> <span class="o">==</span> <span class="o">-</span><span class="mi">999</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
                 <span class="n">int2png</span><span class="p">(</span><span class="n">ind</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
@@ -821,7 +821,7 @@
     <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
         <span class="n">futures</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">izoom</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">zoom_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">zoom_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing zoom level </span><span class="si">{</span><span class="n">izoom</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Processing zoom level </span><span class="si">{</span><span class="n">izoom</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">transform</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tile_window</span><span class="p">(</span><span class="n">izoom</span><span class="p">,</span> <span class="n">minx</span><span class="p">,</span> <span class="n">miny</span><span class="p">,</span> <span class="n">maxx</span><span class="p">,</span> <span class="n">maxy</span><span class="p">):</span>
                 <span class="n">futures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">_process_tile</span><span class="p">,</span> <span class="n">izoom</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span>
@@ -829,12 +829,12 @@
         <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">futures</span><span class="p">:</span>
             <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
 
-    <span class="k">if</span> <span class="n">write_html_viewer</span> <span class="ow">and</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;png&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">write_html_viewer</span> <span class="ow">and</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"png"</span><span class="p">:</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">index_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">write_html</span><span class="p">(</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">index_path</span><span class="p">,</span> <span class="s2">&quot;index.html&quot;</span><span class="p">),</span>
-            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Index tiles&quot;</span><span class="p">,</span>
-            <span class="n">legend_title</span><span class="o">=</span><span class="s2">&quot;Cell indices&quot;</span><span class="p">,</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">index_path</span><span class="p">,</span> <span class="s2">"index.html"</span><span class="p">),</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">"Index tiles"</span><span class="p">,</span>
+            <span class="n">legend_title</span><span class="o">=</span><span class="s2">"Cell indices"</span><span class="p">,</span>
             <span class="n">max_native_zoom</span><span class="o">=</span><span class="n">zoom_range</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
         <span class="p">)</span>
 
@@ -842,23 +842,23 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_elevation_list_from_catalog</span><span class="p">(</span>
     <span class="n">data_catalog</span><span class="p">,</span> <span class="n">res</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an elevation_list by resolving every source in a data catalog.</span>
+<span class="w">    </span><span class="sd">"""Build an elevation_list by resolving every source in a data catalog.</span>
 
 <span class="sd">    Used as a fallback when no explicit ``elevation_list`` is supplied to</span>
 <span class="sd">    the tiling workflows. Assumes all sources in ``data_catalog`` are</span>
-<span class="sd">    raster elevation datasets (true in DelftDashboard, where the model&#39;s</span>
+<span class="sd">    raster elevation datasets (true in DelftDashboard, where the model's</span>
 <span class="sd">    catalog is populated only with topobathy sources).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">resolved</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">sources</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">zoom</span> <span class="o">=</span> <span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="s2">&quot;meter&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">res</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">zoom</span> <span class="o">=</span> <span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="s2">"meter"</span><span class="p">)</span> <span class="k">if</span> <span class="n">res</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
             <span class="n">da</span> <span class="o">=</span> <span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">zoom</span><span class="o">=</span><span class="n">zoom</span><span class="p">)</span>
-            <span class="n">da</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;elevation&quot;</span>
+            <span class="n">da</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">"elevation"</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No data in domain for </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">, skipped.&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No data in domain for </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">, skipped."</span><span class="p">)</span>
             <span class="k">continue</span>
-        <span class="n">resolved</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;da&quot;</span><span class="p">:</span> <span class="n">da</span><span class="p">})</span>
+        <span class="n">resolved</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"da"</span><span class="p">:</span> <span class="n">da</span><span class="p">})</span>
     <span class="k">return</span> <span class="n">resolved</span>
 
 
@@ -872,12 +872,12 @@
     <span class="n">index_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">zoom_range</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span>
     <span class="n">z_range</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">20000.0</span><span class="p">,</span> <span class="mf">20000.0</span><span class="p">],</span>
-    <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;bin&quot;</span><span class="p">,</span>
+    <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bin"</span><span class="p">,</span>
     <span class="n">write_html_viewer</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">max_workers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logger</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create webmercator topobathy tiles for a given region.</span>
+<span class="w">    </span><span class="sd">"""Create webmercator topobathy tiles for a given region.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -900,15 +900,15 @@
 <span class="sd">    z_range : List[int], optional</span>
 <span class="sd">        Range of valid elevations, by default [-20000.0, 20000.0]</span>
 <span class="sd">    fmt : str, optional</span>
-<span class="sd">        The desired output format of the topobathy tiles, by default &quot;bin&quot;. Also &quot;png&quot; and &quot;tif&quot; are supported.</span>
+<span class="sd">        The desired output format of the topobathy tiles, by default "bin". Also "png" and "tif" are supported.</span>
 <span class="sd">    write_html_viewer : bool, optional</span>
 <span class="sd">        If True (default), also write an ``index.html`` Leaflet viewer</span>
 <span class="sd">        alongside the tiles so they can be previewed in a browser.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="c1"># TODO change the order of the zoom_levels</span>
     <span class="c1"># basing large scale zoom levels on the high-resolution ones prevents memory errors</span>
 
-    <span class="n">topobathy_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">&quot;topobathy&quot;</span><span class="p">)</span>
+    <span class="n">topobathy_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"topobathy"</span><span class="p">)</span>
     <span class="n">npix</span> <span class="o">=</span> <span class="mi">256</span>
 
     <span class="c1"># if only one zoom level is specified, create tiles up to that zoom level</span>
@@ -926,11 +926,11 @@
             <span class="n">data_catalog</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="n">res</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span>
         <span class="p">)</span>
 
-    <span class="k">assert</span> <span class="n">elevation_list</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">elevation_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;No DEMs provided&quot;</span>
+    <span class="k">assert</span> <span class="n">elevation_list</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">elevation_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"No DEMs provided"</span>
 
     <span class="c1"># for binary format, use .dat extension</span>
-    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;bin&quot;</span><span class="p">:</span>
-        <span class="n">extension</span> <span class="o">=</span> <span class="s2">&quot;dat&quot;</span>
+    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"bin"</span><span class="p">:</span>
+        <span class="n">extension</span> <span class="o">=</span> <span class="s2">"dat"</span>
     <span class="c1"># for net, tif and png extension and format are the same</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">extension</span> <span class="o">=</span> <span class="n">fmt</span>
@@ -953,12 +953,12 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_process_tile</span><span class="p">(</span><span class="n">izoom</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">transform</span><span class="p">:</span> <span class="n">Affine</span><span class="p">,</span> <span class="n">col</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">zoom_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">topobathy_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">))</span>
-        <span class="n">file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">zoom_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">col</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">extension</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">zoom_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">col</span><span class="p">),</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">row</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">extension</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">index_path</span><span class="p">:</span>
             <span class="c1"># Only make tiles for which there is an index file (.dat or .png)</span>
-            <span class="n">idx_dat</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">index_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">col</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="si">}</span><span class="s2">.dat&quot;</span><span class="p">)</span>
-            <span class="n">idx_png</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">index_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">col</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="si">}</span><span class="s2">.png&quot;</span><span class="p">)</span>
+            <span class="n">idx_dat</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">index_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">col</span><span class="p">),</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">row</span><span class="si">}</span><span class="s2">.dat"</span><span class="p">)</span>
+            <span class="n">idx_png</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">index_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">col</span><span class="p">),</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">row</span><span class="si">}</span><span class="s2">.png"</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">idx_dat</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">idx_png</span><span class="p">):</span>
                 <span class="k">return</span>
 
@@ -969,14 +969,14 @@
 
         <span class="n">da_dep</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
             <span class="n">zg</span><span class="p">,</span>
-            <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">y3857</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">x3857</span><span class="p">},</span>
-            <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">],</span>
+            <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">"y"</span><span class="p">:</span> <span class="n">y3857</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">:</span> <span class="n">x3857</span><span class="p">},</span>
+            <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">],</span>
         <span class="p">)</span>
         <span class="n">da_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="mi">3857</span><span class="p">)</span>
         <span class="c1"># Tell rioxarray which dims are spatial so it can derive the</span>
         <span class="c1"># transform from the coordinate arrays (avoids</span>
         <span class="c1"># NotGeoreferencedWarning during reprojection).</span>
-        <span class="n">da_dep</span><span class="o">.</span><span class="n">rio</span><span class="o">.</span><span class="n">set_spatial_dims</span><span class="p">(</span><span class="n">x_dim</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">y_dim</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">da_dep</span><span class="o">.</span><span class="n">rio</span><span class="o">.</span><span class="n">set_spatial_dims</span><span class="p">(</span><span class="n">x_dim</span><span class="o">=</span><span class="s2">"x"</span><span class="p">,</span> <span class="n">y_dim</span><span class="o">=</span><span class="s2">"y"</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="n">da_dep</span> <span class="o">=</span> <span class="n">merge_multi_dataarrays</span><span class="p">(</span>
             <span class="n">da_list</span><span class="o">=</span><span class="n">elevation_list</span><span class="p">,</span>
@@ -994,19 +994,19 @@
 
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">zoom_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">col</span><span class="p">)),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;bin&quot;</span><span class="p">:</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"bin"</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
                 <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">da_dep</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;png&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"png"</span><span class="p">:</span>
             <span class="n">elevation2png</span><span class="p">(</span><span class="n">da_dep</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;tif&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"tif"</span><span class="p">:</span>
             <span class="n">da_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">to_raster</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
 
     <span class="n">max_workers</span> <span class="o">=</span> <span class="n">max_workers</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">1</span>
     <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
         <span class="n">futures</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">izoom</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">zoom_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">zoom_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing zoom level </span><span class="si">{</span><span class="n">izoom</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Processing zoom level </span><span class="si">{</span><span class="n">izoom</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">transform</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tile_window</span><span class="p">(</span><span class="n">izoom</span><span class="p">,</span> <span class="n">minx</span><span class="p">,</span> <span class="n">miny</span><span class="p">,</span> <span class="n">maxx</span><span class="p">,</span> <span class="n">maxy</span><span class="p">):</span>
                 <span class="n">futures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">_process_tile</span><span class="p">,</span> <span class="n">izoom</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span>
@@ -1014,19 +1014,19 @@
         <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">futures</span><span class="p">:</span>
             <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
 
-    <span class="k">if</span> <span class="n">write_html_viewer</span> <span class="ow">and</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;png&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">write_html_viewer</span> <span class="ow">and</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"png"</span><span class="p">:</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">topobathy_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">write_html</span><span class="p">(</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">topobathy_path</span><span class="p">,</span> <span class="s2">&quot;index.html&quot;</span><span class="p">),</span>
-            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Topobathy tiles&quot;</span><span class="p">,</span>
-            <span class="n">legend_title</span><span class="o">=</span><span class="s2">&quot;Topobathy&quot;</span><span class="p">,</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">topobathy_path</span><span class="p">,</span> <span class="s2">"index.html"</span><span class="p">),</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">"Topobathy tiles"</span><span class="p">,</span>
+            <span class="n">legend_title</span><span class="o">=</span><span class="s2">"Topobathy"</span><span class="p">,</span>
             <span class="n">max_native_zoom</span><span class="o">=</span><span class="n">zoom_range</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
         <span class="p">)</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">deg2num</span><span class="p">(</span><span class="n">lat_deg</span><span class="p">,</span> <span class="n">lon_deg</span><span class="p">,</span> <span class="n">zoom</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert lat/lon to webmercator tile number&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Convert lat/lon to webmercator tile number"""</span>
     <span class="n">lat_rad</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">lat_deg</span><span class="p">)</span>
     <span class="n">n</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="n">zoom</span>
     <span class="n">xtile</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">lon_deg</span> <span class="o">+</span> <span class="mf">180.0</span><span class="p">)</span> <span class="o">/</span> <span class="mf">360.0</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span>
@@ -1035,7 +1035,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">num2deg</span><span class="p">(</span><span class="n">xtile</span><span class="p">,</span> <span class="n">ytile</span><span class="p">,</span> <span class="n">zoom</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert webmercator tile number to lat/lon&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Convert webmercator tile number to lat/lon"""</span>
     <span class="n">n</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="n">zoom</span>
     <span class="n">lon_deg</span> <span class="o">=</span> <span class="n">xtile</span> <span class="o">/</span> <span class="n">n</span> <span class="o">*</span> <span class="mf">360.0</span> <span class="o">-</span> <span class="mf">180.0</span>
     <span class="n">lat_rad</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">atan</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sinh</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">ytile</span> <span class="o">/</span> <span class="n">n</span><span class="p">)))</span>
@@ -1044,13 +1044,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">rgba2int</span><span class="p">(</span><span class="n">rgba</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert rgba tuple to int&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Convert rgba tuple to int"""</span>
     <span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">rgba</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span> <span class="mi">256</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">g</span> <span class="o">*</span> <span class="mi">256</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">b</span> <span class="o">*</span> <span class="mi">256</span><span class="p">)</span> <span class="o">+</span> <span class="n">a</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">int2rgba</span><span class="p">(</span><span class="n">int_val</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert int to rgba tuple&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Convert int to rgba tuple"""</span>
     <span class="n">r</span> <span class="o">=</span> <span class="p">(</span><span class="n">int_val</span> <span class="o">//</span> <span class="mi">256</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span> <span class="o">%</span> <span class="mi">256</span>
     <span class="n">g</span> <span class="o">=</span> <span class="p">(</span><span class="n">int_val</span> <span class="o">//</span> <span class="mi">256</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">%</span> <span class="mi">256</span>
     <span class="n">b</span> <span class="o">=</span> <span class="p">(</span><span class="n">int_val</span> <span class="o">//</span> <span class="mi">256</span><span class="p">)</span> <span class="o">%</span> <span class="mi">256</span>
@@ -1059,7 +1059,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">elevation2rgb</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert elevation to rgb tuple&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Convert elevation to rgb tuple"""</span>
     <span class="n">val</span> <span class="o">+=</span> <span class="mi">32768</span>
     <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">val</span> <span class="o">/</span> <span class="mi">256</span><span class="p">)</span>
     <span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">val</span> <span class="o">%</span> <span class="mi">256</span><span class="p">)</span>
@@ -1069,19 +1069,19 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">rgb2elevation</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert rgb tuple to elevation&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Convert rgb tuple to elevation"""</span>
     <span class="n">val</span> <span class="o">=</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span> <span class="mi">256</span> <span class="o">+</span> <span class="n">g</span> <span class="o">+</span> <span class="n">b</span> <span class="o">/</span> <span class="mi">256</span><span class="p">)</span> <span class="o">-</span> <span class="mi">32768</span>
     <span class="k">return</span> <span class="n">val</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">png2int</span><span class="p">(</span><span class="n">png_file</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert png to int array&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Convert png to int array"""</span>
     <span class="c1"># Open the PNG image</span>
     <span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">png_file</span><span class="p">)</span>
 
-    <span class="c1"># Convert the image to RGBA mode if it&#39;s not already in RGBN mode</span>
-    <span class="k">if</span> <span class="n">image</span><span class="o">.</span><span class="n">mode</span> <span class="o">!=</span> <span class="s2">&quot;RGBA&quot;</span><span class="p">:</span>
-        <span class="n">image</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">&quot;RGBA&quot;</span><span class="p">)</span>
+    <span class="c1"># Convert the image to RGBA mode if it's not already in RGBN mode</span>
+    <span class="k">if</span> <span class="n">image</span><span class="o">.</span><span class="n">mode</span> <span class="o">!=</span> <span class="s2">"RGBA"</span><span class="p">:</span>
+        <span class="n">image</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">"RGBA"</span><span class="p">)</span>
 
     <span class="c1"># Get the pixel data from the image</span>
     <span class="n">pixel_data</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">image</span><span class="o">.</span><span class="n">getdata</span><span class="p">())</span>
@@ -1095,9 +1095,9 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">int2png</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">png_file</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert int array to png&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Convert int array to png"""</span>
     <span class="c1"># Convert index integers to RGBA values</span>
-    <span class="n">rgba</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">256</span> <span class="o">*</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="s2">&quot;uint8&quot;</span><span class="p">)</span>
+    <span class="n">rgba</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">256</span> <span class="o">*</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="s2">"uint8"</span><span class="p">)</span>
     <span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">int2rgba</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
 
     <span class="n">rgba</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
@@ -1113,18 +1113,18 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">png2elevation</span><span class="p">(</span><span class="n">png_file</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert png to elevation array based on terrarium interpretation&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Convert png to elevation array based on terrarium interpretation"""</span>
     <span class="n">img</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">png_file</span><span class="p">)</span>
-    <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">))</span>
+    <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">"RGB"</span><span class="p">))</span>
     <span class="c1"># Convert RGB values to elevation values</span>
     <span class="n">elevations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="n">rgb2elevation</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">arr</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">elevations</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">elevation2png</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">png_file</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert elevation array to png using terrarium interpretation&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Convert elevation array to png using terrarium interpretation"""</span>
 
-    <span class="n">rgb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">256</span> <span class="o">*</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="s2">&quot;uint8&quot;</span><span class="p">)</span>
+    <span class="n">rgb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">256</span> <span class="o">*</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="s2">"uint8"</span><span class="p">)</span>
     <span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">elevation2rgb</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
 
     <span class="n">rgb</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
@@ -1139,7 +1139,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">tile_window</span><span class="p">(</span><span class="n">zl</span><span class="p">,</span> <span class="n">minx</span><span class="p">,</span> <span class="n">miny</span><span class="p">,</span> <span class="n">maxx</span><span class="p">,</span> <span class="n">maxy</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Window generator for a given zoom level and bounding box&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Window generator for a given zoom level and bounding box"""</span>
     <span class="n">dxy</span> <span class="o">=</span> <span class="p">(</span><span class="mf">20037508.34</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">zl</span><span class="p">)</span>
     <span class="c1"># Origin displacement</span>
     <span class="n">odx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="o">-</span><span class="mf">20037508.34</span> <span class="o">-</span> <span class="n">minx</span><span class="p">)</span> <span class="o">/</span> <span class="n">dxy</span><span class="p">)</span>

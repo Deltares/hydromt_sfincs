@@ -443,26 +443,26 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
 
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="SfincsObservationPoints">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.geometries.SfincsObservationPoints.html#hydromt_sfincs.components.geometries.SfincsObservationPoints">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SfincsObservationPoints</span><span class="p">(</span><span class="n">ModelComponent</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;SFINCS Observation Points Component.</span>
+<span class="w">    </span><span class="sd">"""SFINCS Observation Points Component.</span>
 
 <span class="sd">    This component handles reading, writing, and creating observation points, which are used for</span>
 <span class="sd">    extracting model results at specific locations such as water level gauging stations. The frequency</span>
-<span class="sd">    of output at these points can be controlled via the &quot;dthisout&quot; parameter in the configuration.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    of output at these points can be controlled via the "dthisout" parameter in the configuration.</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="SfincsObservationPoints.__init__">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.geometries.SfincsObservationPoints.html#hydromt_sfincs.components.geometries.SfincsObservationPoints.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;SfincsModel&quot;</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="s2">"SfincsModel"</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sfincs.obs&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"sfincs.obs"</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
@@ -471,33 +471,33 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Observation point data, returned as a GeoDataFrame.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Observation point data, returned as a GeoDataFrame."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_initialize</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">gdf</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Observation point data, returned as a GeoDataFrame. Same as data property.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Observation point data, returned as a GeoDataFrame. Same as data property."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">nr_points</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Return the number of point locations currently stored.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;index&quot;</span><span class="p">):</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">"index"</span><span class="p">):</span>
             <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
         <span class="k">return</span> <span class="mi">0</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">list_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Return list of names of observation points.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
-        <span class="n">names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">])</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"name"</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">names</span>
 
     <span class="c1"># %% core HydroMT-SFINCS functions:</span>
@@ -510,7 +510,7 @@
     <span class="c1"># clear</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">skip_read</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize observation points.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Initialize observation points."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">()</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">is_reading_mode</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">skip_read</span><span class="p">:</span>
@@ -519,14 +519,14 @@
 <div class="viewcode-block" id="SfincsObservationPoints.read">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.geometries.SfincsObservationPoints.read.html#hydromt_sfincs.components.geometries.SfincsObservationPoints.read">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read SFINCS observation points (.obs) file. Filename is obtained from config if not given.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Read SFINCS observation points (.obs) file. Filename is obtained from config if not given."""</span>
 
         <span class="c1"># check that read mode is on</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_read_mode</span><span class="p">()</span>
 
         <span class="c1"># get absolute file path and set it in config if obsfile is not None</span>
         <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
-            <span class="s2">&quot;obsfile&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span>
+            <span class="s2">"obsfile"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span>
         <span class="p">)</span>
 
         <span class="c1"># check if abs_file_path is None or does not exist</span>
@@ -534,7 +534,7 @@
             <span class="k">return</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="n">abs_file_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Observation points file not found: </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"Observation points file not found: </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
 
         <span class="c1"># Read input file:</span>
@@ -547,20 +547,20 @@
 <div class="viewcode-block" id="SfincsObservationPoints.write">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.geometries.SfincsObservationPoints.write.html#hydromt_sfincs.components.geometries.SfincsObservationPoints.write">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write SFINCS observation points (.obs) file,</span>
-<span class="sd">        and set obsfile in config (if it was not already set)&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Write SFINCS observation points (.obs) file,</span>
+<span class="sd">        and set obsfile in config (if it was not already set)"""</span>
 
         <span class="c1"># check that write mode is on</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_write_mode</span><span class="p">()</span>
 
         <span class="c1"># check if data present:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;No observation points data available to write.&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"No observation points data available to write."</span><span class="p">)</span>
             <span class="k">return</span>
 
         <span class="c1"># Set file name and get absolute path</span>
         <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
-            <span class="n">key</span><span class="o">=</span><span class="s2">&quot;obsfile&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;sfincs.obs&quot;</span>
+            <span class="n">key</span><span class="o">=</span><span class="s2">"obsfile"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">"sfincs.obs"</span>
         <span class="p">)</span>
 
         <span class="c1"># Create parent directories if they do not exist</span>
@@ -568,9 +568,9 @@
 
         <span class="c1"># Change precision of coordinates according to crs</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
-            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%11.6f</span><span class="s2">&quot;</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">"</span><span class="si">%11.6f</span><span class="s2">"</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%11.1f</span><span class="s2">&quot;</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">"</span><span class="si">%11.1f</span><span class="s2">"</span>
 
         <span class="n">writers</span><span class="o">.</span><span class="n">write_xyn</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>  <span class="c1"># =utils.py function</span>
 
@@ -578,15 +578,15 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">write_gis</span><span class="p">:</span>
             <span class="n">writers</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
-                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;obs&quot;</span><span class="p">,</span>
-                <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;gis&quot;</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"obs"</span><span class="p">,</span>
+                <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">"gis"</span><span class="p">),</span>
             <span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">gdf</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">skip_validation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set SFINCS observation points.</span>
+<span class="w">        </span><span class="sd">"""Set SFINCS observation points.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -597,15 +597,15 @@
 
 <span class="sd">        .. note::</span>
 <span class="sd">            When directly using the set method, the GeoDataFrame needs to be in the same CRS as SFINCS model.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">skip_validation</span><span class="p">:</span>
             <span class="c1"># Check that gdf has geometry column and that it is of type Point, and that the CRS matches the model CRS</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">&quot;Point&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Observation points must be of type Point.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">"Point"</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Observation points must be of type Point."</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf</span><span class="o">.</span><span class="n">crs</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Observation points CRS </span><span class="si">{</span><span class="n">gdf</span><span class="o">.</span><span class="n">crs</span><span class="si">}</span><span class="s2"> does not match model CRS </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="si">}</span><span class="s2">.&quot;</span>
+                    <span class="sa">f</span><span class="s2">"Observation points CRS </span><span class="si">{</span><span class="n">gdf</span><span class="o">.</span><span class="n">crs</span><span class="si">}</span><span class="s2"> does not match model CRS </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="si">}</span><span class="s2">."</span>
                 <span class="p">)</span>
 
             <span class="c1"># Clip points outside of model region:</span>
@@ -619,17 +619,17 @@
                     <span class="c1"># write away the names of points that are removed</span>
                     <span class="n">gdf_name</span> <span class="o">=</span> <span class="n">gdf</span><span class="o">.</span><span class="n">name</span><span class="p">[</span><span class="o">~</span><span class="n">within</span><span class="p">]</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                        <span class="s2">&quot;Some of the observation points fall out of model domain. Removing points: &quot;</span>
+                        <span class="s2">"Some of the observation points fall out of model domain. Removing points: "</span>
                         <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">gdf_name</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
                     <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;None of observation points fall within model domain.&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"None of observation points fall within model domain."</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">merge</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">gdf0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
             <span class="c1"># add the new data behind the original</span>
             <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">gdf0</span><span class="p">,</span> <span class="n">gdf</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Adding new observation points to existing ones.&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Adding new observation points to existing ones."</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">gdf</span>  <span class="c1"># set gdf in self.data</span>
 
@@ -642,7 +642,7 @@
         <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create model observation point locations.</span>
+<span class="w">        </span><span class="sd">"""Create model observation point locations.</span>
 <span class="sd">        (old name: setup_observation_points)</span>
 
 <span class="sd">        Adds model layers:</span>
@@ -655,25 +655,25 @@
 <span class="sd">            Path, data source name, or geopandas object for observation point locations.</span>
 <span class="sd">        merge: bool, optional</span>
 <span class="sd">            If True, merge the new observation points with the existing ones. By default True.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">gdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
             <span class="n">locations</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
         <span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">&quot;Point&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Observation points should be of type Point&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">"Point"</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Observation points should be of type Point"</span><span class="p">)</span>
 
         <span class="c1"># Set the observation points data</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">merge</span><span class="p">)</span>
         <span class="c1"># Set config</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;obsfile&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs.obs&quot;</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"obsfile"</span><span class="p">,</span> <span class="s2">"sfincs.obs"</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">delete</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">index</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove one or more observation points.</span>
+<span class="w">        </span><span class="sd">"""Remove one or more observation points.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -681,23 +681,23 @@
 <span class="sd">            Specify observation points to be dropped from GeoDataFrame.</span>
 <span class="sd">            If int, drop a single observation point based on index.</span>
 <span class="sd">            If list, drop multiple observation points based on index.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="c1"># Turn int or str into list</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
             <span class="n">index</span> <span class="o">=</span> <span class="p">[</span><span class="n">index</span><span class="p">]</span>
 
         <span class="c1"># Check that any integer in list is not larger than the number of points</span>
         <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">nr_points</span> <span class="o">-</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">min</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;One of the indices exceeds length of index range!&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"One of the indices exceeds length of index range!"</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Dropping point(s) from observations&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Dropping point(s) from observations"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clean GeoDataFrame with observation points.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Clean GeoDataFrame with observation points."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">()</span>
         <span class="c1"># Set obsfile to None in config</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;obsfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"obsfile"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="c1"># %% DDB GUI focused additional functions:</span>
     <span class="c1"># add_point</span>
@@ -710,7 +710,7 @@
         <span class="n">y</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add single point to observation points.</span>
+<span class="w">        </span><span class="sd">"""Add single point to observation points.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ---------</span>
@@ -721,9 +721,9 @@
 <span class="sd">        name: str</span>
 <span class="sd">            Name for point to be added</span>
 <span class="sd">        **NOTE** - x&amp;y values need to be in the same CRS as SFINCS model.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">point</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s2">&quot;long_name&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;geometry&quot;</span><span class="p">:</span> <span class="n">point</span><span class="p">}</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s2">"long_name"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"geometry"</span><span class="p">:</span> <span class="n">point</span><span class="p">}</span>
 
         <span class="c1"># Create a new GeoDataFrame for the Point</span>
         <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">([</span><span class="n">d</span><span class="p">],</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
@@ -734,25 +734,25 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">name_or_index</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove point from observation points.</span>
+<span class="w">        </span><span class="sd">"""Remove point from observation points.</span>
 <span class="sd">        This function finds the wanted index, after which the generic delete function is called.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ---------</span>
 <span class="sd">        name_or_index: str, int</span>
 <span class="sd">            Specify either name (str) or index (int) of point to be dropped from GeoDataFrame of observations.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name_or_index</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">index</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-                <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">name_or_index</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="o">==</span> <span class="n">name_or_index</span><span class="p">:</span>
                     <span class="n">index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Point &quot;</span> <span class="o">+</span> <span class="n">name_or_index</span> <span class="o">+</span> <span class="s2">&quot; not found!&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Point "</span> <span class="o">+</span> <span class="n">name_or_index</span> <span class="o">+</span> <span class="s2">" not found!"</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name_or_index</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
             <span class="n">index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">name_or_index</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Wrong input type given for function delete_point&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Wrong input type given for function delete_point"</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
         <span class="k">return</span></div>

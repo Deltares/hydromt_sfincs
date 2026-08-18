@@ -441,23 +441,23 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
 
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="SfincsOutput">
 <a class="viewcode-back" href="../../../_generated/hydromt_sfincs.components.output.SfincsOutput.html#hydromt_sfincs.components.output.SfincsOutput">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SfincsOutput</span><span class="p">(</span><span class="n">ModelComponent</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;SFINCS model output component.</span>
+<span class="w">    </span><span class="sd">"""SFINCS model output component.</span>
 
 <span class="sd">    This component handles reading and storing model results from SFINCS. The results</span>
 <span class="sd">    are stored in a dictionary and can be accessed via the `data` property.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="SfincsOutput.__init__">
 <a class="viewcode-back" href="../../../_generated/hydromt_sfincs.components.output.SfincsOutput.html#hydromt_sfincs.components.output.SfincsOutput.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;SfincsModel&quot;</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="s2">"SfincsModel"</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
@@ -469,13 +469,13 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">,</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataset</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Model results. Returns dict of xarray.DataArray or xarray.Dataset.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Model results. Returns dict of xarray.DataArray or xarray.Dataset."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_initialize</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">skip_read</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize results.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Initialize results."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">is_reading_mode</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">skip_read</span><span class="p">:</span>
@@ -484,12 +484,12 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">chunksize</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-        <span class="n">drop</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincsgrid&quot;</span><span class="p">],</span>
-        <span class="n">fn_map</span><span class="o">=</span><span class="s2">&quot;sfincs_map.nc&quot;</span><span class="p">,</span>
-        <span class="n">fn_his</span><span class="o">=</span><span class="s2">&quot;sfincs_his.nc&quot;</span><span class="p">,</span>
+        <span class="n">drop</span><span class="o">=</span><span class="p">[</span><span class="s2">"crs"</span><span class="p">,</span> <span class="s2">"sfincsgrid"</span><span class="p">],</span>
+        <span class="n">fn_map</span><span class="o">=</span><span class="s2">"sfincs_map.nc"</span><span class="p">,</span>
+        <span class="n">fn_his</span><span class="o">=</span><span class="s2">"sfincs_his.nc"</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read results from sfincs_map.nc and sfincs_his.nc and save to the `results` attribute.</span>
+<span class="w">        </span><span class="sd">"""Read results from sfincs_map.nc and sfincs_his.nc and save to the `results` attribute.</span>
 <span class="sd">        The staggered nc file format is translated into hydromt.RasterDataArray formats.</span>
 <span class="sd">        Additionally, hmax is computed from zsmax and zb if present.</span>
 
@@ -498,12 +498,12 @@
 <span class="sd">        chunksize: int, optional</span>
 <span class="sd">            chunk size along time dimension, by default 100</span>
 <span class="sd">        drop: list, optional</span>
-<span class="sd">            list of variables to drop, by default [&quot;crs&quot;, &quot;sfincsgrid&quot;]</span>
+<span class="sd">            list of variables to drop, by default ["crs", "sfincsgrid"]</span>
 <span class="sd">        fn_map: str, optional</span>
-<span class="sd">            filename of sfincs_map.nc, by default &quot;sfincs_map.nc&quot;</span>
+<span class="sd">            filename of sfincs_map.nc, by default "sfincs_map.nc"</span>
 <span class="sd">        fn_his: str, optional</span>
-<span class="sd">            filename of sfincs_his.nc, by default &quot;sfincs_his.nc&quot;</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">            filename of sfincs_his.nc, by default "sfincs_his.nc"</span>
+<span class="sd">        """</span>
 
         <span class="c1"># Check that read mode is on</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_read_mode</span><span class="p">()</span>
@@ -521,7 +521,7 @@
                 <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">fn_map</span><span class="si">}</span><span class="s2"> not found.&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"File </span><span class="si">{</span><span class="n">fn_map</span><span class="si">}</span><span class="s2"> not found."</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">isabs</span><span class="p">(</span><span class="n">fn_his</span><span class="p">):</span>
             <span class="n">fn_his</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span> <span class="o">/</span> <span class="n">fn_his</span>
@@ -533,20 +533,20 @@
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">ds_his</span><span class="p">,</span> <span class="n">split_dataset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">fn_his</span><span class="si">}</span><span class="s2"> not found.&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"File </span><span class="si">{</span><span class="n">fn_his</span><span class="si">}</span><span class="s2"> not found."</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Writing results to sfincs_map.nc and sfincs_his.nc files is not part of</span>
-<span class="sd">        the hydromt.sfincs package. This is done by the SFINCS kernel itself.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Writing results to sfincs_map.nc and sfincs_his.nc files is not part of</span>
+<span class="sd">        the hydromt.sfincs package. This is done by the SFINCS kernel itself."""</span>
         <span class="k">pass</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">read_his_file</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">fn_his</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sfincs_his.nc&quot;</span><span class="p">,</span>
-        <span class="n">drop</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincsgrid&quot;</span><span class="p">],</span>
+        <span class="n">fn_his</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"sfincs_his.nc"</span><span class="p">,</span>
+        <span class="n">drop</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"crs"</span><span class="p">,</span> <span class="s2">"sfincsgrid"</span><span class="p">],</span>
         <span class="n">chunksize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read the sfincs_his.nc file and return it as an xarray Dataset.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Read the sfincs_his.nc file and return it as an xarray Dataset."""</span>
         <span class="n">ds_his</span> <span class="o">=</span> <span class="n">readers</span><span class="o">.</span><span class="n">read_sfincs_his_results</span><span class="p">(</span>
             <span class="n">fn_his</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">chunksize</span><span class="o">=</span><span class="n">chunksize</span>
         <span class="p">)</span>
@@ -557,16 +557,16 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">read_map_file</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">fn_map</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sfincs_map.nc&quot;</span><span class="p">,</span>
-        <span class="n">drop</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincsgrid&quot;</span><span class="p">],</span>
+        <span class="n">fn_map</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"sfincs_map.nc"</span><span class="p">,</span>
+        <span class="n">drop</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"crs"</span><span class="p">,</span> <span class="s2">"sfincsgrid"</span><span class="p">],</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read the sfincs_map.nc file and return it as an xarray Dataset.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Read the sfincs_map.nc file and return it as an xarray Dataset."""</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Grid type not known, trying to read from config file. &quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"Grid type not known, trying to read from config file. "</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"regular"</span><span class="p">:</span>
             <span class="n">ds_face</span><span class="p">,</span> <span class="n">ds_edge</span> <span class="o">=</span> <span class="n">readers</span><span class="o">.</span><span class="n">read_sfincs_map_results</span><span class="p">(</span>
                 <span class="n">fn_map</span><span class="p">,</span>
                 <span class="n">ds_like</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span>
@@ -577,21 +577,21 @@
             <span class="c1"># save as dict of DataArray</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">ds_face</span><span class="p">,</span> <span class="n">split_dataset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">ds_edge</span><span class="p">,</span> <span class="n">split_dataset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"quadtree"</span><span class="p">:</span>
             <span class="k">with</span> <span class="n">xu</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">fn_map</span><span class="p">)</span> <span class="k">as</span> <span class="n">ds</span><span class="p">:</span>
                 <span class="c1"># set coords</span>
-                <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">set_coords</span><span class="p">([</span><span class="s2">&quot;mesh2d_node_x&quot;</span><span class="p">,</span> <span class="s2">&quot;mesh2d_node_y&quot;</span><span class="p">])</span>
+                <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">set_coords</span><span class="p">([</span><span class="s2">"mesh2d_node_x"</span><span class="p">,</span> <span class="s2">"mesh2d_node_y"</span><span class="p">])</span>
                 <span class="c1"># get crs variable, drop it and set it correctly</span>
                 <span class="k">if</span> <span class="n">ds</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">crs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                        <span class="s2">&quot;CRS not found in grid, trying to read from crs variable. &quot;</span>
+                        <span class="s2">"CRS not found in grid, trying to read from crs variable. "</span>
                     <span class="p">)</span>
                     <span class="k">try</span><span class="p">:</span>
-                        <span class="n">crs</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
-                        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">drop_vars</span><span class="p">(</span><span class="s2">&quot;crs&quot;</span><span class="p">)</span>
+                        <span class="n">crs</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">"crs"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+                        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">drop_vars</span><span class="p">(</span><span class="s2">"crs"</span><span class="p">)</span>
                         <span class="n">ds</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">CRS</span><span class="o">.</span><span class="n">from_user_input</span><span class="p">(</span><span class="n">crs</span><span class="p">))</span>
                     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to set CRS from variable: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to set CRS from variable: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">split_dataset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span>
@@ -600,7 +600,7 @@
         <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">split_dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add data to results attribute.</span>
+<span class="w">        </span><span class="sd">"""Add data to results attribute.</span>
 
 <span class="sd">        Dataset can either be added as is (default) or split into several</span>
 <span class="sd">        DataArrays using the split_dataset argument.</span>
@@ -614,14 +614,14 @@
 <span class="sd">        split_dataset: bool, optional</span>
 <span class="sd">            If True (False by default), split a Dataset to store each variable</span>
 <span class="sd">            as a DataArray.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="c1"># Initialize results if not done yet</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_initialize</span><span class="p">()</span>
 
         <span class="n">data_dict</span> <span class="o">=</span> <span class="n">_check_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">split_dataset</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">data_dict</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Replacing result: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Replacing result: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">data_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span></div>
 
 
@@ -638,7 +638,7 @@
         <span class="k">elif</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">data</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">name</span>
         <span class="k">elif</span> <span class="n">data</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Name required for DataArray.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Name required for DataArray."</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">data</span><span class="p">}</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span>
         <span class="n">data</span><span class="p">,</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataset</span>
@@ -646,11 +646,11 @@
         <span class="k">if</span> <span class="n">split_dataset</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">data_vars</span><span class="p">}</span>
         <span class="k">elif</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Name required for Dataset.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Name required for Dataset."</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">data</span><span class="p">}</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Data type &quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1">&quot; not recognized&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Data type "</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1">" not recognized'</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">data</span>
 
 

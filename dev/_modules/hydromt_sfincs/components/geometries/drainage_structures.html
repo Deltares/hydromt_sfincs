@@ -443,25 +443,25 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
 
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="SfincsDrainageStructures">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.geometries.SfincsDrainageStructures.html#hydromt_sfincs.components.geometries.SfincsDrainageStructures">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SfincsDrainageStructures</span><span class="p">(</span><span class="n">ModelComponent</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;SFINCS drainage structures component.</span>
+<span class="w">    </span><span class="sd">"""SFINCS drainage structures component.</span>
 
 <span class="sd">    This component handles reading, writing, and creating drainage structures</span>
 <span class="sd">    such as pumps, culverts, and valves in a SFINCS model.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="SfincsDrainageStructures.__init__">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.geometries.SfincsDrainageStructures.html#hydromt_sfincs.components.geometries.SfincsDrainageStructures.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;SfincsModel&quot;</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="s2">"SfincsModel"</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sfincs.drn&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"sfincs.drn"</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
@@ -470,28 +470,28 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Drainage structures data, returns geopandas.GeoDataFrame&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Drainage structures data, returns geopandas.GeoDataFrame"""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_initialize</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">gdf</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Drainage structures data, returns geopandas.GeoDataFrame&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Drainage structures data, returns geopandas.GeoDataFrame"""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">nr_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Return the number of line locations currently stored.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;index&quot;</span><span class="p">):</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">"index"</span><span class="p">):</span>
             <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
         <span class="k">return</span> <span class="mi">0</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">list_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Give list of names of drainage structures.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Give list of names of drainage structures."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
         <span class="c1"># The drainage structures do not really have names,</span>
@@ -503,24 +503,24 @@
         <span class="n">igate</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">names</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">ipump</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Pump </span><span class="si">{</span><span class="n">ipump</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Pump </span><span class="si">{</span><span class="n">ipump</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
                 <span class="n">iculvert</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Culvert </span><span class="si">{</span><span class="n">iculvert</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Culvert </span><span class="si">{</span><span class="n">iculvert</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
                 <span class="n">ivalve</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Valve </span><span class="si">{</span><span class="n">ivalve</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Valve </span><span class="si">{</span><span class="n">ivalve</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
                 <span class="n">igate</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Gate </span><span class="si">{</span><span class="n">igate</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Gate </span><span class="si">{</span><span class="n">igate</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Drainage </span><span class="si">{</span><span class="n">index</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Drainage </span><span class="si">{</span><span class="n">index</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">names</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">skip_read</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize drainage structures.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Initialize drainage structures."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">()</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">is_reading_mode</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">skip_read</span><span class="p">:</span>
@@ -529,14 +529,14 @@
 <div class="viewcode-block" id="SfincsDrainageStructures.read">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.geometries.SfincsDrainageStructures.read.html#hydromt_sfincs.components.geometries.SfincsDrainageStructures.read">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read SFINCS drainage structures (.drn) file. Filename is obtained from config if not provided.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Read SFINCS drainage structures (.drn) file. Filename is obtained from config if not provided."""</span>
 
         <span class="c1"># check that read mode is on</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_read_mode</span><span class="p">()</span>
 
         <span class="c1"># get absolute file path and set it in config if drnfile is not None</span>
         <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
-            <span class="s2">&quot;drnfile&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span>
+            <span class="s2">"drnfile"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span>
         <span class="p">)</span>
 
         <span class="c1"># check if abs_file_path is None or does not exist</span>
@@ -544,7 +544,7 @@
             <span class="k">return</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="n">abs_file_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Drainage structures file not found: </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"Drainage structures file not found: </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
 
         <span class="c1"># Read input file:</span>
@@ -558,20 +558,20 @@
 <div class="viewcode-block" id="SfincsDrainageStructures.write">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.geometries.SfincsDrainageStructures.write.html#hydromt_sfincs.components.geometries.SfincsDrainageStructures.write">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write SFINCS drainage structures (.drn) file,</span>
-<span class="sd">        and make sure drnfile is in config (if it was not already set).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Write SFINCS drainage structures (.drn) file,</span>
+<span class="sd">        and make sure drnfile is in config (if it was not already set)."""</span>
 
         <span class="c1"># check that write mode is on</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_write_mode</span><span class="p">()</span>
 
         <span class="c1"># check if data present:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;No drainage structures data available to write.&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"No drainage structures data available to write."</span><span class="p">)</span>
             <span class="k">return</span>
 
         <span class="c1"># Set file name and get absolute path</span>
         <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
-            <span class="n">key</span><span class="o">=</span><span class="s2">&quot;drnfile&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;sfincs.drn&quot;</span>
+            <span class="n">key</span><span class="o">=</span><span class="s2">"drnfile"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">"sfincs.drn"</span>
         <span class="p">)</span>
 
         <span class="c1"># Create parent directories if they do not exist</span>
@@ -579,9 +579,9 @@
 
         <span class="c1"># Change precision of coordinates according to crs</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
-            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%11.6f</span><span class="s2">&quot;</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">"</span><span class="si">%11.6f</span><span class="s2">"</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%11.1f</span><span class="s2">&quot;</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">"</span><span class="si">%11.1f</span><span class="s2">"</span>
 
         <span class="c1"># TODO we can move the utils to here, since only used here?</span>
         <span class="n">writers</span><span class="o">.</span><span class="n">write_drn</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
@@ -590,13 +590,13 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">write_gis</span><span class="p">:</span>
             <span class="n">writers</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
-                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;drn&quot;</span><span class="p">,</span>
-                <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;gis&quot;</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"drn"</span><span class="p">,</span>
+                <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">"gis"</span><span class="p">),</span>
             <span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gdf</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set SFINCS drainage structures.</span>
+<span class="w">        </span><span class="sd">"""Set SFINCS drainage structures.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -608,13 +608,13 @@
 
 <span class="sd">        .. note::</span>
 <span class="sd">            When directly using the set method, the GeoDataFrame needs to be in the same CRS as SFINCS model.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">&quot;LineString&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Drainage structures must be of type LineString.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">"LineString"</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Drainage structures must be of type LineString."</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf</span><span class="o">.</span><span class="n">crs</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Drainage structures CRS </span><span class="si">{</span><span class="n">gdf</span><span class="o">.</span><span class="n">crs</span><span class="si">}</span><span class="s2"> does not match model CRS </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="si">}</span><span class="s2">.&quot;</span>
+                <span class="sa">f</span><span class="s2">"Drainage structures CRS </span><span class="si">{</span><span class="n">gdf</span><span class="o">.</span><span class="n">crs</span><span class="si">}</span><span class="s2"> does not match model CRS </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="si">}</span><span class="s2">."</span>
             <span class="p">)</span>
 
         <span class="c1"># Clip geometries outside of model region:</span>
@@ -628,17 +628,17 @@
                 <span class="c1"># write away the names of geometries that are removed</span>
                 <span class="n">gdf_name</span> <span class="o">=</span> <span class="n">gdf</span><span class="o">.</span><span class="n">name</span><span class="p">[</span><span class="o">~</span><span class="n">within</span><span class="p">]</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                    <span class="s2">&quot;Some of the drainage structures fall out of model domain. Removing structures: &quot;</span>
+                    <span class="s2">"Some of the drainage structures fall out of model domain. Removing structures: "</span>
                     <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">gdf_name</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
                 <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;None of drainage structures fall within model domain.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"None of drainage structures fall within model domain."</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">merge</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
             <span class="n">gdf0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
             <span class="c1"># add the new data behind the original</span>
             <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">gdf0</span><span class="p">,</span> <span class="n">gdf</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Adding new drainage structures to existing ones.&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Adding new drainage structures to existing ones."</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">gdf</span>  <span class="c1"># set gdf in self.data</span>
 
@@ -648,7 +648,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">locations</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">],</span>
-        <span class="n">stype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;pump&quot;</span><span class="p">,</span>
+        <span class="n">stype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"pump"</span><span class="p">,</span>
         <span class="n">discharge</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
         <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
         <span class="n">width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
@@ -660,7 +660,7 @@
         <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create drainage structures such as pumps, culverts, valves, or gates (old name: setup_drainage_structures).</span>
+<span class="w">        </span><span class="sd">"""Create drainage structures such as pumps, culverts, valves, or gates (old name: setup_drainage_structures).</span>
 
 <span class="sd">        Adds model layer:</span>
 <span class="sd">        * **drn** geom: drainage pump or culvert</span>
@@ -670,21 +670,21 @@
 <span class="sd">        locations : str, Path</span>
 <span class="sd">            Path, data source name, or geopandas object to structure line geometry file.</span>
 <span class="sd">            The line should consist of only 2 points (else first and last points are used), ordered from up to downstream.</span>
-<span class="sd">            The &quot;type&quot; (1 for pump, 2 for culvert, 3 for valve, 4 for gate), &quot;par1&quot; (&quot;discharge&quot; also accepted) variables are optional.</span>
-<span class="sd">            If &quot;type&quot; or &quot;par1&quot; are not provided, they are based on stype or discharge Parameters.</span>
-<span class="sd">        stype : {&#39;pump&#39;, &#39;culvert&#39;, &#39;valve&#39;, &#39;gate&#39;}, optional</span>
-<span class="sd">            Structure type, by default &quot;pump&quot;. stype is converted to integer &quot;type&quot; to match with SFINCS expectations.</span>
+<span class="sd">            The "type" (1 for pump, 2 for culvert, 3 for valve, 4 for gate), "par1" ("discharge" also accepted) variables are optional.</span>
+<span class="sd">            If "type" or "par1" are not provided, they are based on stype or discharge Parameters.</span>
+<span class="sd">        stype : {'pump', 'culvert', 'valve', 'gate'}, optional</span>
+<span class="sd">            Structure type, by default "pump". stype is converted to integer "type" to match with SFINCS expectations.</span>
 <span class="sd">        discharge : float, optional</span>
 <span class="sd">            Discharge of the structure, by default 0.0. For culverts and one-way-valves, this is the maximum discharge,</span>
 <span class="sd">            since actual discharge depends on waterlevel gradient</span>
 <span class="sd">        merge : bool, optional</span>
 <span class="sd">            If True, merge with existing drainage locations, by default True.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="n">stype</span> <span class="o">=</span> <span class="n">stype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="n">svalues</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;pump&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;culvert&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;valve&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;gate&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}</span>
+        <span class="n">svalues</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"pump"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"culvert"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"valve"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">"gate"</span><span class="p">:</span> <span class="mi">4</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">stype</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">svalues</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;stype must be one of &quot;pump&quot;, &quot;culvert&quot;, &quot;valve&quot;, &quot;gate&quot;&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'stype must be one of "pump", "culvert", "valve", "gate"'</span><span class="p">)</span>
         <span class="n">svalue</span> <span class="o">=</span> <span class="n">svalues</span><span class="p">[</span><span class="n">stype</span><span class="p">]</span>
 
         <span class="c1"># read, clip and reproject</span>
@@ -694,56 +694,56 @@
 
         <span class="c1"># check if type (int) is present in gdf, else overwrite from args</span>
         <span class="c1"># TODO also add check if type is interger?</span>
-        <span class="k">if</span> <span class="s2">&quot;type&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">svalue</span>
+        <span class="k">if</span> <span class="s2">"type"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">=</span> <span class="n">svalue</span>
         <span class="c1"># if discharge is provided, rename to par1</span>
-        <span class="k">if</span> <span class="s2">&quot;discharge&quot;</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-            <span class="n">gdf_structures</span> <span class="o">=</span> <span class="n">gdf_structures</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;discharge&quot;</span><span class="p">:</span> <span class="s2">&quot;par1&quot;</span><span class="p">})</span>
+        <span class="k">if</span> <span class="s2">"discharge"</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+            <span class="n">gdf_structures</span> <span class="o">=</span> <span class="n">gdf_structures</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s2">"discharge"</span><span class="p">:</span> <span class="s2">"par1"</span><span class="p">})</span>
 
         <span class="c1"># Now for the different structure types</span>
         <span class="k">if</span> <span class="n">svalue</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="c1"># Pump</span>
-            <span class="k">if</span> <span class="s2">&quot;par1&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par1&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">discharge</span>
+            <span class="k">if</span> <span class="s2">"par1"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">"par1"</span><span class="p">]</span> <span class="o">=</span> <span class="n">discharge</span>
         <span class="k">elif</span> <span class="n">svalue</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
             <span class="c1"># Culvert</span>
-            <span class="k">if</span> <span class="s2">&quot;par1&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par1&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">alpha</span>
+            <span class="k">if</span> <span class="s2">"par1"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">"par1"</span><span class="p">]</span> <span class="o">=</span> <span class="n">alpha</span>
         <span class="k">elif</span> <span class="n">svalue</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
             <span class="c1"># Check valve</span>
-            <span class="k">if</span> <span class="s2">&quot;par1&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par1&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">alpha</span>
+            <span class="k">if</span> <span class="s2">"par1"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">"par1"</span><span class="p">]</span> <span class="o">=</span> <span class="n">alpha</span>
         <span class="k">elif</span> <span class="n">svalue</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
             <span class="c1"># Gate</span>
-            <span class="k">if</span> <span class="s2">&quot;par1&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par1&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">width</span>
-            <span class="k">if</span> <span class="s2">&quot;par2&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sill_elevation</span>
-            <span class="k">if</span> <span class="s2">&quot;par3&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par3&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">manning_n</span>
-            <span class="k">if</span> <span class="s2">&quot;par4&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par4&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">zmin</span>
-            <span class="k">if</span> <span class="s2">&quot;par5&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par5&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">zmax</span>
-            <span class="k">if</span> <span class="s2">&quot;par6&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par6&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">closing_time</span>
+            <span class="k">if</span> <span class="s2">"par1"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">"par1"</span><span class="p">]</span> <span class="o">=</span> <span class="n">width</span>
+            <span class="k">if</span> <span class="s2">"par2"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">"par2"</span><span class="p">]</span> <span class="o">=</span> <span class="n">sill_elevation</span>
+            <span class="k">if</span> <span class="s2">"par3"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">"par3"</span><span class="p">]</span> <span class="o">=</span> <span class="n">manning_n</span>
+            <span class="k">if</span> <span class="s2">"par4"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">"par4"</span><span class="p">]</span> <span class="o">=</span> <span class="n">zmin</span>
+            <span class="k">if</span> <span class="s2">"par5"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">"par5"</span><span class="p">]</span> <span class="o">=</span> <span class="n">zmax</span>
+            <span class="k">if</span> <span class="s2">"par6"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+                <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">"par6"</span><span class="p">]</span> <span class="o">=</span> <span class="n">closing_time</span>
 
         <span class="c1"># add par1, par2, par3, par4, par5 if not present</span>
-        <span class="k">if</span> <span class="s2">&quot;par1&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par1&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
-        <span class="k">if</span> <span class="s2">&quot;par2&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
-        <span class="k">if</span> <span class="s2">&quot;par3&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par3&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
-        <span class="k">if</span> <span class="s2">&quot;par4&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par4&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
-        <span class="k">if</span> <span class="s2">&quot;par5&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par5&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
-        <span class="k">if</span> <span class="s2">&quot;par6&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
-            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">&quot;par6&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="s2">"par1"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">"par1"</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="s2">"par2"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">"par2"</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="s2">"par3"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">"par3"</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="s2">"par4"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">"par4"</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="s2">"par5"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">"par5"</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="s2">"par6"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_structures</span><span class="p">:</span>
+            <span class="n">gdf_structures</span><span class="p">[</span><span class="s2">"par6"</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
 
         <span class="c1"># multi to single lines</span>
-        <span class="n">lines</span> <span class="o">=</span> <span class="n">gdf_structures</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="s2">&quot;geometry&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">gdf_structures</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="s2">"geometry"</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="c1"># get start [0] and end [1] points</span>
         <span class="n">endpoints</span> <span class="o">=</span> <span class="n">lines</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">index_parts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">unstack</span><span class="p">()</span>
         <span class="c1"># merge start and end points into a single linestring</span>
@@ -755,14 +755,14 @@
         <span class="c1"># set structures</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">gdf_structures</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="n">merge</span><span class="p">)</span>
         <span class="c1"># set config</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;drnfile&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs.drn&quot;</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"drnfile"</span><span class="p">,</span> <span class="s2">"sfincs.drn"</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">delete</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">index</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove one or more drainage structures.</span>
+<span class="w">        </span><span class="sd">"""Remove one or more drainage structures.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -770,30 +770,30 @@
 <span class="sd">            Specify drainage structures to be dropped from GeoDataFrame.</span>
 <span class="sd">            If int, drop a single drainage structure based on index.</span>
 <span class="sd">            If list, drop multiple drainage structures based on index.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="c1"># Turn int or str into list</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
             <span class="n">index</span> <span class="o">=</span> <span class="p">[</span><span class="n">index</span><span class="p">]</span>
 
         <span class="c1"># Check that any integer in list is not larger than the number of lines</span>
         <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="o">&gt;</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">min</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;One of the indices exceeds length of index range!&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"One of the indices exceeds length of index range!"</span><span class="p">)</span>
 
         <span class="c1"># Drop lines from GeoDataFrame</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Dropping line(s) from drainage structures&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Dropping line(s) from drainage structures"</span><span class="p">)</span>
 
         <span class="c1"># Check if any cross sections are left</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;All drainage structures have been removed!&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"All drainage structures have been removed!"</span><span class="p">)</span>
             <span class="c1"># Set crsfile to None</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;drnfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"drnfile"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clean GeoDataFrame with drainage structures.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Clean GeoDataFrame with drainage structures."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">()</span>
         <span class="c1"># Set drnfile to None in config</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;drnfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"drnfile"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
 
 </pre></div>
 

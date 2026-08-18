@@ -426,10 +426,10 @@
                 <article class="bd-article">
                   
   <h1>Source code for hydromt_sfincs.utils</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""</span>
 <span class="sd">HydroMT-SFINCS utilities functions for reading and writing SFINCS specific input and output files,</span>
 <span class="sd">as well as some common data conversions.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
@@ -452,38 +452,38 @@
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;downscale_floodmap&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;get_bounds_vector&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;create_boundary_points&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;mask2gdf&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;gdf2linestring&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;gdf2polygon&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;linestring2gdf&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;polygon2gdf&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;rotated_grid&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;build_overviews&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;find_uv_indices&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;make_regular_grid&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;make_regular_grid_transform&quot;</span><span class="p">,</span>
+    <span class="s2">"downscale_floodmap"</span><span class="p">,</span>
+    <span class="s2">"get_bounds_vector"</span><span class="p">,</span>
+    <span class="s2">"create_boundary_points"</span><span class="p">,</span>
+    <span class="s2">"mask2gdf"</span><span class="p">,</span>
+    <span class="s2">"gdf2linestring"</span><span class="p">,</span>
+    <span class="s2">"gdf2polygon"</span><span class="p">,</span>
+    <span class="s2">"linestring2gdf"</span><span class="p">,</span>
+    <span class="s2">"polygon2gdf"</span><span class="p">,</span>
+    <span class="s2">"rotated_grid"</span><span class="p">,</span>
+    <span class="s2">"build_overviews"</span><span class="p">,</span>
+    <span class="s2">"find_uv_indices"</span><span class="p">,</span>
+    <span class="s2">"make_regular_grid"</span><span class="p">,</span>
+    <span class="s2">"make_regular_grid_transform"</span><span class="p">,</span>
 <span class="p">]</span>
 
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">downscale_floodmap</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deprecated. Import from ``hydromt_sfincs.workflows`` instead.</span>
+<span class="w">    </span><span class="sd">"""Deprecated. Import from ``hydromt_sfincs.workflows`` instead.</span>
 
 <span class="sd">    .. deprecated::</span>
 <span class="sd">        ``downscale_floodmap`` has moved to</span>
 <span class="sd">        :func:`hydromt_sfincs.workflows.downscale_floodmap`.</span>
 <span class="sd">        This shim will be removed in a future release.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.workflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">downscale_floodmap</span> <span class="k">as</span> <span class="n">_downscale_floodmap</span>
 
     <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="s2">&quot;downscale_floodmap has moved to hydromt_sfincs.workflows. &quot;</span>
-        <span class="s2">&quot;Update your import to: from hydromt_sfincs.workflows import downscale_floodmap. &quot;</span>
-        <span class="s2">&quot;The old location will be removed in a future release.&quot;</span>
+        <span class="s2">"downscale_floodmap has moved to hydromt_sfincs.workflows. "</span>
+        <span class="s2">"Update your import to: from hydromt_sfincs.workflows import downscale_floodmap. "</span>
+        <span class="s2">"The old location will be removed in a future release."</span>
     <span class="p">)</span>
     <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">FutureWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
@@ -492,12 +492,12 @@
 
 <div class="viewcode-block" id="parse_datetime">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.parse_datetime.html#hydromt_sfincs.utils.parse_datetime">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">parse_datetime</span><span class="p">(</span><span class="n">dt</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">],</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2"> %H%M%S&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Checks and/or parses datetime from a string, default sfincs datetime string format&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_datetime</span><span class="p">(</span><span class="n">dt</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">],</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"%Y%m</span><span class="si">%d</span><span class="s2"> %H%M%S"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Checks and/or parses datetime from a string, default sfincs datetime string format"""</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="nb">format</span><span class="p">)</span>
     <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="n">datetime</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown type for datetime: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">dt</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown type for datetime: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">dt</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">dt</span></div>
 
 
@@ -508,7 +508,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">get_bounds_vector</span><span class="p">(</span>
     <span class="n">da_msk</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get bounds of vectorized mask as GeoDataFrame.</span>
+<span class="w">    </span><span class="sd">"""Get bounds of vectorized mask as GeoDataFrame.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -520,26 +520,26 @@
 <span class="sd">    -------</span>
 <span class="sd">    gdf_msk: gpd.GeoDataFrame</span>
 <span class="sd">        GeoDataFrame with line geometries of mask boundaries.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="c1"># check if da_msk has values greater than 1, if not raise error</span>
     <span class="k">if</span> <span class="n">da_msk</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;The mask should have values greater than 1 to determine boundary cells.&quot;</span>
+            <span class="s2">"The mask should have values greater than 1 to determine boundary cells."</span>
         <span class="p">)</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">da_msk</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
         <span class="n">gdf_msk</span> <span class="o">=</span> <span class="n">da_msk</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">vectorize</span><span class="p">()</span>
         <span class="c1"># small buffer for rounding errors</span>
         <span class="k">if</span> <span class="n">da_msk</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
-            <span class="n">gdf_msk</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_msk</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">)</span>
+            <span class="n">gdf_msk</span><span class="p">[</span><span class="s2">"geometry"</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_msk</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">gdf_msk</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_msk</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">region</span> <span class="o">=</span> <span class="p">(</span><span class="n">da_msk</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;int16&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">vectorize</span><span class="p">()</span>
-        <span class="n">region</span> <span class="o">=</span> <span class="n">region</span><span class="p">[</span><span class="n">region</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="s2">&quot;value&quot;</span><span class="p">)</span>
-        <span class="n">region</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">region</span><span class="o">.</span><span class="n">boundary</span>
-        <span class="n">gdf_msk</span> <span class="o">=</span> <span class="n">gdf_msk</span><span class="p">[</span><span class="n">gdf_msk</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">gdf_msk</span><span class="p">[</span><span class="s2">"geometry"</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_msk</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">region</span> <span class="o">=</span> <span class="p">(</span><span class="n">da_msk</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"int16"</span><span class="p">)</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">vectorize</span><span class="p">()</span>
+        <span class="n">region</span> <span class="o">=</span> <span class="n">region</span><span class="p">[</span><span class="n">region</span><span class="p">[</span><span class="s2">"value"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="s2">"value"</span><span class="p">)</span>
+        <span class="n">region</span><span class="p">[</span><span class="s2">"geometry"</span><span class="p">]</span> <span class="o">=</span> <span class="n">region</span><span class="o">.</span><span class="n">boundary</span>
+        <span class="n">gdf_msk</span> <span class="o">=</span> <span class="n">gdf_msk</span><span class="p">[</span><span class="n">gdf_msk</span><span class="p">[</span><span class="s2">"value"</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">]</span>
         <span class="n">gdf_msk</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">overlay</span><span class="p">(</span>
-            <span class="n">region</span><span class="p">,</span> <span class="n">gdf_msk</span><span class="p">,</span> <span class="s2">&quot;intersection&quot;</span><span class="p">,</span> <span class="n">keep_geom_type</span><span class="o">=</span><span class="kc">False</span>
+            <span class="n">region</span><span class="p">,</span> <span class="n">gdf_msk</span><span class="p">,</span> <span class="s2">"intersection"</span><span class="p">,</span> <span class="n">keep_geom_type</span><span class="o">=</span><span class="kc">False</span>
         <span class="p">)</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">index_parts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">gdf_msk</span> <span class="o">=</span> <span class="n">gdf_msk</span><span class="p">[</span><span class="n">gdf_msk</span><span class="o">.</span><span class="n">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">da_msk</span><span class="p">,</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">):</span>
@@ -630,8 +630,8 @@
 
                 <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="p">{</span>
-                        <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">mval</span><span class="p">),</span>
-                        <span class="s2">&quot;geometry&quot;</span><span class="p">:</span> <span class="n">line</span><span class="p">,</span>
+                        <span class="s2">"value"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">mval</span><span class="p">),</span>
+                        <span class="s2">"geometry"</span><span class="p">:</span> <span class="n">line</span><span class="p">,</span>
                     <span class="p">}</span>
                 <span class="p">)</span>
 
@@ -640,8 +640,8 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">create_boundary_points</span><span class="p">(</span><span class="n">gdf_lines</span><span class="p">,</span> <span class="n">bnd_dist</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;normalized&quot;</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_boundary_points</span><span class="p">(</span><span class="n">gdf_lines</span><span class="p">,</span> <span class="n">bnd_dist</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"normalized"</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Generate points along line geometries in a GeoDataFrame.</span>
 
 <span class="sd">    Parameters</span>
@@ -649,10 +649,10 @@
 <span class="sd">    gdf_lines : GeoDataFrame</span>
 <span class="sd">        GeoDataFrame containing line geometries.</span>
 <span class="sd">    bnd_dist : float</span>
-<span class="sd">        Distance between points (for &#39;absolute&#39;) or approximate segment length (for &#39;normalized&#39;).</span>
+<span class="sd">        Distance between points (for 'absolute') or approximate segment length (for 'normalized').</span>
 <span class="sd">    method : str, optional</span>
-<span class="sd">        &#39;absolute&#39; for fixed-distance spacing,</span>
-<span class="sd">        &#39;normalized&#39; for equal fraction spacing along each line.</span>
+<span class="sd">        'absolute' for fixed-distance spacing,</span>
+<span class="sd">        'normalized' for equal fraction spacing along each line.</span>
 <span class="sd">    crs : CRS, optional</span>
 <span class="sd">        Coordinate reference system for the output GeoDataFrame.</span>
 
@@ -660,26 +660,26 @@
 <span class="sd">    -------</span>
 <span class="sd">    GeoDataFrame</span>
 <span class="sd">        Points along the input line geometries.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">points</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">gdf_lines</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
         <span class="n">line</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">geometry</span>
 
-        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;absolute&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"absolute"</span><span class="p">:</span>
             <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">length</span> <span class="o">+</span> <span class="n">bnd_dist</span><span class="p">,</span> <span class="n">bnd_dist</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">distances</span><span class="p">:</span>
                 <span class="n">d</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">length</span><span class="p">)</span>
                 <span class="n">pt</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
                 <span class="n">points</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">pt</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">y</span><span class="p">))</span>
-        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;normalized&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"normalized"</span><span class="p">:</span>
             <span class="n">num_points</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">length</span> <span class="o">/</span> <span class="n">bnd_dist</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span>
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_points</span><span class="p">):</span>
                 <span class="n">t</span> <span class="o">=</span> <span class="n">i</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">num_points</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
                 <span class="n">pt</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">normalized</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                 <span class="n">points</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">pt</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">y</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown method: </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown method: </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="n">gdf_points</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">geometry</span><span class="o">=</span><span class="n">gpd</span><span class="o">.</span><span class="n">points_from_xy</span><span class="p">(</span><span class="o">*</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">points</span><span class="p">)),</span> <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">gdf_points</span>
@@ -689,38 +689,38 @@
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.mask2gdf.html#hydromt_sfincs.utils.mask2gdf">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">mask2gdf</span><span class="p">(</span>
     <span class="n">da_mask</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
-    <span class="n">option</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span>
+    <span class="n">option</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"all"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a boolean mask to a GeoDataFrame of polygons.</span>
+<span class="w">    </span><span class="sd">"""Convert a boolean mask to a GeoDataFrame of polygons.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    da_mask: xr.DataArray</span>
 <span class="sd">        Mask with integer values.</span>
-<span class="sd">    option: {&quot;all&quot;, &quot;active&quot;, &quot;wlev&quot;, &quot;outflow&quot;}</span>
+<span class="sd">    option: {"all", "active", "wlev", "outflow"}</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    gdf: geopandas.GeoDataFrame</span>
 <span class="sd">        GeoDataFrame of Points.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s2">"all"</span><span class="p">:</span>
         <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span> <span class="o">!=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span>
-    <span class="k">elif</span> <span class="n">option</span> <span class="o">==</span> <span class="s2">&quot;active&quot;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">option</span> <span class="o">==</span> <span class="s2">"active"</span><span class="p">:</span>
         <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span> <span class="o">==</span> <span class="mi">1</span>
-    <span class="k">elif</span> <span class="n">option</span> <span class="o">==</span> <span class="s2">&quot;wlev&quot;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">option</span> <span class="o">==</span> <span class="s2">"wlev"</span><span class="p">:</span>
         <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span> <span class="o">==</span> <span class="mi">2</span>
-    <span class="k">elif</span> <span class="n">option</span> <span class="o">==</span> <span class="s2">&quot;outflow&quot;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">option</span> <span class="o">==</span> <span class="s2">"outflow"</span><span class="p">:</span>
         <span class="n">da_mask</span> <span class="o">=</span> <span class="n">da_mask</span> <span class="o">==</span> <span class="mi">3</span>
 
     <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_mask</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="s2">&quot;x&quot;</span> <span class="ow">in</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">coords</span><span class="p">:</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">indices</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]]</span>
-        <span class="n">y</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">indices</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]]</span>
+    <span class="k">if</span> <span class="s2">"x"</span> <span class="ow">in</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">coords</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s2">"x"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">indices</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s2">"y"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">indices</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]]</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s2">&quot;xc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">indices</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">indices</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]]</span>
-        <span class="n">y</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s2">&quot;yc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">indices</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">indices</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]]</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s2">"xc"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">indices</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">indices</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s2">"yc"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">indices</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">indices</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]]</span>
 
     <span class="n">points</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">geometry</span><span class="o">=</span><span class="n">gpd</span><span class="o">.</span><span class="n">points_from_xy</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
 
@@ -734,11 +734,11 @@
 <div class="viewcode-block" id="gdf2linestring">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.gdf2linestring.html#hydromt_sfincs.utils.gdf2linestring">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">gdf2linestring</span><span class="p">(</span><span class="n">gdf</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert GeoDataFrame[LineString] to list of structure dictionaries</span>
+<span class="w">    </span><span class="sd">"""Convert GeoDataFrame[LineString] to list of structure dictionaries</span>
 
 <span class="sd">    The x,y are taken from the geometry.</span>
-<span class="sd">    For weir structures to additional paramters are required, a &quot;elevation&quot; (elevation) and</span>
-<span class="sd">    &quot;par1&quot; (Cd coefficient in weir formula) are required which should be supplied</span>
+<span class="sd">    For weir structures to additional paramters are required, a "elevation" (elevation) and</span>
+<span class="sd">    "par1" (Cd coefficient in weir formula) are required which should be supplied</span>
 <span class="sd">    as columns (or z-coordinate) of the GeoDataFrame. These columns should either</span>
 <span class="sd">    contain a float or 1D-array of floats with same length as the LineString.</span>
 
@@ -751,20 +751,20 @@
 <span class="sd">    -------</span>
 <span class="sd">    feats: list of dict</span>
 <span class="sd">        List of dictionaries describing structures.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">feats</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-        <span class="n">feat</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;geometry&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+        <span class="n">feat</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">"geometry"</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
         <span class="c1"># check geom</span>
         <span class="n">line</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">geometry</span>
-        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">geom_type</span> <span class="o">==</span> <span class="s2">&quot;MultiLineString&quot;</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">geoms</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">geom_type</span> <span class="o">==</span> <span class="s2">"MultiLineString"</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">geoms</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">geoms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">geom_type</span> <span class="o">!=</span> <span class="s2">&quot;LineString&quot;</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid geometry type, only LineString is accepted.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">geom_type</span> <span class="o">!=</span> <span class="s2">"LineString"</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid geometry type, only LineString is accepted."</span><span class="p">)</span>
         <span class="n">xyz</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">line</span><span class="o">.</span><span class="n">coords</span><span class="p">[:]))</span>
-        <span class="n">feat</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">],</span> <span class="n">feat</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">xyz</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">list</span><span class="p">(</span><span class="n">xyz</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">feat</span><span class="p">[</span><span class="s2">"x"</span><span class="p">],</span> <span class="n">feat</span><span class="p">[</span><span class="s2">"y"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">xyz</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">list</span><span class="p">(</span><span class="n">xyz</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">xyz</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
-            <span class="n">feat</span><span class="p">[</span><span class="s2">&quot;elevation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">xyz</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">feat</span><span class="p">[</span><span class="s2">"elevation"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">xyz</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
         <span class="n">feats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">feats</span></div>
 
@@ -773,7 +773,7 @@
 <div class="viewcode-block" id="gdf2polygon">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.gdf2polygon.html#hydromt_sfincs.utils.gdf2polygon">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">gdf2polygon</span><span class="p">(</span><span class="n">gdf</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert GeoDataFrame[Polygon] to list of structure dictionaries</span>
+<span class="w">    </span><span class="sd">"""Convert GeoDataFrame[Polygon] to list of structure dictionaries</span>
 
 <span class="sd">    The x,y are taken from the geometry.</span>
 
@@ -786,18 +786,18 @@
 <span class="sd">    -------</span>
 <span class="sd">    feats: list of dict</span>
 <span class="sd">        List of dictionaries describing structures.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">feats</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-        <span class="n">feat</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;geometry&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+        <span class="n">feat</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">"geometry"</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
         <span class="c1"># check geom</span>
         <span class="n">poly</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">geometry</span>
-        <span class="k">if</span> <span class="n">poly</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;MultiPolygon&quot;</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">poly</span><span class="o">.</span><span class="n">geoms</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">poly</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"MultiPolygon"</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">poly</span><span class="o">.</span><span class="n">geoms</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">poly</span> <span class="o">=</span> <span class="n">poly</span><span class="o">.</span><span class="n">geoms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">poly</span><span class="o">.</span><span class="n">type</span> <span class="o">!=</span> <span class="s2">&quot;Polygon&quot;</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid geometry type, only Polygon is accepted.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">poly</span><span class="o">.</span><span class="n">type</span> <span class="o">!=</span> <span class="s2">"Polygon"</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid geometry type, only Polygon is accepted."</span><span class="p">)</span>
         <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">poly</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">xy</span>
-        <span class="n">feat</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">],</span> <span class="n">feat</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">feat</span><span class="p">[</span><span class="s2">"x"</span><span class="p">],</span> <span class="n">feat</span><span class="p">[</span><span class="s2">"y"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
         <span class="n">feats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">feats</span></div>
 
@@ -806,7 +806,7 @@
 <div class="viewcode-block" id="linestring2gdf">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.utils.linestring2gdf.html#hydromt_sfincs.utils.linestring2gdf">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">linestring2gdf</span><span class="p">(</span><span class="n">feats</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">],</span> <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert list of structure dictionaries to GeoDataFrame[LineString]</span>
+<span class="w">    </span><span class="sd">"""Convert list of structure dictionaries to GeoDataFrame[LineString]</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -819,15 +819,15 @@
 <span class="sd">    -------</span>
 <span class="sd">    gdf: geopandas.GeoDataFrame</span>
 <span class="sd">        GeoDataFrame structures</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">records</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">feats</span><span class="p">:</span>
         <span class="n">feat</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-        <span class="n">xy</span> <span class="o">=</span> <span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">),</span> <span class="n">feat</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)]</span>
-        <span class="n">feat</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;geometry&quot;</span><span class="p">:</span> <span class="n">LineString</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">xy</span><span class="p">)))})</span>
+        <span class="n">xy</span> <span class="o">=</span> <span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"x"</span><span class="p">),</span> <span class="n">feat</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"y"</span><span class="p">)]</span>
+        <span class="n">feat</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"geometry"</span><span class="p">:</span> <span class="n">LineString</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">xy</span><span class="p">)))})</span>
         <span class="n">records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
     <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>
-    <span class="n">gdf</span><span class="o">.</span><span class="n">set_geometry</span><span class="p">(</span><span class="s2">&quot;geometry&quot;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">gdf</span><span class="o">.</span><span class="n">set_geometry</span><span class="p">(</span><span class="s2">"geometry"</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">gdf</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">gdf</span></div>
@@ -842,7 +842,7 @@
     <span class="n">zmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">zmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert list of structure dictionaries to GeoDataFrame[Polygon]</span>
+<span class="w">    </span><span class="sd">"""Convert list of structure dictionaries to GeoDataFrame[Polygon]</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -855,17 +855,17 @@
 <span class="sd">    -------</span>
 <span class="sd">    gdf: geopandas.GeoDataFrame</span>
 <span class="sd">        GeoDataFrame structures</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">records</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">feats</span><span class="p">:</span>
         <span class="n">feat</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-        <span class="n">xy</span> <span class="o">=</span> <span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">),</span> <span class="n">feat</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)]</span>
-        <span class="n">feat</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;geometry&quot;</span><span class="p">:</span> <span class="n">Polygon</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">xy</span><span class="p">)))})</span>
+        <span class="n">xy</span> <span class="o">=</span> <span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"x"</span><span class="p">),</span> <span class="n">feat</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"y"</span><span class="p">)]</span>
+        <span class="n">feat</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"geometry"</span><span class="p">:</span> <span class="n">Polygon</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">xy</span><span class="p">)))})</span>
         <span class="n">records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
     <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>
-    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;zmin&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">zmin</span>
-    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;zmax&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">zmax</span>
-    <span class="n">gdf</span><span class="o">.</span><span class="n">set_geometry</span><span class="p">(</span><span class="s2">&quot;geometry&quot;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">"zmin"</span><span class="p">]</span> <span class="o">=</span> <span class="n">zmin</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">"zmax"</span><span class="p">]</span> <span class="o">=</span> <span class="n">zmax</span>
+    <span class="n">gdf</span><span class="o">.</span><span class="n">set_geometry</span><span class="p">(</span><span class="s2">"geometry"</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">gdf</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">gdf</span></div>
@@ -877,7 +877,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">rotated_grid</span><span class="p">(</span>
     <span class="n">pol</span><span class="p">:</span> <span class="n">Polygon</span><span class="p">,</span> <span class="n">res</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">dec_origin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dec_rotation</span><span class="o">=</span><span class="mi">3</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the origin (x0, y0), shape (mmax, nmax) and rotation</span>
+<span class="w">    </span><span class="sd">"""Returns the origin (x0, y0), shape (mmax, nmax) and rotation</span>
 <span class="sd">    of the rotated grid fitted to the minimum rotated rectangle around the</span>
 <span class="sd">    area of interest (pol). The grid shape is defined by the resolution (res).</span>
 
@@ -887,15 +887,15 @@
 <span class="sd">        Polygon of the area of interest</span>
 <span class="sd">    res : float</span>
 <span class="sd">        Resolution of the grid</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_azimuth</span><span class="p">(</span><span class="n">point1</span><span class="p">,</span> <span class="n">point2</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;azimuth between 2 points (interval 0 - 180)&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""azimuth between 2 points (interval 0 - 180)"""</span>
         <span class="n">angle</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">point2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">point1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">point2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">point1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">angle</span><span class="p">),</span> <span class="n">dec_rotation</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_dist</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;distance between points&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""distance between points"""</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 
     <span class="n">mrr</span> <span class="o">=</span> <span class="n">pol</span><span class="o">.</span><span class="n">minimum_rotated_rectangle</span>
@@ -928,11 +928,11 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">build_overviews</span><span class="p">(</span>
     <span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
-    <span class="n">resample_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;average&quot;</span><span class="p">,</span>
-    <span class="n">overviews</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">resample_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"average"</span><span class="p">,</span>
+    <span class="n">overviews</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"auto"</span><span class="p">,</span>
     <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build overviews for GeoTIFF file.</span>
+<span class="w">    </span><span class="sd">"""Build overviews for GeoTIFF file.</span>
 
 <span class="sd">    Overviews are reduced resolution versions of your dataset that can speed up</span>
 <span class="sd">    rendering when you don’t need full resolution. By precomputing the upsampled</span>
@@ -943,48 +943,48 @@
 <span class="sd">    fn : str, Path</span>
 <span class="sd">        Path to GeoTIFF file.</span>
 <span class="sd">    method: str</span>
-<span class="sd">        Resampling method, by default &quot;average&quot;. Other option is &quot;nearest&quot;.</span>
+<span class="sd">        Resampling method, by default "average". Other option is "nearest".</span>
 <span class="sd">    overviews: list of int, optional</span>
-<span class="sd">        List of overview levels, by default &quot;auto&quot;. When set to &quot;auto&quot; the</span>
+<span class="sd">        List of overview levels, by default "auto". When set to "auto" the</span>
 <span class="sd">        overview levels are determined based on the size of the dataset.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1"># Endswith is not a method of Path so convert to str</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">Path</span><span class="p">):</span>
         <span class="n">fn</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
 
     <span class="c1"># check if fn is a geotiff file</span>
-    <span class="n">extensions</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;.tif&quot;</span><span class="p">,</span> <span class="s2">&quot;.tiff&quot;</span><span class="p">]</span>
+    <span class="n">extensions</span> <span class="o">=</span> <span class="p">[</span><span class="s2">".tif"</span><span class="p">,</span> <span class="s2">".tiff"</span><span class="p">]</span>
     <span class="k">assert</span> <span class="nb">any</span><span class="p">(</span>
         <span class="n">fn</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span> <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">extensions</span>
-    <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2"> is not a GeoTIFF file.&quot;</span>
+    <span class="p">),</span> <span class="sa">f</span><span class="s2">"File </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2"> is not a GeoTIFF file."</span>
 
     <span class="c1"># open rasterio dataset</span>
-    <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;r+&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">"r+"</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
         <span class="c1"># determine overviews when not provided</span>
-        <span class="k">if</span> <span class="n">overviews</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
-            <span class="n">bs</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;blockxsize&quot;</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">overviews</span> <span class="o">==</span> <span class="s2">"auto"</span><span class="p">:</span>
+            <span class="n">bs</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"blockxsize"</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span>
             <span class="n">max_level</span> <span class="o">=</span> <span class="n">get_maximum_overview_level</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">src</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="n">bs</span><span class="p">)</span>
             <span class="n">overviews</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="o">**</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">overviews</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;overviews should be a list of integers or &#39;auto&#39;.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"overviews should be a list of integers or 'auto'."</span><span class="p">)</span>
 
         <span class="n">resampling</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Resampling</span><span class="p">,</span> <span class="n">resample_method</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">resampling</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Resampling method unknown: </span><span class="si">{</span><span class="n">resample_method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Resampling method unknown: </span><span class="si">{</span><span class="n">resample_method</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="n">no</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">overviews</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Building </span><span class="si">{</span><span class="n">no</span><span class="si">}</span><span class="s2"> overviews with </span><span class="si">{</span><span class="n">resample_method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Building </span><span class="si">{</span><span class="n">no</span><span class="si">}</span><span class="s2"> overviews with </span><span class="si">{</span><span class="n">resample_method</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="c1"># create new overviews, resampling with average method</span>
         <span class="n">src</span><span class="o">.</span><span class="n">build_overviews</span><span class="p">(</span><span class="n">overviews</span><span class="p">,</span> <span class="n">resampling</span><span class="p">)</span>
 
         <span class="c1"># update dataset tags</span>
-        <span class="n">src</span><span class="o">.</span><span class="n">update_tags</span><span class="p">(</span><span class="n">ns</span><span class="o">=</span><span class="s2">&quot;rio_overview&quot;</span><span class="p">,</span> <span class="n">resampling</span><span class="o">=</span><span class="n">resample_method</span><span class="p">)</span>
+        <span class="n">src</span><span class="o">.</span><span class="n">update_tags</span><span class="p">(</span><span class="n">ns</span><span class="o">=</span><span class="s2">"rio_overview"</span><span class="p">,</span> <span class="n">resampling</span><span class="o">=</span><span class="n">resample_method</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">find_uv_indices</span><span class="p">(</span><span class="n">mask</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The subgrid tables for a regular SFINCS grid are organized as flattened arrays, meaning</span>
+<span class="w">    </span><span class="sd">"""The subgrid tables for a regular SFINCS grid are organized as flattened arrays, meaning</span>
 <span class="sd">    2D arrays (y,x) are transformed into 1D arrays, only containing values for active cells.</span>
 
 <span class="sd">    For the cell centers, this is straightforward, we just find the indices of the active cells.</span>
@@ -1008,7 +1008,7 @@
 <span class="sd">    index_nu1: np.ndarray</span>
 <span class="sd">        Index of upstream v-point in combined uv-array.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">values</span>
 
@@ -1095,13 +1095,13 @@
     <span class="n">mmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
     <span class="n">nmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
     <span class="n">refi</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;var&quot;</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"var"</span><span class="p">,</span>
     <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
     <span class="n">fill_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
     <span class="n">uv_points</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">make_ugrid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Create an xarray.DataArray with spatial coordinates based on grid definition.</span>
 
 <span class="sd">    Parameters</span>
@@ -1119,7 +1119,7 @@
 <span class="sd">    uv_points : bool, optional</span>
 <span class="sd">        If True, place points at cell corners (UV points);</span>
 <span class="sd">        if False, place points at cell centers (default).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1"># Refined spacing</span>
     <span class="n">dxp</span><span class="p">,</span> <span class="n">dyp</span> <span class="o">=</span> <span class="n">dx</span> <span class="o">/</span> <span class="n">refi</span><span class="p">,</span> <span class="n">dy</span> <span class="o">/</span> <span class="n">refi</span>
@@ -1152,12 +1152,12 @@
             <span class="n">n_range</span> <span class="o">+</span> <span class="n">offset_y</span> <span class="o">/</span> <span class="n">dyp</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">coords</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;m&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">m_range</span> <span class="o">+</span> <span class="n">mmin</span> <span class="o">*</span> <span class="n">refi</span><span class="p">),</span>
-            <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">n_range</span> <span class="o">+</span> <span class="n">nmin</span> <span class="o">*</span> <span class="n">refi</span><span class="p">),</span>
-            <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">x_coords</span><span class="p">,</span>
-            <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">y_coords</span><span class="p">,</span>
+            <span class="s2">"m"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="n">m_range</span> <span class="o">+</span> <span class="n">mmin</span> <span class="o">*</span> <span class="n">refi</span><span class="p">),</span>
+            <span class="s2">"n"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"y"</span><span class="p">,</span> <span class="n">n_range</span> <span class="o">+</span> <span class="n">nmin</span> <span class="o">*</span> <span class="n">refi</span><span class="p">),</span>
+            <span class="s2">"x"</span><span class="p">:</span> <span class="n">x_coords</span><span class="p">,</span>
+            <span class="s2">"y"</span><span class="p">:</span> <span class="n">y_coords</span><span class="p">,</span>
         <span class="p">}</span>
-        <span class="n">dims</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">)</span>
+        <span class="n">dims</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>  <span class="c1"># With rotation → 2D coordinate arrays</span>
         <span class="n">m_mesh</span><span class="p">,</span> <span class="n">n_mesh</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">m_range</span><span class="p">,</span> <span class="n">n_range</span><span class="p">)</span>
         <span class="n">x_coords</span><span class="p">,</span> <span class="n">y_coords</span> <span class="o">=</span> <span class="n">transform</span> <span class="o">*</span> <span class="p">(</span>
@@ -1165,12 +1165,12 @@
             <span class="n">n_mesh</span> <span class="o">+</span> <span class="n">offset_y</span> <span class="o">/</span> <span class="n">dyp</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">coords</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;m&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">m_range</span> <span class="o">+</span> <span class="n">mmin</span> <span class="o">*</span> <span class="n">refi</span><span class="p">),</span>
-            <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">n_range</span> <span class="o">+</span> <span class="n">nmin</span> <span class="o">*</span> <span class="n">refi</span><span class="p">),</span>
-            <span class="s2">&quot;xc&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span> <span class="n">x_coords</span><span class="p">),</span>
-            <span class="s2">&quot;yc&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span> <span class="n">y_coords</span><span class="p">),</span>
+            <span class="s2">"m"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="n">m_range</span> <span class="o">+</span> <span class="n">mmin</span> <span class="o">*</span> <span class="n">refi</span><span class="p">),</span>
+            <span class="s2">"n"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"y"</span><span class="p">,</span> <span class="n">n_range</span> <span class="o">+</span> <span class="n">nmin</span> <span class="o">*</span> <span class="n">refi</span><span class="p">),</span>
+            <span class="s2">"xc"</span><span class="p">:</span> <span class="p">((</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">),</span> <span class="n">x_coords</span><span class="p">),</span>
+            <span class="s2">"yc"</span><span class="p">:</span> <span class="p">((</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">),</span> <span class="n">y_coords</span><span class="p">),</span>
         <span class="p">}</span>
-        <span class="n">dims</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">)</span>
+        <span class="n">dims</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">)</span>
 
     <span class="c1"># DataArray with fill value</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="p">),</span> <span class="n">fill_value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
@@ -1179,7 +1179,7 @@
     <span class="c1"># CRS/Ugrid handling</span>
     <span class="k">if</span> <span class="n">make_ugrid</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">rotation</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
-            <span class="n">da</span> <span class="o">=</span> <span class="n">UgridDataArray</span><span class="o">.</span><span class="n">from_structured2d</span><span class="p">(</span><span class="n">da</span><span class="p">,</span> <span class="s2">&quot;xc&quot;</span><span class="p">,</span> <span class="s2">&quot;yc&quot;</span><span class="p">)</span>
+            <span class="n">da</span> <span class="o">=</span> <span class="n">UgridDataArray</span><span class="o">.</span><span class="n">from_structured2d</span><span class="p">(</span><span class="n">da</span><span class="p">,</span> <span class="s2">"xc"</span><span class="p">,</span> <span class="s2">"yc"</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">da</span> <span class="o">=</span> <span class="n">UgridDataArray</span><span class="o">.</span><span class="n">from_structured2d</span><span class="p">(</span><span class="n">da</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1194,12 +1194,12 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">make_regular_grid_transform</span><span class="p">(</span>
     <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span><span class="p">,</span> <span class="n">mmax</span><span class="p">,</span> <span class="n">nmax</span><span class="p">,</span> <span class="n">mmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">nmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">refi</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">uv_points</span><span class="o">=</span><span class="kc">False</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Compute affine transform for a regular grid</span>
 <span class="sd">    (possibly rotated) without allocating arrays. The affine corresponds</span>
 <span class="sd">    to the **bottom-left corner** of the first pixel (raster convention),</span>
 <span class="sd">    while preserving original UV offset logic.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">dxp</span> <span class="o">=</span> <span class="n">dx</span> <span class="o">/</span> <span class="n">refi</span>
     <span class="n">dyp</span> <span class="o">=</span> <span class="n">dy</span> <span class="o">/</span> <span class="n">refi</span>
 

@@ -646,8 +646,8 @@ Optional merge arguments include: ‘zmin’, ‘zmax’, ‘mask’, ‘offset�
 and ‘merge_method’, see example below. For a complete overview of all merge options,
 see <code class="xref py py-func docutils literal notranslate"><span class="pre">hydromt.workflows.merge_multi_dataarrays()</span></code></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>
-    <span class="p">{</span><span class="s1">&#39;elevation&#39;</span><span class="p">:</span> <span class="s1">&#39;merit_hydro&#39;</span><span class="p">,</span> <span class="s1">&#39;zmin&#39;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">},</span>
-    <span class="p">{</span><span class="s1">&#39;elevation&#39;</span><span class="p">:</span> <span class="s1">&#39;gebco&#39;</span><span class="p">,</span> <span class="s1">&#39;offset&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;merge_method&#39;</span><span class="p">:</span> <span class="s1">&#39;first&#39;</span><span class="p">,</span> <span class="n">reproj_method</span><span class="p">:</span> <span class="s1">&#39;bilinear&#39;</span><span class="p">}</span>
+    <span class="p">{</span><span class="s1">'elevation'</span><span class="p">:</span> <span class="s1">'merit_hydro'</span><span class="p">,</span> <span class="s1">'zmin'</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">},</span>
+    <span class="p">{</span><span class="s1">'elevation'</span><span class="p">:</span> <span class="s1">'gebco'</span><span class="p">,</span> <span class="s1">'offset'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">'merge_method'</span><span class="p">:</span> <span class="s1">'first'</span><span class="p">,</span> <span class="n">reproj_method</span><span class="p">:</span> <span class="s1">'bilinear'</span><span class="p">}</span>
 <span class="p">]</span>
 </pre></div>
 </div>
@@ -661,8 +661,8 @@ landuse/landcover and a mapping table.</p></li>
 </ul>
 <p>In additon, optional merge arguments can be provided, e.g.:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>
-    <span class="p">{</span><span class="s1">&#39;manning&#39;</span><span class="p">:</span> <span class="s1">&#39;manning_data&#39;</span><span class="p">},</span>
-    <span class="p">{</span><span class="s1">&#39;lulc&#39;</span><span class="p">:</span> <span class="s1">&#39;esa_worlcover&#39;</span><span class="p">,</span> <span class="s1">&#39;reclass_table&#39;</span><span class="p">:</span> <span class="s1">&#39;esa_worlcover_mapping&#39;</span><span class="p">}</span>
+    <span class="p">{</span><span class="s1">'manning'</span><span class="p">:</span> <span class="s1">'manning_data'</span><span class="p">},</span>
+    <span class="p">{</span><span class="s1">'lulc'</span><span class="p">:</span> <span class="s1">'esa_worlcover'</span><span class="p">,</span> <span class="s1">'reclass_table'</span><span class="p">:</span> <span class="s1">'esa_worlcover_mapping'</span><span class="p">}</span>
 <span class="p">]</span>
 </pre></div>
 </div>
@@ -685,7 +685,7 @@ which used to estimate the river bank height in case river depth is provided.</p
 <p>For more info see <code class="xref py py-func docutils literal notranslate"><span class="pre">hydromt.workflows.bathymetry.burn_river_rect()</span></code></p>
 </dd>
 </dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[{</span><span class="s1">&#39;centerlines&#39;</span><span class="p">:</span> <span class="s1">&#39;river_lines&#39;</span><span class="p">,</span> <span class="s1">&#39;mask&#39;</span><span class="p">:</span> <span class="s1">&#39;river_mask&#39;</span><span class="p">,</span> <span class="s1">&#39;manning&#39;</span><span class="p">:</span> <span class="mf">0.035</span><span class="p">}]</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[{</span><span class="s1">'centerlines'</span><span class="p">:</span> <span class="s1">'river_lines'</span><span class="p">,</span> <span class="s1">'mask'</span><span class="p">:</span> <span class="s1">'river_mask'</span><span class="p">,</span> <span class="s1">'manning'</span><span class="p">:</span> <span class="mf">0.035</span><span class="p">}]</span>
 </pre></div>
 </div>
 </p></li>

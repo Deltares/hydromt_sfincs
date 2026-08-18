@@ -426,7 +426,7 @@
                 <article class="bd-article">
                   
   <h1>Source code for hydromt_sfincs.readers</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Standalone reader functions for HydroMT-SFINCS.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Standalone reader functions for HydroMT-SFINCS."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ast</span><span class="w"> </span><span class="kn">import</span> <span class="n">literal_eval</span>
@@ -445,21 +445,21 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_datetime</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;read_ascii_map&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;read_bdr&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;read_binary_map&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;read_binary_map_index&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;read_config&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;read_drn&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;read_geoms&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;read_sfincs_his_results&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;read_sfincs_map_results&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;read_timeseries&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;read_xy&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;read_xyn&quot;</span><span class="p">,</span>
+    <span class="s2">"read_ascii_map"</span><span class="p">,</span>
+    <span class="s2">"read_bdr"</span><span class="p">,</span>
+    <span class="s2">"read_binary_map"</span><span class="p">,</span>
+    <span class="s2">"read_binary_map_index"</span><span class="p">,</span>
+    <span class="s2">"read_config"</span><span class="p">,</span>
+    <span class="s2">"read_drn"</span><span class="p">,</span>
+    <span class="s2">"read_geoms"</span><span class="p">,</span>
+    <span class="s2">"read_sfincs_his_results"</span><span class="p">,</span>
+    <span class="s2">"read_sfincs_map_results"</span><span class="p">,</span>
+    <span class="s2">"read_timeseries"</span><span class="p">,</span>
+    <span class="s2">"read_xy"</span><span class="p">,</span>
+    <span class="s2">"read_xyn"</span><span class="p">,</span>
 <span class="p">]</span>
 
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
 <span class="c1">## Configuration: sfincs.inp ##</span>
@@ -468,7 +468,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">read_config</span><span class="p">(</span>
     <span class="n">filename</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read the SFINCS input file (sfincs.inp).</span>
+<span class="w">    </span><span class="sd">"""Read the SFINCS input file (sfincs.inp).</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -479,41 +479,41 @@
 <span class="sd">    -------</span>
 <span class="sd">    dict[str, Any]</span>
 <span class="sd">        The model settings.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="c1"># Ensure typing</span>
     <span class="n">filename</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
     <span class="c1"># Check if exists</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">filename</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;SFINCS input file &#39;</span><span class="si">{</span><span class="n">filename</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span><span class="si">}</span><span class="s2">&#39; does not exist.&quot;</span>
+            <span class="sa">f</span><span class="s2">"SFINCS input file '</span><span class="si">{</span><span class="n">filename</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span><span class="si">}</span><span class="s2">' does not exist."</span>
         <span class="p">)</span>
 
     <span class="c1"># Read the file line by line</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
         <span class="n">lines</span> <span class="o">=</span> <span class="n">fid</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
 
     <span class="n">inp_dict</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
         <span class="c1"># Check if first character is #</span>
-        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"#"</span><span class="p">):</span>
             <span class="c1"># Full line comment</span>
             <span class="k">continue</span>
         <span class="c1"># Find last character before #</span>
-        <span class="n">comment_idx</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">)</span>
+        <span class="n">comment_idx</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">"#"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">comment_idx</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="p">[:</span><span class="n">comment_idx</span><span class="p">]</span>
-        <span class="n">line</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">)]</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"="</span><span class="p">)]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="o">=</span> <span class="n">line</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;tref&quot;</span><span class="p">,</span> <span class="s2">&quot;tstart&quot;</span><span class="p">,</span> <span class="s2">&quot;tstop&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"tref"</span><span class="p">,</span> <span class="s2">"tstart"</span><span class="p">,</span> <span class="s2">"tstop"</span><span class="p">]:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">val</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2"> %H%M%S&quot;</span><span class="p">)</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="s2">"%Y%m</span><span class="si">%d</span><span class="s2"> %H%M%S"</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1"> = </span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s1">&quot; not understood.&#39;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;cdwnd&quot;</span><span class="p">,</span> <span class="s2">&quot;cdval&quot;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">'"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1"> = </span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s1">" not understood.'</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"cdwnd"</span><span class="p">,</span> <span class="s2">"cdval"</span><span class="p">]:</span>
             <span class="n">val</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">val</span><span class="o">.</span><span class="n">split</span><span class="p">()]</span>
-        <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;utmzone&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"utmzone"</span><span class="p">:</span>
             <span class="n">val</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
@@ -521,10 +521,10 @@
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="k">pass</span>
 
-        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;crs&quot;</span><span class="p">:</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;epsg&quot;</span>
-        <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;dtout&quot;</span><span class="p">:</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;dtmapout&quot;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"crs"</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s2">"epsg"</span>
+        <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"dtout"</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s2">"dtmapout"</span>
 
         <span class="n">inp_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
 
@@ -537,7 +537,7 @@
 <div class="viewcode-block" id="read_ascii_map">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.readers.read_ascii_map.html#hydromt_sfincs.readers.read_ascii_map">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">read_ascii_map</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read ascii map</span>
+<span class="w">    </span><span class="sd">"""Read ascii map</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -548,7 +548,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    data : np.ndarray</span>
 <span class="sd">        2D array of sfincs map.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">data</span></div>
 
@@ -558,7 +558,7 @@
 <div class="viewcode-block" id="read_timeseries">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.readers.read_timeseries.html#hydromt_sfincs.readers.read_timeseries">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">read_timeseries</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">tref</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read ascii timeseries files such as sfincs.bzs, sfincs.dis and sfincs.precip.</span>
+<span class="w">    </span><span class="sd">"""Read ascii timeseries files such as sfincs.bzs, sfincs.dis and sfincs.precip.</span>
 <span class="sd">    The first column (time index) is parsed to datetime format assumming it represents</span>
 <span class="sd">    seconds from `tref`.</span>
 
@@ -567,19 +567,19 @@
 <span class="sd">    fn: str, Path</span>
 <span class="sd">        Path to output timeseries file.</span>
 <span class="sd">    tref: datetime.datetime, str</span>
-<span class="sd">        Datetime of tref, string in &quot;%Y%m%d %H%M%S&quot; format.</span>
+<span class="sd">        Datetime of tref, string in "%Y%m%d %H%M%S" format.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    df: pd.DataFrame</span>
 <span class="sd">        Dataframe of timeseries with parsed time index.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">tref</span> <span class="o">=</span> <span class="n">parse_datetime</span><span class="p">(</span><span class="n">tref</span><span class="p">)</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;\s+&quot;</span><span class="p">)</span>
-    <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="n">tref</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="sa">r</span><span class="s2">"\s+"</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">"s"</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="n">tref</span><span class="p">)</span>
     <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># convert to zero-based index</span>
-    <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span>
-    <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;index&quot;</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">"time"</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">"index"</span>
     <span class="k">return</span> <span class="n">df</span></div>
 
 
@@ -592,9 +592,9 @@
     <span class="n">ind</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="n">shape</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
     <span class="n">mv</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">9999.0</span><span class="p">,</span>
-    <span class="n">dtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;f4&quot;</span><span class="p">,</span>
+    <span class="n">dtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"f4"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read binary map.</span>
+<span class="w">    </span><span class="sd">"""Read binary map.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -607,13 +607,13 @@
 <span class="sd">    mv: int or float</span>
 <span class="sd">        missing value, by default -9999.0.</span>
 <span class="sd">    dtype: str, np.dtype, optional</span>
-<span class="sd">        Data type, by default &quot;f4&quot;. For sfincs.msk file use dtype=&quot;u1&quot;.</span>
+<span class="sd">        Data type, by default "f4". For sfincs.msk file use dtype="u1".</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    ind: np.ndarray</span>
 <span class="sd">        1D array of flat index of binary maps.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">assert</span> <span class="n">ind</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="o">*</span><span class="n">shape</span><span class="p">)</span>
     <span class="n">nrow</span><span class="p">,</span> <span class="n">ncol</span> <span class="o">=</span> <span class="n">shape</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">ncol</span><span class="p">,</span> <span class="n">nrow</span><span class="p">),</span> <span class="n">mv</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
@@ -626,7 +626,7 @@
 <div class="viewcode-block" id="read_binary_map_index">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.readers.read_binary_map_index.html#hydromt_sfincs.readers.read_binary_map_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">read_binary_map_index</span><span class="p">(</span><span class="n">fn_ind</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read binary map index file.</span>
+<span class="w">    </span><span class="sd">"""Read binary map index file.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -637,8 +637,8 @@
 <span class="sd">    -------</span>
 <span class="sd">    ind: np.ndarray</span>
 <span class="sd">        1D array of flat index of binary maps.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">_ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">fn_ind</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;u4&quot;</span><span class="p">)</span>
+<span class="sd">    """</span>
+    <span class="n">_ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">fn_ind</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"u4"</span><span class="p">)</span>
     <span class="n">ind</span> <span class="o">=</span> <span class="n">_ind</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># convert to zero based index</span>
     <span class="k">assert</span> <span class="n">_ind</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">ind</span><span class="o">.</span><span class="n">size</span>
     <span class="k">return</span> <span class="n">ind</span></div>
@@ -654,7 +654,7 @@
     <span class="n">chunksize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read sfincs_his.nc point timeseries netcdf file and parse to hydromt.GeoDataset object.</span>
+<span class="w">    </span><span class="sd">"""Read sfincs_his.nc point timeseries netcdf file and parse to hydromt.GeoDataset object.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -669,15 +669,15 @@
 <span class="sd">    -------</span>
 <span class="sd">    ds_his: xr.Dataset</span>
 <span class="sd">        Parsed SFINCS output his file.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">with</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">fn_his</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">chunksize</span><span class="p">},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">as</span> <span class="n">ds_his</span><span class="p">:</span>
-        <span class="n">crs</span> <span class="o">=</span> <span class="n">ds_his</span><span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">if</span> <span class="n">ds_his</span><span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">crs</span>
+<span class="sd">    """</span>
+    <span class="k">with</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">fn_his</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">{</span><span class="s2">"time"</span><span class="p">:</span> <span class="n">chunksize</span><span class="p">},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">as</span> <span class="n">ds_his</span><span class="p">:</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">ds_his</span><span class="p">[</span><span class="s2">"crs"</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">if</span> <span class="n">ds_his</span><span class="p">[</span><span class="s2">"crs"</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">crs</span>
         <span class="n">dvars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ds_his</span><span class="o">.</span><span class="n">data_vars</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="c1"># set coordinates &amp; spatial dims</span>
-        <span class="n">cvars</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">]</span>
-        <span class="n">ds_his</span> <span class="o">=</span> <span class="n">ds_his</span><span class="o">.</span><span class="n">set_coords</span><span class="p">([</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dvars</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">cvars</span><span class="p">])</span>
+        <span class="n">cvars</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"id"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">]</span>
+        <span class="n">ds_his</span> <span class="o">=</span> <span class="n">ds_his</span><span class="o">.</span><span class="n">set_coords</span><span class="p">([</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dvars</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_"</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">cvars</span><span class="p">])</span>
         <span class="n">ds_his</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">set_spatial_dims</span><span class="p">(</span>
-            <span class="n">x_name</span><span class="o">=</span><span class="s2">&quot;station_x&quot;</span><span class="p">,</span> <span class="n">y_name</span><span class="o">=</span><span class="s2">&quot;station_y&quot;</span><span class="p">,</span> <span class="n">index_dim</span><span class="o">=</span><span class="s2">&quot;stations&quot;</span>
+            <span class="n">x_name</span><span class="o">=</span><span class="s2">"station_x"</span><span class="p">,</span> <span class="n">y_name</span><span class="o">=</span><span class="s2">"station_y"</span><span class="p">,</span> <span class="n">index_dim</span><span class="o">=</span><span class="s2">"stations"</span>
         <span class="p">)</span>
         <span class="c1"># set crs</span>
         <span class="n">ds_his</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
@@ -692,11 +692,11 @@
     <span class="n">fn_map</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">ds_like</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
     <span class="n">chunksize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
-    <span class="n">drop</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;crs&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincsgrid&quot;</span><span class="p">],</span>
+    <span class="n">drop</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"crs"</span><span class="p">,</span> <span class="s2">"sfincsgrid"</span><span class="p">],</span>
     <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read sfincs_map.nc staggered grid netcdf files and parse to two</span>
+<span class="w">    </span><span class="sd">"""Read sfincs_map.nc staggered grid netcdf files and parse to two</span>
 <span class="sd">    hydromt.RasterDataset objects: one with face and one with edge variables.</span>
 
 <span class="sd">    Parameters</span>
@@ -708,24 +708,24 @@
 <span class="sd">    chunksize: int, optional</span>
 <span class="sd">        chunk size along time dimension, by default 100</span>
 <span class="sd">    drop : List[str], optional</span>
-<span class="sd">        Variables to drop from reading, by default [&quot;crs&quot;, &quot;sfincsgrid&quot;]</span>
+<span class="sd">        Variables to drop from reading, by default ["crs", "sfincsgrid"]</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    ds_face, ds_edge: hydromt.RasterDataset</span>
 <span class="sd">        Parsed SFINCS output map file</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">rm</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="s2">&quot;xc&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="s2">&quot;yc&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;corner_x&quot;</span><span class="p">:</span> <span class="s2">&quot;corner_xc&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;corner_y&quot;</span><span class="p">:</span> <span class="s2">&quot;corner_yc&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;m&quot;</span><span class="p">:</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;corner_n&quot;</span><span class="p">:</span> <span class="s2">&quot;corner_y&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;corner_m&quot;</span><span class="p">:</span> <span class="s2">&quot;corner_x&quot;</span><span class="p">,</span>
+        <span class="s2">"x"</span><span class="p">:</span> <span class="s2">"xc"</span><span class="p">,</span>
+        <span class="s2">"y"</span><span class="p">:</span> <span class="s2">"yc"</span><span class="p">,</span>
+        <span class="s2">"corner_x"</span><span class="p">:</span> <span class="s2">"corner_xc"</span><span class="p">,</span>
+        <span class="s2">"corner_y"</span><span class="p">:</span> <span class="s2">"corner_yc"</span><span class="p">,</span>
+        <span class="s2">"n"</span><span class="p">:</span> <span class="s2">"y"</span><span class="p">,</span>
+        <span class="s2">"m"</span><span class="p">:</span> <span class="s2">"x"</span><span class="p">,</span>
+        <span class="s2">"corner_n"</span><span class="p">:</span> <span class="s2">"corner_y"</span><span class="p">,</span>
+        <span class="s2">"corner_m"</span><span class="p">:</span> <span class="s2">"corner_x"</span><span class="p">,</span>
     <span class="p">}</span>
-    <span class="k">with</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">fn_map</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">chunksize</span><span class="p">},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">as</span> <span class="n">ds_map</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">fn_map</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">{</span><span class="s2">"time"</span><span class="p">:</span> <span class="n">chunksize</span><span class="p">},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">as</span> <span class="n">ds_map</span><span class="p">:</span>
         <span class="n">ds_map</span> <span class="o">=</span> <span class="n">ds_map</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
             <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">rm</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="p">(</span><span class="n">k</span> <span class="ow">in</span> <span class="n">ds_map</span> <span class="ow">or</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ds_map</span><span class="o">.</span><span class="n">dims</span><span class="p">)}</span>
         <span class="p">)</span>
@@ -735,21 +735,21 @@
 
         <span class="c1"># support for older sfincs_map.nc files</span>
         <span class="c1"># check if x,y dimensions are in the order y,x</span>
-        <span class="n">ds_map</span> <span class="o">=</span> <span class="n">ds_map</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;corner_y&quot;</span><span class="p">,</span> <span class="s2">&quot;corner_x&quot;</span><span class="p">)</span>
+        <span class="n">ds_map</span> <span class="o">=</span> <span class="n">ds_map</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">,</span> <span class="s2">"corner_y"</span><span class="p">,</span> <span class="s2">"corner_x"</span><span class="p">)</span>
 
         <span class="c1"># split face and edge variables</span>
         <span class="n">scoords</span> <span class="o">=</span> <span class="n">ds_like</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">coords</span>
         <span class="n">tcoords</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">tdim</span><span class="p">:</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">tdim</span><span class="p">]</span> <span class="k">for</span> <span class="n">tdim</span> <span class="ow">in</span> <span class="n">ds_map</span><span class="o">.</span><span class="n">dims</span> <span class="k">if</span> <span class="n">tdim</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
+            <span class="n">tdim</span><span class="p">:</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">tdim</span><span class="p">]</span> <span class="k">for</span> <span class="n">tdim</span> <span class="ow">in</span> <span class="n">ds_map</span><span class="o">.</span><span class="n">dims</span> <span class="k">if</span> <span class="n">tdim</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"time"</span><span class="p">)</span>
         <span class="p">}</span>
         <span class="n">ds_face</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="n">scoords</span><span class="p">,</span> <span class="o">**</span><span class="n">tcoords</span><span class="p">})</span>
         <span class="n">ds_edge</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">ds_map</span><span class="o">.</span><span class="n">data_vars</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">drop</span><span class="p">:</span>
                 <span class="k">continue</span>
-            <span class="k">if</span> <span class="s2">&quot;x&quot;</span> <span class="ow">in</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span> <span class="ow">and</span> <span class="s2">&quot;y&quot;</span> <span class="ow">in</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">"x"</span> <span class="ow">in</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span> <span class="ow">and</span> <span class="s2">"y"</span> <span class="ow">in</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
                 <span class="c1"># drop to overwrite with ds_like.raster.coords</span>
-                <span class="n">ds_face</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">drop_vars</span><span class="p">([</span><span class="s2">&quot;xc&quot;</span><span class="p">,</span> <span class="s2">&quot;yc&quot;</span><span class="p">])</span>
+                <span class="n">ds_face</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">drop_vars</span><span class="p">([</span><span class="s2">"xc"</span><span class="p">,</span> <span class="s2">"yc"</span><span class="p">])</span>
             <span class="k">elif</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">ds_face</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds_map</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
@@ -768,7 +768,7 @@
 <div class="viewcode-block" id="read_geoms">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.readers.read_geoms.html#hydromt_sfincs.readers.read_geoms">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">read_geoms</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read structure files to list of dictionaries.</span>
+<span class="w">    </span><span class="sd">"""Read structure files to list of dictionaries.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -779,15 +779,15 @@
 <span class="sd">    -------</span>
 <span class="sd">    feats: list of dict</span>
 <span class="sd">        List of dictionaries describing structures.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">feats</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">col_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;elevation&quot;</span><span class="p">,</span> <span class="s2">&quot;par1&quot;</span><span class="p">]</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">col_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"elevation"</span><span class="p">,</span> <span class="s2">"par1"</span><span class="p">]</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="p">:</span>  <span class="c1"># EOF</span>
                 <span class="k">break</span>
-            <span class="n">feat</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">}</span>
+            <span class="n">feat</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span><span class="p">}</span>
             <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">maxsplit</span><span class="o">=</span><span class="mi">2</span><span class="p">)]</span>
             <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cols</span><span class="p">):</span>
                 <span class="n">feat</span><span class="p">[</span><span class="n">col_names</span><span class="p">[</span><span class="n">c</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rows</span><span class="p">)]</span>
@@ -805,7 +805,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">read_bdr</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">crs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read river boundary file to geodataframe.</span>
+<span class="w">    </span><span class="sd">"""Read river boundary file to geodataframe.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -818,22 +818,22 @@
 <span class="sd">    -------</span>
 <span class="sd">    gpd.GeoDataFrame</span>
 <span class="sd">        Dataframe with river boundary parameters and geometry.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1"># expected columns for river boundary structures</span>
-    <span class="n">col_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;xbdr&quot;</span><span class="p">,</span> <span class="s2">&quot;ybdr&quot;</span><span class="p">,</span> <span class="s2">&quot;x_bdr_in&quot;</span><span class="p">,</span> <span class="s2">&quot;y_bdr_in&quot;</span><span class="p">,</span> <span class="s2">&quot;slope&quot;</span><span class="p">,</span> <span class="s2">&quot;distance&quot;</span><span class="p">]</span>
+    <span class="n">col_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"xbdr"</span><span class="p">,</span> <span class="s2">"ybdr"</span><span class="p">,</span> <span class="s2">"x_bdr_in"</span><span class="p">,</span> <span class="s2">"y_bdr_in"</span><span class="p">,</span> <span class="s2">"slope"</span><span class="p">,</span> <span class="s2">"distance"</span><span class="p">]</span>
 
     <span class="c1"># read structure file</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">s+&quot;</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">col_names</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\\</span><span class="s2">s+"</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">col_names</span><span class="p">)</span>
 
     <span class="c1"># get geometry linestring</span>
     <span class="n">geom</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">sg</span><span class="o">.</span><span class="n">LineString</span><span class="p">([(</span><span class="n">xbdr</span><span class="p">,</span> <span class="n">ybdr</span><span class="p">),</span> <span class="p">(</span><span class="n">x_bdr_in</span><span class="p">,</span> <span class="n">y_bdr_in</span><span class="p">)])</span>
         <span class="k">for</span> <span class="n">xbdr</span><span class="p">,</span> <span class="n">ybdr</span><span class="p">,</span> <span class="n">x_bdr_in</span><span class="p">,</span> <span class="n">y_bdr_in</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
-            <span class="n">df</span><span class="p">[</span><span class="s2">&quot;xbdr&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;ybdr&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;x_bdr_in&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;y_bdr_in&quot;</span><span class="p">]</span>
+            <span class="n">df</span><span class="p">[</span><span class="s2">"xbdr"</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">"ybdr"</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">"x_bdr_in"</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">"y_bdr_in"</span><span class="p">]</span>
         <span class="p">)</span>
     <span class="p">]</span>
-    <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">&quot;xbdr&quot;</span><span class="p">,</span> <span class="s2">&quot;ybdr&quot;</span><span class="p">,</span> <span class="s2">&quot;x_bdr_in&quot;</span><span class="p">,</span> <span class="s2">&quot;y_bdr_in&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">"xbdr"</span><span class="p">,</span> <span class="s2">"ybdr"</span><span class="p">,</span> <span class="s2">"x_bdr_in"</span><span class="p">,</span> <span class="s2">"y_bdr_in"</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># convert to geodataframe</span>
     <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">geometry</span><span class="o">=</span><span class="n">geom</span><span class="p">)</span>
@@ -845,7 +845,7 @@
 <div class="viewcode-block" id="read_drn">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.readers.read_drn.html#hydromt_sfincs.readers.read_drn">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">read_drn</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">crs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read drainage structure files to geodataframe.</span>
+<span class="w">    </span><span class="sd">"""Read drainage structure files to geodataframe.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -858,25 +858,25 @@
 <span class="sd">    -------</span>
 <span class="sd">    gpd.GeoDataFrame</span>
 <span class="sd">        Dataframe with drainage structure parameters and geometry.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1"># expected columns for drainage structures</span>
     <span class="n">col_names</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="s2">&quot;xsnk&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;ysnk&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;xsrc&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;ysrc&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;par1&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;par2&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;par3&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;par4&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;par5&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;par6&quot;</span><span class="p">,</span>
+        <span class="s2">"xsnk"</span><span class="p">,</span>
+        <span class="s2">"ysnk"</span><span class="p">,</span>
+        <span class="s2">"xsrc"</span><span class="p">,</span>
+        <span class="s2">"ysrc"</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">,</span>
+        <span class="s2">"par1"</span><span class="p">,</span>
+        <span class="s2">"par2"</span><span class="p">,</span>
+        <span class="s2">"par3"</span><span class="p">,</span>
+        <span class="s2">"par4"</span><span class="p">,</span>
+        <span class="s2">"par5"</span><span class="p">,</span>
+        <span class="s2">"par6"</span><span class="p">,</span>
     <span class="p">]</span>
 
     <span class="c1"># read structure file</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">s+&quot;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\\</span><span class="s2">s+"</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
 
     <span class="c1"># trim or expand columns to expected size</span>
     <span class="n">n_expected</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">col_names</span><span class="p">)</span>
@@ -896,10 +896,10 @@
     <span class="n">geom</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">sg</span><span class="o">.</span><span class="n">LineString</span><span class="p">([(</span><span class="n">xsnk</span><span class="p">,</span> <span class="n">ysnk</span><span class="p">),</span> <span class="p">(</span><span class="n">xsrc</span><span class="p">,</span> <span class="n">ysrc</span><span class="p">)])</span>
         <span class="k">for</span> <span class="n">xsnk</span><span class="p">,</span> <span class="n">ysnk</span><span class="p">,</span> <span class="n">xsrc</span><span class="p">,</span> <span class="n">ysrc</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
-            <span class="n">df</span><span class="p">[</span><span class="s2">&quot;xsnk&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;ysnk&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;xsrc&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;ysrc&quot;</span><span class="p">]</span>
+            <span class="n">df</span><span class="p">[</span><span class="s2">"xsnk"</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">"ysnk"</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">"xsrc"</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">"ysrc"</span><span class="p">]</span>
         <span class="p">)</span>
     <span class="p">]</span>
-    <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">&quot;xsnk&quot;</span><span class="p">,</span> <span class="s2">&quot;ysnk&quot;</span><span class="p">,</span> <span class="s2">&quot;xsrc&quot;</span><span class="p">,</span> <span class="s2">&quot;ysrc&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">"xsnk"</span><span class="p">,</span> <span class="s2">"ysnk"</span><span class="p">,</span> <span class="s2">"xsrc"</span><span class="p">,</span> <span class="s2">"ysrc"</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># convert to geodataframe</span>
     <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">geometry</span><span class="o">=</span><span class="n">geom</span><span class="p">)</span>
@@ -913,7 +913,7 @@
 <div class="viewcode-block" id="read_xy">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.readers.read_xy.html#hydromt_sfincs.readers.read_xy">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">read_xy</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read sfincs xy files and parse to GeoDataFrame.</span>
+<span class="w">    </span><span class="sd">"""Read sfincs xy files and parse to GeoDataFrame.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -926,8 +926,8 @@
 <span class="sd">    -------</span>
 <span class="sd">    gdf: gpd.GeoDataFrame</span>
 <span class="sd">        GeoDataFrame with point geometries</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">gdf</span> <span class="o">=</span> <span class="n">open_vector</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span> <span class="n">driver</span><span class="o">=</span><span class="s2">&quot;xy&quot;</span><span class="p">)</span>
+<span class="sd">    """</span>
+    <span class="n">gdf</span> <span class="o">=</span> <span class="n">open_vector</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span> <span class="n">driver</span><span class="o">=</span><span class="s2">"xy"</span><span class="p">)</span>
     <span class="n">gdf</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">gdf</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>  <span class="c1"># index starts at 0</span>
     <span class="k">return</span> <span class="n">gdf</span></div>
 
@@ -936,10 +936,10 @@
 <div class="viewcode-block" id="read_xyn">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.readers.read_xyn.html#hydromt_sfincs.readers.read_xyn">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">read_xyn</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CRS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read xyn files.</span>
+<span class="w">    </span><span class="sd">"""Read xyn files.</span>
 
 <span class="sd">    For example observation points with names. When name column is not present,</span>
-<span class="sd">    it will be generated as &quot;point001&quot;, &quot;point002&quot;, etc.</span>
+<span class="sd">    it will be generated as "point001", "point002", etc.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -952,17 +952,17 @@
 <span class="sd">    -------</span>
 <span class="sd">    gdf: gpd.GeoDataFrame</span>
 <span class="sd">        GeoDataFrame with point geometries.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;\s+&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
-        <span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;y&quot;</span><span class="p">}</span>
+<span class="sd">    """</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="sa">r</span><span class="s2">"\s+"</span><span class="p">)</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+        <span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s2">"x"</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="s2">"y"</span><span class="p">}</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;name&quot;</span><span class="p">})</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="mi">2</span><span class="p">:</span> <span class="s2">"name"</span><span class="p">})</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">df</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;point</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"point</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
 
-    <span class="n">points</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">points_from_xy</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">])</span>
-    <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">]),</span> <span class="n">geometry</span><span class="o">=</span><span class="n">points</span><span class="p">)</span>
+    <span class="n">points</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">points_from_xy</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"x"</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">"y"</span><span class="p">])</span>
+    <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">]),</span> <span class="n">geometry</span><span class="o">=</span><span class="n">points</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">gdf</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">gdf</span></div>

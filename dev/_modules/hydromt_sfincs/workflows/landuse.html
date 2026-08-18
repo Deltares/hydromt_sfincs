@@ -426,7 +426,7 @@
                 <article class="bd-article">
                   
   <h1>Source code for hydromt_sfincs.workflows.landuse</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Landuse related workflows for SFINCS.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Landuse related workflows for SFINCS."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 
@@ -435,13 +435,13 @@
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;cn_to_s&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"cn_to_s"</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="cn_to_s">
 <a class="viewcode-back" href="../../../_generated/hydromt_sfincs.workflows.cn_to_s.html#hydromt_sfincs.workflows.cn_to_s">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">cn_to_s</span><span class="p">(</span><span class="n">da_cn</span><span class="p">,</span> <span class="n">da_mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=-</span><span class="mi">9999</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert Curve Numbers to potential maximum soil moisture retention S [inch].&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Convert Curve Numbers to potential maximum soil moisture retention S [inch]."""</span>
     <span class="c1"># set nodata values to CN 100 (zero infiltration)</span>
     <span class="c1"># avoid CN = 0 values; minumum expected value is ~30</span>
     <span class="n">da_cn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">da_cn</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>

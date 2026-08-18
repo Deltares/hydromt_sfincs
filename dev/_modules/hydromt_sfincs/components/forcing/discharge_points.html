@@ -445,23 +445,23 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
 
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="SfincsDischargePoints">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsDischargePoints.html#hydromt_sfincs.components.forcing.SfincsDischargePoints">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SfincsDischargePoints</span><span class="p">(</span><span class="n">SfincsBoundaryBase</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Discharge point component for SFINCS models.</span>
+<span class="w">    </span><span class="sd">"""Discharge point component for SFINCS models.</span>
 
 <span class="sd">    This component handles reading and writing of discharge points and their</span>
 <span class="sd">    associated time series data in SFINCS format, including both ASCII and netCDF files.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">_default_varname</span> <span class="o">=</span> <span class="s2">&quot;dis&quot;</span>
+    <span class="n">_default_varname</span> <span class="o">=</span> <span class="s2">"dis"</span>
 
 <div class="viewcode-block" id="SfincsDischargePoints.__init__">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsDischargePoints.html#hydromt_sfincs.components.forcing.SfincsDischargePoints.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;SfincsModel&quot;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="s2">"SfincsModel"</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div>
 
 
@@ -472,28 +472,28 @@
 
         <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">to_gdf</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="s2">&quot;name&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="n">g</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Point </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">g</span><span class="p">))]</span>
+        <span class="k">if</span> <span class="s2">"name"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">g</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"Point </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">g</span><span class="p">))]</span>
 
         <span class="c1"># enforce no missing names</span>
-        <span class="k">if</span> <span class="n">g</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-            <span class="n">missing</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span>
-            <span class="n">g</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">missing</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="sa">f</span><span class="s2">&quot;Point </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">missing</span><span class="p">[</span><span class="n">missing</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+        <span class="k">if</span> <span class="n">g</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="n">missing</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">missing</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="sa">f</span><span class="s2">"Point </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">missing</span><span class="p">[</span><span class="n">missing</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
             <span class="p">]</span>
         <span class="k">return</span> <span class="n">g</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">list_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return list of point names for display purposes.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return list of point names for display purposes."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nr_points</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">gdf</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
 <div class="viewcode-block" id="SfincsDischargePoints.read">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsDischargePoints.read.html#hydromt_sfincs.components.forcing.SfincsDischargePoints.read">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read SFINCS discharge points (.dis, .src files) or netcdf file.</span>
+<span class="w">        </span><span class="sd">"""Read SFINCS discharge points (.dis, .src files) or netcdf file.</span>
 
 <span class="sd">        The format of the discharge conditions files can be specified,</span>
 <span class="sd">        otherwise it is determined from the model configuration.</span>
@@ -501,36 +501,36 @@
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        format : str, optional</span>
-<span class="sd">            Format of the discharge files, &quot;asc&quot; or &quot;netcdf&quot;.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">            Format of the discharge files, "asc" or "netcdf".</span>
+<span class="sd">        """</span>
 
         <span class="k">if</span> <span class="nb">format</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;netsrcdisfile&quot;</span><span class="p">):</span>
-                <span class="nb">format</span> <span class="o">=</span> <span class="s2">&quot;netcdf&quot;</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"netsrcdisfile"</span><span class="p">):</span>
+                <span class="nb">format</span> <span class="o">=</span> <span class="s2">"netcdf"</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="nb">format</span> <span class="o">=</span> <span class="s2">&quot;asc&quot;</span>
+                <span class="nb">format</span> <span class="o">=</span> <span class="s2">"asc"</span>
 
-        <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="s2">&quot;asc&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="s2">"asc"</span><span class="p">:</span>
             <span class="n">gdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_discharge_points</span><span class="p">()</span>
             <span class="c1"># Check if there are any points</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
                 <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_discharge_timeseries</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="p">,</span> <span class="n">gdf</span><span class="o">=</span><span class="n">gdf</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">drop_duplicates</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">format</span> <span class="o">==</span> <span class="s2">&quot;netcdf&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="nb">format</span> <span class="o">==</span> <span class="s2">"netcdf"</span><span class="p">:</span>
             <span class="c1"># Read netcdf file</span>
             <span class="n">da</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_discharge_conditions_netcdf</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">geodataset</span><span class="o">=</span><span class="n">da</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">drop_duplicates</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">read_discharge_points</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read SFINCS discharge points (.src) file&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Read SFINCS discharge points (.src) file"""</span>
 
         <span class="c1"># Check that read mode is on</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_read_mode</span><span class="p">()</span>
 
         <span class="c1"># Get absolute file name and set it in config if crsfile is not None</span>
         <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
-            <span class="s2">&quot;srcfile&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span>
+            <span class="s2">"srcfile"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span>
         <span class="p">)</span>
 
         <span class="c1"># Check if abs_file_path is None</span>
@@ -540,21 +540,21 @@
 
         <span class="c1"># Check if src file exists</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">abs_file_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Discharge points file not found: </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Discharge points file not found: </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="c1"># Read src file</span>
         <span class="n">gdf</span> <span class="o">=</span> <span class="n">readers</span><span class="o">.</span><span class="n">read_xyn</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">gdf</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">read_discharge_timeseries</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read SFINCS discharge condition timeseries (.dis) file&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Read SFINCS discharge condition timeseries (.dis) file"""</span>
 
         <span class="c1"># Check that read mode is on</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_read_mode</span><span class="p">()</span>
 
         <span class="c1"># Get absolute file name and set it in config if crsfile is not None</span>
         <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
-            <span class="s2">&quot;disfile&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span>
+            <span class="s2">"disfile"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span>
         <span class="p">)</span>
 
         <span class="c1"># Check if abs_file_path is None</span>
@@ -565,24 +565,24 @@
         <span class="c1"># Check if dis file exists</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">abs_file_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Discharge timeseries file not found: </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"Discharge timeseries file not found: </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
 
         <span class="c1"># Read dis file (this creates one DataFrame with all timeseries)</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">readers</span><span class="o">.</span><span class="n">read_timeseries</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">tref</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tref&quot;</span><span class="p">))</span>
-        <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span>
-        <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;index&quot;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">readers</span><span class="o">.</span><span class="n">read_timeseries</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">tref</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tref"</span><span class="p">))</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">"time"</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">"index"</span>
         <span class="k">return</span> <span class="n">df</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">read_discharge_conditions_netcdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read SFINCS discharge conditions netcdf file&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Read SFINCS discharge conditions netcdf file"""</span>
 
         <span class="c1"># Check that read mode is on</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_read_mode</span><span class="p">()</span>
 
         <span class="c1"># Get absolute file name and set it in config if netsrcdisfile is not None</span>
         <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
-            <span class="s2">&quot;netsrcdisfile&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span>
+            <span class="s2">"netsrcdisfile"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span>
         <span class="p">)</span>
 
         <span class="c1"># Check if abs_file_path is None</span>
@@ -593,22 +593,22 @@
         <span class="c1"># Check if netsrcdisfile exists</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">abs_file_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;discharge condition netcdf file not found: </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"discharge condition netcdf file not found: </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
 
         <span class="c1"># Read netcdf file</span>
-        <span class="n">ds</span> <span class="o">=</span> <span class="n">GeoDataset</span><span class="o">.</span><span class="n">from_netcdf</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">GeoDataset</span><span class="o">.</span><span class="n">from_netcdf</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">)</span>
 
         <span class="c1"># rename variables to match hydromt-sfincs naming</span>
-        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;stations&quot;</span><span class="p">:</span> <span class="s2">&quot;index&quot;</span><span class="p">})</span> <span class="k">if</span> <span class="s2">&quot;stations&quot;</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">dims</span> <span class="k">else</span> <span class="n">ds</span>
-        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;discharge&quot;</span><span class="p">:</span> <span class="s2">&quot;dis&quot;</span><span class="p">})</span> <span class="k">if</span> <span class="s2">&quot;discharge&quot;</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">data_vars</span> <span class="k">else</span> <span class="n">ds</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">"stations"</span><span class="p">:</span> <span class="s2">"index"</span><span class="p">})</span> <span class="k">if</span> <span class="s2">"stations"</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">dims</span> <span class="k">else</span> <span class="n">ds</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">"discharge"</span><span class="p">:</span> <span class="s2">"dis"</span><span class="p">})</span> <span class="k">if</span> <span class="s2">"discharge"</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">data_vars</span> <span class="k">else</span> <span class="n">ds</span>
 
         <span class="k">return</span> <span class="n">ds</span>
 
 <div class="viewcode-block" id="SfincsDischargePoints.write">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsDischargePoints.write.html#hydromt_sfincs.components.forcing.SfincsDischargePoints.write">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write SFINCS discharges (.src, .dis files) or netcdf file.</span>
+<span class="w">        </span><span class="sd">"""Write SFINCS discharges (.src, .dis files) or netcdf file.</span>
 
 <span class="sd">        The format of the discharge files can be specified,</span>
 <span class="sd">        otherwise it is determined from the model configuration.</span>
@@ -616,20 +616,20 @@
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        format : str, optional</span>
-<span class="sd">            Format of the discharge files, &quot;asc&quot; (default), or &quot;netcdf&quot;.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">            Format of the discharge files, "asc" (default), or "netcdf".</span>
+<span class="sd">        """</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nr_points</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="c1"># There are no discharge points</span>
             <span class="k">return</span>
 
         <span class="k">if</span> <span class="nb">format</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;netsrcdisfile&quot;</span><span class="p">):</span>
-                <span class="nb">format</span> <span class="o">=</span> <span class="s2">&quot;netcdf&quot;</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"netsrcdisfile"</span><span class="p">):</span>
+                <span class="nb">format</span> <span class="o">=</span> <span class="s2">"netcdf"</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="nb">format</span> <span class="o">=</span> <span class="s2">&quot;asc&quot;</span>
+                <span class="nb">format</span> <span class="o">=</span> <span class="s2">"asc"</span>
 
-        <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="s2">&quot;asc&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="s2">"asc"</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">write_discharge_points</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">write_discharge_timeseries</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
@@ -638,20 +638,20 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">write_gis</span><span class="p">:</span>
             <span class="n">writers</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">gdf</span><span class="p">,</span>
-                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;dis&quot;</span><span class="p">,</span>
-                <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;gis&quot;</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"dis"</span><span class="p">,</span>
+                <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">"gis"</span><span class="p">),</span>
             <span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write_discharge_points</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write SFINCS discharge points (.src) file&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Write SFINCS discharge points (.src) file"""</span>
 
         <span class="c1"># Check that write mode is on</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_write_mode</span><span class="p">()</span>
 
         <span class="c1"># Get absolute file name and set it in config if bndfile is not None</span>
         <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
-            <span class="s2">&quot;srcfile&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;sfincs.src&quot;</span>
+            <span class="s2">"srcfile"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">"sfincs.src"</span>
         <span class="p">)</span>
 
         <span class="c1"># Create parent directories if they do not exist</span>
@@ -660,42 +660,42 @@
         <span class="c1"># Write src file</span>
         <span class="c1"># Change precision of coordinates according to crs</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
-            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%11.6f</span><span class="s2">&quot;</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">"</span><span class="si">%11.6f</span><span class="s2">"</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%11.1f</span><span class="s2">&quot;</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">"</span><span class="si">%11.1f</span><span class="s2">"</span>
 
         <span class="n">writers</span><span class="o">.</span><span class="n">write_xyn</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gdf</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write_discharge_timeseries</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write SFINCS discharge timeseries (.dis) file&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Write SFINCS discharge timeseries (.dis) file"""</span>
 
         <span class="c1"># Check that write mode is on</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_write_mode</span><span class="p">()</span>
 
         <span class="c1"># Get absolute file name and set it in config if disfile is not None</span>
         <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
-            <span class="s2">&quot;disfile&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;sfincs.dis&quot;</span>
+            <span class="s2">"disfile"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">"sfincs.dis"</span>
         <span class="p">)</span>
 
         <span class="c1"># Create parent directories if they do not exist</span>
         <span class="n">abs_file_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="c1"># parse data to dataframe</span>
-        <span class="n">da</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;dis&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+        <span class="n">da</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"dis"</span><span class="p">]</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="s2">"time"</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
 
         <span class="c1"># Write to file</span>
-        <span class="n">writers</span><span class="o">.</span><span class="n">write_timeseries</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tref&quot;</span><span class="p">))</span>
+        <span class="n">writers</span><span class="o">.</span><span class="n">write_timeseries</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tref"</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write_discharge_conditions_netcdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write SFINCS discharge conditions netcdf file&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Write SFINCS discharge conditions netcdf file"""</span>
 
         <span class="c1"># Check that write mode is on</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_write_mode</span><span class="p">()</span>
 
         <span class="c1"># Get absolute file name and set it in config if netsrcdisfile is not None</span>
         <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
-            <span class="s2">&quot;netsrcdisfile&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;sfincs_netsrcdisfile.nc&quot;</span>
+            <span class="s2">"netsrcdisfile"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">"sfincs_netsrcdisfile.nc"</span>
         <span class="p">)</span>
 
         <span class="c1"># Create parent directories if they do not exist</span>
@@ -708,34 +708,34 @@
 
         <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
 
-        <span class="n">tref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tref&quot;</span><span class="p">)</span>
-        <span class="n">tref_str</span> <span class="o">=</span> <span class="n">tref</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">)</span>
+        <span class="n">tref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tref"</span><span class="p">)</span>
+        <span class="n">tref_str</span> <span class="o">=</span> <span class="n">tref</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S"</span><span class="p">)</span>
 
-        <span class="n">encoding</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;minutes since </span><span class="si">{</span><span class="n">tref_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;float64&quot;</span><span class="p">})</span>
+        <span class="n">encoding</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="p">{</span><span class="s2">"units"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"minutes since </span><span class="si">{</span><span class="n">tref_str</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"dtype"</span><span class="p">:</span> <span class="s2">"float64"</span><span class="p">})</span>
 
         <span class="c1"># rename variables to match sfincs naming</span>
-        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="s2">&quot;stations&quot;</span><span class="p">})</span> <span class="k">if</span> <span class="s2">&quot;index&quot;</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">dims</span> <span class="k">else</span> <span class="n">ds</span>
-        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;dis&quot;</span><span class="p">:</span> <span class="s2">&quot;discharge&quot;</span><span class="p">})</span> <span class="k">if</span> <span class="s2">&quot;dis&quot;</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">data_vars</span> <span class="k">else</span> <span class="n">ds</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">"index"</span><span class="p">:</span> <span class="s2">"stations"</span><span class="p">})</span> <span class="k">if</span> <span class="s2">"index"</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">dims</span> <span class="k">else</span> <span class="n">ds</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">"dis"</span><span class="p">:</span> <span class="s2">"discharge"</span><span class="p">})</span> <span class="k">if</span> <span class="s2">"dis"</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">data_vars</span> <span class="k">else</span> <span class="n">ds</span>
 
         <span class="c1"># Write netcdf file safely (might get locked, e..g in other notebooks)</span>
         <span class="n">final_path</span> <span class="o">=</span> <span class="n">writers</span><span class="o">.</span><span class="n">write_netcdf_safely</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">abs_file_path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">final_path</span> <span class="o">!=</span> <span class="n">abs_file_path</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;netsrcdisfile&quot;</span><span class="p">,</span> <span class="n">final_path</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"netsrcdisfile"</span><span class="p">,</span> <span class="n">final_path</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]):</span>
-        <span class="s2">&quot;Delete boundary points and clear config when no points remain.&quot;</span>
+        <span class="s2">"Delete boundary points and clear config when no points remain."</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nr_points</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;srcfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;disfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;netsrcdisfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"srcfile"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"disfile"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"netsrcdisfile"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="s2">&quot;Clear boundary points and unset associated config keys.&quot;</span>
+        <span class="s2">"Clear boundary points and unset associated config keys."</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;srcfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;disfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;netsrcdisfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"srcfile"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"disfile"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"netsrcdisfile"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
 <div class="viewcode-block" id="SfincsDischargePoints.create_timeseries">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.forcing.SfincsDischargePoints.create_timeseries.html#hydromt_sfincs.components.forcing.SfincsDischargePoints.create_timeseries">[docs]</a>
@@ -743,7 +743,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">create_timeseries</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">index</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">shape</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;constant&quot;</span><span class="p">,</span>
+        <span class="n">shape</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"constant"</span><span class="p">,</span>
         <span class="n">timestep</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">600.0</span><span class="p">,</span>
         <span class="n">offset</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
         <span class="n">amplitude</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
@@ -753,13 +753,13 @@
         <span class="n">tpeak</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">86400.0</span><span class="p">,</span>
         <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">43200.0</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Applies time series discharges for each point</span>
+<span class="w">        </span><span class="sd">"""Applies time series discharges for each point</span>
 <span class="sd">        Create numpy datetime64 array for time series with python datetime.datetime objects</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        shape : str</span>
-<span class="sd">            Shape of the time series. Options are &quot;constant&quot;, &quot;sine&quot;, or &quot;gaussian&quot;.</span>
+<span class="sd">            Shape of the time series. Options are "constant", "sine", or "gaussian".</span>
 <span class="sd">        timestep : float</span>
 <span class="sd">            Time step [s]</span>
 <span class="sd">        offset : float</span>
@@ -776,39 +776,39 @@
 <span class="sd">            Time of the peak of the Gaussian wave [s] with respect to the model reference time</span>
 <span class="sd">        duration : float</span>
 <span class="sd">            Duration of the Gaussian wave [s]</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nr_points</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Cannot create timeseries without existing discharge points&quot;</span>
+                <span class="s2">"Cannot create timeseries without existing discharge points"</span>
             <span class="p">)</span>
 
-        <span class="n">t0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tstart&quot;</span><span class="p">))</span>
-        <span class="n">t1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tstop&quot;</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">shape</span> <span class="o">==</span> <span class="s2">&quot;constant&quot;</span><span class="p">:</span>
-            <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="nb">int</span><span class="p">((</span><span class="n">t1</span> <span class="o">-</span> <span class="n">t0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1e6</span><span class="p">),</span> <span class="s2">&quot;s&quot;</span><span class="p">)</span>
+        <span class="n">t0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tstart"</span><span class="p">))</span>
+        <span class="n">t1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tstop"</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">shape</span> <span class="o">==</span> <span class="s2">"constant"</span><span class="p">:</span>
+            <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="nb">int</span><span class="p">((</span><span class="n">t1</span> <span class="o">-</span> <span class="n">t0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1e6</span><span class="p">),</span> <span class="s2">"s"</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">timestep</span><span class="p">),</span> <span class="s2">&quot;s&quot;</span><span class="p">)</span>
+            <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">timestep</span><span class="p">),</span> <span class="s2">"s"</span><span class="p">)</span>
         <span class="n">time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">t0</span><span class="p">,</span> <span class="n">t1</span> <span class="o">+</span> <span class="n">dt</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
         <span class="n">dtsec</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
         <span class="c1"># Convert time to seconds since tref</span>
         <span class="n">tsec</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="p">(</span><span class="n">time</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tref&quot;</span><span class="p">)))</span>
-            <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;timedelta64[s]&quot;</span><span class="p">)</span>
+            <span class="p">(</span><span class="n">time</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tref"</span><span class="p">)))</span>
+            <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"timedelta64[s]"</span><span class="p">)</span>
             <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="n">nt</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tsec</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">shape</span> <span class="o">==</span> <span class="s2">&quot;constant&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">shape</span> <span class="o">==</span> <span class="s2">"constant"</span><span class="p">:</span>
             <span class="n">q</span> <span class="o">=</span> <span class="p">[</span><span class="n">offset</span><span class="p">]</span> <span class="o">*</span> <span class="n">nt</span>
-        <span class="k">elif</span> <span class="n">shape</span> <span class="o">==</span> <span class="s2">&quot;sine&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">shape</span> <span class="o">==</span> <span class="s2">"sine"</span><span class="p">:</span>
             <span class="n">q</span> <span class="o">=</span> <span class="n">offset</span> <span class="o">+</span> <span class="n">amplitude</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span>
                 <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">tsec</span> <span class="o">/</span> <span class="n">period</span> <span class="o">+</span> <span class="n">phase</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span>
             <span class="p">)</span>
-        <span class="k">elif</span> <span class="n">shape</span> <span class="o">==</span> <span class="s2">&quot;gaussian&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">shape</span> <span class="o">==</span> <span class="s2">"gaussian"</span><span class="p">:</span>
             <span class="n">q</span> <span class="o">=</span> <span class="n">offset</span> <span class="o">+</span> <span class="n">peak</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(((</span><span class="n">tsec</span> <span class="o">-</span> <span class="n">tpeak</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">0.25</span> <span class="o">*</span> <span class="n">duration</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Shape &#39;</span><span class="si">{</span><span class="n">shape</span><span class="si">}</span><span class="s2">&#39; is not implemented. Use &#39;constant&#39;, &#39;sine&#39;, or &#39;gaussian&#39;.&quot;</span>
+                <span class="sa">f</span><span class="s2">"Shape '</span><span class="si">{</span><span class="n">shape</span><span class="si">}</span><span class="s2">' is not implemented. Use 'constant', 'sine', or 'gaussian'."</span>
             <span class="p">)</span>
 
         <span class="n">times</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span>
@@ -825,7 +825,7 @@
             <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">index</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">times</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">index</span>
         <span class="p">)</span>
 
-        <span class="c1"># Call set_timeseries to update your object&#39;s data</span>
+        <span class="c1"># Call set_timeseries to update your object's data</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_timeseries</span><span class="p">(</span><span class="n">df</span><span class="p">)</span></div>
 
 
@@ -841,13 +841,13 @@
         <span class="n">buffer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">drop_duplicates</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup discharge forcing.</span>
+<span class="w">        </span><span class="sd">"""Setup discharge forcing.</span>
 
 <span class="sd">        Discharge timeseries are read from a `geodataset` (geospatial point timeseries)</span>
 <span class="sd">        or a tabular `timeseries` dataframe. At least one of these must be provided.</span>
 
 <span class="sd">        The tabular timeseries data is combined with `locations` if provided,</span>
-<span class="sd">        or with existing &#39;src&#39; locations if previously set, e.g., with the</span>
+<span class="sd">        or with existing 'src' locations if previously set, e.g., with the</span>
 <span class="sd">        `setup_river_inflow` method.</span>
 
 <span class="sd">        Adds model layers:</span>
@@ -862,19 +862,19 @@
 <span class="sd">            Path, data source name, or pandas data object for tabular timeseries.</span>
 <span class="sd">        locations: str, Path, gpd.GeoDataFrame, optional</span>
 <span class="sd">            Path, data source name, or geopandas object for bnd point locations.</span>
-<span class="sd">            It should contain a &#39;index&#39; column matching the column names in `timeseries`.</span>
+<span class="sd">            It should contain a 'index' column matching the column names in `timeseries`.</span>
 <span class="sd">        merge : bool, optional</span>
 <span class="sd">            If True, merge locations with existing forcing data, by default True.</span>
 <span class="sd">        buffer: float, optional</span>
 <span class="sd">            Buffer [m] around model boundary within the model region</span>
 <span class="sd">            select discharge gauges, by default None.</span>
 <span class="sd">        drop_duplicates : bool, optional</span>
-<span class="sd">            If True, drop duplicate points in gdf based on &#39;name&#39; column or geometry.</span>
+<span class="sd">            If True, drop duplicate points in gdf based on 'name' column or geometry.</span>
 
 <span class="sd">        See Also</span>
 <span class="sd">        --------</span>
 <span class="sd">        setup_river_inflow</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="n">gdf_locs</span><span class="p">,</span> <span class="n">df_ts</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
         <span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">()</span>  <span class="c1"># model time</span>
@@ -888,7 +888,7 @@
             <span class="n">da</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataset</span><span class="p">(</span>
                 <span class="n">geodataset</span><span class="p">,</span>
                 <span class="n">geom</span><span class="o">=</span><span class="n">region</span><span class="p">,</span>
-                <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;discharge&quot;</span><span class="p">],</span>
+                <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">"discharge"</span><span class="p">],</span>
                 <span class="n">time_range</span><span class="o">=</span><span class="p">(</span><span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span><span class="p">),</span>
             <span class="p">)</span>
             <span class="n">df_ts</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">da</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">index_dim</span><span class="p">)</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
@@ -898,9 +898,9 @@
                 <span class="n">timeseries</span><span class="p">,</span>
                 <span class="n">time_range</span><span class="o">=</span><span class="p">(</span><span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span><span class="p">),</span>
                 <span class="n">source_kwargs</span><span class="o">=</span><span class="p">{</span>
-                    <span class="s2">&quot;driver&quot;</span><span class="p">:</span> <span class="p">{</span>
-                        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;pandas&quot;</span><span class="p">,</span>
-                        <span class="s2">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;index_col&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;parse_dates&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+                    <span class="s2">"driver"</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"pandas"</span><span class="p">,</span>
+                        <span class="s2">"options"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"index_col"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"parse_dates"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
                     <span class="p">}</span>
                 <span class="p">},</span>
             <span class="p">)</span>
@@ -912,28 +912,28 @@
                 <span class="n">locations</span><span class="p">,</span>
                 <span class="n">geom</span><span class="o">=</span><span class="n">region</span><span class="p">,</span>
             <span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
-            <span class="k">if</span> <span class="s2">&quot;index&quot;</span> <span class="ow">in</span> <span class="n">gdf_locs</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-                <span class="n">gdf_locs</span> <span class="o">=</span> <span class="n">gdf_locs</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;index&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">"index"</span> <span class="ow">in</span> <span class="n">gdf_locs</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">gdf_locs</span> <span class="o">=</span> <span class="n">gdf_locs</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"index"</span><span class="p">)</span>
             <span class="c1"># filter df_ts timeseries based on gdf_locs index</span>
             <span class="c1"># this allows to use a subset of the locations in the timeseries</span>
             <span class="k">if</span> <span class="n">df_ts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">gdf_locs</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">df_ts</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
                 <span class="n">df_ts</span> <span class="o">=</span> <span class="n">df_ts</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">gdf_locs</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">gdf_locs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="s2">&quot;No locations provided, using existing discharge points from data.&quot;</span>
+                <span class="s2">"No locations provided, using existing discharge points from data."</span>
             <span class="p">)</span>
             <span class="c1"># gdf_locs = self.data.vector.to_gdf() #NOTE this is now done in set_timeseries ...</span>
         <span class="k">elif</span> <span class="n">gdf_locs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No discharge boundary (src) points provided.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No discharge boundary (src) points provided."</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">df_ts</span><span class="p">,</span> <span class="n">gdf</span><span class="o">=</span><span class="n">gdf_locs</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="n">merge</span><span class="p">,</span> <span class="n">drop_duplicates</span><span class="o">=</span><span class="n">drop_duplicates</span><span class="p">)</span>
         <span class="c1"># update config</span>
         <span class="k">if</span> <span class="n">geodataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># if a geodataset is used, keep the format to netcdf</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;netsrcdisfile&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs_netsrcdisfile.nc&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"netsrcdisfile"</span><span class="p">,</span> <span class="s2">"sfincs_netsrcdisfile.nc"</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;srcfile&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs.src&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;disfile&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs.dis&quot;</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"srcfile"</span><span class="p">,</span> <span class="s2">"sfincs.src"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"disfile"</span><span class="p">,</span> <span class="s2">"sfincs.dis"</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_from_grid</span><span class="p">(</span>
@@ -945,7 +945,7 @@
         <span class="n">rel_error</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
         <span class="n">abs_error</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create discharge forcing based on a gridded discharge dataset.</span>
+<span class="w">        </span><span class="sd">"""Create discharge forcing based on a gridded discharge dataset.</span>
 
 <span class="sd">        Discharge boundary timesereis are read from the `discharge` dataset</span>
 <span class="sd">        with gridded discharge time series data.</span>
@@ -966,40 +966,40 @@
 <span class="sd">        discharge: str, Path, xr.DataArray optional</span>
 <span class="sd">            Path,  data source name or xarray data object for gridded discharge timeseries dataset.</span>
 
-<span class="sd">            * Required variables: [&#39;discharge&#39; (m3/s)]</span>
-<span class="sd">            * Required coordinates: [&#39;time&#39;, &#39;y&#39;, &#39;x&#39;]</span>
+<span class="sd">            * Required variables: ['discharge' (m3/s)]</span>
+<span class="sd">            * Required coordinates: ['time', 'y', 'x']</span>
 <span class="sd">        locations: str, Path, gpd.GeoDataFrame, optional</span>
 <span class="sd">            Path, data source name, or geopandas data object for point location dataset.</span>
 <span class="sd">            Not required if point location have previously been set, e.g. using the</span>
 <span class="sd">            :py:meth:`~hydromt_sfincs.SfincsModel.setup_river_inflow` method.</span>
 
-<span class="sd">            * Required variables: [&#39;uparea&#39; (km2)]</span>
+<span class="sd">            * Required variables: ['uparea' (km2)]</span>
 <span class="sd">        uparea: str, Path, optional</span>
 <span class="sd">            Path, data source name, or xarray data object for upstream area grid.</span>
 
-<span class="sd">            * Required variables: [&#39;uparea&#39; (km2)]</span>
+<span class="sd">            * Required variables: ['uparea' (km2)]</span>
 <span class="sd">        wdw: int, optional</span>
 <span class="sd">            Window size in number of cells around discharge boundary locations</span>
 <span class="sd">            to snap to, only used if ``uparea`` is provided. By default 1.</span>
 <span class="sd">        rel_error, abs_error: float, optional</span>
 <span class="sd">            Maximum relative error (default 0.05) and absolute error (default 50 km2)</span>
 <span class="sd">            between the discharge boundary location upstream area and the upstream area of</span>
-<span class="sd">            the best fit grid cell, only used if &quot;discharge&quot; geoms has a &quot;uparea&quot; column.</span>
+<span class="sd">            the best fit grid cell, only used if "discharge" geoms has a "uparea" column.</span>
 
 <span class="sd">        See Also</span>
 <span class="sd">        --------</span>
 <span class="sd">        setup_river_inflow</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">locations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">gdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
-                <span class="n">locations</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">assert_gtype</span><span class="o">=</span><span class="s2">&quot;Point&quot;</span>
+                <span class="n">locations</span><span class="p">,</span> <span class="n">geom</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">assert_gtype</span><span class="o">=</span><span class="s2">"Point"</span>
             <span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">nr_points</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="c1"># TODO check how to store the uparea for points that were created earlier</span>
             <span class="c1"># previously we stored it in a geojson file in the gis folder</span>
             <span class="n">gdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gdf</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No discharge boundary (src) points provided.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No discharge boundary (src) points provided."</span><span class="p">)</span>
 
         <span class="c1"># read data</span>
         <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
@@ -1007,20 +1007,20 @@
             <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
             <span class="n">buffer</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
             <span class="n">time_range</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_model_time</span><span class="p">(),</span>  <span class="c1"># model time</span>
-            <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;discharge&quot;</span><span class="p">],</span>
+            <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">"discharge"</span><span class="p">],</span>
             <span class="n">single_var_as_array</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">if</span> <span class="n">uparea</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;uparea&quot;</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">uparea</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">"uparea"</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
             <span class="n">da_upa</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
                 <span class="n">uparea</span><span class="p">,</span>
                 <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
                 <span class="n">buffer</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-                <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">],</span>
+                <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">"uparea"</span><span class="p">],</span>
             <span class="p">)</span>
             <span class="c1"># make sure ds and da_upa align</span>
-            <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;uparea&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">da_upa</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;nearest&quot;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="s2">&quot;uparea&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;No &quot;uparea&quot; column found in location data.&#39;</span><span class="p">)</span>
+            <span class="n">ds</span><span class="p">[</span><span class="s2">"uparea"</span><span class="p">]</span> <span class="o">=</span> <span class="n">da_upa</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"nearest"</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"uparea"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">'No "uparea" column found in location data.'</span><span class="p">)</span>
 
         <span class="c1"># TODO use hydromt core method</span>
         <span class="n">ds_snapped</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">snap_discharge</span><span class="p">(</span>
@@ -1029,28 +1029,28 @@
             <span class="n">wdw</span><span class="o">=</span><span class="n">wdw</span><span class="p">,</span>
             <span class="n">rel_error</span><span class="o">=</span><span class="n">rel_error</span><span class="p">,</span>
             <span class="n">abs_error</span><span class="o">=</span><span class="n">abs_error</span><span class="p">,</span>
-            <span class="n">uparea_name</span><span class="o">=</span><span class="s2">&quot;uparea&quot;</span><span class="p">,</span>
-            <span class="n">discharge_name</span><span class="o">=</span><span class="s2">&quot;discharge&quot;</span><span class="p">,</span>
+            <span class="n">uparea_name</span><span class="o">=</span><span class="s2">"uparea"</span><span class="p">,</span>
+            <span class="n">discharge_name</span><span class="o">=</span><span class="s2">"discharge"</span><span class="p">,</span>
             <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="c1"># set zeros for src points without matching discharge</span>
-        <span class="n">da_q</span> <span class="o">=</span> <span class="n">ds_snapped</span><span class="p">[</span><span class="s2">&quot;discharge&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">gdf</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">df_q</span> <span class="o">=</span> <span class="n">da_q</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+        <span class="n">da_q</span> <span class="o">=</span> <span class="n">ds_snapped</span><span class="p">[</span><span class="s2">"discharge"</span><span class="p">]</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">gdf</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">df_q</span> <span class="o">=</span> <span class="n">da_q</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="s2">"time"</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
         <span class="c1"># update forcing, note this overwrites any existing discharge timeseries</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">df_q</span><span class="p">,</span> <span class="n">gdf</span><span class="o">=</span><span class="n">gdf</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="c1"># make sure to update the config to use netcdf format for discharge conditions,</span>
         <span class="c1"># since then we can store more attributes like the uparea</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
             <span class="p">{</span>
-                <span class="s2">&quot;netsrcdisfile&quot;</span><span class="p">:</span> <span class="s2">&quot;sfincs_netsrcdisfile.nc&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;srcfile&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-                <span class="s2">&quot;disfile&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">"netsrcdisfile"</span><span class="p">:</span> <span class="s2">"sfincs_netsrcdisfile.nc"</span><span class="p">,</span>
+                <span class="s2">"srcfile"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">"disfile"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
             <span class="p">}</span>
         <span class="p">)</span></div>
 
 
         <span class="c1"># TODO do we want to keep the snapped geometries in the model?</span>
-        <span class="c1"># self.set_geoms(ds_snapped.vector.to_gdf(), &quot;src_snapped&quot;)</span>
+        <span class="c1"># self.set_geoms(ds_snapped.vector.to_gdf(), "src_snapped")</span>
 </pre></div>
 
                 </article>

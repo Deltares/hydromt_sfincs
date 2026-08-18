@@ -426,7 +426,7 @@
                 <article class="bd-article">
                   
   <h1>Source code for hydromt_sfincs.workflows.merge</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Workflow to merge multiple datasets into a single dataset used for elevation and manning data.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Workflow to merge multiple datasets into a single dataset used for elevation and manning data."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
@@ -445,9 +445,9 @@
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;merge_multi_dataarrays&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;merge_dataarrays&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;merge_multi_dataarrays_on_mesh&quot;</span><span class="p">,</span>
+    <span class="s2">"merge_multi_dataarrays"</span><span class="p">,</span>
+    <span class="s2">"merge_dataarrays"</span><span class="p">,</span>
+    <span class="s2">"merge_multi_dataarrays_on_mesh"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -459,10 +459,10 @@
     <span class="n">da_like</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">reproj_kwargs</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="p">{},</span>
     <span class="n">buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># not in list</span>
-    <span class="n">interp_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;linear&quot;</span><span class="p">,</span>  <span class="c1"># not in list</span>
+    <span class="n">interp_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>  <span class="c1"># not in list</span>
     <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge a list of data arrays by reprojecting these to a common destination grid</span>
+<span class="w">    </span><span class="sd">"""Merge a list of data arrays by reprojecting these to a common destination grid</span>
 <span class="sd">    and combine valid values.</span>
 
 <span class="sd">    Parameters</span>
@@ -488,7 +488,7 @@
 <span class="sd">    buffer_cells : int, optional</span>
 <span class="sd">        Number of cells between datasets to ensure smooth transition of bed levels, by default 0</span>
 <span class="sd">    interp_method : str, optional</span>
-<span class="sd">        Interpolation method used to fill the buffer cells , by default &quot;linear&quot;</span>
+<span class="sd">        Interpolation method used to fill the buffer cells , by default "linear"</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -499,11 +499,11 @@
 <span class="sd">    ---------</span>
 <span class="sd">    :py:func:`~hydromt_sfincs.workflows.merge.merge_dataarrays`</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1"># start with common grid</span>
-    <span class="n">method</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;reproj_method&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="n">da1</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;da&quot;</span><span class="p">)</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"reproj_method"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">da1</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"da"</span><span class="p">)</span>
 
     <span class="c1"># get resolution of da1 in meters</span>
     <span class="n">dx_1</span> <span class="o">=</span> <span class="p">(</span>
@@ -523,27 +523,27 @@
             <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">da_like</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="mf">111111.0</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">dx_1</span> <span class="o">&gt;=</span> <span class="n">dx_like</span><span class="p">:</span>
-            <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;bilinear&quot;</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="s2">"bilinear"</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;average&quot;</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="s2">"average"</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;bilinear&quot;</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="s2">"bilinear"</span>
 
     <span class="k">if</span> <span class="n">da_like</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># reproject first raster to destination grid</span>
-        <span class="c1"># Clip before reproject. If da_like&#39;s bbox falls (entirely) outside</span>
-        <span class="c1"># da1&#39;s extent, ``clip_bbox`` can raise &quot;negative dimensions are</span>
-        <span class="c1"># not allowed&quot; — treat that the same as an empty clip and start</span>
+        <span class="c1"># Clip before reproject. If da_like's bbox falls (entirely) outside</span>
+        <span class="c1"># da1's extent, ``clip_bbox`` can raise "negative dimensions are</span>
+        <span class="c1"># not allowed" — treat that the same as an empty clip and start</span>
         <span class="c1"># from an empty array shaped like da_like.</span>
         <span class="n">bbox</span> <span class="o">=</span> <span class="n">da_like</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="n">da1</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
         <span class="n">clip_failed</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">da1</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">clip_bbox</span><span class="p">(</span><span class="n">bbox</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">IndexError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No data in da1 within bbox [</span><span class="si">{</span><span class="n">bbox</span><span class="si">}</span><span class="s2">] (</span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No data in da1 within bbox [</span><span class="si">{</span><span class="n">bbox</span><span class="si">}</span><span class="s2">] (</span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
             <span class="n">clip_failed</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">if</span> <span class="n">clip_failed</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">da1</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">):</span>
             <span class="c1"># no data in da1 so use an empty array like da_like</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;No data da1, start with empty array&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"No data da1, start with empty array"</span><span class="p">)</span>
             <span class="n">da1</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">da_like</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
             <span class="n">da1</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
             <span class="n">da1</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
@@ -553,7 +553,7 @@
     <span class="k">elif</span> <span class="n">reproj_kwargs</span><span class="p">:</span>
         <span class="c1"># TODO</span>
         <span class="n">da1</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="o">**</span><span class="n">reproj_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reprojection method of first dataset is: </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Reprojection method of first dataset is: </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="c1"># set nodata to np.nan, Note this might change the dtype to float</span>
     <span class="n">da1</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
@@ -561,22 +561,22 @@
     <span class="c1"># get valid cells of first dataset</span>
     <span class="n">da1</span> <span class="o">=</span> <span class="n">_add_offset_mask_invalid</span><span class="p">(</span>
         <span class="n">da1</span><span class="p">,</span>
-        <span class="n">offset</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;offset&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-        <span class="n">min_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;zmin&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-        <span class="n">max_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;zmax&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-        <span class="n">gdf_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gdf_valid&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-        <span class="n">reproj_method</span><span class="o">=</span><span class="s2">&quot;bilinear&quot;</span><span class="p">,</span>  <span class="c1"># always bilinear!</span>
+        <span class="n">offset</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"offset"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">min_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"zmin"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">max_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"zmax"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">gdf_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"gdf_valid"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">reproj_method</span><span class="o">=</span><span class="s2">"bilinear"</span><span class="p">,</span>  <span class="c1"># always bilinear!</span>
     <span class="p">)</span>
 
     <span class="c1"># combine with next dataset</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">da_list</span><span class="p">)):</span>
-        <span class="n">merge_method</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;merge_method&quot;</span><span class="p">,</span> <span class="s2">&quot;first&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;first&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da1</span><span class="o">.</span><span class="n">values</span><span class="p">)):</span>
+        <span class="n">merge_method</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"merge_method"</span><span class="p">,</span> <span class="s2">"first"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">"first"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da1</span><span class="o">.</span><span class="n">values</span><span class="p">)):</span>
             <span class="k">continue</span>
 
         <span class="c1"># base reprojection method on resolution of datasets</span>
-        <span class="n">reproj_method</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;reproj_method&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">da2</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;da&quot;</span><span class="p">)</span>
+        <span class="n">reproj_method</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"reproj_method"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">da2</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"da"</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">reproj_method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">dx_2</span> <span class="o">=</span> <span class="p">(</span>
@@ -585,20 +585,20 @@
                 <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">da2</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="mf">111111.0</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">dx_2</span> <span class="o">&gt;=</span> <span class="n">dx_1</span><span class="p">:</span>
-                <span class="n">reproj_method</span> <span class="o">=</span> <span class="s2">&quot;bilinear&quot;</span>
+                <span class="n">reproj_method</span> <span class="o">=</span> <span class="s2">"bilinear"</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">reproj_method</span> <span class="o">=</span> <span class="s2">&quot;average&quot;</span>
+                <span class="n">reproj_method</span> <span class="o">=</span> <span class="s2">"average"</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">reproj_method</span> <span class="o">=</span> <span class="s2">&quot;bilinear&quot;</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reprojection method of dataset </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="si">}</span><span class="s2"> is: </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">reproj_method</span> <span class="o">=</span> <span class="s2">"bilinear"</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Reprojection method of dataset </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="si">}</span><span class="s2"> is: </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="n">da1</span> <span class="o">=</span> <span class="n">merge_dataarrays</span><span class="p">(</span>
             <span class="n">da1</span><span class="p">,</span>
             <span class="n">da2</span><span class="o">=</span><span class="n">da2</span><span class="p">,</span>
-            <span class="n">offset</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;offset&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="n">min_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;zmin&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="n">max_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;zmax&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="n">gdf_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gdf_valid&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">offset</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"offset"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">min_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"zmin"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">max_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"zmax"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">gdf_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"gdf_valid"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
             <span class="n">reproj_method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">,</span>
             <span class="n">merge_method</span><span class="o">=</span><span class="n">merge_method</span><span class="p">,</span>
             <span class="n">buffer_cells</span><span class="o">=</span><span class="n">buffer_cells</span><span class="p">,</span>
@@ -607,20 +607,20 @@
 
     <span class="c1"># burn in rivers</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">gdf_list</span><span class="p">)):</span>
-        <span class="n">cs_type</span> <span class="o">=</span> <span class="n">gdf_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;rectangular&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">cs_type</span> <span class="o">==</span> <span class="s2">&quot;rectangular&quot;</span><span class="p">:</span>
+        <span class="n">cs_type</span> <span class="o">=</span> <span class="n">gdf_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">,</span> <span class="s2">"rectangular"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cs_type</span> <span class="o">==</span> <span class="s2">"rectangular"</span><span class="p">:</span>
             <span class="c1"># width or gdf_riv_mask is required</span>
             <span class="c1"># zb is used if provided, otherwise depth is used</span>
             <span class="n">da1</span> <span class="o">=</span> <span class="n">burn_river_rect</span><span class="p">(</span>
                 <span class="n">da_elv</span><span class="o">=</span><span class="n">da1</span><span class="p">,</span>
-                <span class="n">gdf_riv</span><span class="o">=</span><span class="n">gdf_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gdf&quot;</span><span class="p">),</span>
-                <span class="n">gdf_riv_mask</span><span class="o">=</span><span class="n">gdf_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gdf_mask&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-                <span class="n">rivdph_name</span><span class="o">=</span><span class="n">gdf_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;depth&quot;</span><span class="p">,</span> <span class="s2">&quot;rivdph&quot;</span><span class="p">),</span>
-                <span class="n">rivwth_name</span><span class="o">=</span><span class="n">gdf_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;width&quot;</span><span class="p">,</span> <span class="s2">&quot;rivwth&quot;</span><span class="p">),</span>
-                <span class="n">rivbed_name</span><span class="o">=</span><span class="n">gdf_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;zb&quot;</span><span class="p">,</span> <span class="s2">&quot;rivbed&quot;</span><span class="p">),</span>
+                <span class="n">gdf_riv</span><span class="o">=</span><span class="n">gdf_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"gdf"</span><span class="p">),</span>
+                <span class="n">gdf_riv_mask</span><span class="o">=</span><span class="n">gdf_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"gdf_mask"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                <span class="n">rivdph_name</span><span class="o">=</span><span class="n">gdf_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"depth"</span><span class="p">,</span> <span class="s2">"rivdph"</span><span class="p">),</span>
+                <span class="n">rivwth_name</span><span class="o">=</span><span class="n">gdf_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"width"</span><span class="p">,</span> <span class="s2">"rivwth"</span><span class="p">),</span>
+                <span class="n">rivbed_name</span><span class="o">=</span><span class="n">gdf_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"zb"</span><span class="p">,</span> <span class="s2">"rivbed"</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cross section type </span><span class="si">{</span><span class="n">cs_type</span><span class="si">}</span><span class="s2"> not implemented.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cross section type </span><span class="si">{</span><span class="n">cs_type</span><span class="si">}</span><span class="s2"> not implemented."</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">da1</span></div>
 
 
@@ -635,11 +635,11 @@
     <span class="n">max_valid</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">gdf_valid</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="n">merge_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;first&quot;</span><span class="p">,</span>
-    <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;bilinear&quot;</span><span class="p">,</span>
-    <span class="n">interp_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+    <span class="n">merge_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"first"</span><span class="p">,</span>
+    <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bilinear"</span><span class="p">,</span>
+    <span class="n">interp_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return merged data from two data arrays.</span>
+<span class="w">    </span><span class="sd">"""Return merged data from two data arrays.</span>
 
 <span class="sd">    Valid cells of da2 are merged with da1 according to merge_method.</span>
 <span class="sd">    Valid cells are based on its nodata value; the min_valid-max_valid range; and the gd_valid region.</span>
@@ -662,44 +662,44 @@
 <span class="sd">    gdf_valid: gpd.GeoDataFrame, optional</span>
 <span class="sd">        Geometry of the valid region for da2</span>
 <span class="sd">    buffer_cells: int, optional</span>
-<span class="sd">        Buffer (number of cells) around valid cells in da1 (if `merge_method=&#39;first&#39;`)</span>
-<span class="sd">        or da2 (if `merge_method=&#39;last&#39;`) where values are interpolated</span>
+<span class="sd">        Buffer (number of cells) around valid cells in da1 (if `merge_method='first'`)</span>
+<span class="sd">        or da2 (if `merge_method='last'`) where values are interpolated</span>
 <span class="sd">        to create a smooth surface between both datasets, by default 0.</span>
-<span class="sd">    merge_method: {&#39;first&#39;,&#39;last&#39;, &#39;mean&#39;, &#39;max&#39;, &#39;min&#39;}, optional</span>
-<span class="sd">        merge method, by default &#39;first&#39;:</span>
+<span class="sd">    merge_method: {'first','last', 'mean', 'max', 'min'}, optional</span>
+<span class="sd">        merge method, by default 'first':</span>
 <span class="sd">        * first: use valid new where existing invalid</span>
 <span class="sd">        * last: use valid new</span>
 <span class="sd">        * mean: use mean of valid new and existing</span>
 <span class="sd">        * max: use max of valid new and existing</span>
 <span class="sd">        * min: use min of valid new and existing</span>
-<span class="sd">    reproj_method: {&#39;bilinear&#39;, &#39;cubic&#39;, &#39;nearest&#39;, &#39;average&#39;, &#39;max&#39;, &#39;min&#39;}</span>
+<span class="sd">    reproj_method: {'bilinear', 'cubic', 'nearest', 'average', 'max', 'min'}</span>
 <span class="sd">        Method used to reproject the offset and second dataset to the grid of the</span>
-<span class="sd">        first dataset, by default &#39;bilinear&#39;.</span>
+<span class="sd">        first dataset, by default 'bilinear'.</span>
 <span class="sd">        See :py:meth:`rasterio.warp.reproject` for more methods</span>
-<span class="sd">    interp_method, {&#39;linear&#39;, &#39;nearest&#39;, &#39;rio_idw&#39;}</span>
-<span class="sd">        Method used to interpolate the buffer cells, by default &#39;linear&#39;.</span>
+<span class="sd">    interp_method, {'linear', 'nearest', 'rio_idw'}</span>
+<span class="sd">        Method used to interpolate the buffer cells, by default 'linear'.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    da_out: xr.DataArray</span>
 <span class="sd">        Merged dataarray</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">nodata</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span>
     <span class="n">dtype</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">dtype</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">nodata</span><span class="p">):</span>
         <span class="n">da1</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
-    <span class="c1"># Clip before reproject. If da1&#39;s bbox falls (entirely) outside da2&#39;s</span>
-    <span class="c1"># extent, ``clip_bbox`` can raise &quot;negative dimensions are not</span>
-    <span class="c1"># allowed&quot; — treat that the same as an empty clip and skip da2.</span>
+    <span class="c1"># Clip before reproject. If da1's bbox falls (entirely) outside da2's</span>
+    <span class="c1"># extent, ``clip_bbox`` can raise "negative dimensions are not</span>
+    <span class="c1"># allowed" — treat that the same as an empty clip and skip da2.</span>
     <span class="n">bbox</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="n">da2</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">da2</span> <span class="o">=</span> <span class="n">da2</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">clip_bbox</span><span class="p">(</span><span class="n">bbox</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">IndexError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No data in dataset 2 within bbox [</span><span class="si">{</span><span class="n">bbox</span><span class="si">}</span><span class="s2">], skip (</span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No data in dataset 2 within bbox [</span><span class="si">{</span><span class="n">bbox</span><span class="si">}</span><span class="s2">], skip (</span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">da1</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">da2</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">):</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No data in dataset 2 within bbox [</span><span class="si">{</span><span class="n">bbox</span><span class="si">}</span><span class="s2">], skip&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No data in dataset 2 within bbox [</span><span class="si">{</span><span class="n">bbox</span><span class="si">}</span><span class="s2">], skip"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">da1</span>
 
     <span class="c1">## reproject da2 and reset nodata value to match da1 nodata</span>
@@ -712,22 +712,22 @@
         <span class="n">min_valid</span><span class="o">=</span><span class="n">min_valid</span><span class="p">,</span>
         <span class="n">max_valid</span><span class="o">=</span><span class="n">max_valid</span><span class="p">,</span>
         <span class="n">gdf_valid</span><span class="o">=</span><span class="n">gdf_valid</span><span class="p">,</span>
-        <span class="n">reproj_method</span><span class="o">=</span><span class="s2">&quot;bilinear&quot;</span><span class="p">,</span>  <span class="c1"># always bilinear!</span>
+        <span class="n">reproj_method</span><span class="o">=</span><span class="s2">"bilinear"</span><span class="p">,</span>  <span class="c1"># always bilinear!</span>
     <span class="p">)</span>
     <span class="c1"># merge based merge_method</span>
-    <span class="k">if</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;first&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">"first"</span><span class="p">:</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da1</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;last&quot;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">"last"</span><span class="p">:</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da2</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;mean&quot;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da1</span><span class="p">)</span>
         <span class="n">da2</span> <span class="o">=</span> <span class="p">(</span><span class="n">da1</span> <span class="o">+</span> <span class="n">da2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-    <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">"max"</span><span class="p">:</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="n">da1</span> <span class="o">&gt;=</span> <span class="n">da2</span>
-    <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">"min"</span><span class="p">:</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="n">da1</span> <span class="o">&lt;=</span> <span class="n">da2</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown merge_method: </span><span class="si">{</span><span class="n">merge_method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown merge_method: </span><span class="si">{</span><span class="n">merge_method</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">da_out</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">da2</span><span class="p">)</span>
     <span class="n">da_out</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
     <span class="c1"># identify buffer cells and interpolate data</span>
@@ -749,12 +749,12 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">merge_multi_dataarrays_on_mesh</span><span class="p">(</span>
     <span class="n">da_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
     <span class="n">mesh2d</span><span class="p">:</span> <span class="n">xu</span><span class="o">.</span><span class="n">Ugrid2d</span><span class="p">,</span>
-    <span class="n">resampling_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;barycentric&quot;</span><span class="p">,</span>
+    <span class="n">resampling_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"barycentric"</span><span class="p">,</span>
     <span class="c1"># buffer_cells: int = 0,  # not in list</span>
-    <span class="c1"># interp_method: str = &quot;linear&quot;,  # not in list</span>
+    <span class="c1"># interp_method: str = "linear",  # not in list</span>
     <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge a list of data arrays by reprojecting these to a common destination grid</span>
+<span class="w">    </span><span class="sd">"""Merge a list of data arrays by reprojecting these to a common destination grid</span>
 <span class="sd">    and combine valid values.</span>
 
 <span class="sd">    Parameters</span>
@@ -777,7 +777,7 @@
 <span class="sd">    buffer_cells : int, optional</span>
 <span class="sd">        Number of cells between datasets to ensure smooth transition of bed levels, by default 0</span>
 <span class="sd">    interp_method : str, optional</span>
-<span class="sd">        Interpolation method used to fill the buffer cells , by default &quot;linear&quot;</span>
+<span class="sd">        Interpolation method used to fill the buffer cells , by default "linear"</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -788,7 +788,7 @@
 <span class="sd">    ---------</span>
 <span class="sd">    :py:func:`~hydromt.workflows.mesh.mesh2d_from_rasterdataset`</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1"># make an empty data array</span>
     <span class="n">da0</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
@@ -799,32 +799,32 @@
 
     <span class="c1"># combine with next dataset</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">da_list</span><span class="p">)):</span>
-        <span class="n">merge_method</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;merge_method&quot;</span><span class="p">,</span> <span class="s2">&quot;first&quot;</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing dataset </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> with merge_method=</span><span class="si">{</span><span class="n">merge_method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;first&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">uda_out</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Skipping dataset due to &#39;first&#39; merge method and no NaNs.&quot;</span><span class="p">)</span>
+        <span class="n">merge_method</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"merge_method"</span><span class="p">,</span> <span class="s2">"first"</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Processing dataset </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> with merge_method=</span><span class="si">{</span><span class="n">merge_method</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">"first"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">uda_out</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Skipping dataset due to 'first' merge method and no NaNs."</span><span class="p">)</span>
             <span class="k">continue</span>
 
         <span class="c1"># get reprojection method</span>
         <span class="c1"># TODO base this on resolution of datasets</span>
         <span class="c1"># NOTE for now the default is barycentric</span>
-        <span class="n">reproj_method</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;reproj_method&quot;</span><span class="p">,</span> <span class="n">resampling_method</span><span class="p">)</span>
-        <span class="n">da</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;da&quot;</span><span class="p">)</span>
+        <span class="n">reproj_method</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"reproj_method"</span><span class="p">,</span> <span class="n">resampling_method</span><span class="p">)</span>
+        <span class="n">da</span> <span class="o">=</span> <span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"da"</span><span class="p">)</span>
 
         <span class="c1"># get extent of mesh</span>
         <span class="n">bbox</span> <span class="o">=</span> <span class="n">uda_out</span><span class="o">.</span><span class="n">ugrid</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">ugrid</span><span class="o">.</span><span class="n">total_bounds</span>
 
         <span class="c1"># Clip before reproject. If the mesh bbox falls (entirely) outside</span>
-        <span class="c1"># the dataset, ``clip_bbox`` can raise &quot;negative dimensions are</span>
-        <span class="c1"># not allowed&quot; — treat the same as an empty clip and skip this</span>
+        <span class="c1"># the dataset, ``clip_bbox`` can raise "negative dimensions are</span>
+        <span class="c1"># not allowed" — treat the same as an empty clip and skip this</span>
         <span class="c1"># dataset.</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">clip_bbox</span><span class="p">(</span><span class="n">bbox</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">IndexError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No data in dataset within bbox [</span><span class="si">{</span><span class="n">bbox</span><span class="si">}</span><span class="s2">], skip (</span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No data in dataset within bbox [</span><span class="si">{</span><span class="n">bbox</span><span class="si">}</span><span class="s2">], skip (</span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
             <span class="k">continue</span>
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">):</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No data in dataset within bbox [</span><span class="si">{</span><span class="n">bbox</span><span class="si">}</span><span class="s2">], skip&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No data in dataset within bbox [</span><span class="si">{</span><span class="n">bbox</span><span class="si">}</span><span class="s2">], skip"</span><span class="p">)</span>
             <span class="k">continue</span>
 
         <span class="c1"># get part of dataset in memory</span>
@@ -836,10 +836,10 @@
         <span class="c1"># get valid cells of dataset</span>
         <span class="n">da</span> <span class="o">=</span> <span class="n">_add_offset_mask_invalid</span><span class="p">(</span>
             <span class="n">da</span><span class="p">,</span>
-            <span class="n">offset</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;offset&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="n">min_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;zmin&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="n">max_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;zmax&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="n">gdf_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gdf_valid&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">offset</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"offset"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">min_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"zmin"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">max_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"zmax"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">gdf_valid</span><span class="o">=</span><span class="n">da_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"gdf_valid"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
             <span class="n">reproj_method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -852,20 +852,20 @@
 
         <span class="c1"># merge based merge_method</span>
         <span class="n">da1</span> <span class="o">=</span> <span class="n">uda_out</span>
-        <span class="n">da2</span> <span class="o">=</span> <span class="n">mesh</span><span class="p">[</span><span class="s2">&quot;elevation&quot;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;first&quot;</span><span class="p">:</span>
+        <span class="n">da2</span> <span class="o">=</span> <span class="n">mesh</span><span class="p">[</span><span class="s2">"elevation"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">"first"</span><span class="p">:</span>
             <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da1</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;last&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">"last"</span><span class="p">:</span>
             <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da2</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;mean&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
             <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da1</span><span class="p">)</span>
             <span class="n">da2</span> <span class="o">=</span> <span class="p">(</span><span class="n">da1</span> <span class="o">+</span> <span class="n">da2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-        <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">"max"</span><span class="p">:</span>
             <span class="n">mask</span> <span class="o">=</span> <span class="n">da1</span> <span class="o">&gt;=</span> <span class="n">da2</span>
-        <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">merge_method</span> <span class="o">==</span> <span class="s2">"min"</span><span class="p">:</span>
             <span class="n">mask</span> <span class="o">=</span> <span class="n">da1</span> <span class="o">&lt;=</span> <span class="n">da2</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown merge_method: </span><span class="si">{</span><span class="n">merge_method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown merge_method: </span><span class="si">{</span><span class="n">merge_method</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">uda_out</span> <span class="o">=</span> <span class="n">da1</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">da2</span><span class="p">)</span>
 
         <span class="c1"># TODO add buffer cells and interpolation</span>
@@ -894,7 +894,7 @@
     <span class="n">min_valid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">max_valid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">gdf_valid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;bilinear&quot;</span><span class="p">,</span>
+    <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bilinear"</span><span class="p">,</span>
 <span class="p">):</span>
     <span class="c1">## add offset</span>
     <span class="k">if</span> <span class="n">offset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>

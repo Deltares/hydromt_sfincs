@@ -426,7 +426,7 @@
                 <article class="bd-article">
                   
   <h1>Source code for hydromt_sfincs.components.grid.regulargrid</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;RegularGrid class for SFINCS.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""RegularGrid class for SFINCS."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
@@ -452,16 +452,16 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
 
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-<span class="n">_MAPS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">,</span> <span class="s2">&quot;dep&quot;</span><span class="p">,</span> <span class="s2">&quot;scs&quot;</span><span class="p">,</span> <span class="s2">&quot;manning&quot;</span><span class="p">,</span> <span class="s2">&quot;qinf&quot;</span><span class="p">,</span> <span class="s2">&quot;smax&quot;</span><span class="p">,</span> <span class="s2">&quot;seff&quot;</span><span class="p">,</span> <span class="s2">&quot;ks&quot;</span><span class="p">,</span> <span class="s2">&quot;vol&quot;</span><span class="p">,</span> <span class="s2">&quot;zs&quot;</span><span class="p">]</span>
-<span class="n">_MAP_EXCEPTIONS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;zs&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;inifile&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs.ini&quot;</span><span class="p">)}</span>
+<span class="n">_MAPS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"mask"</span><span class="p">,</span> <span class="s2">"dep"</span><span class="p">,</span> <span class="s2">"scs"</span><span class="p">,</span> <span class="s2">"manning"</span><span class="p">,</span> <span class="s2">"qinf"</span><span class="p">,</span> <span class="s2">"smax"</span><span class="p">,</span> <span class="s2">"seff"</span><span class="p">,</span> <span class="s2">"ks"</span><span class="p">,</span> <span class="s2">"vol"</span><span class="p">,</span> <span class="s2">"zs"</span><span class="p">]</span>
+<span class="n">_MAP_EXCEPTIONS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"zs"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"inifile"</span><span class="p">,</span> <span class="s2">"sfincs.ini"</span><span class="p">)}</span>
 
 
 <div class="viewcode-block" id="SfincsGrid">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsGrid.html#hydromt_sfincs.components.grid.SfincsGrid">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SfincsGrid</span><span class="p">(</span><span class="n">GridComponent</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Regular grid component of the SfincsModel class.</span>
+<span class="w">    </span><span class="sd">"""Regular grid component of the SfincsModel class.</span>
 
 <span class="sd">    This class implements reading and writing of SFINCS binary grid files,</span>
 <span class="sd">    as well as methods to create a regular grid for a region of interest.</span>
@@ -478,18 +478,18 @@
 <span class="sd">    :py:class:`~hydromt_sfincs.components.grid.infiltration.SfincsInfiltration`</span>
 <span class="sd">    :py:class:`~hydromt_sfincs.components.grid.storage_volume.SfincsStorageVolume`</span>
 <span class="sd">    :py:class:`~hydromt_sfincs.components.grid.initial_conditions.SfincsInitialConditions`</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="SfincsGrid.__init__">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsGrid.html#hydromt_sfincs.components.grid.SfincsGrid.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;SfincsModel&quot;</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="s2">"SfincsModel"</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-            <span class="n">filename</span><span class="o">=</span><span class="s2">&quot;sfincs.nc&quot;</span><span class="p">,</span>
-            <span class="n">region_filename</span><span class="o">=</span><span class="s2">&quot;region.geojson&quot;</span><span class="p">,</span>
+            <span class="n">filename</span><span class="o">=</span><span class="s2">"sfincs.nc"</span><span class="p">,</span>
+            <span class="n">region_filename</span><span class="o">=</span><span class="s2">"region.geojson"</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="c1"># initialize data attribute</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="kc">None</span></div>
@@ -497,7 +497,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the affine transform of the regular grid.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return the affine transform of the regular grid."""</span>
         <span class="n">transform</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">Affine</span><span class="o">.</span><span class="n">translation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y0</span><span class="p">)</span>
             <span class="o">*</span> <span class="n">Affine</span><span class="o">.</span><span class="n">rotation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rotation</span><span class="p">)</span>
@@ -506,8 +506,8 @@
         <span class="k">return</span> <span class="n">transform</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">coordinates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_dim</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">y_dim</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the coordinates of the cell-centers the regular grid.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">coordinates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_dim</span><span class="o">=</span><span class="s2">"x"</span><span class="p">,</span> <span class="n">y_dim</span><span class="o">=</span><span class="s2">"y"</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Return the coordinates of the cell-centers the regular grid."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">b</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">x_coords</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span> <span class="o">*</span> <span class="p">(</span>
                 <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mmax</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span>
@@ -528,14 +528,14 @@
                 <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mmax</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nmax</span><span class="p">))</span>
             <span class="p">)</span>
             <span class="n">coords</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">&quot;yc&quot;</span><span class="p">:</span> <span class="p">((</span><span class="n">y_dim</span><span class="p">,</span> <span class="n">x_dim</span><span class="p">),</span> <span class="n">y_coords</span><span class="p">),</span>
-                <span class="s2">&quot;xc&quot;</span><span class="p">:</span> <span class="p">((</span><span class="n">y_dim</span><span class="p">,</span> <span class="n">x_dim</span><span class="p">),</span> <span class="n">x_coords</span><span class="p">),</span>
+                <span class="s2">"yc"</span><span class="p">:</span> <span class="p">((</span><span class="n">y_dim</span><span class="p">,</span> <span class="n">x_dim</span><span class="p">),</span> <span class="n">y_coords</span><span class="p">),</span>
+                <span class="s2">"xc"</span><span class="p">:</span> <span class="p">((</span><span class="n">y_dim</span><span class="p">,</span> <span class="n">x_dim</span><span class="p">),</span> <span class="n">x_coords</span><span class="p">),</span>
             <span class="p">}</span>
         <span class="k">return</span> <span class="n">coords</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">edges</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the coordinates of the cell-edges the regular grid.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return the coordinates of the cell-edges the regular grid."""</span>
         <span class="n">x_edges</span><span class="p">,</span> <span class="n">y_edges</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">transform</span>
             <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">translation</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
@@ -545,47 +545,47 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">empty_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return mask with only inactive cells&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return mask with only inactive cells"""</span>
         <span class="n">da_mask</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
-            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;mask&quot;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"mask"</span><span class="p">,</span>
             <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nmax</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mmax</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span>
             <span class="n">coords</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coordinates</span><span class="p">,</span>
-            <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span>
-            <span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;_FillValue&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+            <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">),</span>
+            <span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s2">"_FillValue"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
         <span class="p">)</span>
         <span class="n">da_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">da_mask</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">crs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CRS</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the coordinate reference system of the regular grid.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return the coordinate reference system of the regular grid."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">CRS</span><span class="o">.</span><span class="n">from_epsg</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epsg</span><span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No CRS defined for the regular grid.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No CRS defined for the regular grid."</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">mask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the mask of the regular grid.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="s2">&quot;mask&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
-            <span class="n">da_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Return the mask of the regular grid."""</span>
+        <span class="k">if</span> <span class="s2">"mask"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+            <span class="n">da_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"mask"</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">da_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">empty_mask</span>
         <span class="k">return</span> <span class="n">da_mask</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">region</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the active region of the regular grid.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="s2">&quot;mask&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
-            <span class="n">da</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""Return the active region of the regular grid."""</span>
+        <span class="k">if</span> <span class="s2">"mask"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"mask"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">da</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"mask"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">)</span>
             <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
             <span class="n">gdf</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">vectorize</span><span class="p">()</span><span class="o">.</span><span class="n">dissolve</span><span class="p">()</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">gdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">empty_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">box</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No grid data available to derive region.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No grid data available to derive region."</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf</span><span class="o">.</span><span class="n">crs</span><span class="p">:</span>
             <span class="n">gdf</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">gdf</span>
@@ -593,14 +593,14 @@
 <div class="viewcode-block" id="SfincsGrid.read">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsGrid.read.html#hydromt_sfincs.components.grid.SfincsGrid.read">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_vars</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read SFINCS binary grid files and save to `data` attribute.</span>
+<span class="w">        </span><span class="sd">"""Read SFINCS binary grid files and save to `data` attribute.</span>
 <span class="sd">        Filenames are taken from the `model.config` attribute (i.e. input file).</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        data_vars : Union[List, str], optional</span>
 <span class="sd">            List of data variables to read, by default None (all).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="c1"># check if in read mode and initialize grid</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_read_mode</span><span class="p">()</span>
         <span class="c1"># self._initialize_grid(skip_read=True)</span>
@@ -621,34 +621,34 @@
 
         <span class="c1"># read index file</span>
         <span class="n">ind_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="s2">&quot;indexfile&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s2">&quot;sfincs.ind&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span>
+            <span class="s2">"indexfile"</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s2">"sfincs.ind"</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">isfile</span><span class="p">(</span><span class="n">ind_fn</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.ind path </span><span class="si">{</span><span class="n">ind_fn</span><span class="si">}</span><span class="s2"> does not exist&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="sa">f</span><span class="s2">".ind path </span><span class="si">{</span><span class="n">ind_fn</span><span class="si">}</span><span class="s2"> does not exist"</span><span class="p">)</span>
 
-        <span class="n">dtypes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;mask&quot;</span><span class="p">:</span> <span class="s2">&quot;u1&quot;</span><span class="p">}</span>
-        <span class="n">mvs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;mask&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="n">dtypes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"mask"</span><span class="p">:</span> <span class="s2">"u1"</span><span class="p">}</span>
+        <span class="n">mvs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"mask"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
         <span class="n">ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_ind</span><span class="p">(</span><span class="n">ind_fn</span><span class="o">=</span><span class="n">ind_fn</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">data_vars</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;mask&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"mask"</span><span class="p">:</span>
                 <span class="c1"># mask is special, it is always read</span>
-                <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span><span class="s2">&quot;mskfile&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs.msk&quot;</span><span class="p">)</span>
+                <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span><span class="s2">"mskfile"</span><span class="p">,</span> <span class="s2">"sfincs.msk"</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">config_key</span><span class="p">,</span> <span class="n">fallback</span> <span class="o">=</span> <span class="n">_MAP_EXCEPTIONS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                    <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
                 <span class="p">)</span>
                 <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">config_key</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="n">fallback</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">isfile</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">provide_warnings</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file not found at </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file not found at </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
                 <span class="k">continue</span>
-            <span class="n">dtype</span> <span class="o">=</span> <span class="n">dtypes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;f4&quot;</span><span class="p">)</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">dtypes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">"f4"</span><span class="p">)</span>
             <span class="n">mv</span> <span class="o">=</span> <span class="n">mvs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">-</span><span class="mf">9999.0</span><span class="p">)</span>
             <span class="n">da</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_map</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">ind</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">mv</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
             <span class="n">da_lst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">da</span><span class="p">)</span>
         <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">da_lst</span><span class="p">)</span>
-        <span class="n">epsg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;epsg&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">epsg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"epsg"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">epsg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="n">epsg</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span></div>
@@ -660,31 +660,31 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">data_vars</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write SFINCS grid to binary files including map index file.</span>
+<span class="w">        </span><span class="sd">"""Write SFINCS grid to binary files including map index file.</span>
 <span class="sd">        Filenames are taken from the `config` attribute (i.e. input file).</span>
 
 <span class="sd">        If `write_gis` property is True, all grid variables are written to geotiff</span>
-<span class="sd">        files in a &quot;gis&quot; subfolder.</span>
+<span class="sd">        files in a "gis" subfolder.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        data_vars : Union[List, str], optional</span>
 <span class="sd">            List of data variables to write, by default None (all)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_write_mode</span>
 
-        <span class="n">dtypes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;mask&quot;</span><span class="p">:</span> <span class="s2">&quot;u1&quot;</span><span class="p">}</span>  <span class="c1"># default to f4</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">data_vars</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="s2">&quot;mask&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+        <span class="n">dtypes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"mask"</span><span class="p">:</span> <span class="s2">"u1"</span><span class="p">}</span>  <span class="c1"># default to f4</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">data_vars</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="s2">"mask"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
             <span class="c1"># make sure orientation is S-&gt;N</span>
             <span class="n">ds_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
             <span class="k">if</span> <span class="n">ds_out</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">ds_out</span> <span class="o">=</span> <span class="n">ds_out</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">flipud</span><span class="p">()</span>
-            <span class="n">mask</span> <span class="o">=</span> <span class="n">ds_out</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">ds_out</span><span class="p">[</span><span class="s2">"mask"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
 
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Write binary map indices based on mask.&quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;indexfile&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;indexfile&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs.ind&quot;</span><span class="p">)</span>
-            <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;indexfile&quot;</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Write binary map indices based on mask."</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"indexfile"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"indexfile"</span><span class="p">,</span> <span class="s2">"sfincs.ind"</span><span class="p">)</span>
+            <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"indexfile"</span><span class="p">,</span> <span class="n">abs_path</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="c1"># Create parent directories if they do not exist</span>
             <span class="n">abs_file_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="c1"># Write index file</span>
@@ -696,26 +696,26 @@
                 <span class="c1"># check which data_vars are not defined, remove them, and provide warning</span>
                 <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">data_vars</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds_out</span><span class="p">:</span>
-                        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> not found in data, skipping.&quot;</span><span class="p">)</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> not found in data, skipping."</span><span class="p">)</span>
                         <span class="n">data_vars</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_vars</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
                 <span class="c1"># check if data_vars is defined</span>
                 <span class="k">if</span> <span class="n">data_vars</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds_out</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_vars</span><span class="si">}</span><span class="s2"> not found in data.&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">data_vars</span><span class="si">}</span><span class="s2"> not found in data."</span><span class="p">)</span>
                 <span class="n">data_vars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">data_vars</span><span class="p">)</span>
             <span class="c1"># always rewrite the mask</span>
-            <span class="n">data_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;mask&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="s2">&quot;mask&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data_vars</span> <span class="k">else</span> <span class="n">data_vars</span>
+            <span class="n">data_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"mask"</span><span class="p">)</span> <span class="k">if</span> <span class="s2">"mask"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data_vars</span> <span class="k">else</span> <span class="n">data_vars</span>
 
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Write binary map files: </span><span class="si">{</span><span class="n">data_vars</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Write binary map files: </span><span class="si">{</span><span class="n">data_vars</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">data_vars</span><span class="p">:</span>
                 <span class="c1"># Set file name and get absolute path</span>
-                <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;mask&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"mask"</span><span class="p">:</span>
                     <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
-                        <span class="s2">&quot;mskfile&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;sfincs.msk&quot;</span>
+                        <span class="s2">"mskfile"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">"sfincs.msk"</span>
                     <span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">config_key</span><span class="p">,</span> <span class="n">default</span> <span class="o">=</span> <span class="n">_MAP_EXCEPTIONS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                        <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
                     <span class="p">)</span>
                     <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
                         <span class="n">config_key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">default</span>
@@ -726,14 +726,14 @@
                     <span class="n">map_fn</span><span class="o">=</span><span class="n">abs_file_path</span><span class="p">,</span>
                     <span class="n">data</span><span class="o">=</span><span class="n">ds_out</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
                     <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span>
-                    <span class="n">dtype</span><span class="o">=</span><span class="n">dtypes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;f4&quot;</span><span class="p">),</span>
+                    <span class="n">dtype</span><span class="o">=</span><span class="n">dtypes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">"f4"</span><span class="p">),</span>
                 <span class="p">)</span>
 
                 <span class="c1"># write to gis-files for visualization</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">write_gis</span><span class="p">:</span>
                     <span class="n">writers</span><span class="o">.</span><span class="n">write_raster</span><span class="p">(</span>
                         <span class="n">ds_out</span><span class="p">[</span><span class="n">name</span><span class="p">],</span>
-                        <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;gis&quot;</span><span class="p">),</span>
+                        <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">"gis"</span><span class="p">),</span>
                         <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span>
                     <span class="p">)</span>
 
@@ -741,8 +741,8 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">write_gis</span><span class="p">:</span>
                 <span class="n">writers</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
-                    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;region&quot;</span><span class="p">,</span>
-                    <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;gis&quot;</span><span class="p">),</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s2">"region"</span><span class="p">,</span>
+                    <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">"gis"</span><span class="p">),</span>
                 <span class="p">)</span></div>
 
 
@@ -760,7 +760,7 @@
         <span class="n">rotation</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">epsg</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a regular grid for the SfincsModel.</span>
+<span class="w">        </span><span class="sd">"""Create a regular grid for the SfincsModel.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -774,19 +774,19 @@
 <span class="sd">            rotation of grid [degree angle], by default None</span>
 <span class="sd">        epsg : int, optional</span>
 <span class="sd">            epsg-code of the coordinate reference system</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="c1"># update the grid attributes in the model config</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
             <span class="p">{</span>
-                <span class="s2">&quot;x0&quot;</span><span class="p">:</span> <span class="n">x0</span><span class="p">,</span>
-                <span class="s2">&quot;y0&quot;</span><span class="p">:</span> <span class="n">y0</span><span class="p">,</span>
-                <span class="s2">&quot;dx&quot;</span><span class="p">:</span> <span class="n">dx</span><span class="p">,</span>
-                <span class="s2">&quot;dy&quot;</span><span class="p">:</span> <span class="n">dy</span><span class="p">,</span>
-                <span class="s2">&quot;nmax&quot;</span><span class="p">:</span> <span class="n">nmax</span><span class="p">,</span>
-                <span class="s2">&quot;mmax&quot;</span><span class="p">:</span> <span class="n">mmax</span><span class="p">,</span>
-                <span class="s2">&quot;rotation&quot;</span><span class="p">:</span> <span class="n">rotation</span><span class="p">,</span>
-                <span class="s2">&quot;epsg&quot;</span><span class="p">:</span> <span class="n">epsg</span><span class="p">,</span>
+                <span class="s2">"x0"</span><span class="p">:</span> <span class="n">x0</span><span class="p">,</span>
+                <span class="s2">"y0"</span><span class="p">:</span> <span class="n">y0</span><span class="p">,</span>
+                <span class="s2">"dx"</span><span class="p">:</span> <span class="n">dx</span><span class="p">,</span>
+                <span class="s2">"dy"</span><span class="p">:</span> <span class="n">dy</span><span class="p">,</span>
+                <span class="s2">"nmax"</span><span class="p">:</span> <span class="n">nmax</span><span class="p">,</span>
+                <span class="s2">"mmax"</span><span class="p">:</span> <span class="n">mmax</span><span class="p">,</span>
+                <span class="s2">"rotation"</span><span class="p">:</span> <span class="n">rotation</span><span class="p">,</span>
+                <span class="s2">"epsg"</span><span class="p">:</span> <span class="n">epsg</span><span class="p">,</span>
             <span class="p">}</span>
         <span class="p">)</span>
         <span class="c1"># create grid based on config</span>
@@ -809,7 +809,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">region</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
         <span class="n">res</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
-        <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;utm&quot;</span><span class="p">,</span>
+        <span class="n">crs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"utm"</span><span class="p">,</span>
         <span class="n">rotated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">hydrography_fn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">basin_index_fn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -817,17 +817,17 @@
         <span class="n">dec_origin</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">dec_rotation</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a regular grid for the SfincsModel based on a region.</span>
+<span class="w">        </span><span class="sd">"""Create a regular grid for the SfincsModel based on a region.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        region : dict</span>
 <span class="sd">            Dictionary describing region of interest, e.g.:</span>
 
-<span class="sd">            * {&#39;bbox&#39;: [xmin, ymin, xmax, ymax]}</span>
-<span class="sd">            * {&#39;geom&#39;: &#39;path/to/polygon_geometry&#39;}</span>
+<span class="sd">            * {'bbox': [xmin, ymin, xmax, ymax]}</span>
+<span class="sd">            * {'geom': 'path/to/polygon_geometry'}</span>
 
-<span class="sd">            Note: For the &#39;bbox&#39; option the coordinates need to be provided in WG84/EPSG:4326.</span>
+<span class="sd">            Note: For the 'bbox' option the coordinates need to be provided in WG84/EPSG:4326.</span>
 
 <span class="sd">            For a complete overview of all region options,</span>
 <span class="sd">            see :py:func:`hydromt.workflows.basin_mask.parse_region`</span>
@@ -835,7 +835,7 @@
 <span class="sd">            grid resolution, by default 100 m</span>
 <span class="sd">        crs : Union[str, int], optional</span>
 <span class="sd">            coordinate reference system of the grid</span>
-<span class="sd">            if &quot;utm&quot; (default) the best UTM zone is selected</span>
+<span class="sd">            if "utm" (default) the best UTM zone is selected</span>
 <span class="sd">            else a pyproj crs string or epsg code (int) can be provided</span>
 <span class="sd">        rotated : bool, optional</span>
 <span class="sd">            if True, a minimum rotated rectangular grid is fitted around the region, by default False</span>
@@ -843,8 +843,8 @@
 <span class="sd">            Name of data source for hydrography data.</span>
 <span class="sd">        basin_index_fn : str</span>
 <span class="sd">            Name of data source with basin (bounding box) geometries associated with</span>
-<span class="sd">            the &#39;basins&#39; layer of `hydrography_fn`. Only required if the `region` is</span>
-<span class="sd">            based on a (sub)(inter)basins without a &#39;bounds&#39; argument.</span>
+<span class="sd">            the 'basins' layer of `hydrography_fn`. Only required if the `region` is</span>
+<span class="sd">            based on a (sub)(inter)basins without a 'bounds' argument.</span>
 <span class="sd">        align : bool, optional</span>
 <span class="sd">            If True (default), align target transform to resolution.</span>
 <span class="sd">            Note that this has only been implemented for non-rotated grids.</span>
@@ -856,7 +856,7 @@
 <span class="sd">        See Also</span>
 <span class="sd">        --------</span>
 <span class="sd">        :py:func:`~hydromt.model.processes.create_grid_from_region`</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="n">ds</span> <span class="o">=</span> <span class="n">create_grid_from_region</span><span class="p">(</span>
             <span class="n">region</span><span class="o">=</span><span class="n">region</span><span class="p">,</span>
@@ -895,17 +895,17 @@
     <span class="c1"># - to_gdf</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">ind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return indices of active cells in mask.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return indices of active cells in mask."""</span>
         <span class="k">assert</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nmax</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mmax</span><span class="p">)</span>
-        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s2">"F"</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">ind</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">read_ind</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">ind_fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;sfincs.ind&quot;</span><span class="p">,</span>
+        <span class="n">ind_fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"sfincs.ind"</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read indices of active cells in mask from binary file.&quot;&quot;&quot;</span>
-        <span class="n">_ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">ind_fn</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;u4&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""Read indices of active cells in mask from binary file."""</span>
+        <span class="n">_ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">ind_fn</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"u4"</span><span class="p">)</span>
         <span class="n">ind</span> <span class="o">=</span> <span class="n">_ind</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># convert to zero based index</span>
         <span class="k">assert</span> <span class="n">_ind</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">ind</span><span class="o">.</span><span class="n">size</span>
 
@@ -915,38 +915,38 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">map_fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
         <span class="n">ind</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">dtype</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;f4&quot;</span><span class="p">,</span>
+        <span class="n">dtype</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"f4"</span><span class="p">,</span>
         <span class="n">mv</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">9999.0</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read one of the grid variables of the SFINCS model map from a binary file.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Read one of the grid variables of the SFINCS model map from a binary file."""</span>
 
         <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">mmax</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nmax</span><span class="p">),</span> <span class="n">mv</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
         <span class="n">data</span><span class="o">.</span><span class="n">flat</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">map_fn</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
 
         <span class="n">da</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
-            <span class="n">name</span><span class="o">=</span><span class="n">map_fn</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">name</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">map_fn</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">name</span><span class="p">,</span>
             <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
             <span class="n">coords</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coordinates</span><span class="p">,</span>
-            <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span>
-            <span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;_FillValue&quot;</span><span class="p">:</span> <span class="n">mv</span><span class="p">},</span>
+            <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">),</span>
+            <span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s2">"_FillValue"</span><span class="p">:</span> <span class="n">mv</span><span class="p">},</span>
         <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;mask&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">!=</span> <span class="s2">"mask"</span><span class="p">:</span>
             <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">da</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write_ind</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">ind_fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;sfincs.ind&quot;</span><span class="p">,</span>
+        <span class="n">ind_fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"sfincs.ind"</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write indices of active cells in mask to binary file.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Write indices of active cells in mask to binary file."""</span>
         <span class="k">assert</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nmax</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mmax</span><span class="p">)</span>
         <span class="c1"># Add 1 because indices in SFINCS start with 1, not 0</span>
         <span class="n">ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ind</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
-        <span class="n">indices_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ind</span><span class="p">)),</span> <span class="n">ind</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;u4&quot;</span><span class="p">)</span>
+        <span class="n">indices_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ind</span><span class="p">)),</span> <span class="n">ind</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"u4"</span><span class="p">)</span>
         <span class="n">indices_</span><span class="o">.</span><span class="n">tofile</span><span class="p">(</span><span class="n">ind_fn</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write_map</span><span class="p">(</span>
@@ -954,43 +954,43 @@
         <span class="n">map_fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
         <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="n">mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">dtype</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;f4&quot;</span><span class="p">,</span>
+        <span class="n">dtype</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"f4"</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write one of the grid variables of the SFINCS model map to a binary file.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Write one of the grid variables of the SFINCS model map to a binary file."""</span>
 
         <span class="n">data_masked</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">transpose</span><span class="p">()[</span><span class="n">mask</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
         <span class="c1"># make sure there is no NaN in the data to be written, otherwise SFINCS will crash</span>
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">data_masked</span><span class="p">)):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Data to be written to </span><span class="si">{</span><span class="n">map_fn</span><span class="si">}</span><span class="s2"> contains NaN values. &quot;</span>
-                <span class="s2">&quot;Please replace NaN values with a valid value before writing.&quot;</span>
+                <span class="sa">f</span><span class="s2">"Data to be written to </span><span class="si">{</span><span class="n">map_fn</span><span class="si">}</span><span class="s2"> contains NaN values. "</span>
+                <span class="s2">"Please replace NaN values with a valid value before writing."</span>
             <span class="p">)</span>
         <span class="n">data_out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data_masked</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
         <span class="n">data_out</span><span class="o">.</span><span class="n">tofile</span><span class="p">(</span><span class="n">map_fn</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">update_grid_from_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update grid properties based on `config` (sfincs.inp) attributes&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Update grid properties based on `config` (sfincs.inp) attributes"""</span>
 
         <span class="c1"># assert model.config exists</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;config&quot;</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;Model has no config attribute&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">"config"</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">"Model has no config attribute"</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">x0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;x0&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">y0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;y0&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dx&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dy&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nmax&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mmax&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">rotation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rotation&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">epsg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;epsg&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"x0"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"y0"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"dx"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"dy"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"nmax"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mmax"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rotation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"rotation"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epsg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"epsg"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
-        <span class="c1"># Set &#39;crsgeo&#39; flag in the config based on whether the CRS is geographic</span>
+        <span class="c1"># Set 'crsgeo' flag in the config based on whether the CRS is geographic</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">crs</span> <span class="o">=</span> <span class="n">CRS</span><span class="o">.</span><span class="n">from_epsg</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epsg</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;crsgeo&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"crsgeo"</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">update_config_from_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update `config` (sfincs.inp) attributes based on grid properties&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Update `config` (sfincs.inp) attributes based on grid properties"""</span>
 
         <span class="c1"># derive grid properties from grid</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nmax</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">shape</span>
@@ -1014,20 +1014,20 @@
         <span class="c1"># update the grid properties in the config</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
             <span class="p">{</span>
-                <span class="s2">&quot;x0&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">x0</span><span class="p">,</span>
-                <span class="s2">&quot;y0&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">y0</span><span class="p">,</span>
-                <span class="s2">&quot;dx&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dx</span><span class="p">,</span>
-                <span class="s2">&quot;dy&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dy</span><span class="p">,</span>
-                <span class="s2">&quot;nmax&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nmax</span><span class="p">,</span>
-                <span class="s2">&quot;mmax&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mmax</span><span class="p">,</span>
-                <span class="s2">&quot;rotation&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">rotation</span><span class="p">,</span>
-                <span class="s2">&quot;epsg&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsg</span><span class="p">,</span>
-                <span class="s2">&quot;crsgeo&quot;</span><span class="p">:</span> <span class="n">crsgeo</span><span class="p">,</span>
+                <span class="s2">"x0"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">x0</span><span class="p">,</span>
+                <span class="s2">"y0"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">y0</span><span class="p">,</span>
+                <span class="s2">"dx"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dx</span><span class="p">,</span>
+                <span class="s2">"dy"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dy</span><span class="p">,</span>
+                <span class="s2">"nmax"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nmax</span><span class="p">,</span>
+                <span class="s2">"mmax"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mmax</span><span class="p">,</span>
+                <span class="s2">"rotation"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">rotation</span><span class="p">,</span>
+                <span class="s2">"epsg"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsg</span><span class="p">,</span>
+                <span class="s2">"crsgeo"</span><span class="p">:</span> <span class="n">crsgeo</span><span class="p">,</span>
             <span class="p">}</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_grid_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return lists of start and end coordinates for all grid lines.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return lists of start and end coordinates for all grid lines."""</span>
         <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">edges</span>
 
         <span class="n">x1_list</span><span class="p">,</span> <span class="n">y1_list</span><span class="p">,</span> <span class="n">x2_list</span><span class="p">,</span> <span class="n">y2_list</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
@@ -1054,7 +1054,7 @@
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">to_gdf</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a GeoDataFrame with a geometry for each grid line.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return a GeoDataFrame with a geometry for each grid line."""</span>
         <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_grid_lines</span><span class="p">()</span>
         <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">LineString</span><span class="p">([(</span><span class="n">x1</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">y1</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="p">(</span><span class="n">x2</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">y2</span><span class="p">[</span><span class="n">i</span><span class="p">])])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x1</span><span class="p">))]</span>
         <span class="k">return</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">geometry</span><span class="o">=</span><span class="n">lines</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
@@ -1072,11 +1072,11 @@
         <span class="n">root</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
         <span class="n">region</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span>
         <span class="n">zoom_range</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span>
-        <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;bin&quot;</span><span class="p">,</span>
+        <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bin"</span><span class="p">,</span>
         <span class="n">write_html_viewer</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logger</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create index tiles for a region. Index tiles are used to quickly map webmercator tiles to the corresponding SFINCS cell.</span>
+<span class="w">        </span><span class="sd">"""Create index tiles for a region. Index tiles are used to quickly map webmercator tiles to the corresponding SFINCS cell.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1087,18 +1087,18 @@
 <span class="sd">        zoom_range : Union[int, List[int]], optional</span>
 <span class="sd">            Range of zoom levels for which tiles are created, by default [0,13]</span>
 <span class="sd">        fmt : str, optional</span>
-<span class="sd">            Format of index tiles, either &quot;bin&quot; (binary, default) or &quot;png&quot;</span>
+<span class="sd">            Format of index tiles, either "bin" (binary, default) or "png"</span>
 <span class="sd">        write_html_viewer : bool, optional</span>
 <span class="sd">            If True (default), also write an ``index.html`` Leaflet viewer</span>
 <span class="sd">            alongside the tiles so they can be previewed in a browser.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
-        <span class="n">index_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">&quot;indices&quot;</span><span class="p">)</span>
+        <span class="n">index_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">)</span>
         <span class="n">npix</span> <span class="o">=</span> <span class="mi">256</span>
 
         <span class="c1"># for binary format, use .dat extension</span>
-        <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;bin&quot;</span><span class="p">:</span>
-            <span class="n">extension</span> <span class="o">=</span> <span class="s2">&quot;dat&quot;</span>
+        <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"bin"</span><span class="p">:</span>
+            <span class="n">extension</span> <span class="o">=</span> <span class="s2">"dat"</span>
         <span class="c1"># for net, tif and png extension and format are the same</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">extension</span> <span class="o">=</span> <span class="n">fmt</span>
@@ -1132,7 +1132,7 @@
             <span class="p">)</span>
 
         <span class="k">for</span> <span class="n">izoom</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">zoom_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">zoom_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Processing zoom level &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Processing zoom level "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">))</span>
 
             <span class="n">zoom_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">index_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">izoom</span><span class="p">))</span>
 
@@ -1140,7 +1140,7 @@
                 <span class="c1"># transform is a rasterio Affine object</span>
                 <span class="c1"># col, row are the tile indices</span>
                 <span class="n">file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                    <span class="n">zoom_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">col</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="n">extension</span>
+                    <span class="n">zoom_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">col</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"."</span> <span class="o">+</span> <span class="n">extension</span>
                 <span class="p">)</span>
 
                 <span class="c1"># get the coordinates of the tile in webmercator projection</span>
@@ -1150,7 +1150,7 @@
                 <span class="n">x3857</span><span class="p">,</span> <span class="n">y3857</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x3857</span><span class="p">,</span> <span class="n">y3857</span><span class="p">)</span>
 
                 <span class="c1"># convert to SFINCS coordinates</span>
-                <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">x3857</span><span class="p">,</span> <span class="n">y3857</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s2">&quot;INVERSE&quot;</span><span class="p">)</span>
+                <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">x3857</span><span class="p">,</span> <span class="n">y3857</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s2">"INVERSE"</span><span class="p">)</span>
 
                 <span class="c1"># Now rotate around origin of SFINCS model</span>
                 <span class="n">x00</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">x0</span>
@@ -1172,21 +1172,21 @@
                     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">zoom_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">col</span><span class="p">))):</span>
                         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">zoom_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">col</span><span class="p">)))</span>
                     <span class="c1"># And write indices to file</span>
-                    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;bin&quot;</span><span class="p">:</span>
-                        <span class="n">fid</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"bin"</span><span class="p">:</span>
+                        <span class="n">fid</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span>
                         <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span>
                         <span class="n">fid</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-                    <span class="k">elif</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;png&quot;</span><span class="p">:</span>
+                    <span class="k">elif</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"png"</span><span class="p">:</span>
                         <span class="c1"># for png, change nodata -999 nodata into 0</span>
                         <span class="n">ind</span><span class="p">[</span><span class="n">ind</span> <span class="o">==</span> <span class="o">-</span><span class="mi">999</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
                         <span class="n">int2png</span><span class="p">(</span><span class="n">ind</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">write_html_viewer</span> <span class="ow">and</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;png&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">write_html_viewer</span> <span class="ow">and</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"png"</span><span class="p">:</span>
             <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">index_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">write_html</span><span class="p">(</span>
-                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">index_path</span><span class="p">,</span> <span class="s2">&quot;index.html&quot;</span><span class="p">),</span>
-                <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Index tiles&quot;</span><span class="p">,</span>
-                <span class="n">legend_title</span><span class="o">=</span><span class="s2">&quot;Cell indices&quot;</span><span class="p">,</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">index_path</span><span class="p">,</span> <span class="s2">"index.html"</span><span class="p">),</span>
+                <span class="n">title</span><span class="o">=</span><span class="s2">"Index tiles"</span><span class="p">,</span>
+                <span class="n">legend_title</span><span class="o">=</span><span class="s2">"Cell indices"</span><span class="p">,</span>
                 <span class="n">max_native_zoom</span><span class="o">=</span><span class="n">zoom_range</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
             <span class="p">)</span>
 

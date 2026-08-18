@@ -426,9 +426,9 @@
                 <article class="bd-article">
                   
   <h1>Source code for hydromt_sfincs.components.grid.subgrid</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""</span>
 <span class="sd">SubgridTableRegular class to create, read and write sfincs subgrid (sbg) files.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
@@ -450,27 +450,27 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
 
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="SfincsSubgridTable">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsSubgridTable.html#hydromt_sfincs.components.grid.SfincsSubgridTable">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SfincsSubgridTable</span><span class="p">(</span><span class="n">ModelComponent</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;SFINCS Subgrid Table Component.</span>
+<span class="w">    </span><span class="sd">"""SFINCS Subgrid Table Component.</span>
 
 <span class="sd">    This component contains methods to create, read and write subgrid tables for the SFINCS model</span>
 <span class="sd">    on regular grids. Subgrid tables are used to represent subgrid-scale variations in bed level</span>
 <span class="sd">    and roughness within each grid cell, allowing for more accurate simulations of flow dynamics.</span>
 
 <span class="sd">    .. note::</span>
-<span class="sd">        The subgrid table data is stored in the component&#39;s data attribute as an xarray.Dataset.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        The subgrid table data is stored in the component's data attribute as an xarray.Dataset.</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="SfincsSubgridTable.__init__">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsSubgridTable.html#hydromt_sfincs.components.grid.SfincsSubgridTable.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;SfincsModel&quot;</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="s2">"SfincsModel"</span><span class="p">,</span>
         <span class="n">version</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span> <span class="o">=</span> <span class="kc">None</span>
@@ -481,24 +481,24 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Model static gridded data as xarray.Dataset.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Model static gridded data as xarray.Dataset."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_grid</span><span class="p">()</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">skip_read</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize grid object.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Initialize grid object."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">()</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">is_reading_mode</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">skip_read</span><span class="p">:</span>
                 <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
-                    <span class="s2">&quot;sbgfile&quot;</span><span class="p">,</span>
+                    <span class="s2">"sbgfile"</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">abs_file_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="c1"># File name not defined, so no subgrid in this model</span>
                     <span class="k">return</span>
-                <span class="k">if</span> <span class="n">abs_file_path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">!=</span> <span class="s2">&quot;.nc&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">abs_file_path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">!=</span> <span class="s2">".nc"</span><span class="p">:</span>
                     <span class="c1"># if not netcdf, assume it is a binary file</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">read_binary</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">abs_file_path</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
@@ -509,26 +509,26 @@
 <div class="viewcode-block" id="SfincsSubgridTable.read">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsSubgridTable.read.html#hydromt_sfincs.components.grid.SfincsSubgridTable.read">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load subgrid table from file for a regular grid with given mask.</span>
+<span class="w">        </span><span class="sd">"""Load subgrid table from file for a regular grid with given mask.</span>
 <span class="sd">        If filename is not specified, sthe filename is taken from the model configuration.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="c1"># Check that read mode is on</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_read_mode</span><span class="p">()</span>
 
         <span class="c1"># get absolute file path</span>
         <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
-            <span class="s2">&quot;sbgfile&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span>
+            <span class="s2">"sbgfile"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">filename</span>
         <span class="p">)</span>
 
         <span class="c1"># check if abs_file_path is None or does not exist</span>
         <span class="k">if</span> <span class="n">abs_file_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="n">abs_file_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Subgrid file not found: </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Subgrid file not found: </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="c1"># check if the file is a netcdf file</span>
-        <span class="k">if</span> <span class="n">abs_file_path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;.nc&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">abs_file_path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">".nc"</span><span class="p">:</span>
             <span class="c1"># read netcdf file</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">read_netcdf</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">abs_file_path</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -537,7 +537,7 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">read_netcdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load subgrid table from netcdf file for a regular grid with given mask.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Load subgrid table from netcdf file for a regular grid with given mask."""</span>
         <span class="c1"># netcdf, so set version to 1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="mi">1</span>
 
@@ -547,16 +547,16 @@
         <span class="c1"># Read data from netcdf file with xarray</span>
         <span class="k">with</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="k">as</span> <span class="n">ds</span><span class="p">:</span>
             <span class="c1"># transpose to have level as first dimension</span>
-            <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="s2">&quot;levels&quot;</span><span class="p">,</span> <span class="s2">&quot;npuv&quot;</span><span class="p">,</span> <span class="s2">&quot;np&quot;</span><span class="p">)</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="s2">"levels"</span><span class="p">,</span> <span class="s2">"npuv"</span><span class="p">,</span> <span class="s2">"np"</span><span class="p">)</span>
 
             <span class="c1"># grid dimensions</span>
             <span class="n">grid_dim</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span>
 
             <span class="c1"># get number of levels, point and uv points</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">nr_levels</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nr_cells</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nr_uv_points</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">ds</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="s2">&quot;levels&quot;</span><span class="p">],</span>
-                <span class="n">ds</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="s2">&quot;np&quot;</span><span class="p">],</span>
-                <span class="n">ds</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="s2">&quot;npuv&quot;</span><span class="p">],</span>
+                <span class="n">ds</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="s2">"levels"</span><span class="p">],</span>
+                <span class="n">ds</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="s2">"np"</span><span class="p">],</span>
+                <span class="n">ds</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="s2">"npuv"</span><span class="p">],</span>
             <span class="p">)</span>
 
             <span class="c1"># find indices of active cells</span>
@@ -566,9 +566,9 @@
             <span class="n">active_v_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">index_nu1</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
             <span class="c1"># convert 1D indices to 2D indices</span>
-            <span class="n">active_cells</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unravel_index</span><span class="p">(</span><span class="n">active_indices</span><span class="p">,</span> <span class="n">grid_dim</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="p">)</span>
-            <span class="n">active_u_cells</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unravel_index</span><span class="p">(</span><span class="n">active_u_indices</span><span class="p">,</span> <span class="n">grid_dim</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="p">)</span>
-            <span class="n">active_v_cells</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unravel_index</span><span class="p">(</span><span class="n">active_v_indices</span><span class="p">,</span> <span class="n">grid_dim</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="p">)</span>
+            <span class="n">active_cells</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unravel_index</span><span class="p">(</span><span class="n">active_indices</span><span class="p">,</span> <span class="n">grid_dim</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">"F"</span><span class="p">)</span>
+            <span class="n">active_u_cells</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unravel_index</span><span class="p">(</span><span class="n">active_u_indices</span><span class="p">,</span> <span class="n">grid_dim</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">"F"</span><span class="p">)</span>
+            <span class="n">active_v_cells</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unravel_index</span><span class="p">(</span><span class="n">active_v_indices</span><span class="p">,</span> <span class="n">grid_dim</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">"F"</span><span class="p">)</span>
 
             <span class="c1"># Initialize the data-arrays</span>
             <span class="c1"># Z points</span>
@@ -611,22 +611,22 @@
 
             <span class="c1"># Now read the data and add it to the data-arrays</span>
             <span class="c1"># use index_nm of the active cells in the new dataset</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">z_zmin</span><span class="p">[</span><span class="n">active_cells</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;z_zmin&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">z_zmax</span><span class="p">[</span><span class="n">active_cells</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;z_zmax&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">z_volmax</span><span class="p">[</span><span class="n">active_cells</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;z_volmax&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">z_zmin</span><span class="p">[</span><span class="n">active_cells</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">"z_zmin"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">z_zmax</span><span class="p">[</span><span class="n">active_cells</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">"z_zmax"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">z_volmax</span><span class="p">[</span><span class="n">active_cells</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">"z_volmax"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
             <span class="k">for</span> <span class="n">ilevel</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nr_levels</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">z_level</span><span class="p">[</span><span class="n">ilevel</span><span class="p">,</span> <span class="n">active_cells</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">active_cells</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;z_level&quot;</span><span class="p">][</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">z_level</span><span class="p">[</span><span class="n">ilevel</span><span class="p">,</span> <span class="n">active_cells</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">active_cells</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">"z_level"</span><span class="p">][</span>
                     <span class="n">ilevel</span>
                 <span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
 
             <span class="c1"># now use index_mu1 and index_nu1 to put the values of the active cells in the new dataset</span>
-            <span class="n">var_list</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;zmin&quot;</span><span class="p">,</span> <span class="s2">&quot;zmax&quot;</span><span class="p">,</span> <span class="s2">&quot;ffit&quot;</span><span class="p">,</span> <span class="s2">&quot;navg&quot;</span><span class="p">]</span>
+            <span class="n">var_list</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"zmin"</span><span class="p">,</span> <span class="s2">"zmax"</span><span class="p">,</span> <span class="s2">"ffit"</span><span class="p">,</span> <span class="s2">"navg"</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">var_list</span><span class="p">:</span>
-                <span class="n">uv_var</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;uv_&quot;</span> <span class="o">+</span> <span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+                <span class="n">uv_var</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">"uv_"</span> <span class="o">+</span> <span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
 
                 <span class="c1"># Dynamically set the attribute for self.u_var and self.v_var</span>
-                <span class="n">u_attr_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;u_</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="n">v_attr_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;v_</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="n">u_attr_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"u_</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">"</span>
+                <span class="n">v_attr_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"v_</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">"</span>
 
                 <span class="c1"># Retrieve the current attribute values</span>
                 <span class="n">u_array</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">u_attr_name</span><span class="p">)</span>
@@ -640,14 +640,14 @@
                 <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">u_attr_name</span><span class="p">,</span> <span class="n">u_array</span><span class="p">)</span>
                 <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v_attr_name</span><span class="p">,</span> <span class="n">v_array</span><span class="p">)</span>
 
-            <span class="n">var_list_levels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;havg&quot;</span><span class="p">,</span> <span class="s2">&quot;nrep&quot;</span><span class="p">,</span> <span class="s2">&quot;pwet&quot;</span><span class="p">]</span>
+            <span class="n">var_list_levels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"havg"</span><span class="p">,</span> <span class="s2">"nrep"</span><span class="p">,</span> <span class="s2">"pwet"</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">var_list_levels</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">ilevel</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nr_levels</span><span class="p">):</span>
-                    <span class="n">uv_var</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;uv_&quot;</span> <span class="o">+</span> <span class="n">var</span><span class="p">][</span><span class="n">ilevel</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+                    <span class="n">uv_var</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">"uv_"</span> <span class="o">+</span> <span class="n">var</span><span class="p">][</span><span class="n">ilevel</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
 
                     <span class="c1"># Dynamically set the attribute for self.u_var and self.v_var</span>
-                    <span class="n">u_attr_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;u_</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">&quot;</span>
-                    <span class="n">v_attr_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;v_</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="n">u_attr_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"u_</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="n">v_attr_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"v_</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">"</span>
 
                     <span class="c1"># Retrieve the current attribute values</span>
                     <span class="n">u_array</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">u_attr_name</span><span class="p">)</span>
@@ -670,7 +670,7 @@
 
     <span class="c1"># Following remains for backward compatibility, but should soon not be used anymore</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">read_binary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load subgrid table from binary file for a regular grid with given mask.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Load subgrid table from binary file for a regular grid with given mask."""</span>
 
         <span class="c1"># set version to old binary format</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="mi">0</span>
@@ -689,7 +689,7 @@
 
         <span class="n">grid_dim</span> <span class="o">=</span> <span class="p">(</span><span class="n">nmax</span><span class="p">,</span> <span class="n">mmax</span><span class="p">)</span>
 
-        <span class="n">file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span>
+        <span class="n">file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span>
 
         <span class="c1"># File version</span>
         <span class="c1"># self.version = np.fromfile(file, dtype=np.int32, count=1)[0]</span>
@@ -787,30 +787,30 @@
 <div class="viewcode-block" id="SfincsSubgridTable.write">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsSubgridTable.write.html#hydromt_sfincs.components.grid.SfincsSubgridTable.write">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write subgrid table to file for a regular grid with given mask. Values are only written</span>
+<span class="w">        </span><span class="sd">"""Write subgrid table to file for a regular grid with given mask. Values are only written</span>
 <span class="sd">        for active cells (mask &gt; 0). If filename is not specified, the filename is taken from the model</span>
-<span class="sd">        configuration.&quot;&quot;&quot;</span>
+<span class="sd">        configuration."""</span>
 
         <span class="c1"># Check that write mode is on</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_write_mode</span><span class="p">()</span>
 
         <span class="c1"># Check that data is not empty</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">data_vars</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No subgrid table available to write.&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"No subgrid table available to write."</span><span class="p">)</span>
             <span class="k">return</span>
 
         <span class="c1"># Set file name and get absolute path</span>
         <span class="n">abs_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_set_file_variable</span><span class="p">(</span>
-            <span class="s2">&quot;sbgfile&quot;</span><span class="p">,</span>
+            <span class="s2">"sbgfile"</span><span class="p">,</span>
             <span class="n">value</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
-            <span class="n">default</span><span class="o">=</span><span class="s2">&quot;sfincs_subgrid.nc&quot;</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="s2">"sfincs_subgrid.nc"</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># Create parent directories if they do not exist</span>
         <span class="n">abs_file_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="c1"># check if the file is a netcdf file</span>
-        <span class="k">if</span> <span class="n">abs_file_path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;.nc&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">abs_file_path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">".nc"</span><span class="p">:</span>
             <span class="c1"># read netcdf file</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">write_netcdf</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">abs_file_path</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -819,14 +819,14 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write_netcdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Save the subgrid data to a netcdf file for a regular grid with given mask. Values are only written</span>
-<span class="sd">        for active cells (mask &gt; 0).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Save the subgrid data to a netcdf file for a regular grid with given mask. Values are only written</span>
+<span class="sd">        for active cells (mask &gt; 0)."""</span>
         <span class="c1"># get the mask from the model and convert to xarray</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span>
         <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_xarray</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">dims</span><span class="p">,</span> <span class="n">coords</span><span class="o">=</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
 
         <span class="c1"># Need to transpose to match the FORTRAN convention in SFINCS</span>
-        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="s2">&quot;levels&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">)</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="s2">"levels"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">)</span>
 
         <span class="c1"># find indices of active cells</span>
         <span class="n">index_nm</span><span class="p">,</span> <span class="n">index_mu1</span><span class="p">,</span> <span class="n">index_nu1</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">find_uv_indices</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
@@ -843,53 +843,53 @@
 
         <span class="c1"># Make a new xarray dataset where we only keep the values of the active cells (index_nm &gt; -1)</span>
         <span class="c1"># use index_nm to put the values of the active cells in the new dataset</span>
-        <span class="n">ds_new</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;_FillValue&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">})</span>
+        <span class="n">ds_new</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s2">"_FillValue"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">})</span>
 
         <span class="c1"># Z points</span>
-        <span class="n">variables</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;z_zmin&quot;</span><span class="p">,</span> <span class="s2">&quot;z_zmax&quot;</span><span class="p">,</span> <span class="s2">&quot;z_volmax&quot;</span><span class="p">]</span>
+        <span class="n">variables</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"z_zmin"</span><span class="p">,</span> <span class="s2">"z_zmax"</span><span class="p">,</span> <span class="s2">"z_volmax"</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">:</span>
             <span class="n">ds_new</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
-                <span class="n">ds</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()[</span><span class="n">active_cells</span><span class="p">],</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;np&quot;</span><span class="p">)</span>
+                <span class="n">ds</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()[</span><span class="n">active_cells</span><span class="p">],</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">"np"</span><span class="p">)</span>
             <span class="p">)</span>
 
         <span class="n">z_level</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nr_levels</span><span class="p">,</span> <span class="n">nr_z_points</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">ilevel</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nr_levels</span><span class="p">):</span>
-            <span class="n">z_level</span><span class="p">[</span><span class="n">ilevel</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;z_level&quot;</span><span class="p">][</span><span class="n">ilevel</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()[</span><span class="n">active_cells</span><span class="p">]</span>
-        <span class="n">ds_new</span><span class="p">[</span><span class="s2">&quot;z_level&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">z_level</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;levels&quot;</span><span class="p">,</span> <span class="s2">&quot;np&quot;</span><span class="p">))</span>
+            <span class="n">z_level</span><span class="p">[</span><span class="n">ilevel</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">"z_level"</span><span class="p">][</span><span class="n">ilevel</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()[</span><span class="n">active_cells</span><span class="p">]</span>
+        <span class="n">ds_new</span><span class="p">[</span><span class="s2">"z_level"</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">z_level</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">"levels"</span><span class="p">,</span> <span class="s2">"np"</span><span class="p">))</span>
 
         <span class="c1"># u and v points</span>
-        <span class="n">var_list</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;zmin&quot;</span><span class="p">,</span> <span class="s2">&quot;zmax&quot;</span><span class="p">,</span> <span class="s2">&quot;ffit&quot;</span><span class="p">,</span> <span class="s2">&quot;navg&quot;</span><span class="p">]</span>
+        <span class="n">var_list</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"zmin"</span><span class="p">,</span> <span class="s2">"zmax"</span><span class="p">,</span> <span class="s2">"ffit"</span><span class="p">,</span> <span class="s2">"navg"</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">var_list</span><span class="p">:</span>
             <span class="n">uv_var</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nr_uv_points</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-            <span class="n">uv_var</span><span class="p">[</span><span class="n">index_mu1</span><span class="p">[</span><span class="n">index_mu1</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;u_&quot;</span> <span class="o">+</span> <span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()[</span>
+            <span class="n">uv_var</span><span class="p">[</span><span class="n">index_mu1</span><span class="p">[</span><span class="n">index_mu1</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">"u_"</span> <span class="o">+</span> <span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()[</span>
                 <span class="n">index_mu1</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span>
             <span class="p">]</span>
-            <span class="n">uv_var</span><span class="p">[</span><span class="n">index_nu1</span><span class="p">[</span><span class="n">index_nu1</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;v_&quot;</span> <span class="o">+</span> <span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()[</span>
+            <span class="n">uv_var</span><span class="p">[</span><span class="n">index_nu1</span><span class="p">[</span><span class="n">index_nu1</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">"v_"</span> <span class="o">+</span> <span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()[</span>
                 <span class="n">index_nu1</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span>
             <span class="p">]</span>
-            <span class="n">ds_new</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;uv_</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">uv_var</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;npuv&quot;</span><span class="p">))</span>
+            <span class="n">ds_new</span><span class="p">[</span><span class="sa">f</span><span class="s2">"uv_</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">uv_var</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">"npuv"</span><span class="p">))</span>
 
-        <span class="n">var_list_levels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;havg&quot;</span><span class="p">,</span> <span class="s2">&quot;nrep&quot;</span><span class="p">,</span> <span class="s2">&quot;pwet&quot;</span><span class="p">]</span>
+        <span class="n">var_list_levels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"havg"</span><span class="p">,</span> <span class="s2">"nrep"</span><span class="p">,</span> <span class="s2">"pwet"</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">var_list_levels</span><span class="p">:</span>
             <span class="n">uv_var</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nr_levels</span><span class="p">,</span> <span class="n">nr_uv_points</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">ilevel</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nr_levels</span><span class="p">):</span>
-                <span class="n">uv_var</span><span class="p">[</span><span class="n">ilevel</span><span class="p">,</span> <span class="n">index_mu1</span><span class="p">[</span><span class="n">index_mu1</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;u_&quot;</span> <span class="o">+</span> <span class="n">var</span><span class="p">][</span>
+                <span class="n">uv_var</span><span class="p">[</span><span class="n">ilevel</span><span class="p">,</span> <span class="n">index_mu1</span><span class="p">[</span><span class="n">index_mu1</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">"u_"</span> <span class="o">+</span> <span class="n">var</span><span class="p">][</span>
                     <span class="n">ilevel</span>
                 <span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()[</span><span class="n">index_mu1</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-                <span class="n">uv_var</span><span class="p">[</span><span class="n">ilevel</span><span class="p">,</span> <span class="n">index_nu1</span><span class="p">[</span><span class="n">index_nu1</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;v_&quot;</span> <span class="o">+</span> <span class="n">var</span><span class="p">][</span>
+                <span class="n">uv_var</span><span class="p">[</span><span class="n">ilevel</span><span class="p">,</span> <span class="n">index_nu1</span><span class="p">[</span><span class="n">index_nu1</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">"v_"</span> <span class="o">+</span> <span class="n">var</span><span class="p">][</span>
                     <span class="n">ilevel</span>
                 <span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()[</span><span class="n">index_nu1</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="n">ds_new</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;uv_</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">uv_var</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;levels&quot;</span><span class="p">,</span> <span class="s2">&quot;npuv&quot;</span><span class="p">))</span>
+            <span class="n">ds_new</span><span class="p">[</span><span class="sa">f</span><span class="s2">"uv_</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">uv_var</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">"levels"</span><span class="p">,</span> <span class="s2">"npuv"</span><span class="p">))</span>
 
         <span class="c1"># ensure levels is last dimension</span>
-        <span class="n">ds_new</span> <span class="o">=</span> <span class="n">ds_new</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="s2">&quot;npuv&quot;</span><span class="p">,</span> <span class="s2">&quot;np&quot;</span><span class="p">,</span> <span class="s2">&quot;levels&quot;</span><span class="p">)</span>
+        <span class="n">ds_new</span> <span class="o">=</span> <span class="n">ds_new</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="s2">"npuv"</span><span class="p">,</span> <span class="s2">"np"</span><span class="p">,</span> <span class="s2">"levels"</span><span class="p">)</span>
 
         <span class="c1"># Write to netcdf file</span>
         <span class="n">ds_new</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
 
     <span class="c1"># Following remains for backward compatibility, but should soon not be used anymore</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_binary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Save the subgrid data to a binary file. Values are only written for active cells (mask &gt; 0).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Save the subgrid data to a binary file. Values are only written for active cells (mask &gt; 0)."""</span>
 
         <span class="c1"># get the mask from the model</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span>
@@ -904,9 +904,9 @@
         <span class="n">mmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z_zmin</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
 
         <span class="c1"># Add 1 because indices in SFINCS start with 1, not 0</span>
-        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel_multi_index</span><span class="p">(</span><span class="n">iok</span><span class="p">,</span> <span class="p">(</span><span class="n">nmax</span><span class="p">,</span> <span class="n">mmax</span><span class="p">),</span> <span class="n">order</span><span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel_multi_index</span><span class="p">(</span><span class="n">iok</span><span class="p">,</span> <span class="p">(</span><span class="n">nmax</span><span class="p">,</span> <span class="n">mmax</span><span class="p">),</span> <span class="n">order</span><span class="o">=</span><span class="s2">"F"</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
 
-        <span class="n">file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span>
+        <span class="n">file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span>
         <span class="c1"># file.write(np.int32(self.version))  # version</span>
         <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">ind</span><span class="p">)))</span>  <span class="c1"># Nr of active points</span>
         <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>  <span class="c1"># min</span>
@@ -970,15 +970,15 @@
         <span class="n">z_minimum</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">99999.0</span><span class="p">,</span>
         <span class="n">huthresh</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
         <span class="n">q_table_option</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-        <span class="n">weight_option</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;min&quot;</span><span class="p">,</span>
+        <span class="n">weight_option</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"min"</span><span class="p">,</span>
         <span class="n">manning_land</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.04</span><span class="p">,</span>
         <span class="n">manning_sea</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.02</span><span class="p">,</span>
         <span class="n">rgh_lev_land</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
         <span class="n">write_dep_tif</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">write_man_tif</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create method for subgrid tables based on a list of</span>
-<span class="sd">        elevation and Manning&#39;s roughness datasets.</span>
+<span class="w">        </span><span class="sd">"""Create method for subgrid tables based on a list of</span>
+<span class="sd">        elevation and Manning's roughness datasets.</span>
 
 <span class="sd">        These datasets are used to derive relations between the water level</span>
 <span class="sd">        and the volume in a cell to do the continuity update,</span>
@@ -992,20 +992,20 @@
 <span class="sd">        elevation_list : List[dict]</span>
 <span class="sd">            List of dictionaries with topobathy data.</span>
 <span class="sd">            Each should minimally contain a data catalog source name, data file path,</span>
-<span class="sd">            or xarray raster object (&#39;elevation&#39;).</span>
-<span class="sd">            Optional merge arguments include: &#39;zmin&#39;, &#39;zmax&#39;, &#39;mask&#39;, &#39;offset&#39;, &#39;reproj_method&#39;,</span>
-<span class="sd">            and &#39;merge_method&#39;, see example below. For a complete overview of all merge options,</span>
+<span class="sd">            or xarray raster object ('elevation').</span>
+<span class="sd">            Optional merge arguments include: 'zmin', 'zmax', 'mask', 'offset', 'reproj_method',</span>
+<span class="sd">            and 'merge_method', see example below. For a complete overview of all merge options,</span>
 <span class="sd">            see :py:func:`hydromt.workflows.merge_multi_dataarrays`</span>
 
 <span class="sd">            ::</span>
 
 <span class="sd">                [</span>
-<span class="sd">                    {&#39;elevation&#39;: &#39;merit_hydro&#39;, &#39;zmin&#39;: 0.01},</span>
-<span class="sd">                    {&#39;elevation&#39;: &#39;gebco&#39;, &#39;offset&#39;: 0, &#39;merge_method&#39;: &#39;first&#39;, reproj_method: &#39;bilinear&#39;}</span>
+<span class="sd">                    {'elevation': 'merit_hydro', 'zmin': 0.01},</span>
+<span class="sd">                    {'elevation': 'gebco', 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}</span>
 <span class="sd">                ]</span>
 
 <span class="sd">        roughness_list : List[dict], optional</span>
-<span class="sd">            List of dictionaries with Manning&#39;s n datasets. Each dictionary should at</span>
+<span class="sd">            List of dictionaries with Manning's n datasets. Each dictionary should at</span>
 <span class="sd">            least contain one of the following:</span>
 
 <span class="sd">            * manning: filename (or Path) of gridded data with manning values</span>
@@ -1017,8 +1017,8 @@
 <span class="sd">            ::</span>
 
 <span class="sd">                [</span>
-<span class="sd">                    {&#39;manning&#39;: &#39;manning_data&#39;},</span>
-<span class="sd">                    {&#39;lulc&#39;: &#39;esa_worlcover&#39;, &#39;reclass_table&#39;: &#39;esa_worlcover_mapping&#39;}</span>
+<span class="sd">                    {'manning': 'manning_data'},</span>
+<span class="sd">                    {'lulc': 'esa_worlcover', 'reclass_table': 'esa_worlcover_mapping'}</span>
 <span class="sd">                ]</span>
 
 <span class="sd">        river_list : List[dict], optional</span>
@@ -1028,10 +1028,10 @@
 <span class="sd">            * centerlines: filename (or Path) of river centerline with attributes</span>
 <span class="sd">              rivwth (river width [m]; required if not river mask provided),</span>
 <span class="sd">              rivdph or rivbed (river depth [m]; river bedlevel [m+REF]),</span>
-<span class="sd">              manning (Manning&#39;s n [s/m^(1/3)]; optional)</span>
+<span class="sd">              manning (Manning's n [s/m^(1/3)]; optional)</span>
 <span class="sd">            * mask (optional): filename (or Path) of river mask</span>
 <span class="sd">            * point_zb (optional): filename (or Path) of river points with bed (z) values</span>
-<span class="sd">            * river attributes (optional): &quot;rivdph&quot;, &quot;rivbed&quot;, &quot;rivwth&quot;, &quot;manning&quot;</span>
+<span class="sd">            * river attributes (optional): "rivdph", "rivbed", "rivwth", "manning"</span>
 <span class="sd">              to fill missing values</span>
 <span class="sd">            * arguments to the river burn method (optional):</span>
 <span class="sd">              segment_length [m] (default 500m) and riv_bank_q [0-1] (default 0.5)</span>
@@ -1041,7 +1041,7 @@
 
 <span class="sd">           ::</span>
 
-<span class="sd">                [{&#39;centerlines&#39;: &#39;river_lines&#39;, &#39;mask&#39;: &#39;river_mask&#39;, &#39;manning&#39;: 0.035}]</span>
+<span class="sd">                [{'centerlines': 'river_lines', 'mask': 'river_mask', 'manning': 0.035}]</span>
 
 <span class="sd">        buffer_cells : int, optional</span>
 <span class="sd">            Number of cells between datasets to ensure smooth transition of bed levels,</span>
@@ -1066,13 +1066,13 @@
 <span class="sd">            Threshold depth in SFINCS model, by default 0.01 m</span>
 <span class="sd">        q_table_option : int, optional</span>
 <span class="sd">            Option for the computation of the representative roughness and conveyance depth at u/v points, by default 2.</span>
-<span class="sd">            1: &quot;old&quot; weighting method, compliant with SFINCS &lt; v2.1.1, taking the avarage of the adjacent cells</span>
-<span class="sd">            2: &quot;improved&quot; weighting method, recommended for SFINCS &gt;= v2.1.1, that takes into account the wet fractions of the adjacent cells</span>
+<span class="sd">            1: "old" weighting method, compliant with SFINCS &lt; v2.1.1, taking the avarage of the adjacent cells</span>
+<span class="sd">            2: "improved" weighting method, recommended for SFINCS &gt;= v2.1.1, that takes into account the wet fractions of the adjacent cells</span>
 <span class="sd">        weight_option : str, optional</span>
-<span class="sd">            Weighting factor of the adjacent cells for the flux q at u/v points, by default &quot;min&quot;</span>
+<span class="sd">            Weighting factor of the adjacent cells for the flux q at u/v points, by default "min"</span>
 <span class="sd">        manning_land, manning_sea : float, optional</span>
 <span class="sd">            Constant manning roughness values for land and sea, by default 0.04 and 0.02 s.m-1/3</span>
-<span class="sd">            Note that these values are only used when no Manning&#39;s n datasets are provided,</span>
+<span class="sd">            Note that these values are only used when no Manning's n datasets are provided,</span>
 <span class="sd">            or to fill the nodata values</span>
 <span class="sd">        rgh_lev_land : float, optional</span>
 <span class="sd">            Elevation level to distinguish land and sea roughness</span>
@@ -1082,7 +1082,7 @@
 <span class="sd">            These files are not used by SFINCS, but can be used for visualisation and</span>
 <span class="sd">            downscaling of the floodmaps. Unlinke the SFINCS files it is written</span>
 <span class="sd">            to disk at execution of this method. By default False</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
             <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">nr_subgrid_pixels</span>
@@ -1104,7 +1104,7 @@
 
         <span class="c1"># folder where high-resolution topobathy and manning geotiffs are stored</span>
         <span class="k">if</span> <span class="n">write_dep_tif</span> <span class="ow">or</span> <span class="n">write_man_tif</span><span class="p">:</span>
-            <span class="n">highres_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;subgrid&quot;</span><span class="p">)</span>
+            <span class="n">highres_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">"subgrid"</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">highres_dir</span><span class="p">):</span>
                 <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">highres_dir</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -1112,13 +1112,13 @@
 
         <span class="k">if</span> <span class="n">nbins</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="s2">&quot;Keyword nbins is deprecated and will be removed in future versions. Please use nr_levels instead.&quot;</span>
+                <span class="s2">"Keyword nbins is deprecated and will be removed in future versions. Please use nr_levels instead."</span>
             <span class="p">)</span>
             <span class="n">nr_levels</span> <span class="o">=</span> <span class="n">nbins</span>
 
         <span class="k">if</span> <span class="n">q_table_option</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">max_gradient</span> <span class="o">&gt;</span> <span class="mf">20.0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;For the old q_table_option, a max_gradient of 5.0 is recommended to improve numerical stability&quot;</span>
+                <span class="s2">"For the old q_table_option, a max_gradient of 5.0 is recommended to improve numerical stability"</span>
             <span class="p">)</span>
 
         <span class="c1"># get the mask from the model</span>
@@ -1130,7 +1130,7 @@
         <span class="c1"># this is needed for symmetry around the uv points</span>
         <span class="k">if</span> <span class="n">nr_subgrid_pixels</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;nr_subgrid_pixels must be a multiple of 2 for subgrid table&quot;</span>
+                <span class="s2">"nr_subgrid_pixels must be a multiple of 2 for subgrid table"</span>
             <span class="p">)</span>
 
         <span class="n">refi</span> <span class="o">=</span> <span class="n">nr_subgrid_pixels</span>
@@ -1148,7 +1148,7 @@
 
         <span class="c1"># create COGs for topobathy/manning</span>
         <span class="n">profile</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
-            <span class="n">driver</span><span class="o">=</span><span class="s2">&quot;GTiff&quot;</span><span class="p">,</span>
+            <span class="n">driver</span><span class="o">=</span><span class="s2">"GTiff"</span><span class="p">,</span>
             <span class="n">width</span><span class="o">=</span><span class="n">output_width</span><span class="p">,</span>
             <span class="n">height</span><span class="o">=</span><span class="n">output_height</span><span class="p">,</span>
             <span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
@@ -1158,22 +1158,22 @@
             <span class="n">tiled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">blockxsize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
             <span class="n">blockysize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
-            <span class="n">compress</span><span class="o">=</span><span class="s2">&quot;deflate&quot;</span><span class="p">,</span>
+            <span class="n">compress</span><span class="o">=</span><span class="s2">"deflate"</span><span class="p">,</span>
             <span class="n">predictor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-            <span class="n">profile</span><span class="o">=</span><span class="s2">&quot;COG&quot;</span><span class="p">,</span>
+            <span class="n">profile</span><span class="o">=</span><span class="s2">"COG"</span><span class="p">,</span>
             <span class="n">nodata</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
-            <span class="n">BIGTIFF</span><span class="o">=</span><span class="s2">&quot;YES&quot;</span><span class="p">,</span>  <span class="c1"># Add the BIGTIFF option here</span>
+            <span class="n">BIGTIFF</span><span class="o">=</span><span class="s2">"YES"</span><span class="p">,</span>  <span class="c1"># Add the BIGTIFF option here</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">write_dep_tif</span><span class="p">:</span>
             <span class="c1"># create the CloudOptimizedGeotiff containing the merged topobathy data</span>
-            <span class="n">fn_dep_tif</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">highres_dir</span><span class="p">,</span> <span class="s2">&quot;dep_subgrid.tif&quot;</span><span class="p">)</span>
-            <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fn_dep_tif</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">profile</span><span class="p">):</span>
+            <span class="n">fn_dep_tif</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">highres_dir</span><span class="p">,</span> <span class="s2">"dep_subgrid.tif"</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fn_dep_tif</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="o">**</span><span class="n">profile</span><span class="p">):</span>
                 <span class="k">pass</span>
 
         <span class="k">if</span> <span class="n">write_man_tif</span><span class="p">:</span>
             <span class="c1"># create the CloudOptimizedGeotiff creating the merged manning roughness</span>
-            <span class="n">fn_man_tif</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">highres_dir</span><span class="p">,</span> <span class="s2">&quot;manning_subgrid.tif&quot;</span><span class="p">)</span>
-            <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fn_man_tif</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">profile</span><span class="p">):</span>
+            <span class="n">fn_man_tif</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">highres_dir</span><span class="p">,</span> <span class="s2">"manning_subgrid.tif"</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fn_man_tif</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="o">**</span><span class="n">profile</span><span class="p">):</span>
                 <span class="k">pass</span>
 
         <span class="c1"># Z points</span>
@@ -1234,12 +1234,12 @@
             <span class="n">nrbn</span> <span class="o">-=</span> <span class="mi">1</span>
             <span class="n">merge_last_row</span> <span class="o">=</span> <span class="kc">True</span>
 
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Number of regular cells in a block : &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">nrcb</span><span class="p">))</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Number of blocks in n direction    : &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">nrbn</span><span class="p">))</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Number of blocks in m direction    : &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">nrbm</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Number of regular cells in a block : "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">nrcb</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Number of blocks in n direction    : "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">nrbn</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Number of blocks in m direction    : "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">nrbm</span><span class="p">))</span>
 
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Grid size of flux grid            : dx=</span><span class="si">{</span><span class="n">dx</span><span class="si">}</span><span class="s2">, dy=</span><span class="si">{</span><span class="n">dy</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Grid size of subgrid pixels       : dx=</span><span class="si">{</span><span class="n">dxp</span><span class="si">}</span><span class="s2">, dy=</span><span class="si">{</span><span class="n">dyp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Grid size of flux grid            : dx=</span><span class="si">{</span><span class="n">dx</span><span class="si">}</span><span class="s2">, dy=</span><span class="si">{</span><span class="n">dy</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Grid size of subgrid pixels       : dx=</span><span class="si">{</span><span class="n">dxp</span><span class="si">}</span><span class="s2">, dy=</span><span class="si">{</span><span class="n">dyp</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="c1">## Loop through blocks</span>
         <span class="n">ib</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
@@ -1258,8 +1258,8 @@
                 <span class="c1"># Count</span>
                 <span class="n">ib</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;block </span><span class="si">{</span><span class="n">ib</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">nrbn</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nrbm</span><span class="si">}</span><span class="s2"> -- &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;col </span><span class="si">{</span><span class="n">bm0</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">bm1</span><span class="o">-</span><span class="mi">1</span><span class="si">}</span><span class="s2"> | row </span><span class="si">{</span><span class="n">bn0</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">bn1</span><span class="o">-</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="sa">f</span><span class="s2">"block </span><span class="si">{</span><span class="n">ib</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">nrbn</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nrbm</span><span class="si">}</span><span class="s2"> -- "</span>
+                    <span class="sa">f</span><span class="s2">"col </span><span class="si">{</span><span class="n">bm0</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">bm1</span><span class="o">-</span><span class="mi">1</span><span class="si">}</span><span class="s2"> | row </span><span class="si">{</span><span class="n">bn0</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">bn1</span><span class="o">-</span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span>
                 <span class="p">)</span>
 
                 <span class="c1"># calculate transform and shape of block at cell and subgrid level</span>
@@ -1267,10 +1267,10 @@
                 <span class="n">slice_block</span> <span class="o">=</span> <span class="p">{</span><span class="n">x_dim</span><span class="p">:</span> <span class="nb">slice</span><span class="p">(</span><span class="n">bm0</span><span class="p">,</span> <span class="n">bm1</span><span class="p">),</span> <span class="n">y_dim</span><span class="p">:</span> <span class="nb">slice</span><span class="p">(</span><span class="n">bn0</span><span class="p">,</span> <span class="n">bn1</span><span class="p">)}</span>
                 <span class="n">da_mask_block</span> <span class="o">=</span> <span class="n">da_mask</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">slice_block</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
                 <span class="n">check_block</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">([</span><span class="n">s</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">da_mask_block</span><span class="o">.</span><span class="n">shape</span><span class="p">])</span>
-                <span class="k">assert</span> <span class="n">check_block</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;unexpected block shape </span><span class="si">{</span><span class="n">da_mask_block</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="k">assert</span> <span class="n">check_block</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"unexpected block shape </span><span class="si">{</span><span class="n">da_mask_block</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span>
                 <span class="n">nactive</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">da_mask_block</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>
                 <span class="k">if</span> <span class="n">nactive</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># not active cells in block</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Skip block - No active cells&quot;</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Skip block - No active cells"</span><span class="p">)</span>
                     <span class="k">continue</span>
                 <span class="n">transform</span> <span class="o">=</span> <span class="n">da_mask_block</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform</span>
                 <span class="c1"># add refi cells overlap in both dimensions for u and v in last row/col</span>
@@ -1281,14 +1281,14 @@
                     <span class="n">dst_height</span><span class="o">=</span><span class="p">(</span><span class="n">da_mask_block</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">height</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">refi</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">da_mask_sbg</span> <span class="o">=</span> <span class="n">da_mask_block</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject</span><span class="p">(</span>
-                    <span class="n">method</span><span class="o">=</span><span class="s2">&quot;nearest&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">reproj_kwargs</span>
+                    <span class="n">method</span><span class="o">=</span><span class="s2">"nearest"</span><span class="p">,</span> <span class="o">**</span><span class="n">reproj_kwargs</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
 
                 <span class="c1"># get subgrid bathymetry tile</span>
                 <span class="n">da_dep</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">merge_multi_dataarrays</span><span class="p">(</span>
                     <span class="n">da_list</span><span class="o">=</span><span class="n">elevation_list</span><span class="p">,</span>
                     <span class="n">da_like</span><span class="o">=</span><span class="n">da_mask_sbg</span><span class="p">,</span>
-                    <span class="n">interp_method</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+                    <span class="n">interp_method</span><span class="o">=</span><span class="s2">"linear"</span><span class="p">,</span>
                     <span class="n">buffer_cells</span><span class="o">=</span><span class="n">buffer_cells</span><span class="p">,</span>
                 <span class="p">)</span>
 
@@ -1300,11 +1300,11 @@
                 <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_dep</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">da_mask_sbg</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="n">npx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_dep</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">da_mask_sbg</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">])))</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Interpolate elevation data at </span><span class="si">{</span><span class="n">npx</span><span class="si">}</span><span class="s2"> subgrid pixels&quot;</span>
+                        <span class="sa">f</span><span class="s2">"Interpolate elevation data at </span><span class="si">{</span><span class="n">npx</span><span class="si">}</span><span class="s2"> subgrid pixels"</span>
                     <span class="p">)</span>
                 <span class="c1"># always interpolate/extrapolate to avoid NaN values</span>
                 <span class="n">da_dep</span> <span class="o">=</span> <span class="n">da_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">interpolate_na</span><span class="p">(</span>
-                    <span class="n">method</span><span class="o">=</span><span class="s2">&quot;rio_idw&quot;</span><span class="p">,</span> <span class="n">extrapolate</span><span class="o">=</span><span class="kc">True</span>
+                    <span class="n">method</span><span class="o">=</span><span class="s2">"rio_idw"</span><span class="p">,</span> <span class="n">extrapolate</span><span class="o">=</span><span class="kc">True</span>
                 <span class="p">)</span>
 
                 <span class="c1"># get subgrid manning roughness tile</span>
@@ -1312,14 +1312,14 @@
                     <span class="n">da_man</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">merge_multi_dataarrays</span><span class="p">(</span>
                         <span class="n">da_list</span><span class="o">=</span><span class="n">roughness_list</span><span class="p">,</span>
                         <span class="n">da_like</span><span class="o">=</span><span class="n">da_mask_sbg</span><span class="p">,</span>
-                        <span class="n">interp_method</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+                        <span class="n">interp_method</span><span class="o">=</span><span class="s2">"linear"</span><span class="p">,</span>
                         <span class="n">buffer_cells</span><span class="o">=</span><span class="n">buffer_cells</span><span class="p">,</span>
                     <span class="p">)</span>
                     <span class="c1"># raise warning if NaN values in active cells</span>
                     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_man</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">da_mask_sbg</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
                         <span class="n">npx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_man</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">da_mask_sbg</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">])))</span>
                         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                            <span class="sa">f</span><span class="s2">&quot;Fill manning roughness data at </span><span class="si">{</span><span class="n">npx</span><span class="si">}</span><span class="s2"> subgrid pixels with default values&quot;</span>
+                            <span class="sa">f</span><span class="s2">"Fill manning roughness data at </span><span class="si">{</span><span class="n">npx</span><span class="si">}</span><span class="s2"> subgrid pixels with default values"</span>
                         <span class="p">)</span>
                     <span class="c1"># always fill based on land/sea elevation to avoid NaN values</span>
                     <span class="n">da_man0</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
@@ -1332,7 +1332,7 @@
 
                 <span class="c1"># burn rivers in bathymetry and manning</span>
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">river_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Burn rivers in bathymetry and manning data&quot;</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Burn rivers in bathymetry and manning data"</span><span class="p">)</span>
                     <span class="k">for</span> <span class="n">riv_kwargs</span> <span class="ow">in</span> <span class="n">river_list</span><span class="p">:</span>
                         <span class="n">da_dep</span><span class="p">,</span> <span class="n">da_man</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">bathymetry</span><span class="o">.</span><span class="n">burn_river_rect</span><span class="p">(</span>
                             <span class="n">da_elv</span><span class="o">=</span><span class="n">da_dep</span><span class="p">,</span> <span class="n">da_man</span><span class="o">=</span><span class="n">da_man</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span> <span class="o">**</span><span class="n">riv_kwargs</span>
@@ -1349,14 +1349,14 @@
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">write_dep_tif</span><span class="p">:</span>
                     <span class="c1"># write the block to the output COG</span>
-                    <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fn_dep_tif</span><span class="p">,</span> <span class="s2">&quot;r+&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">dep_tif</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fn_dep_tif</span><span class="p">,</span> <span class="s2">"r+"</span><span class="p">)</span> <span class="k">as</span> <span class="n">dep_tif</span><span class="p">:</span>
                         <span class="n">dep_tif</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
                             <span class="n">da_dep</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_mask_sbg</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)[:</span><span class="o">-</span><span class="n">refi</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="n">refi</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
                             <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span>
                             <span class="n">indexes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                         <span class="p">)</span>
                 <span class="k">if</span> <span class="n">write_man_tif</span><span class="p">:</span>
-                    <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fn_man_tif</span><span class="p">,</span> <span class="s2">&quot;r+&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">man_tif</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fn_man_tif</span><span class="p">,</span> <span class="s2">"r+"</span><span class="p">)</span> <span class="k">as</span> <span class="n">man_tif</span><span class="p">:</span>
                         <span class="n">man_tif</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
                             <span class="n">da_man</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_mask_sbg</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)[:</span><span class="o">-</span><span class="n">refi</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="n">refi</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
                             <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span>
@@ -1365,16 +1365,16 @@
 
                 <span class="c1"># check for NaN values for entire tile</span>
                 <span class="n">check_nans</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">da_dep</span><span class="p">))</span>
-                <span class="k">assert</span> <span class="n">check_nans</span><span class="p">,</span> <span class="s2">&quot;NaN values in depth array&quot;</span>
+                <span class="k">assert</span> <span class="n">check_nans</span><span class="p">,</span> <span class="s2">"NaN values in depth array"</span>
                 <span class="n">check_nans</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">da_man</span><span class="p">))</span>
-                <span class="k">assert</span> <span class="n">check_nans</span><span class="p">,</span> <span class="s2">&quot;NaN values in manning roughness array&quot;</span>
+                <span class="k">assert</span> <span class="n">check_nans</span><span class="p">,</span> <span class="s2">"NaN values in manning roughness array"</span>
 
                 <span class="n">yg</span> <span class="o">=</span> <span class="n">da_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">ycoords</span><span class="o">.</span><span class="n">values</span>
                 <span class="k">if</span> <span class="n">yg</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                     <span class="n">yg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">yg</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">da_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
                 <span class="c1"># Now compute subgrid properties</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing subgrid tables for </span><span class="si">{</span><span class="n">nactive</span><span class="si">}</span><span class="s2"> active cells..&quot;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Processing subgrid tables for </span><span class="si">{</span><span class="n">nactive</span><span class="si">}</span><span class="s2"> active cells.."</span><span class="p">)</span>
                 <span class="n">sn</span><span class="p">,</span> <span class="n">sm</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">bn0</span><span class="p">,</span> <span class="n">bn1</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="n">bm0</span><span class="p">,</span> <span class="n">bm1</span><span class="p">)</span>
                 <span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">z_zmin</span><span class="p">[</span><span class="n">sn</span><span class="p">,</span> <span class="n">sm</span><span class="p">],</span>
@@ -1424,52 +1424,52 @@
         <span class="k">if</span> <span class="n">write_dep_tif</span><span class="p">:</span>
             <span class="n">utils</span><span class="o">.</span><span class="n">build_overviews</span><span class="p">(</span>
                 <span class="n">fn</span><span class="o">=</span><span class="n">fn_dep_tif</span><span class="p">,</span>
-                <span class="n">resample_method</span><span class="o">=</span><span class="s2">&quot;average&quot;</span><span class="p">,</span>
-                <span class="n">overviews</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+                <span class="n">resample_method</span><span class="o">=</span><span class="s2">"average"</span><span class="p">,</span>
+                <span class="n">overviews</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">,</span>
                 <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">write_man_tif</span><span class="p">:</span>
             <span class="n">utils</span><span class="o">.</span><span class="n">build_overviews</span><span class="p">(</span>
                 <span class="n">fn</span><span class="o">=</span><span class="n">fn_man_tif</span><span class="p">,</span>
-                <span class="n">resample_method</span><span class="o">=</span><span class="s2">&quot;average&quot;</span><span class="p">,</span>
-                <span class="n">overviews</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+                <span class="n">resample_method</span><span class="o">=</span><span class="s2">"average"</span><span class="p">,</span>
+                <span class="n">overviews</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">,</span>
                 <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">&quot;Subgrid tables created. Note that the subgrid tables overwrite previously defined information on elevation and roughness.&quot;</span>
+            <span class="s2">"Subgrid tables created. Note that the subgrid tables overwrite previously defined information on elevation and roughness."</span>
         <span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">to_xarray</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">coords</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert old binary subgrid class to xarray dataset.&quot;&quot;&quot;</span>
-        <span class="n">ds_sbg</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;levels&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nr_levels</span><span class="p">),</span> <span class="o">**</span><span class="n">coords</span><span class="p">})</span>
-        <span class="n">ds_sbg</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;_FillValue&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">})</span>
+<span class="w">        </span><span class="sd">"""Convert old binary subgrid class to xarray dataset."""</span>
+        <span class="n">ds_sbg</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">"levels"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nr_levels</span><span class="p">),</span> <span class="o">**</span><span class="n">coords</span><span class="p">})</span>
+        <span class="n">ds_sbg</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"_FillValue"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">})</span>
 
-        <span class="n">zlst2</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;z_zmin&quot;</span><span class="p">,</span> <span class="s2">&quot;z_zmax&quot;</span><span class="p">,</span> <span class="s2">&quot;z_volmax&quot;</span><span class="p">]</span>
+        <span class="n">zlst2</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"z_zmin"</span><span class="p">,</span> <span class="s2">"z_zmax"</span><span class="p">,</span> <span class="s2">"z_volmax"</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">uvlst2</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;u_zmin&quot;</span><span class="p">,</span> <span class="s2">&quot;u_zmax&quot;</span><span class="p">,</span> <span class="s2">&quot;v_zmin&quot;</span><span class="p">,</span> <span class="s2">&quot;v_zmax&quot;</span><span class="p">]</span>
-            <span class="n">lst3</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;z_depth&quot;</span><span class="p">,</span> <span class="s2">&quot;u_hrep&quot;</span><span class="p">,</span> <span class="s2">&quot;u_navg&quot;</span><span class="p">,</span> <span class="s2">&quot;v_hrep&quot;</span><span class="p">,</span> <span class="s2">&quot;v_navg&quot;</span><span class="p">]</span>
+            <span class="n">uvlst2</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"u_zmin"</span><span class="p">,</span> <span class="s2">"u_zmax"</span><span class="p">,</span> <span class="s2">"v_zmin"</span><span class="p">,</span> <span class="s2">"v_zmax"</span><span class="p">]</span>
+            <span class="n">lst3</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"z_depth"</span><span class="p">,</span> <span class="s2">"u_hrep"</span><span class="p">,</span> <span class="s2">"u_navg"</span><span class="p">,</span> <span class="s2">"v_hrep"</span><span class="p">,</span> <span class="s2">"v_navg"</span><span class="p">]</span>
 
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">uvlst2</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="s2">&quot;u_zmin&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;u_zmax&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;u_ffit&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;u_navg&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;v_zmin&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;v_zmax&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;v_ffit&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;v_navg&quot;</span><span class="p">,</span>
+                <span class="s2">"u_zmin"</span><span class="p">,</span>
+                <span class="s2">"u_zmax"</span><span class="p">,</span>
+                <span class="s2">"u_ffit"</span><span class="p">,</span>
+                <span class="s2">"u_navg"</span><span class="p">,</span>
+                <span class="s2">"v_zmin"</span><span class="p">,</span>
+                <span class="s2">"v_zmax"</span><span class="p">,</span>
+                <span class="s2">"v_ffit"</span><span class="p">,</span>
+                <span class="s2">"v_navg"</span><span class="p">,</span>
             <span class="p">]</span>
             <span class="n">lst3</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="s2">&quot;z_level&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;u_havg&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;u_nrep&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;u_pwet&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;v_havg&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;v_nrep&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;v_pwet&quot;</span><span class="p">,</span>
+                <span class="s2">"z_level"</span><span class="p">,</span>
+                <span class="s2">"u_havg"</span><span class="p">,</span>
+                <span class="s2">"u_nrep"</span><span class="p">,</span>
+                <span class="s2">"u_pwet"</span><span class="p">,</span>
+                <span class="s2">"v_havg"</span><span class="p">,</span>
+                <span class="s2">"v_nrep"</span><span class="p">,</span>
+                <span class="s2">"v_pwet"</span><span class="p">,</span>
             <span class="p">]</span>
 
         <span class="c1"># 2D arrays</span>
@@ -1479,11 +1479,11 @@
         <span class="c1"># 3D arrays</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">lst3</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-                <span class="n">ds_sbg</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Variable</span><span class="p">((</span><span class="s2">&quot;levels&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">dims</span><span class="p">),</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+                <span class="n">ds_sbg</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Variable</span><span class="p">((</span><span class="s2">"levels"</span><span class="p">,</span> <span class="o">*</span><span class="n">dims</span><span class="p">),</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">ds_sbg</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">from_xarray</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ds_sbg</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert xarray dataset to subgrid class.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Convert xarray dataset to subgrid class."""</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">ds_sbg</span><span class="o">.</span><span class="n">data_vars</span><span class="p">:</span>
             <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">ds_sbg</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span></div>
 
@@ -1505,7 +1505,7 @@
     <span class="n">weight_option</span><span class="p">,</span>
     <span class="n">is_geographic</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;calculate subgrid properties for a single tile&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""calculate subgrid properties for a single tile"""</span>
     <span class="c1"># Z points</span>
     <span class="n">grid_dim</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span>
     <span class="n">z_zmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">grid_dim</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>

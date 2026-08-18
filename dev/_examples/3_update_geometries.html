@@ -519,7 +519,7 @@
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/tmp/ipykernel_4939/36717968.py:4: DeprecationWarning: importing &#39;log&#39; from &#39;hydromt._utils&#39; is deprecated. use &#39;from hydromt import log&#39; instead.
+/tmp/ipykernel_5056/36717968.py:4: DeprecationWarning: importing &#39;log&#39; from &#39;hydromt._utils&#39; is deprecated. use &#39;from hydromt import log&#39; instead.
   from hydromt._utils import log
 </pre></div></div>
 </div>
@@ -538,7 +538,7 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model_root</span> <span class="o">=</span> <span class="s2">&quot;tmp_sfincs_compound&quot;</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model_root</span> <span class="o">=</span> <span class="s2">"tmp_sfincs_compound"</span>
 
 <span class="c1"># Initialize logging, the lower the log level number, the more verbose (more info) the output</span>
 <span class="c1"># NOTSET=0-9, DEBUG=10, INFO=20, WARNING=30, ERROR=40, CRITICAL=50</span>
@@ -546,14 +546,14 @@
 <span class="n">log</span><span class="o">.</span><span class="n">set_log_level</span><span class="p">(</span><span class="n">log_level</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
 
 <span class="c1"># Add file handler to log to a file</span>
-<span class="n">log_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">model_root</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;hydromt_sfincs.log&quot;</span>
+<span class="n">log_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">model_root</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"hydromt_sfincs.log"</span>
 <span class="n">logger</span> <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">_add_filehandler</span><span class="p">(</span><span class="n">log_file</span><span class="p">)</span>
 
 <span class="c1"># Initialize SfincsModel Python class with the artifact data catalog which contains publically available data for North Italy</span>
 <span class="n">sf</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span>
-    <span class="n">data_libs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;artifact_data&quot;</span><span class="p">],</span>  <span class="c1"># specify which data libraries to use</span>
+    <span class="n">data_libs</span><span class="o">=</span><span class="p">[</span><span class="s2">"artifact_data"</span><span class="p">],</span>  <span class="c1"># specify which data libraries to use</span>
     <span class="n">root</span><span class="o">=</span><span class="n">model_root</span><span class="p">,</span>  <span class="c1"># specify the root directory for the model</span>
-    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r+&quot;</span><span class="p">,</span>  <span class="c1"># specify the mode for opening the model (r=read only, r+=append, w=write, w+=overwrite</span>
+    <span class="n">mode</span><span class="o">=</span><span class="s2">"r+"</span><span class="p">,</span>  <span class="c1"># specify the mode for opening the model (r=read only, r+=append, w=write, w+=overwrite</span>
     <span class="n">write_gis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># specify whether to write GIS data</span>
 <span class="p">)</span>
 </pre></div>
@@ -564,7 +564,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-08-02 10:26:44,848 - hydromt - log - INFO - HydroMT version: 1.4.0
+2026-08-18 09:58:59,951 - hydromt - log - INFO - HydroMT version: 1.4.1
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -596,11 +596,11 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># In this example specify a &#39;line&#39; style shapefile for the location of the weir to be added</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># In this example specify a 'line' style shapefile for the location of the weir to be added</span>
 <span class="c1"># # NOTE: optional: dz argument - If provided, for weir structures the z value is calculated from the model elevation (dep) plus dz.</span>
 
 <span class="n">sf</span><span class="o">.</span><span class="n">weirs</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-    <span class="n">locations</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;data/compound_example_weirfile_input.geojson&quot;</span><span class="p">,</span>
+    <span class="n">locations</span><span class="o">=</span><span class="sa">r</span><span class="s2">"data/compound_example_weirfile_input.geojson"</span><span class="p">,</span>
     <span class="n">dz</span><span class="o">=</span><span class="mf">7.7</span><span class="p">,</span>
     <span class="n">merge</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span>
@@ -637,7 +637,7 @@
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Loading a point shapefile clicked by user:</span>
 <span class="c1"># NOTE: merge=True makes HydroMT merge the new observation points with already existing observation points (if present)</span>
 <span class="n">sf</span><span class="o">.</span><span class="n">observation_points</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-    <span class="n">locations</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;data/compound_example_observation_points.geojson&quot;</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="kc">False</span>
+    <span class="n">locations</span><span class="o">=</span><span class="sa">r</span><span class="s2">"data/compound_example_observation_points.geojson"</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="kc">False</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -666,13 +666,13 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use predefined plotting function &#39;plot_basemap&#39; to show your full SFINCS model setup</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use predefined plotting function 'plot_basemap' to show your full SFINCS model setup</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span>
-    <span class="n">fn_out</span><span class="o">=</span><span class="s2">&quot;basemap.png&quot;</span><span class="p">,</span>
-    <span class="n">variable</span><span class="o">=</span><span class="s2">&quot;dep&quot;</span><span class="p">,</span>
+    <span class="n">fn_out</span><span class="o">=</span><span class="s2">"basemap.png"</span><span class="p">,</span>
+    <span class="n">variable</span><span class="o">=</span><span class="s2">"dep"</span><span class="p">,</span>
     <span class="n">plot_geoms</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span>
+    <span class="n">bmap</span><span class="o">=</span><span class="s2">"sat"</span><span class="p">,</span>
     <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>

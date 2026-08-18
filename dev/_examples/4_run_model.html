@@ -535,15 +535,15 @@
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="c1"># ── Adjust these two paths ────────────────────────────────────────────────────</span>
-<span class="n">model_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;./sfincs_compound&quot;</span><span class="p">)</span>  <span class="c1"># folder containing sfincs.inp</span>
-<span class="n">sfincs_exe_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;../sfincs_exe&quot;</span><span class="p">)</span>  <span class="c1"># folder containing sfincs.exe</span>
+<span class="n">model_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"./sfincs_compound"</span><span class="p">)</span>  <span class="c1"># folder containing sfincs.inp</span>
+<span class="n">sfincs_exe_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"../sfincs_exe"</span><span class="p">)</span>  <span class="c1"># folder containing sfincs.exe</span>
 <span class="c1"># ─────────────────────────────────────────────────────────────────────────────</span>
 
-<span class="n">sfincs_exe</span> <span class="o">=</span> <span class="n">sfincs_exe_dir</span> <span class="o">/</span> <span class="s2">&quot;sfincs.exe&quot;</span>  <span class="c1"># full path — used by run_sfincs</span>
+<span class="n">sfincs_exe</span> <span class="o">=</span> <span class="n">sfincs_exe_dir</span> <span class="o">/</span> <span class="s2">"sfincs.exe"</span>  <span class="c1"># full path — used by run_sfincs</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model folder  : </span><span class="si">{</span><span class="n">model_root</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Executable    : </span><span class="si">{</span><span class="n">sfincs_exe</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Exe found     : </span><span class="si">{</span><span class="n">sfincs_exe</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Model folder  : </span><span class="si">{</span><span class="n">model_root</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Executable    : </span><span class="si">{</span><span class="n">sfincs_exe</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Exe found     : </span><span class="si">{</span><span class="n">sfincs_exe</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -575,13 +575,13 @@ Exe found     : False
 <span class="c1"># Open the model read-only and pass the executable folder</span>
 <span class="n">sf</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span>
     <span class="n">root</span><span class="o">=</span><span class="n">model_root</span><span class="p">,</span>
-    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">,</span>
+    <span class="n">mode</span><span class="o">=</span><span class="s2">"r"</span><span class="p">,</span>
     <span class="n">exe_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">sfincs_exe_dir</span><span class="p">),</span>  <span class="c1"># folder — SfincsModel appends sfincs.exe internally</span>
 <span class="p">)</span>
 
 <span class="n">bat_file</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">write_batch_file</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Launcher written : </span><span class="si">{</span><span class="n">bat_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Contents:</span><span class="se">\n</span><span class="si">{</span><span class="n">bat_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Launcher written : </span><span class="si">{</span><span class="n">bat_file</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Contents:</span><span class="se">\n</span><span class="si">{</span><span class="n">bat_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -609,10 +609,10 @@ export HDF5_USE_FILE_LOCKING=FALSE
 </div>
 <blockquote>
 <div><p><strong>Alternative — write the batch file manually</strong> (no model object needed):</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bat_file</span> <span class="o">=</span> <span class="n">model_root</span> <span class="o">/</span> <span class="s1">&#39;run.bat&#39;</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bat_file</span> <span class="o">=</span> <span class="n">model_root</span> <span class="o">/</span> <span class="s1">'run.bat'</span>
 <span class="n">bat_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
-    <span class="sa">f</span><span class="s1">&#39;set HDF5_USE_FILE_LOCKING=FALSE</span><span class="se">\n</span><span class="s1">&quot;</span><span class="si">{</span><span class="n">sfincs_exe</span><span class="si">}</span><span class="s1">&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span>
-    <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;ascii&#39;</span><span class="p">,</span>
+    <span class="sa">f</span><span class="s1">'set HDF5_USE_FILE_LOCKING=FALSE</span><span class="se">\n</span><span class="s1">"</span><span class="si">{</span><span class="n">sfincs_exe</span><span class="si">}</span><span class="s1">"</span><span class="se">\n</span><span class="s1">'</span><span class="p">,</span>
+    <span class="n">encoding</span><span class="o">=</span><span class="s1">'ascii'</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -668,8 +668,8 @@ export HDF5_USE_FILE_LOCKING=FALSE
         <span class="n">sfincs_exe</span><span class="o">=</span><span class="n">sfincs_exe</span><span class="p">,</span>  <span class="c1"># full path to sfincs.exe</span>
     <span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Skipping: executable not found at </span><span class="si">{</span><span class="n">sfincs_exe</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Download from: https://download.deltares.nl/en/download/sfincs/&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Skipping: executable not found at </span><span class="si">{</span><span class="n">sfincs_exe</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Download from: https://download.deltares.nl/en/download/sfincs/"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -709,17 +709,17 @@ Download from: https://download.deltares.nl/en/download/sfincs/
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># run_sfincs writes sfincs_log.txt; the SFINCS binary itself writes sfincs.log</span>
-<span class="n">log_file</span> <span class="o">=</span> <span class="n">model_root</span> <span class="o">/</span> <span class="s2">&quot;sfincs_log.txt&quot;</span>
+<span class="n">log_file</span> <span class="o">=</span> <span class="n">model_root</span> <span class="o">/</span> <span class="s2">"sfincs_log.txt"</span>
 <span class="k">if</span> <span class="ow">not</span> <span class="n">log_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-    <span class="n">log_file</span> <span class="o">=</span> <span class="n">model_root</span> <span class="o">/</span> <span class="s2">&quot;sfincs.log&quot;</span>
+    <span class="n">log_file</span> <span class="o">=</span> <span class="n">model_root</span> <span class="o">/</span> <span class="s2">"sfincs.log"</span>
 
 <span class="k">if</span> <span class="n">log_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-    <span class="n">lines</span> <span class="o">=</span> <span class="n">log_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s2">&quot;replace&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Log: </span><span class="si">{</span><span class="n">log_file</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">  (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span><span class="si">}</span><span class="s2"> lines)&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- Last 20 lines ---&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="o">-</span><span class="mi">20</span><span class="p">:]))</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">log_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s2">"replace"</span><span class="p">)</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Log: </span><span class="si">{</span><span class="n">log_file</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">  (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span><span class="si">}</span><span class="s2"> lines)"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">--- Last 20 lines ---"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="o">-</span><span class="mi">20</span><span class="p">:]))</span>
 <span class="k">else</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No log file found — has the model run yet?&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"No log file found — has the model run yet?"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -778,12 +778,12 @@ Log: sfincs_log.txt  (102 lines)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;sfincs_map.nc&quot;</span><span class="p">,</span> <span class="s2">&quot;sfincs_his.nc&quot;</span><span class="p">]:</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"sfincs_map.nc"</span><span class="p">,</span> <span class="s2">"sfincs_his.nc"</span><span class="p">]:</span>
     <span class="n">fp</span> <span class="o">=</span> <span class="n">model_root</span> <span class="o">/</span> <span class="n">fn</span>
     <span class="k">if</span> <span class="n">fp</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">fp</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e6</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> MB&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">fp</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e6</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> MB"</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2">: NOT FOUND&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2">: NOT FOUND"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

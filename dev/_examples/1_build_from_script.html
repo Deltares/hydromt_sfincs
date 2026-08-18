@@ -521,7 +521,7 @@
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/tmp/ipykernel_4503/4146800926.py:6: DeprecationWarning: importing &#39;log&#39; from &#39;hydromt._utils&#39; is deprecated. use &#39;from hydromt import log&#39; instead.
+/tmp/ipykernel_4620/4146800926.py:6: DeprecationWarning: importing &#39;log&#39; from &#39;hydromt._utils&#39; is deprecated. use &#39;from hydromt import log&#39; instead.
   from hydromt._utils import log
 </pre></div></div>
 </div>
@@ -550,7 +550,7 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model_root</span> <span class="o">=</span> <span class="s2">&quot;tmp_sfincs_compound&quot;</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model_root</span> <span class="o">=</span> <span class="s2">"tmp_sfincs_compound"</span>
 
 <span class="c1"># Initialize logging, the lower the log level number, the more verbose (more info) the output</span>
 <span class="c1"># NOTSET=0-9, DEBUG=10, INFO=20, WARNING=30, ERROR=40, CRITICAL=50</span>
@@ -558,14 +558,14 @@
 <span class="n">log</span><span class="o">.</span><span class="n">set_log_level</span><span class="p">(</span><span class="n">log_level</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
 
 <span class="c1"># Add file handler to log to a file</span>
-<span class="n">log_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">model_root</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;hydromt_sfincs.log&quot;</span>
+<span class="n">log_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">model_root</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"hydromt_sfincs.log"</span>
 <span class="n">logger</span> <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">_add_filehandler</span><span class="p">(</span><span class="n">log_file</span><span class="p">)</span>
 
 <span class="c1"># Initialize SfincsModel Python class with the artifact data catalog which contains publically available data for North Italy</span>
 <span class="n">sf</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span>
-    <span class="n">data_libs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;artifact_data&quot;</span><span class="p">],</span>  <span class="c1"># specify which data libraries to use</span>
+    <span class="n">data_libs</span><span class="o">=</span><span class="p">[</span><span class="s2">"artifact_data"</span><span class="p">],</span>  <span class="c1"># specify which data libraries to use</span>
     <span class="n">root</span><span class="o">=</span><span class="n">model_root</span><span class="p">,</span>  <span class="c1"># specify the root directory for the model</span>
-    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w+&quot;</span><span class="p">,</span>  <span class="c1"># specify the mode for opening the model (r=read only, r+=append, w=write, w+=overwrite</span>
+    <span class="n">mode</span><span class="o">=</span><span class="s2">"w+"</span><span class="p">,</span>  <span class="c1"># specify the mode for opening the model (r=read only, r+=append, w=write, w+=overwrite</span>
     <span class="n">write_gis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># specify whether to write GIS data</span>
 <span class="p">)</span>
 </pre></div>
@@ -576,7 +576,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-08-02 10:26:35,960 - hydromt - log - INFO - HydroMT version: 1.4.0
+2026-08-18 09:58:51,656 - hydromt - log - INFO - HydroMT version: 1.4.1
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -609,10 +609,10 @@
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sf</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">create_from_region</span><span class="p">(</span>
-    <span class="n">region</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;geom&quot;</span><span class="p">:</span> <span class="s2">&quot;data/region.geojson&quot;</span><span class="p">},</span>  <span class="c1"># specify the region geometry</span>
+    <span class="n">region</span><span class="o">=</span><span class="p">{</span><span class="s2">"geom"</span><span class="p">:</span> <span class="s2">"data/region.geojson"</span><span class="p">},</span>  <span class="c1"># specify the region geometry</span>
     <span class="n">res</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>  <span class="c1"># specify the resolution</span>
     <span class="n">rotated</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># specify whether the grid is rotated</span>
-    <span class="n">crs</span><span class="o">=</span><span class="s2">&quot;utm&quot;</span><span class="p">,</span>  <span class="c1"># specify the coordinate reference system, when &quot;utm&quot;, the UTM zone is automatically detected</span>
+    <span class="n">crs</span><span class="o">=</span><span class="s2">"utm"</span><span class="p">,</span>  <span class="c1"># specify the coordinate reference system, when "utm", the UTM zone is automatically detected</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -664,11 +664,11 @@
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># show the model grid outline</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span>
-    <span class="n">variable</span><span class="o">=</span><span class="s2">&quot;grid&quot;</span><span class="p">,</span>
+    <span class="n">variable</span><span class="o">=</span><span class="s2">"grid"</span><span class="p">,</span>
     <span class="n">plot_region</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span>
+    <span class="n">bmap</span><span class="o">=</span><span class="s2">"sat"</span><span class="p">,</span>
     <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
-    <span class="n">grid_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;linewidth&quot;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">},</span>
+    <span class="n">grid_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"linewidth"</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">},</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -699,15 +699,15 @@
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># In this example we want to combine 2 elevation datasets, merit_hydro as elevation and gebco as bathymetry, in that order.</span>
-<span class="c1"># NOTE: from the 1st dataset (merit_hydro) only elevation above (&quot;zmin&quot;:0.001) meters is used;</span>
+<span class="c1"># NOTE: from the 1st dataset (merit_hydro) only elevation above ("zmin":0.001) meters is used;</span>
 <span class="c1"># the 2nd elevation dataset (gebco) is used where the 1st dataset returned nodata values</span>
-<span class="n">elevation_list</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;elevation&quot;</span><span class="p">:</span> <span class="s2">&quot;merit_hydro&quot;</span><span class="p">,</span> <span class="s2">&quot;zmin&quot;</span><span class="p">:</span> <span class="mf">0.001</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;elevation&quot;</span><span class="p">:</span> <span class="s2">&quot;gebco&quot;</span><span class="p">}]</span>
+<span class="n">elevation_list</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">"elevation"</span><span class="p">:</span> <span class="s2">"merit_hydro"</span><span class="p">,</span> <span class="s2">"zmin"</span><span class="p">:</span> <span class="mf">0.001</span><span class="p">},</span> <span class="p">{</span><span class="s2">"elevation"</span><span class="p">:</span> <span class="s2">"gebco"</span><span class="p">}]</span>
 
 <span class="c1"># Add depth information to modelgrid based on these chosen datasets</span>
 <span class="n">sf</span><span class="o">.</span><span class="n">elevation</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">elevation_list</span><span class="o">=</span><span class="n">elevation_list</span><span class="p">,</span> <span class="n">buffer_cells</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
 <span class="c1"># Make a plot of the merged topobathy, here colour limits are set between an elevation of -5 to 5 meters</span>
-<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="s2">&quot;dep&quot;</span><span class="p">,</span> <span class="n">plot_region</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="s2">"dep"</span><span class="p">,</span> <span class="n">plot_region</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">"sat"</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -746,7 +746,7 @@
 
 <span class="c1"># # Make a plot of the mask file</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span>
-    <span class="n">variable</span><span class="o">=</span><span class="s2">&quot;mask&quot;</span><span class="p">,</span> <span class="n">plot_region</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span>
+    <span class="n">variable</span><span class="o">=</span><span class="s2">"mask"</span><span class="p">,</span> <span class="n">plot_region</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">"sat"</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -784,7 +784,7 @@
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Here we add water level cells along the coastal boundary, for cells up to an elevation of -5 meters</span>
 <span class="n">sf</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">create_boundary</span><span class="p">(</span>
-    <span class="n">btype</span><span class="o">=</span><span class="s2">&quot;waterlevel&quot;</span><span class="p">,</span>
+    <span class="n">btype</span><span class="o">=</span><span class="s2">"waterlevel"</span><span class="p">,</span>
     <span class="n">zmax</span><span class="o">=-</span><span class="mi">5</span><span class="p">,</span>
     <span class="n">reset_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
@@ -814,10 +814,10 @@
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Here we add outflow cells, only where clicked in shapefile along part of the lateral boundaries</span>
 <span class="n">gdf_include</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
-    <span class="s2">&quot;data//compound_example_outflow_boundary_polygon.geojson&quot;</span>
+    <span class="s2">"data//compound_example_outflow_boundary_polygon.geojson"</span>
 <span class="p">)</span>
 <span class="n">sf</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">create_boundary</span><span class="p">(</span>
-    <span class="n">btype</span><span class="o">=</span><span class="s2">&quot;outflow&quot;</span><span class="p">,</span>
+    <span class="n">btype</span><span class="o">=</span><span class="s2">"outflow"</span><span class="p">,</span>
     <span class="n">include_polygon</span><span class="o">=</span><span class="n">gdf_include</span><span class="p">,</span>
     <span class="n">reset_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
@@ -847,10 +847,10 @@
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Make a plot of the mask file</span>
 <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span>
-    <span class="n">variable</span><span class="o">=</span><span class="s2">&quot;mask&quot;</span><span class="p">,</span> <span class="n">plot_region</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span>
+    <span class="n">variable</span><span class="o">=</span><span class="s2">"mask"</span><span class="p">,</span> <span class="n">plot_region</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">"sat"</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span>
 <span class="p">)</span>
 <span class="c1"># plot the shapefile given by the user as dashed line</span>
-<span class="n">gdf_include</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">sf</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">)</span>
+<span class="n">gdf_include</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">sf</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"k"</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">"--"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -887,10 +887,10 @@
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Some reclass tables are available in the hydromt_sfincs DATADIR</span>
 <span class="c1"># e.g. vito_mapping.csv for vito_2015 landuse classification</span>
-<span class="n">reclass_table</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATADIR</span><span class="p">,</span> <span class="s2">&quot;lulc&quot;</span><span class="p">,</span> <span class="s2">&quot;vito_mapping.csv&quot;</span><span class="p">)</span>
+<span class="n">reclass_table</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATADIR</span><span class="p">,</span> <span class="s2">"lulc"</span><span class="p">,</span> <span class="s2">"vito_mapping.csv"</span><span class="p">)</span>
 
 <span class="c1"># use the river manning raster in combination with vito_2015 land to derive the manning roughness file</span>
-<span class="n">roughness_list</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;lulc&quot;</span><span class="p">:</span> <span class="s2">&quot;vito_2015&quot;</span><span class="p">,</span> <span class="s2">&quot;reclass_table&quot;</span><span class="p">:</span> <span class="n">reclass_table</span><span class="p">}]</span>
+<span class="n">roughness_list</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">"lulc"</span><span class="p">:</span> <span class="s2">"vito_2015"</span><span class="p">,</span> <span class="s2">"reclass_table"</span><span class="p">:</span> <span class="n">reclass_table</span><span class="p">}]</span>
 
 <span class="n">sf</span><span class="o">.</span><span class="n">roughness</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
     <span class="n">roughness_list</span><span class="o">=</span><span class="n">roughness_list</span><span class="p">,</span>
@@ -898,7 +898,7 @@
     <span class="n">manning_sea</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span>
     <span class="n">rgh_lev_land</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># the minimum elevation of the land</span>
 <span class="p">)</span>
-<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="s2">&quot;manning&quot;</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="s2">"manning"</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">"sat"</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -936,10 +936,10 @@
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Repeat elevation and roughness sets for clarity</span>
-<span class="n">elevation_list</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;elevation&quot;</span><span class="p">:</span> <span class="s2">&quot;merit_hydro&quot;</span><span class="p">,</span> <span class="s2">&quot;zmin&quot;</span><span class="p">:</span> <span class="mf">0.001</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;elevation&quot;</span><span class="p">:</span> <span class="s2">&quot;gebco&quot;</span><span class="p">}]</span>
+<span class="n">elevation_list</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">"elevation"</span><span class="p">:</span> <span class="s2">"merit_hydro"</span><span class="p">,</span> <span class="s2">"zmin"</span><span class="p">:</span> <span class="mf">0.001</span><span class="p">},</span> <span class="p">{</span><span class="s2">"elevation"</span><span class="p">:</span> <span class="s2">"gebco"</span><span class="p">}]</span>
 
 <span class="c1"># Roughness sets</span>
-<span class="n">roughness_list</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;lulc&quot;</span><span class="p">:</span> <span class="s2">&quot;vito_2015&quot;</span><span class="p">,</span> <span class="s2">&quot;reclass_table&quot;</span><span class="p">:</span> <span class="n">reclass_table</span><span class="p">}]</span>
+<span class="n">roughness_list</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">"lulc"</span><span class="p">:</span> <span class="s2">"vito_2015"</span><span class="p">,</span> <span class="s2">"reclass_table"</span><span class="p">:</span> <span class="n">reclass_table</span><span class="p">}]</span>
 
 <span class="n">sf</span><span class="o">.</span><span class="n">subgrid</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
     <span class="n">elevation_list</span><span class="o">=</span><span class="n">elevation_list</span><span class="p">,</span>
@@ -985,7 +985,7 @@
 
 <span class="c1"># we can plot the 2D subgrid variables</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span>
-    <span class="n">variable</span><span class="o">=</span><span class="n">sf</span><span class="o">.</span><span class="n">subgrid</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;u_navg&quot;</span><span class="p">],</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span>
+    <span class="n">variable</span><span class="o">=</span><span class="n">sf</span><span class="o">.</span><span class="n">subgrid</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"u_navg"</span><span class="p">],</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">"sat"</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -1026,14 +1026,14 @@
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Change period of model simulation time, specified in yyyymmdd HHMMSS, to match with the available water level data</span>
 <span class="n">sf</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
     <span class="p">{</span>
-        <span class="s2">&quot;tref&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
-        <span class="s2">&quot;tstart&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
-        <span class="s2">&quot;tstop&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
+        <span class="s2">"tref"</span><span class="p">:</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+        <span class="s2">"tstart"</span><span class="p">:</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+        <span class="s2">"tstop"</span><span class="p">:</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
     <span class="p">}</span>
 <span class="p">)</span>
 
 <span class="c1"># From geodataset</span>
-<span class="n">sf</span><span class="o">.</span><span class="n">water_level</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">geodataset</span><span class="o">=</span><span class="s2">&quot;gtsmv3_eu_era5&quot;</span><span class="p">)</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">water_level</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">geodataset</span><span class="o">=</span><span class="s2">"gtsmv3_eu_era5"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -1064,7 +1064,7 @@
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot basemap, in this case boundary points should be added (and plotted because of plot_geoms=True)</span>
 <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span>
-    <span class="n">variable</span><span class="o">=</span><span class="s2">&quot;dep&quot;</span><span class="p">,</span> <span class="n">plot_geoms</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span>
+    <span class="n">variable</span><span class="o">=</span><span class="s2">"dep"</span><span class="p">,</span> <span class="n">plot_geoms</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">"sat"</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span>
 <span class="p">)</span>
 </pre></div>
 </div>

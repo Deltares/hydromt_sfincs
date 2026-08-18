@@ -426,9 +426,9 @@
                 <article class="bd-article">
                   
   <h1>Source code for hydromt_sfincs.sfincs</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""</span>
 <span class="sd">SfincsModel class</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="c1"># %% Import packages</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -506,62 +506,62 @@
 <span class="c1"># output / visualization types:</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.components.output</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsOutput</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SfincsModel&quot;</span><span class="p">]</span>
-<span class="n">__hydromt_eps__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SfincsModel&quot;</span><span class="p">]</span>  <span class="c1"># core entrypoints</span>
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"SfincsModel"</span><span class="p">]</span>
+<span class="n">__hydromt_eps__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"SfincsModel"</span><span class="p">]</span>  <span class="c1"># core entrypoints</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
 <span class="c1"># %% SfincsModel class - in V1 style:</span>
 <div class="viewcode-block" id="SfincsModel">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.html#hydromt_sfincs.SfincsModel">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SfincsModel</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;SFINCS model class.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""SFINCS model class."""</span>
 
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sfincs&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"sfincs"</span>
 
     <span class="c1"># Grouped component definitions</span>
-    <span class="n">_CONFIG_COMPONENTS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;config&quot;</span><span class="p">:</span> <span class="n">SfincsConfig</span><span class="p">}</span>
+    <span class="n">_CONFIG_COMPONENTS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"config"</span><span class="p">:</span> <span class="n">SfincsConfig</span><span class="p">}</span>
     <span class="n">_GRID_COMPONENTS</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;grid&quot;</span><span class="p">:</span> <span class="n">SfincsGrid</span><span class="p">,</span>
-        <span class="s2">&quot;elevation&quot;</span><span class="p">:</span> <span class="n">SfincsElevation</span><span class="p">,</span>
-        <span class="s2">&quot;mask&quot;</span><span class="p">:</span> <span class="n">SfincsMask</span><span class="p">,</span>
-        <span class="s2">&quot;infiltration&quot;</span><span class="p">:</span> <span class="n">SfincsInfiltration</span><span class="p">,</span>
-        <span class="s2">&quot;roughness&quot;</span><span class="p">:</span> <span class="n">SfincsRoughness</span><span class="p">,</span>
-        <span class="s2">&quot;storage_volume&quot;</span><span class="p">:</span> <span class="n">SfincsStorageVolume</span><span class="p">,</span>
-        <span class="s2">&quot;subgrid&quot;</span><span class="p">:</span> <span class="n">SfincsSubgridTable</span><span class="p">,</span>
-        <span class="s2">&quot;initial_conditions&quot;</span><span class="p">:</span> <span class="n">SfincsInitialConditions</span><span class="p">,</span>
+        <span class="s2">"grid"</span><span class="p">:</span> <span class="n">SfincsGrid</span><span class="p">,</span>
+        <span class="s2">"elevation"</span><span class="p">:</span> <span class="n">SfincsElevation</span><span class="p">,</span>
+        <span class="s2">"mask"</span><span class="p">:</span> <span class="n">SfincsMask</span><span class="p">,</span>
+        <span class="s2">"infiltration"</span><span class="p">:</span> <span class="n">SfincsInfiltration</span><span class="p">,</span>
+        <span class="s2">"roughness"</span><span class="p">:</span> <span class="n">SfincsRoughness</span><span class="p">,</span>
+        <span class="s2">"storage_volume"</span><span class="p">:</span> <span class="n">SfincsStorageVolume</span><span class="p">,</span>
+        <span class="s2">"subgrid"</span><span class="p">:</span> <span class="n">SfincsSubgridTable</span><span class="p">,</span>
+        <span class="s2">"initial_conditions"</span><span class="p">:</span> <span class="n">SfincsInitialConditions</span><span class="p">,</span>
     <span class="p">}</span>
     <span class="n">_QUADTREE_COMPONENTS</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;quadtree_grid&quot;</span><span class="p">:</span> <span class="n">SfincsQuadtreeGrid</span><span class="p">,</span>
-        <span class="s2">&quot;quadtree_elevation&quot;</span><span class="p">:</span> <span class="n">SfincsQuadtreeElevation</span><span class="p">,</span>
-        <span class="s2">&quot;quadtree_mask&quot;</span><span class="p">:</span> <span class="n">SfincsQuadtreeMask</span><span class="p">,</span>
-        <span class="s2">&quot;quadtree_roughness&quot;</span><span class="p">:</span> <span class="n">SfincsQuadtreeRoughness</span><span class="p">,</span>
-        <span class="s2">&quot;quadtree_infiltration&quot;</span><span class="p">:</span> <span class="n">SfincsQuadtreeInfiltration</span><span class="p">,</span>
-        <span class="s2">&quot;quadtree_storage_volume&quot;</span><span class="p">:</span> <span class="n">SfincsQuadtreeStorageVolume</span><span class="p">,</span>
-        <span class="s2">&quot;quadtree_initial_conditions&quot;</span><span class="p">:</span> <span class="n">SfincsQuadtreeInitialConditions</span><span class="p">,</span>
-        <span class="s2">&quot;quadtree_subgrid&quot;</span><span class="p">:</span> <span class="n">SfincsQuadtreeSubgridTable</span><span class="p">,</span>
-        <span class="s2">&quot;quadtree_snapwave_mask&quot;</span><span class="p">:</span> <span class="n">SnapWaveQuadtreeMask</span><span class="p">,</span>
+        <span class="s2">"quadtree_grid"</span><span class="p">:</span> <span class="n">SfincsQuadtreeGrid</span><span class="p">,</span>
+        <span class="s2">"quadtree_elevation"</span><span class="p">:</span> <span class="n">SfincsQuadtreeElevation</span><span class="p">,</span>
+        <span class="s2">"quadtree_mask"</span><span class="p">:</span> <span class="n">SfincsQuadtreeMask</span><span class="p">,</span>
+        <span class="s2">"quadtree_roughness"</span><span class="p">:</span> <span class="n">SfincsQuadtreeRoughness</span><span class="p">,</span>
+        <span class="s2">"quadtree_infiltration"</span><span class="p">:</span> <span class="n">SfincsQuadtreeInfiltration</span><span class="p">,</span>
+        <span class="s2">"quadtree_storage_volume"</span><span class="p">:</span> <span class="n">SfincsQuadtreeStorageVolume</span><span class="p">,</span>
+        <span class="s2">"quadtree_initial_conditions"</span><span class="p">:</span> <span class="n">SfincsQuadtreeInitialConditions</span><span class="p">,</span>
+        <span class="s2">"quadtree_subgrid"</span><span class="p">:</span> <span class="n">SfincsQuadtreeSubgridTable</span><span class="p">,</span>
+        <span class="s2">"quadtree_snapwave_mask"</span><span class="p">:</span> <span class="n">SnapWaveQuadtreeMask</span><span class="p">,</span>
     <span class="p">}</span>
     <span class="n">_GEOMETRY_COMPONENTS</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;observation_points&quot;</span><span class="p">:</span> <span class="n">SfincsObservationPoints</span><span class="p">,</span>
-        <span class="s2">&quot;cross_sections&quot;</span><span class="p">:</span> <span class="n">SfincsCrossSections</span><span class="p">,</span>
-        <span class="s2">&quot;runup_gauges&quot;</span><span class="p">:</span> <span class="n">SfincsRunupGauges</span><span class="p">,</span>
-        <span class="s2">&quot;thin_dams&quot;</span><span class="p">:</span> <span class="n">SfincsThinDams</span><span class="p">,</span>
-        <span class="s2">&quot;weirs&quot;</span><span class="p">:</span> <span class="n">SfincsWeirs</span><span class="p">,</span>
-        <span class="s2">&quot;wave_makers&quot;</span><span class="p">:</span> <span class="n">SfincsWaveMakers</span><span class="p">,</span>
-        <span class="s2">&quot;drainage_structures&quot;</span><span class="p">:</span> <span class="n">SfincsDrainageStructures</span><span class="p">,</span>
+        <span class="s2">"observation_points"</span><span class="p">:</span> <span class="n">SfincsObservationPoints</span><span class="p">,</span>
+        <span class="s2">"cross_sections"</span><span class="p">:</span> <span class="n">SfincsCrossSections</span><span class="p">,</span>
+        <span class="s2">"runup_gauges"</span><span class="p">:</span> <span class="n">SfincsRunupGauges</span><span class="p">,</span>
+        <span class="s2">"thin_dams"</span><span class="p">:</span> <span class="n">SfincsThinDams</span><span class="p">,</span>
+        <span class="s2">"weirs"</span><span class="p">:</span> <span class="n">SfincsWeirs</span><span class="p">,</span>
+        <span class="s2">"wave_makers"</span><span class="p">:</span> <span class="n">SfincsWaveMakers</span><span class="p">,</span>
+        <span class="s2">"drainage_structures"</span><span class="p">:</span> <span class="n">SfincsDrainageStructures</span><span class="p">,</span>
     <span class="p">}</span>
     <span class="n">_FORCING_COMPONENTS</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;rivers&quot;</span><span class="p">:</span> <span class="n">SfincsRivers</span><span class="p">,</span>
-        <span class="s2">&quot;river_boundary_points&quot;</span><span class="p">:</span> <span class="n">SfincsRiverBoundaryPoints</span><span class="p">,</span>
-        <span class="s2">&quot;water_level&quot;</span><span class="p">:</span> <span class="n">SfincsWaterLevel</span><span class="p">,</span>
-        <span class="s2">&quot;discharge_points&quot;</span><span class="p">:</span> <span class="n">SfincsDischargePoints</span><span class="p">,</span>
-        <span class="s2">&quot;snapwave_boundary_conditions&quot;</span><span class="p">:</span> <span class="n">SnapWaveBoundaryConditions</span><span class="p">,</span>
-        <span class="s2">&quot;precipitation&quot;</span><span class="p">:</span> <span class="n">SfincsPrecipitation</span><span class="p">,</span>
-        <span class="s2">&quot;pressure&quot;</span><span class="p">:</span> <span class="n">SfincsPressure</span><span class="p">,</span>
-        <span class="s2">&quot;wind&quot;</span><span class="p">:</span> <span class="n">SfincsWind</span><span class="p">,</span>
+        <span class="s2">"rivers"</span><span class="p">:</span> <span class="n">SfincsRivers</span><span class="p">,</span>
+        <span class="s2">"river_boundary_points"</span><span class="p">:</span> <span class="n">SfincsRiverBoundaryPoints</span><span class="p">,</span>
+        <span class="s2">"water_level"</span><span class="p">:</span> <span class="n">SfincsWaterLevel</span><span class="p">,</span>
+        <span class="s2">"discharge_points"</span><span class="p">:</span> <span class="n">SfincsDischargePoints</span><span class="p">,</span>
+        <span class="s2">"snapwave_boundary_conditions"</span><span class="p">:</span> <span class="n">SnapWaveBoundaryConditions</span><span class="p">,</span>
+        <span class="s2">"precipitation"</span><span class="p">:</span> <span class="n">SfincsPrecipitation</span><span class="p">,</span>
+        <span class="s2">"pressure"</span><span class="p">:</span> <span class="n">SfincsPressure</span><span class="p">,</span>
+        <span class="s2">"wind"</span><span class="p">:</span> <span class="n">SfincsWind</span><span class="p">,</span>
     <span class="p">}</span>
-    <span class="n">_OUTPUT_COMPONENTS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;output&quot;</span><span class="p">:</span> <span class="n">SfincsOutput</span><span class="p">}</span>
+    <span class="n">_OUTPUT_COMPONENTS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"output"</span><span class="p">:</span> <span class="n">SfincsOutput</span><span class="p">}</span>
 
     <span class="c1"># Combine all component dictionaries</span>
     <span class="n">_ALL_COMPONENTS</span> <span class="o">=</span> <span class="p">{</span>
@@ -582,13 +582,13 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span>
+        <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"w"</span><span class="p">,</span>
         <span class="n">write_gis</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">data_libs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">exe_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">catalog_keys</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        The SFINCS model class (SfincsModel) contains methods to read, write, setup and edit</span>
 <span class="sd">        `SFINCS &lt;https://sfincs.readthedocs.io/en/latest/&gt;`_ models.</span>
 
@@ -596,8 +596,8 @@
 <span class="sd">        ----------</span>
 <span class="sd">        root: str, Path, optional</span>
 <span class="sd">            Path to model folder</span>
-<span class="sd">        mode: {&#39;w&#39;, &#39;r+&#39;, &#39;r&#39;}</span>
-<span class="sd">            Open model in write, append or reading mode, by default &#39;w&#39;</span>
+<span class="sd">        mode: {'w', 'r+', 'r'}</span>
+<span class="sd">            Open model in write, append or reading mode, by default 'w'</span>
 <span class="sd">        write_gis: bool</span>
 <span class="sd">            Write model files additionally to geotiff and geojson, by default True</span>
 <span class="sd">        data_libs: List, str</span>
@@ -607,7 +607,7 @@
 <span class="sd">            :meth:`write_batch_file`. Defaults to ``None``.</span>
 <span class="sd">        **catalog_keys:</span>
 <span class="sd">            Additional keyword arguments to be passed down to the DataCatalog.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="c1"># define some default model properties</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_grid_type</span> <span class="o">=</span> <span class="kc">None</span>
@@ -628,11 +628,11 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Close the model and remove the logger file handler.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Close the model and remove the logger file handler."""</span>
         <span class="k">for</span> <span class="n">handler</span> <span class="ow">in</span> <span class="n">logger</span><span class="o">.</span><span class="n">handlers</span><span class="p">:</span>
             <span class="k">if</span> <span class="p">(</span>
                 <span class="nb">isinstance</span><span class="p">(</span><span class="n">handler</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">)</span>
-                <span class="ow">and</span> <span class="s2">&quot;hydromt.log&quot;</span> <span class="ow">in</span> <span class="n">handler</span><span class="o">.</span><span class="n">baseFilename</span>
+                <span class="ow">and</span> <span class="s2">"hydromt.log"</span> <span class="ow">in</span> <span class="n">handler</span><span class="o">.</span><span class="n">baseFilename</span>
             <span class="p">):</span>
                 <span class="n">handler</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">removeHandler</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span>
@@ -649,47 +649,47 @@
     <span class="c1">## Real properties of the model ##</span>
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">grid_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the grid type of the model.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Returns the grid type of the model."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grid_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_grid_type</span> <span class="o">=</span> <span class="s2">&quot;regular&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_grid_type</span> <span class="o">=</span> <span class="s2">"regular"</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">is_reading_mode</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grid_type</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">crs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CRS</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the model crs&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Returns the model crs"""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"regular"</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">crs</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"quadtree"</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">crs</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">region</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the geometry of the active model cells.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Returns the geometry of the active model cells."""</span>
         <span class="c1"># NOTE overwrites property in GridModel</span>
         <span class="n">region</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">()</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"regular"</span><span class="p">:</span>
             <span class="n">region</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">region</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"quadtree"</span><span class="p">:</span>
             <span class="n">region</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">exterior</span>
         <span class="k">return</span> <span class="n">region</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the bounding box of the model grid.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Returns the bounding box of the model grid."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"regular"</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">empty_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">bounds</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"quadtree"</span><span class="p">:</span>
             <span class="c1"># By are we getting the total bounds of the mask and not the grid?</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">empty_mask</span><span class="o">.</span><span class="n">ugrid</span><span class="o">.</span><span class="n">total_bounds</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">bbox</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the bounding box in WGS 84 of the model grid.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Returns the bounding box in WGS 84 of the model grid."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"regular"</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">empty_mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform_bounds</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"quadtree"</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">empty_mask</span><span class="o">.</span><span class="n">ugrid</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span><span class="o">.</span><span class="n">ugrid</span><span class="o">.</span><span class="n">total_bounds</span>
 
     <span class="c1">## I/O</span>
@@ -697,37 +697,37 @@
 <div class="viewcode-block" id="SfincsModel.read">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read.html#hydromt_sfincs.SfincsModel.read">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read SfincsModel from disk.</span>
+<span class="w">        </span><span class="sd">"""Read SfincsModel from disk.</span>
 
 <span class="sd">        This methods determines the grid type from the configuration file (sfincs.inp),</span>
 <span class="sd">        and reads all relevant components that are described in the config accordingly.</span>
 
 <span class="sd">        For more information, see specific component read methods.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="c1"># always read config first</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">comp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;config&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"config"</span><span class="p">:</span>
                 <span class="k">continue</span>  <span class="c1"># skip config</span>
-            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_QUADTREE_GRID_NAMES</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"regular"</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_QUADTREE_GRID_NAMES</span><span class="p">:</span>
                 <span class="c1"># skip reading quadtree components if grid_type is regular</span>
                 <span class="k">continue</span>
-            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_REGULAR_GRID_NAMES</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"quadtree"</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_REGULAR_GRID_NAMES</span><span class="p">:</span>
                 <span class="c1"># skip reading regular grid components if grid_type is quadtree</span>
                 <span class="k">continue</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">comp</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not read component </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not read component </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
                 <span class="k">continue</span></div>
 
 
 <div class="viewcode-block" id="SfincsModel.write">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.write.html#hydromt_sfincs.SfincsModel.write">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">write_batch_file</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write SfincsModel to disk.</span>
+<span class="w">        </span><span class="sd">"""Write SfincsModel to disk.</span>
 
 <span class="sd">        This methods writes all components that actually contain data to the specified</span>
 <span class="sd">        model root folder. Finally, the configuration file (sfincs.inp) is written.</span>
@@ -741,7 +741,7 @@
 <span class="sd">            set. Default ``False``.</span>
 
 <span class="sd">        For more information, see specific component write methods.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="c1"># Resolve grid_type before iteration: accessing it may trigger config.read()</span>
         <span class="c1"># which pops unused grid components from self.components, mutating the</span>
@@ -750,11 +750,11 @@
 
         <span class="c1"># TODO make sure that all components are in the config (in their individual write functions?)</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">comp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;config&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"config"</span><span class="p">:</span>
                 <span class="k">continue</span>
-            <span class="k">elif</span> <span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_QUADTREE_GRID_NAMES</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"regular"</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_QUADTREE_GRID_NAMES</span><span class="p">:</span>
                 <span class="k">continue</span>
-            <span class="k">elif</span> <span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_REGULAR_GRID_NAMES</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"quadtree"</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_REGULAR_GRID_NAMES</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="n">comp</span><span class="o">.</span><span class="n">write</span><span class="p">()</span>
 
@@ -765,8 +765,8 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_gis</span><span class="p">:</span>
             <span class="n">writers</span><span class="o">.</span><span class="n">write_vector</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
-                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;region&quot;</span><span class="p">,</span>
-                <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;gis&quot;</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"region"</span><span class="p">,</span>
+                <span class="n">root</span><span class="o">=</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">"gis"</span><span class="p">),</span>
             <span class="p">)</span>
 
         <span class="c1"># Optional launcher script (opt-in; DDB passes True explicitly).</span>
@@ -775,7 +775,7 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write_batch_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write a platform-appropriate launcher script for SFINCS.</span>
+<span class="w">        </span><span class="sd">"""Write a platform-appropriate launcher script for SFINCS.</span>
 
 <span class="sd">        On Windows this emits ``run.bat`` (``set HDF5_USE_FILE_LOCKING``);</span>
 <span class="sd">        on Linux / macOS it emits ``run.sh`` (``#!/bin/bash`` + ``export``</span>
@@ -792,28 +792,28 @@
 <span class="sd">        -------</span>
 <span class="sd">        Path</span>
 <span class="sd">            The path of the written launcher script.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">exe_path</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;exe_path not set on SfincsModel; cannot write launcher script.&quot;</span>
+                <span class="s2">"exe_path not set on SfincsModel; cannot write launcher script."</span>
             <span class="p">)</span>
-        <span class="n">is_windows</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;nt&quot;</span>
+        <span class="n">is_windows</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">"nt"</span>
         <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;run.bat&quot;</span> <span class="k">if</span> <span class="n">is_windows</span> <span class="k">else</span> <span class="s2">&quot;run.sh&quot;</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="s2">"run.bat"</span> <span class="k">if</span> <span class="n">is_windows</span> <span class="k">else</span> <span class="s2">"run.sh"</span>
         <span class="n">script_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">)</span> <span class="o">/</span> <span class="n">filename</span>
         <span class="k">if</span> <span class="n">is_windows</span><span class="p">:</span>
-            <span class="n">exe</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exe_path</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;sfincs.exe&quot;</span>
+            <span class="n">exe</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exe_path</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"sfincs.exe"</span>
             <span class="n">script_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
-                <span class="s2">&quot;set HDF5_USE_FILE_LOCKING=FALSE</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">exe</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;ascii&quot;</span><span class="p">,</span>
+                <span class="s2">"set HDF5_USE_FILE_LOCKING=FALSE</span><span class="se">\n</span><span class="s2">"</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">exe</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">encoding</span><span class="o">=</span><span class="s2">"ascii"</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">exe</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exe_path</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;sfincs&quot;</span>
+            <span class="n">exe</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exe_path</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"sfincs"</span>
             <span class="n">script_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
-                <span class="s2">&quot;#!/bin/bash</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="s2">&quot;export HDF5_USE_FILE_LOCKING=FALSE</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="sa">f</span><span class="s1">&#39;&quot;</span><span class="si">{</span><span class="n">exe</span><span class="si">}</span><span class="s1">&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span>
-                <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;ascii&quot;</span><span class="p">,</span>
+                <span class="s2">"#!/bin/bash</span><span class="se">\n</span><span class="s2">"</span> <span class="s2">"export HDF5_USE_FILE_LOCKING=FALSE</span><span class="se">\n</span><span class="s2">"</span> <span class="sa">f</span><span class="s1">'"</span><span class="si">{</span><span class="n">exe</span><span class="si">}</span><span class="s1">"</span><span class="se">\n</span><span class="s1">'</span><span class="p">,</span>
+                <span class="n">encoding</span><span class="o">=</span><span class="s2">"ascii"</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="c1"># Mark executable (ignore on systems that don&#39;t support it).</span>
+            <span class="c1"># Mark executable (ignore on systems that don't support it).</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">st</span> <span class="o">=</span> <span class="n">script_path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mode</span>
                 <span class="n">script_path</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">st</span> <span class="o">|</span> <span class="mo">0o111</span><span class="p">)</span>
@@ -822,19 +822,19 @@
         <span class="k">return</span> <span class="n">script_path</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">clear_spatial_components</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear all spatial components.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Clear all spatial components."""</span>
         <span class="c1"># TODO if we want this, all components should have a clear method</span>
         <span class="k">return</span>
         <span class="c1"># Do something like this</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">comp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span> <span class="s2">&quot;clear&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span> <span class="s2">"clear"</span><span class="p">):</span>
                 <span class="n">comp</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
     <span class="c1">## Plotting</span>
 <div class="viewcode-block" id="SfincsModel.plot_forcing">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.plot_forcing.html#hydromt_sfincs.SfincsModel.plot_forcing">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">plot_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">forcings</span><span class="o">=</span><span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Plot model timeseries forcing.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">forcings</span><span class="o">=</span><span class="s2">"all"</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Plot model timeseries forcing.</span>
 
 <span class="sd">        For distributed forcing a spatial avarage, minimum or maximum is plotted.</span>
 
@@ -845,8 +845,8 @@
 <span class="sd">            If a basename is given it is saved to &lt;model_root&gt;/figs/&lt;fn_out&gt;</span>
 <span class="sd">            If None, no file is saved.</span>
 <span class="sd">        forcings : str</span>
-<span class="sd">            List of forcings to plot, by default &#39;all&#39;.</span>
-<span class="sd">            If &#39;all&#39;, all available forcings are plotted.</span>
+<span class="sd">            List of forcings to plot, by default 'all'.</span>
+<span class="sd">            If 'all', all available forcings are plotted.</span>
 <span class="sd">            See :py:attr:`~hydromt_sfincs.SfincsModel.forcing.keys()`</span>
 <span class="sd">            for available forcings.</span>
 <span class="sd">        **kwargs : dict</span>
@@ -857,35 +857,35 @@
 <span class="sd">        -------</span>
 <span class="sd">        fig, axes</span>
 <span class="sd">            Model fig and ax objects</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.dates</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mdates</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
         <span class="n">_FORCING</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;water_level&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;bzs&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;waterlevel&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;m+ref&quot;</span><span class="p">},</span>
-                <span class="s2">&quot;bzi&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;wave height&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;m&quot;</span><span class="p">},</span>
+            <span class="s2">"water_level"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"bzs"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"standard_name"</span><span class="p">:</span> <span class="s2">"waterlevel"</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"m+ref"</span><span class="p">},</span>
+                <span class="s2">"bzi"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"standard_name"</span><span class="p">:</span> <span class="s2">"wave height"</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"m"</span><span class="p">},</span>
             <span class="p">},</span>
-            <span class="s2">&quot;discharge_points&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;dis&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;discharge&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;m3.s-1&quot;</span><span class="p">},</span>
+            <span class="s2">"discharge_points"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"dis"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"standard_name"</span><span class="p">:</span> <span class="s2">"discharge"</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"m3.s-1"</span><span class="p">},</span>
             <span class="p">},</span>
-            <span class="s2">&quot;precipitation&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;precip&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;precipitation&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;mm.hr-1&quot;</span><span class="p">},</span>
-                <span class="s2">&quot;precip_2d&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;precipitation&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;mm.hr-1&quot;</span><span class="p">},</span>
+            <span class="s2">"precipitation"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"precip"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"standard_name"</span><span class="p">:</span> <span class="s2">"precipitation"</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"mm.hr-1"</span><span class="p">},</span>
+                <span class="s2">"precip_2d"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"standard_name"</span><span class="p">:</span> <span class="s2">"precipitation"</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"mm.hr-1"</span><span class="p">},</span>
             <span class="p">},</span>
-            <span class="s2">&quot;pressure&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;press_2d&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;barometric pressure&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;Pa&quot;</span><span class="p">},</span>
+            <span class="s2">"pressure"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"press_2d"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"standard_name"</span><span class="p">:</span> <span class="s2">"barometric pressure"</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"Pa"</span><span class="p">},</span>
             <span class="p">},</span>
-            <span class="s2">&quot;wind&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;wind&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;wind&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;m/s&quot;</span><span class="p">},</span>
-                <span class="s2">&quot;wind10_u&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;eastward wind&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;m/s&quot;</span><span class="p">},</span>
-                <span class="s2">&quot;wind10_v&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;northward wind&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;m/s&quot;</span><span class="p">},</span>
+            <span class="s2">"wind"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"wind"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"standard_name"</span><span class="p">:</span> <span class="s2">"wind"</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"m/s"</span><span class="p">},</span>
+                <span class="s2">"wind10_u"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"standard_name"</span><span class="p">:</span> <span class="s2">"eastward wind"</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"m/s"</span><span class="p">},</span>
+                <span class="s2">"wind10_v"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"standard_name"</span><span class="p">:</span> <span class="s2">"northward wind"</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"m/s"</span><span class="p">},</span>
             <span class="p">},</span>
-            <span class="s2">&quot;snapwave_boundary_conditions&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;hs&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;significant wave height&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;m&quot;</span><span class="p">},</span>
-                <span class="s2">&quot;tp&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;peak wave period&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;s&quot;</span><span class="p">},</span>
-                <span class="s2">&quot;wd&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;wave direction&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;nautical degrees&quot;</span><span class="p">},</span>
-                <span class="s2">&quot;ds&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;wave direction spread&quot;</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;degrees&quot;</span><span class="p">},</span>
+            <span class="s2">"snapwave_boundary_conditions"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"hs"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"standard_name"</span><span class="p">:</span> <span class="s2">"significant wave height"</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"m"</span><span class="p">},</span>
+                <span class="s2">"tp"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"standard_name"</span><span class="p">:</span> <span class="s2">"peak wave period"</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"s"</span><span class="p">},</span>
+                <span class="s2">"wd"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"standard_name"</span><span class="p">:</span> <span class="s2">"wave direction"</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"nautical degrees"</span><span class="p">},</span>
+                <span class="s2">"ds"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"standard_name"</span><span class="p">:</span> <span class="s2">"wave direction spread"</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"degrees"</span><span class="p">},</span>
             <span class="p">},</span>
         <span class="p">}</span>
 
@@ -893,7 +893,7 @@
         <span class="k">for</span> <span class="n">component</span><span class="p">,</span> <span class="n">vars_dict</span> <span class="ow">in</span> <span class="n">_FORCING</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">component</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">comp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">component</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">comp</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">comp</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">):</span>
                     <span class="k">continue</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="n">comp</span><span class="o">.</span><span class="n">data</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
@@ -930,13 +930,13 @@
             <span class="c1"># save figure</span>
             <span class="k">if</span> <span class="n">fn_out</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isabs</span><span class="p">(</span><span class="n">fn_out</span><span class="p">):</span>
-                    <span class="n">fn_out</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;figs&quot;</span><span class="p">,</span> <span class="n">fn_out</span><span class="p">)</span>
+                    <span class="n">fn_out</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">"figs"</span><span class="p">,</span> <span class="n">fn_out</span><span class="p">)</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">fn_out</span><span class="p">)):</span>
                     <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">fn_out</span><span class="p">))</span>
-                <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">fn_out</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">225</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">fn_out</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">225</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">"tight"</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No forcing found in model.&quot;</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No forcing found in model."</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SfincsModel.plot_basemap">
@@ -944,13 +944,13 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">plot_basemap</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">fn_out</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">variable</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;elevation&quot;</span><span class="p">,</span>
+        <span class="n">variable</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"elevation"</span><span class="p">,</span>
         <span class="n">shaded</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">plot_bounds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">plot_region</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">plot_geoms</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">bmap</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">zoomlevel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+        <span class="n">zoomlevel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="s2">"auto"</span><span class="p">,</span>
         <span class="n">figsize</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">geom_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">geom_kwargs</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="p">{},</span>
@@ -958,7 +958,7 @@
         <span class="n">legend_kwargs</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="p">{},</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create basemap plot.</span>
+<span class="w">        </span><span class="sd">"""Create basemap plot.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -967,10 +967,10 @@
 <span class="sd">            If a basename is given it is saved to &lt;model_root&gt;/figs/&lt;fn_out&gt;</span>
 <span class="sd">            If None, no file is saved.</span>
 <span class="sd">        variable : str, xr.DataArray, optional</span>
-<span class="sd">            Map of variable in ds to plot, by default &#39;dep&#39;</span>
+<span class="sd">            Map of variable in ds to plot, by default 'dep'</span>
 <span class="sd">            Alternatively, provide a xr.DataArray</span>
 <span class="sd">        shaded : bool, optional</span>
-<span class="sd">            Add shade to variable (only for variable = &#39;dep&#39; and non-rotated grids),</span>
+<span class="sd">            Add shade to variable (only for variable = 'dep' and non-rotated grids),</span>
 <span class="sd">            by default False</span>
 <span class="sd">        plot_bounds : bool, optional</span>
 <span class="sd">            Add waterlevel (mask=2) and open (mask=3) boundary conditions to plot.</span>
@@ -980,20 +980,20 @@
 <span class="sd">            If True, plot available geoms.</span>
 <span class="sd">        bmap : str, optional</span>
 <span class="sd">            background map souce name, by default None.</span>
-<span class="sd">            Default image tiles &quot;sat&quot;, and &quot;osm&quot; are fetched from cartopy image tiles.</span>
+<span class="sd">            Default image tiles "sat", and "osm" are fetched from cartopy image tiles.</span>
 <span class="sd">            If contextily is installed, xyzproviders tiles can be used as well.</span>
 <span class="sd">        zoomlevel : int, optional</span>
-<span class="sd">            zoomlevel, by default &#39;auto&#39;</span>
+<span class="sd">            zoomlevel, by default 'auto'</span>
 <span class="sd">        figsize : Tuple[int], optional</span>
 <span class="sd">            figure size, by default None</span>
 <span class="sd">        geom_names : List[str], optional</span>
 <span class="sd">            list of model geometries to plot, by default all model geometries.</span>
 <span class="sd">        geom_kwargs : Dict of Dict, optional</span>
 <span class="sd">            Model geometry styling per geometry, passed to geopandas.GeoDataFrame.plot method.</span>
-<span class="sd">            For instance: {&#39;src&#39;: {&#39;markersize&#39;: 30}}.</span>
+<span class="sd">            For instance: {'src': {'markersize': 30}}.</span>
 <span class="sd">        grid_kwargs : Dict, optional</span>
 <span class="sd">            Styling options for grid plotting (e.g. color, linewidth) passed to matplotlib plot / ugrid.plot.line.</span>
-<span class="sd">            Defaults: {&quot;color&quot;: &quot;black&quot;, &quot;linewidth&quot;: 0.7}</span>
+<span class="sd">            Defaults: {"color": "black", "linewidth": 0.7}</span>
 <span class="sd">        legend_kwargs : Dict, optional</span>
 <span class="sd">            Legend kwargs, passed to ax.legend method.</span>
 
@@ -1001,20 +1001,20 @@
 <span class="sd">        -------</span>
 <span class="sd">        fig, axes</span>
 <span class="sd">            Model fig and ax objects</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
         <span class="n">_GEOMS</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;observation_points&quot;</span><span class="p">:</span> <span class="s2">&quot;obs&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;cross_sections&quot;</span><span class="p">:</span> <span class="s2">&quot;crs&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;runup_gauges&quot;</span><span class="p">:</span> <span class="s2">&quot;rug&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;weirs&quot;</span><span class="p">:</span> <span class="s2">&quot;weir&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;thin_dams&quot;</span><span class="p">:</span> <span class="s2">&quot;thd&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;drainage_structures&quot;</span><span class="p">:</span> <span class="s2">&quot;drn&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;rivers&quot;</span><span class="p">:</span> <span class="s2">&quot;rivers&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;river_boundary_points&quot;</span><span class="p">:</span> <span class="s2">&quot;bdr&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;discharge_points&quot;</span><span class="p">:</span> <span class="s2">&quot;src&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;water_level&quot;</span><span class="p">:</span> <span class="s2">&quot;bnd&quot;</span><span class="p">,</span>
+            <span class="s2">"observation_points"</span><span class="p">:</span> <span class="s2">"obs"</span><span class="p">,</span>
+            <span class="s2">"cross_sections"</span><span class="p">:</span> <span class="s2">"crs"</span><span class="p">,</span>
+            <span class="s2">"runup_gauges"</span><span class="p">:</span> <span class="s2">"rug"</span><span class="p">,</span>
+            <span class="s2">"weirs"</span><span class="p">:</span> <span class="s2">"weir"</span><span class="p">,</span>
+            <span class="s2">"thin_dams"</span><span class="p">:</span> <span class="s2">"thd"</span><span class="p">,</span>
+            <span class="s2">"drainage_structures"</span><span class="p">:</span> <span class="s2">"drn"</span><span class="p">,</span>
+            <span class="s2">"rivers"</span><span class="p">:</span> <span class="s2">"rivers"</span><span class="p">,</span>
+            <span class="s2">"river_boundary_points"</span><span class="p">:</span> <span class="s2">"bdr"</span><span class="p">,</span>
+            <span class="s2">"discharge_points"</span><span class="p">:</span> <span class="s2">"src"</span><span class="p">,</span>
+            <span class="s2">"water_level"</span><span class="p">:</span> <span class="s2">"bnd"</span><span class="p">,</span>
         <span class="p">}</span>  <span class="c1"># parsed to dict of geopandas.GeoDataFrame</span>
 
         <span class="c1"># combine geoms and forcing locations</span>
@@ -1035,8 +1035,8 @@
                     <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
                         <span class="n">sg</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="n">gdf</span><span class="p">})</span>
 
-        <span class="k">if</span> <span class="n">plot_region</span><span class="p">:</span>  <span class="c1"># and &quot;region&quot; not in self.geoms:</span>
-            <span class="n">sg</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;region&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">})</span>
+        <span class="k">if</span> <span class="n">plot_region</span><span class="p">:</span>  <span class="c1"># and "region" not in self.geoms:</span>
+            <span class="n">sg</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"region"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">})</span>
 
         <span class="c1"># make sure grid are set</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
@@ -1045,22 +1045,22 @@
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">):</span>
             <span class="n">ds</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">to_dataset</span><span class="p">()</span>
             <span class="n">variable</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">name</span>
-        <span class="k">elif</span> <span class="n">variable</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;subgrid.&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">subgrid</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">variable</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"subgrid."</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">subgrid</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subgrid</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-            <span class="n">variable</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;subgrid.&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="n">variable</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"subgrid."</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;regular&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"regular"</span><span class="p">:</span>
                 <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-                <span class="k">if</span> <span class="s2">&quot;mask&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
-                    <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span>
-                <span class="k">if</span> <span class="n">variable</span> <span class="o">==</span> <span class="s2">&quot;elevation&quot;</span> <span class="ow">and</span> <span class="s2">&quot;elevation&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
-                    <span class="n">variable</span> <span class="o">=</span> <span class="s2">&quot;dep&quot;</span>
-            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">&quot;quadtree&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s2">"mask"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
+                    <span class="n">ds</span><span class="p">[</span><span class="s2">"mask"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span>
+                <span class="k">if</span> <span class="n">variable</span> <span class="o">==</span> <span class="s2">"elevation"</span> <span class="ow">and</span> <span class="s2">"elevation"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
+                    <span class="n">variable</span> <span class="o">=</span> <span class="s2">"dep"</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"quadtree"</span><span class="p">:</span>
                 <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-                <span class="k">if</span> <span class="s2">&quot;mask&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
-                    <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">mask</span>
-                <span class="k">if</span> <span class="n">variable</span> <span class="o">==</span> <span class="s2">&quot;elevation&quot;</span> <span class="ow">and</span> <span class="s2">&quot;elevation&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
-                    <span class="n">variable</span> <span class="o">=</span> <span class="s2">&quot;z&quot;</span>
+                <span class="k">if</span> <span class="s2">"mask"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
+                    <span class="n">ds</span><span class="p">[</span><span class="s2">"mask"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">mask</span>
+                <span class="k">if</span> <span class="n">variable</span> <span class="o">==</span> <span class="s2">"elevation"</span> <span class="ow">and</span> <span class="s2">"elevation"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
+                    <span class="n">variable</span> <span class="o">=</span> <span class="s2">"z"</span>
 
         <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plots</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span>
             <span class="n">ds</span><span class="p">,</span>
@@ -1083,18 +1083,18 @@
 
         <span class="k">if</span> <span class="n">fn_out</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isabs</span><span class="p">(</span><span class="n">fn_out</span><span class="p">):</span>
-                <span class="n">fn_out</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;figs&quot;</span><span class="p">,</span> <span class="n">fn_out</span><span class="p">)</span>
+                <span class="n">fn_out</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">"figs"</span><span class="p">,</span> <span class="n">fn_out</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">fn_out</span><span class="p">)):</span>
                 <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">fn_out</span><span class="p">))</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">fn_out</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">225</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">fn_out</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">225</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">"tight"</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_model_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return (tstart, tstop) tuple with parsed model start and end time&quot;&quot;&quot;</span>
-        <span class="n">tstart</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_datetime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tstart&quot;</span><span class="p">))</span>
-        <span class="n">tstop</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_datetime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tstop&quot;</span><span class="p">))</span>
+<span class="w">        </span><span class="sd">"""Return (tstart, tstop) tuple with parsed model start and end time"""</span>
+        <span class="n">tstart</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_datetime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tstart"</span><span class="p">))</span>
+        <span class="n">tstop</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_datetime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tstop"</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span>
 
     <span class="c1"># ---------------</span>
@@ -1102,12 +1102,12 @@
     <span class="c1"># ---------------</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_datasets_elevation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elevation_list</span><span class="p">,</span> <span class="n">res</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse filenames or paths of Datasets in list of dictionaries elevation_list</span>
+<span class="w">        </span><span class="sd">"""Parse filenames or paths of Datasets in list of dictionaries elevation_list</span>
 <span class="sd">        into xr.DataArray and gdf.GeoDataFrames:</span>
 
-<span class="sd">        * &quot;elevation&quot; is parsed into da (xr.DataArray)</span>
-<span class="sd">        * &quot;offset&quot; is parsed into da_offset (xr.DataArray)</span>
-<span class="sd">        * &quot;mask&quot; is parsed into gdf (gpd.GeoDataFrame)</span>
+<span class="sd">        * "elevation" is parsed into da (xr.DataArray)</span>
+<span class="sd">        * "offset" is parsed into da_offset (xr.DataArray)</span>
+<span class="sd">        * "mask" is parsed into gdf (gpd.GeoDataFrame)</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1117,147 +1117,147 @@
 <span class="sd">        res : float</span>
 <span class="sd">            Resolution of the model grid in meters. Used to obtain the correct zoom</span>
 <span class="sd">            level of the depth datasets.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">parse_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;elevation&quot;</span><span class="p">,</span> <span class="s2">&quot;offset&quot;</span><span class="p">,</span> <span class="s2">&quot;mask&quot;</span><span class="p">,</span> <span class="s2">&quot;da&quot;</span><span class="p">]</span>
-        <span class="n">copy_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;zmin&quot;</span><span class="p">,</span> <span class="s2">&quot;zmax&quot;</span><span class="p">,</span> <span class="s2">&quot;reproj_method&quot;</span><span class="p">,</span> <span class="s2">&quot;merge_method&quot;</span><span class="p">,</span> <span class="s2">&quot;offset&quot;</span><span class="p">]</span>
+<span class="sd">        """</span>
+        <span class="n">parse_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"elevation"</span><span class="p">,</span> <span class="s2">"offset"</span><span class="p">,</span> <span class="s2">"mask"</span><span class="p">,</span> <span class="s2">"da"</span><span class="p">]</span>
+        <span class="n">copy_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"zmin"</span><span class="p">,</span> <span class="s2">"zmax"</span><span class="p">,</span> <span class="s2">"reproj_method"</span><span class="p">,</span> <span class="s2">"merge_method"</span><span class="p">,</span> <span class="s2">"offset"</span><span class="p">]</span>
 
         <span class="n">datasets_out</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">elevation_list</span><span class="p">:</span>
             <span class="n">dd</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="c1"># read in depth datasets; replace dep (source name; filename or xr.DataArray)</span>
-            <span class="k">if</span> <span class="s2">&quot;elevation&quot;</span> <span class="ow">in</span> <span class="n">dataset</span> <span class="ow">or</span> <span class="s2">&quot;da&quot;</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">"elevation"</span> <span class="ow">in</span> <span class="n">dataset</span> <span class="ow">or</span> <span class="s2">"da"</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">da_elv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
-                        <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;elevation&quot;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;da&quot;</span><span class="p">)),</span>
+                        <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"elevation"</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"da"</span><span class="p">)),</span>
                         <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
                         <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-                        <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;elevtn&quot;</span><span class="p">],</span>  <span class="c1"># NOTE this is still hydromt convention</span>
-                        <span class="n">zoom</span><span class="o">=</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="s2">&quot;meter&quot;</span><span class="p">),</span>
+                        <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">"elevtn"</span><span class="p">],</span>  <span class="c1"># NOTE this is still hydromt convention</span>
+                        <span class="n">zoom</span><span class="o">=</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="s2">"meter"</span><span class="p">),</span>
                     <span class="p">)</span>
                     <span class="c1"># rename elevtn to elevation if present</span>
-                    <span class="n">da_elv</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;elevation&quot;</span>
+                    <span class="n">da_elv</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">"elevation"</span>
                 <span class="k">except</span> <span class="p">(</span><span class="ne">IndexError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">NoDataException</span><span class="p">):</span>
-                    <span class="n">data_name</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;elevation&quot;</span><span class="p">)</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No data in domain for </span><span class="si">{</span><span class="n">data_name</span><span class="si">}</span><span class="s2">, skipped.&quot;</span><span class="p">)</span>
+                    <span class="n">data_name</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"elevation"</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No data in domain for </span><span class="si">{</span><span class="n">data_name</span><span class="si">}</span><span class="s2">, skipped."</span><span class="p">)</span>
                     <span class="k">continue</span>
-                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;da&quot;</span><span class="p">:</span> <span class="n">da_elv</span><span class="p">})</span>
+                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"da"</span><span class="p">:</span> <span class="n">da_elv</span><span class="p">})</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">&quot;No &#39;elevation&#39; (topobathy) dataset provided in elevation_list.&quot;</span>
+                    <span class="s2">"No 'elevation' (topobathy) dataset provided in elevation_list."</span>
                 <span class="p">)</span>
 
             <span class="c1"># read offset filenames</span>
             <span class="c1"># NOTE offsets can be xr.DataArrays and floats</span>
-            <span class="k">if</span> <span class="s2">&quot;offset&quot;</span> <span class="ow">in</span> <span class="n">dataset</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="s2">&quot;offset&quot;</span><span class="p">],</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="s2">"offset"</span> <span class="ow">in</span> <span class="n">dataset</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="s2">"offset"</span><span class="p">],</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
                 <span class="n">da_offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
-                    <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;offset&quot;</span><span class="p">),</span>
+                    <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"offset"</span><span class="p">),</span>
                     <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
                     <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;offset&quot;</span><span class="p">:</span> <span class="n">da_offset</span><span class="p">})</span>
+                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"offset"</span><span class="p">:</span> <span class="n">da_offset</span><span class="p">})</span>
 
             <span class="c1"># read geodataframes describing valid areas</span>
-            <span class="k">if</span> <span class="s2">&quot;mask&quot;</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">"mask"</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
                 <span class="n">gdf_valid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
-                    <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mask&quot;</span><span class="p">),</span>
+                    <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mask"</span><span class="p">),</span>
                     <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;gdf_valid&quot;</span><span class="p">:</span> <span class="n">gdf_valid</span><span class="p">})</span>
+                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"gdf_valid"</span><span class="p">:</span> <span class="n">gdf_valid</span><span class="p">})</span>
 
             <span class="c1"># copy remaining keys</span>
             <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">copy_keys</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dd</span><span class="p">:</span>
                     <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span><span class="p">})</span>
                 <span class="k">elif</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">copy_keys</span> <span class="o">+</span> <span class="n">parse_keys</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> in elevation_list. Ignoring.&quot;</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> in elevation_list. Ignoring."</span><span class="p">)</span>
             <span class="n">datasets_out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dd</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">datasets_out</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_roughness_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">roughness_list</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse filenames or paths of Datasets in list of dictionaries roughness_list</span>
+<span class="w">        </span><span class="sd">"""Parse filenames or paths of Datasets in list of dictionaries roughness_list</span>
 <span class="sd">        into xr.DataArrays and gdf.GeoDataFrames:</span>
 
-<span class="sd">        * &quot;manning&quot; is parsed into da (xr.DataArray)</span>
-<span class="sd">        * &quot;lulc&quot; is parsed into da (xr.DataArray) using reclass table in &quot;reclass_table&quot;</span>
-<span class="sd">        * &quot;mask&quot; is parsed into gdf_valid (gpd.GeoDataFrame)</span>
+<span class="sd">        * "manning" is parsed into da (xr.DataArray)</span>
+<span class="sd">        * "lulc" is parsed into da (xr.DataArray) using reclass table in "reclass_table"</span>
+<span class="sd">        * "mask" is parsed into gdf_valid (gpd.GeoDataFrame)</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        roughness_list : List[dict], optional</span>
-<span class="sd">            List of dictionaries with Manning&#39;s n datasets. Each dictionary should at</span>
+<span class="sd">            List of dictionaries with Manning's n datasets. Each dictionary should at</span>
 <span class="sd">            least contain one of the following:</span>
 <span class="sd">            * (1) manning: filename (or Path) of gridded data with manning values</span>
 <span class="sd">            * (2) lulc (and reclass_table): a combination of a filename of gridded</span>
 <span class="sd">                  landuse/landcover and a reclassify table.</span>
 <span class="sd">            In additon, optional merge arguments can be provided e.g.: merge_method, mask</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">parse_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;manning&quot;</span><span class="p">,</span> <span class="s2">&quot;lulc&quot;</span><span class="p">,</span> <span class="s2">&quot;reclass_table&quot;</span><span class="p">,</span> <span class="s2">&quot;mask&quot;</span><span class="p">,</span> <span class="s2">&quot;da&quot;</span><span class="p">]</span>
-        <span class="n">copy_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;reproj_method&quot;</span><span class="p">,</span> <span class="s2">&quot;merge_method&quot;</span><span class="p">]</span>
+<span class="sd">        """</span>
+        <span class="n">parse_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"manning"</span><span class="p">,</span> <span class="s2">"lulc"</span><span class="p">,</span> <span class="s2">"reclass_table"</span><span class="p">,</span> <span class="s2">"mask"</span><span class="p">,</span> <span class="s2">"da"</span><span class="p">]</span>
+        <span class="n">copy_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"reproj_method"</span><span class="p">,</span> <span class="s2">"merge_method"</span><span class="p">]</span>
 
         <span class="n">datasets_out</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">roughness_list</span><span class="p">:</span>
             <span class="n">dd</span> <span class="o">=</span> <span class="p">{}</span>
 
-            <span class="k">if</span> <span class="s2">&quot;manning&quot;</span> <span class="ow">in</span> <span class="n">dataset</span> <span class="ow">or</span> <span class="s2">&quot;da&quot;</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">"manning"</span> <span class="ow">in</span> <span class="n">dataset</span> <span class="ow">or</span> <span class="s2">"da"</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
                 <span class="n">da_man</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
-                    <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;manning&quot;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;da&quot;</span><span class="p">)),</span>
+                    <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"manning"</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"da"</span><span class="p">)),</span>
                     <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
                     <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;da&quot;</span><span class="p">:</span> <span class="n">da_man</span><span class="p">})</span>
-            <span class="k">elif</span> <span class="s2">&quot;lulc&quot;</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
+                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"da"</span><span class="p">:</span> <span class="n">da_man</span><span class="p">})</span>
+            <span class="k">elif</span> <span class="s2">"lulc"</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
                 <span class="c1"># landuse/landcover should always be combined with mapping</span>
-                <span class="n">lulc</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;lulc&quot;</span><span class="p">)</span>
-                <span class="n">reclass_table</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;reclass_table&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="n">lulc</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"lulc"</span><span class="p">)</span>
+                <span class="n">reclass_table</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"reclass_table"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">reclass_table</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lulc</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-                    <span class="n">reclass_table</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">DATADIR</span><span class="p">,</span> <span class="s2">&quot;lulc&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">lulc</span><span class="si">}</span><span class="s2">_mapping.csv&quot;</span><span class="p">)</span>
+                    <span class="n">reclass_table</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">DATADIR</span><span class="p">,</span> <span class="s2">"lulc"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">lulc</span><span class="si">}</span><span class="s2">_mapping.csv"</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">reclass_table</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span>
-                        <span class="s2">&quot;Manning roughness &#39;reclass_table&#39; csv file must be provided&quot;</span>
+                        <span class="s2">"Manning roughness 'reclass_table' csv file must be provided"</span>
                     <span class="p">)</span>
                 <span class="n">da_lulc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
                     <span class="n">lulc</span><span class="p">,</span>
                     <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
                     <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-                    <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;lulc&quot;</span><span class="p">],</span>
+                    <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">"lulc"</span><span class="p">],</span>
                 <span class="p">)</span>
                 <span class="n">df_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span>
                     <span class="n">reclass_table</span><span class="p">,</span>
                     <span class="n">source_kwargs</span><span class="o">=</span><span class="p">{</span>
-                        <span class="s2">&quot;driver&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;pandas&quot;</span><span class="p">,</span> <span class="s2">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;index_col&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}}</span>
+                        <span class="s2">"driver"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"pandas"</span><span class="p">,</span> <span class="s2">"options"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"index_col"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}}</span>
                     <span class="p">},</span>
                 <span class="p">)</span>
                 <span class="c1"># reclassify</span>
-                <span class="n">da_man</span> <span class="o">=</span> <span class="n">da_lulc</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reclassify</span><span class="p">(</span><span class="n">df_map</span><span class="p">[[</span><span class="s2">&quot;N&quot;</span><span class="p">]])[</span><span class="s2">&quot;N&quot;</span><span class="p">]</span>
-                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;da&quot;</span><span class="p">:</span> <span class="n">da_man</span><span class="p">})</span>
+                <span class="n">da_man</span> <span class="o">=</span> <span class="n">da_lulc</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reclassify</span><span class="p">(</span><span class="n">df_map</span><span class="p">[[</span><span class="s2">"N"</span><span class="p">]])[</span><span class="s2">"N"</span><span class="p">]</span>
+                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"da"</span><span class="p">:</span> <span class="n">da_man</span><span class="p">})</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No &#39;manning&#39; dataset provided in roughness_list.&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No 'manning' dataset provided in roughness_list."</span><span class="p">)</span>
 
             <span class="c1"># read geodataframes describing valid areas</span>
-            <span class="k">if</span> <span class="s2">&quot;mask&quot;</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">"mask"</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
                 <span class="n">gdf_valid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
-                    <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mask&quot;</span><span class="p">),</span>
+                    <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mask"</span><span class="p">),</span>
                     <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;gdf_valid&quot;</span><span class="p">:</span> <span class="n">gdf_valid</span><span class="p">})</span>
+                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"gdf_valid"</span><span class="p">:</span> <span class="n">gdf_valid</span><span class="p">})</span>
 
             <span class="c1"># copy remaining keys</span>
             <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">copy_keys</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dd</span><span class="p">:</span>
                     <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span><span class="p">})</span>
                 <span class="k">elif</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">copy_keys</span> <span class="o">+</span> <span class="n">parse_keys</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> in roughness sets. Ignoring.&quot;</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> in roughness sets. Ignoring."</span><span class="p">)</span>
             <span class="n">datasets_out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dd</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">datasets_out</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_river_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">river_list</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse filenames or paths of Datasets in list of dictionaries</span>
+<span class="w">        </span><span class="sd">"""Parse filenames or paths of Datasets in list of dictionaries</span>
 <span class="sd">        river_list into xr.DataArrays and gdf.GeoDataFrames:</span>
 
 <span class="sd">        see SfincsModel.setup_subgrid for details</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="c1"># option 1: rectangular river cross-sections based on river centerline</span>
         <span class="c1"># depth/bedlevel, manning attributes are specified on the river centerline</span>
         <span class="c1"># TODO: make this work with LineStringZ geometries for bedlevel</span>
@@ -1265,23 +1265,23 @@
         <span class="c1"># option 2: (TODO): irregular river cross-sections</span>
         <span class="c1"># cross-sections are specified as a series of points (river_crosssections)</span>
         <span class="n">parse_keys</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="s2">&quot;centerlines&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;mask&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;gdf_riv&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;gdf_riv_mask&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;gdf_zb&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;point_zb&quot;</span><span class="p">,</span>
+            <span class="s2">"centerlines"</span><span class="p">,</span>
+            <span class="s2">"mask"</span><span class="p">,</span>
+            <span class="s2">"gdf_riv"</span><span class="p">,</span>
+            <span class="s2">"gdf_riv_mask"</span><span class="p">,</span>
+            <span class="s2">"gdf_zb"</span><span class="p">,</span>
+            <span class="s2">"point_zb"</span><span class="p">,</span>
         <span class="p">]</span>
         <span class="n">copy_keys</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">attrs</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;rivwth&quot;</span><span class="p">,</span> <span class="s2">&quot;rivdph&quot;</span><span class="p">,</span> <span class="s2">&quot;rivbed&quot;</span><span class="p">,</span> <span class="s2">&quot;manning&quot;</span><span class="p">]</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"rivwth"</span><span class="p">,</span> <span class="s2">"rivdph"</span><span class="p">,</span> <span class="s2">"rivbed"</span><span class="p">,</span> <span class="s2">"manning"</span><span class="p">]</span>
 
         <span class="n">datasets_out</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">river_list</span><span class="p">:</span>
             <span class="n">dd</span> <span class="o">=</span> <span class="p">{}</span>
 
             <span class="c1"># parse rivers</span>
-            <span class="k">if</span> <span class="s2">&quot;centerlines&quot;</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
-                <span class="n">rivers</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;centerlines&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">"centerlines"</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
+                <span class="n">rivers</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"centerlines"</span><span class="p">)</span>
                 <span class="c1"># NOTE if you want to use model.rivers.data as centerlines,</span>
                 <span class="c1"># you need to provide this in the river_list</span>
                 <span class="n">gdf_riv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
@@ -1297,43 +1297,43 @@
                             <span class="n">gdf_riv</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
                         <span class="k">elif</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">gdf_riv</span><span class="p">[</span><span class="n">key</span><span class="p">])):</span>  <span class="c1"># fill na</span>
                             <span class="n">gdf_riv</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_riv</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;gdf_riv&quot;</span><span class="p">:</span> <span class="n">gdf_riv</span><span class="p">})</span>
+                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"gdf_riv"</span><span class="p">:</span> <span class="n">gdf_riv</span><span class="p">})</span>
 
             <span class="c1"># parse bed_level on points</span>
-            <span class="k">if</span> <span class="s2">&quot;point_zb&quot;</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">"point_zb"</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
                 <span class="n">gdf_zb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
-                    <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;point_zb&quot;</span><span class="p">),</span>
+                    <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"point_zb"</span><span class="p">),</span>
                     <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;gdf_zb&quot;</span><span class="p">:</span> <span class="n">gdf_zb</span><span class="p">})</span>
+                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"gdf_zb"</span><span class="p">:</span> <span class="n">gdf_zb</span><span class="p">})</span>
 
-            <span class="k">if</span> <span class="s2">&quot;gdf_riv&quot;</span> <span class="ow">in</span> <span class="n">dd</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">"gdf_riv"</span> <span class="ow">in</span> <span class="n">dd</span><span class="p">:</span>
                 <span class="k">if</span> <span class="p">(</span>
-                    <span class="ow">not</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">&quot;rivbed&quot;</span><span class="p">,</span> <span class="s2">&quot;rivdph&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
-                    <span class="ow">and</span> <span class="s2">&quot;gdf_zb&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dd</span>
+                    <span class="ow">not</span> <span class="n">gdf_riv</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">"rivbed"</span><span class="p">,</span> <span class="s2">"rivdph"</span><span class="p">])</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+                    <span class="ow">and</span> <span class="s2">"gdf_zb"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dd</span>
                 <span class="p">):</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No &#39;rivbed&#39; or &#39;rivdph&#39; attribute found.&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No 'rivbed' or 'rivdph' attribute found."</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No &#39;centerlines&#39; dataset provided.&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No 'centerlines' dataset provided."</span><span class="p">)</span>
 
             <span class="c1"># parse mask</span>
-            <span class="k">if</span> <span class="s2">&quot;mask&quot;</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">"mask"</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
                 <span class="n">gdf_riv_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
-                    <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mask&quot;</span><span class="p">),</span>
+                    <span class="n">dataset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mask"</span><span class="p">),</span>
                     <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;gdf_riv_mask&quot;</span><span class="p">:</span> <span class="n">gdf_riv_mask</span><span class="p">})</span>
-            <span class="k">elif</span> <span class="s2">&quot;rivwth&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="p">:</span>
+                <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"gdf_riv_mask"</span><span class="p">:</span> <span class="n">gdf_riv_mask</span><span class="p">})</span>
+            <span class="k">elif</span> <span class="s2">"rivwth"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf_riv</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">&quot;Either mask must be provided or centerlines &quot;</span>
-                    <span class="s2">&quot;should contain a &#39;rivwth&#39; attribute.&quot;</span>
+                    <span class="s2">"Either mask must be provided or centerlines "</span>
+                    <span class="s2">"should contain a 'rivwth' attribute."</span>
                 <span class="p">)</span>
             <span class="c1"># copy remaining keys</span>
             <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">copy_keys</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dd</span><span class="p">:</span>
                     <span class="n">dd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span><span class="p">})</span>
                 <span class="k">elif</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">copy_keys</span> <span class="o">+</span> <span class="n">parse_keys</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> in river_list. Ignoring.&quot;</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> in river_list. Ignoring."</span><span class="p">)</span>
             <span class="n">datasets_out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dd</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">datasets_out</span>
@@ -1348,176 +1348,176 @@
     <span class="c1">#</span>
     <span class="c1"># for name, cls in SfincsModel._ALL_COMPONENTS.items():</span>
     <span class="c1">#     # Simplify module path for Sphinx</span>
-    <span class="c1">#     mod_parts = cls.__module__.split(&#39;.&#39;)</span>
+    <span class="c1">#     mod_parts = cls.__module__.split('.')</span>
     <span class="c1">#     # remove hydromt_sfincs.components and script itself from name</span>
     <span class="c1">#     mod_parts_stripped = mod_parts[2]</span>
-    <span class="c1">#     mod_path = &#39;.&#39;.join(mod_parts)</span>
+    <span class="c1">#     mod_path = '.'.join(mod_parts)</span>
 
-    <span class="c1">#     print(f&quot;&quot;&quot;@property</span>
+    <span class="c1">#     print(f"""@property</span>
     <span class="c1"># def {name}(self) -&gt; {cls.__name__}:</span>
-    <span class="c1">#     \&quot;\&quot;\&quot;Instance of :py:class:`~{&#39;.&#39;.join(mod_parts)}.{cls.__name__}`.\&quot;\&quot;\&quot;</span>
-    <span class="c1">#     return self.components[&#39;{name}&#39;]</span>
-    <span class="c1"># &quot;&quot;&quot;)</span>
+    <span class="c1">#     \"\"\"Instance of :py:class:`~{'.'.join(mod_parts)}.{cls.__name__}`.\"\"\"</span>
+    <span class="c1">#     return self.components['{name}']</span>
+    <span class="c1"># """)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsConfig</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.config.config.SfincsConfig`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;config&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.config.config.SfincsConfig`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"config"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">grid</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsGrid</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.grid.regulargrid.SfincsGrid`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;grid&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.grid.regulargrid.SfincsGrid`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"grid"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">elevation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsElevation</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.grid.elevation.SfincsElevation`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;elevation&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.grid.elevation.SfincsElevation`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"elevation"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">mask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsMask</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.grid.mask.SfincsMask`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.grid.mask.SfincsMask`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"mask"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">infiltration</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsInfiltration</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.grid.infiltration.SfincsInfiltration`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;infiltration&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.grid.infiltration.SfincsInfiltration`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"infiltration"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">roughness</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsRoughness</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.grid.roughness.SfincsRoughness`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;roughness&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.grid.roughness.SfincsRoughness`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"roughness"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">storage_volume</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsStorageVolume</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.grid.storage_volume.SfincsStorageVolume`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;storage_volume&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.grid.storage_volume.SfincsStorageVolume`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"storage_volume"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">subgrid</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsSubgridTable</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.grid.subgrid.SfincsSubgridTable`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;subgrid&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.grid.subgrid.SfincsSubgridTable`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"subgrid"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">initial_conditions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsInitialConditions</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.grid.initial_conditions.SfincsInitialConditions`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;initial_conditions&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.grid.initial_conditions.SfincsInitialConditions`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"initial_conditions"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">quadtree_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsQuadtreeGrid</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree.SfincsQuadtreeGrid`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;quadtree_grid&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree.SfincsQuadtreeGrid`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"quadtree_grid"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">quadtree_elevation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsQuadtreeElevation</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree_elevation.SfincsQuadtreeElevation`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;quadtree_elevation&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree_elevation.SfincsQuadtreeElevation`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"quadtree_elevation"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">quadtree_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsQuadtreeMask</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree_mask.SfincsQuadtreeMask`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;quadtree_mask&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree_mask.SfincsQuadtreeMask`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"quadtree_mask"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">quadtree_infiltration</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsQuadtreeInfiltration</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree_infiltration.SfincsQuadtreeInfiltration`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;quadtree_infiltration&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree_infiltration.SfincsQuadtreeInfiltration`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"quadtree_infiltration"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">quadtree_storage_volume</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsQuadtreeStorageVolume</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree_storage_volume.SfincsQuadtreeStorageVolume`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;quadtree_storage_volume&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree_storage_volume.SfincsQuadtreeStorageVolume`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"quadtree_storage_volume"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">quadtree_initial_conditions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsQuadtreeInitialConditions</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree_initial_conditions.SfincsQuadtreeInitialConditions`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;quadtree_initial_conditions&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree_initial_conditions.SfincsQuadtreeInitialConditions`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"quadtree_initial_conditions"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">quadtree_subgrid</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsQuadtreeSubgridTable</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree_subgrid.SfincsQuadtreeSubgridTable`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;quadtree_subgrid&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.quadtree.quadtree_subgrid.SfincsQuadtreeSubgridTable`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"quadtree_subgrid"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">quadtree_snapwave_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SnapWaveQuadtreeMask</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.quadtree.snapwave_quadtree_mask.SnapWaveQuadtreeMask`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;quadtree_snapwave_mask&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.quadtree.snapwave_quadtree_mask.SnapWaveQuadtreeMask`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"quadtree_snapwave_mask"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">observation_points</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsObservationPoints</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.geometries.observation_points.SfincsObservationPoints`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;observation_points&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.geometries.observation_points.SfincsObservationPoints`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"observation_points"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">cross_sections</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsCrossSections</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.geometries.cross_sections.SfincsCrossSections`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;cross_sections&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.geometries.cross_sections.SfincsCrossSections`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"cross_sections"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">runup_gauges</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsRunupGauges</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.geometries.runup_gauges.SfincsRunupGauges`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;runup_gauges&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.geometries.runup_gauges.SfincsRunupGauges`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"runup_gauges"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">thin_dams</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsThinDams</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.geometries.thin_dams.SfincsThinDams`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;thin_dams&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.geometries.thin_dams.SfincsThinDams`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"thin_dams"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">weirs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsWeirs</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.geometries.weirs.SfincsWeirs`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;weirs&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.geometries.weirs.SfincsWeirs`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"weirs"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">wave_makers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsWaveMakers</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.geometries.wave_makers.SfincsWaveMakers`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;wave_makers&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.geometries.wave_makers.SfincsWaveMakers`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"wave_makers"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">drainage_structures</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsDrainageStructures</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.geometries.drainage_structures.SfincsDrainageStructures`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;drainage_structures&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.geometries.drainage_structures.SfincsDrainageStructures`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"drainage_structures"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">rivers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsRivers</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.forcing.rivers.SfincsRivers`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;rivers&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.forcing.rivers.SfincsRivers`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"rivers"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">water_level</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsWaterLevel</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.forcing.water_level.SfincsWaterLevel`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;water_level&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.forcing.water_level.SfincsWaterLevel`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"water_level"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">discharge_points</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsDischargePoints</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.forcing.discharge_points.SfincsDischargePoints`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;discharge_points&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.forcing.discharge_points.SfincsDischargePoints`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"discharge_points"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">snapwave_boundary_conditions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SnapWaveBoundaryConditions</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.forcing.snapwave_boundary_conditions.SnapWaveBoundaryConditions`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;snapwave_boundary_conditions&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.forcing.snapwave_boundary_conditions.SnapWaveBoundaryConditions`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"snapwave_boundary_conditions"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">precipitation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsPrecipitation</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.forcing.meteo.SfincsPrecipitation`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;precipitation&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.forcing.meteo.SfincsPrecipitation`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"precipitation"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">pressure</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsPressure</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.forcing.meteo.SfincsPressure`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;pressure&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.forcing.meteo.SfincsPressure`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"pressure"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">wind</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsWind</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.forcing.meteo.SfincsWind`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;wind&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.forcing.meteo.SfincsWind`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"wind"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SfincsOutput</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instance of :py:class:`~hydromt_sfincs.components.output.SfincsOutput`.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">]</span></div>
+<span class="w">        </span><span class="sd">"""Instance of :py:class:`~hydromt_sfincs.components.output.SfincsOutput`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="s2">"output"</span><span class="p">]</span></div>
 
 
 

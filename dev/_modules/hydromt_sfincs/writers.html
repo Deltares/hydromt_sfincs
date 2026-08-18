@@ -426,7 +426,7 @@
                 <article class="bd-article">
                   
   <h1>Source code for hydromt_sfincs.writers</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Standalone writer functions for HydroMT-SFINCS.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Standalone writer functions for HydroMT-SFINCS."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
@@ -448,28 +448,28 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_datetime</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;write_ascii_map&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_bdr&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_binary_map&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_binary_map_index&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_drn&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_geoms&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_netcdf_safely&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_raster&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_timeseries&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_vector&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_xy&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_xyn&quot;</span><span class="p">,</span>
+    <span class="s2">"write_ascii_map"</span><span class="p">,</span>
+    <span class="s2">"write_bdr"</span><span class="p">,</span>
+    <span class="s2">"write_binary_map"</span><span class="p">,</span>
+    <span class="s2">"write_binary_map_index"</span><span class="p">,</span>
+    <span class="s2">"write_drn"</span><span class="p">,</span>
+    <span class="s2">"write_geoms"</span><span class="p">,</span>
+    <span class="s2">"write_netcdf_safely"</span><span class="p">,</span>
+    <span class="s2">"write_raster"</span><span class="p">,</span>
+    <span class="s2">"write_timeseries"</span><span class="p">,</span>
+    <span class="s2">"write_vector"</span><span class="p">,</span>
+    <span class="s2">"write_xy"</span><span class="p">,</span>
+    <span class="s2">"write_xyn"</span><span class="p">,</span>
 <span class="p">]</span>
 
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
 <span class="c1">## ASCII maps: sfincs.restart ##</span>
 <div class="viewcode-block" id="write_ascii_map">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.writers.write_ascii_map.html#hydromt_sfincs.writers.write_ascii_map">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">write_ascii_map</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%8.3f</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write ascii map</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_ascii_map</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"</span><span class="si">%8.3f</span><span class="s2">"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write ascii map</span>
 
 <span class="sd">    NOTE: The array should be in S-&gt;N and W-&gt;E orientation, with origin in the SW corner.</span>
 
@@ -480,9 +480,9 @@
 <span class="sd">    data : np.ndarray</span>
 <span class="sd">        2D array of sfincs map.</span>
 <span class="sd">    fmt : str, optional</span>
-<span class="sd">        Value format, by default &quot;%8.3f&quot;. See numpy.savetxt for more options.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span class="sd">        Value format, by default "%8.3f". See numpy.savetxt for more options.</span>
+<span class="sd">    """</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span></div>
 
 
@@ -494,9 +494,9 @@
     <span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">df</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">],</span>
     <span class="n">tref</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">],</span>
-    <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%7.3f</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"</span><span class="si">%7.3f</span><span class="s2">"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write pandas.DataFrame to fixed width ascii timeseries files</span>
+<span class="w">    </span><span class="sd">"""Write pandas.DataFrame to fixed width ascii timeseries files</span>
 <span class="sd">    such as sfincs.bzs, sfincs.dis and sfincs.precip. The output time index is given in</span>
 <span class="sd">    seconds from tref.</span>
 
@@ -507,25 +507,25 @@
 <span class="sd">    df: pd.DataFrame</span>
 <span class="sd">        Dataframe of timeseries.</span>
 <span class="sd">    tref: datetime.datetime, str</span>
-<span class="sd">        Datetime of tref, string in &quot;%Y%m%d %H%M%S&quot; format.</span>
+<span class="sd">        Datetime of tref, string in "%Y%m%d %H%M%S" format.</span>
 <span class="sd">    fmt: str, optional</span>
-<span class="sd">        Output value format, by default &quot;%7.2f&quot;.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        Output value format, by default "%7.2f".</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">to_frame</span><span class="p">()</span>
     <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown type for df: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown type for df: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
     <span class="n">tref</span> <span class="o">=</span> <span class="n">parse_datetime</span><span class="p">(</span><span class="n">tref</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;df does not contain data.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"df does not contain data."</span><span class="p">)</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span><span class="o">.</span><span class="n">values</span>
     <span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">-</span> <span class="n">tref</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
     <span class="c1"># calculate required width for time column; hard coded single decimal precision</span>
     <span class="c1"># format for other columns is based on fmt`argument</span>
     <span class="n">w</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]))))</span> <span class="o">+</span> <span class="mi">3</span>
-    <span class="n">fmt_lst</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;%</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">.1f&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">fmt</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">size</span><span class="p">)]</span>
-    <span class="n">fmt_out</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fmt_lst</span><span class="p">)</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">fmt_lst</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"%</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">.1f"</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">fmt</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">size</span><span class="p">)]</span>
+    <span class="n">fmt_out</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fmt_lst</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt_out</span><span class="p">)</span></div>
 
 
@@ -537,9 +537,9 @@
     <span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="n">msk</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-    <span class="n">dtype</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;f4&quot;</span><span class="p">,</span>
+    <span class="n">dtype</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"f4"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write binary map file.</span>
+<span class="w">    </span><span class="sd">"""Write binary map file.</span>
 
 <span class="sd">    NOTE: The array should be in S-&gt;N and W-&gt;E orientation, with origin in the SW corner.</span>
 
@@ -552,8 +552,8 @@
 <span class="sd">    msk: np.ndarray</span>
 <span class="sd">        2D array of sfincs mask map, where invalid cells have value 0.</span>
 <span class="sd">    dtype: str, np.dtype, optional</span>
-<span class="sd">        Data type, by default &quot;f4&quot;. For sfincs.msk file use dtype=&quot;u1&quot;.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        Data type, by default "f4". For sfincs.msk file use dtype="u1".</span>
+<span class="sd">    """</span>
     <span class="n">data_out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">transpose</span><span class="p">()[</span><span class="n">msk</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
     <span class="n">data_out</span><span class="o">.</span><span class="n">tofile</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
 
@@ -562,7 +562,7 @@
 <div class="viewcode-block" id="write_binary_map_index">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.writers.write_binary_map_index.html#hydromt_sfincs.writers.write_binary_map_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">write_binary_map_index</span><span class="p">(</span><span class="n">fn_ind</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">msk</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write flat index of binary map file.</span>
+<span class="w">    </span><span class="sd">"""Write flat index of binary map file.</span>
 
 <span class="sd">    NOTE: The array should be in S-&gt;N and W-&gt;E orientation, with origin in the SW corner.</span>
 
@@ -572,10 +572,10 @@
 <span class="sd">        Path to output map index file.</span>
 <span class="sd">    msk: np.ndarray</span>
 <span class="sd">        2D array of sfincs mask map, where invalid cells have value 0.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="c1"># the index number file of sfincs starts with the length of the index numbers</span>
     <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">msk</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># convert to 1-based index</span>
-    <span class="n">indices_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)),</span> <span class="n">indices</span><span class="p">]),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;u4&quot;</span><span class="p">)</span>
+    <span class="n">indices_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)),</span> <span class="n">indices</span><span class="p">]),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"u4"</span><span class="p">)</span>
     <span class="n">indices_</span><span class="o">.</span><span class="n">tofile</span><span class="p">(</span><span class="n">fn_ind</span><span class="p">)</span></div>
 
 
@@ -586,11 +586,11 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">write_geoms</span><span class="p">(</span>
     <span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">feats</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">],</span>
-    <span class="n">stype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;thd&quot;</span><span class="p">,</span>
-    <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2">&quot;</span><span class="p">,</span>
-    <span class="n">fmt_z</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="n">stype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"thd"</span><span class="p">,</span>
+    <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"</span><span class="si">%.1f</span><span class="s2">"</span><span class="p">,</span>
+    <span class="n">fmt_z</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"</span><span class="si">%.1f</span><span class="s2">"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write list of structure dictionaries to file</span>
+<span class="w">    </span><span class="sd">"""Write list of structure dictionaries to file</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -598,63 +598,63 @@
 <span class="sd">        Path to output structure file.</span>
 <span class="sd">    feats: list of dict</span>
 <span class="sd">        List of dictionaries describing structures.</span>
-<span class="sd">        For pli, pol, thd anc crs files &quot;x&quot; and &quot;y&quot; are required, &quot;name&quot; is optional.</span>
-<span class="sd">        For weir files &quot;x&quot;, &quot;y&quot; and &quot;z&quot; are required, &quot;name&quot; and &quot;par1&quot; are optional.</span>
-<span class="sd">    stype: {&#39;pli&#39;, &#39;pol&#39;, &#39;thd&#39;, &#39;weir&#39;, &#39;crs&#39;, &#39;wvm&#39;}</span>
+<span class="sd">        For pli, pol, thd anc crs files "x" and "y" are required, "name" is optional.</span>
+<span class="sd">        For weir files "x", "y" and "z" are required, "name" and "par1" are optional.</span>
+<span class="sd">    stype: {'pli', 'pol', 'thd', 'weir', 'crs', 'wvm'}</span>
 <span class="sd">        Geom type polylines (pli), polygons (pol) thin dams (thd), weirs (weir),</span>
 <span class="sd">        cross-sections (crs) or wavemaker (wvm).</span>
 <span class="sd">    fmt: str</span>
-<span class="sd">        format for &quot;x&quot; and &quot;y&quot; fields.</span>
+<span class="sd">        format for "x" and "y" fields.</span>
 <span class="sd">    fmt_z: str</span>
-<span class="sd">        format for &quot;z&quot; and &quot;par1&quot; fields.</span>
+<span class="sd">        format for "z" and "par1" fields.</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 <span class="sd">    &gt;&gt;&gt; feats = [</span>
 <span class="sd">            {</span>
-<span class="sd">                &quot;name&quot;: &#39;WEIR01&#39;,</span>
-<span class="sd">                &quot;x&quot;: [0, 10, 20],</span>
-<span class="sd">                &quot;y&quot;: [100, 100, 100],</span>
-<span class="sd">                &quot;elevation&quot;: 5.0,</span>
-<span class="sd">                &quot;par1&quot;: 0.6,</span>
+<span class="sd">                "name": 'WEIR01',</span>
+<span class="sd">                "x": [0, 10, 20],</span>
+<span class="sd">                "y": [100, 100, 100],</span>
+<span class="sd">                "elevation": 5.0,</span>
+<span class="sd">                "par1": 0.6,</span>
 <span class="sd">            },</span>
 <span class="sd">            {</span>
-<span class="sd">                &quot;name&quot;: &#39;WEIR02&#39;,</span>
-<span class="sd">                &quot;x&quot;: [100, 110, 120],</span>
-<span class="sd">                &quot;y&quot;: [100, 100, 100],</span>
-<span class="sd">                &quot;elevation&quot;: [5.0, 5.1, 5.0],</span>
-<span class="sd">                &quot;par1&quot;: 0.6,</span>
+<span class="sd">                "name": 'WEIR02',</span>
+<span class="sd">                "x": [100, 110, 120],</span>
+<span class="sd">                "y": [100, 100, 100],</span>
+<span class="sd">                "elevation": [5.0, 5.1, 5.0],</span>
+<span class="sd">                "par1": 0.6,</span>
 <span class="sd">            },</span>
 <span class="sd">        ]</span>
-<span class="sd">    &gt;&gt;&gt; write_structures(&#39;sfincs.weir&#39;, feats, stype=&#39;weir&#39;)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">cols</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;pli&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;pol&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;thd&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;weir&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;crs&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;wvm&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}[</span><span class="n">stype</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
+<span class="sd">    &gt;&gt;&gt; write_structures('sfincs.weir', feats, stype='weir')</span>
+<span class="sd">    """</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"pli"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"pol"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"thd"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"weir"</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">"crs"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"wvm"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}[</span><span class="n">stype</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
 
     <span class="n">fmt</span> <span class="o">=</span> <span class="p">[</span><span class="n">fmt</span><span class="p">,</span> <span class="n">fmt</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">fmt_z</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cols</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)]</span>
-    <span class="k">if</span> <span class="n">stype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;weir&quot;</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">([</span><span class="s2">&quot;elevation&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">feats</span><span class="p">]):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;&quot;elevation&quot; value missing for weir files.&#39;</span><span class="p">)</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">stype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"weir"</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">([</span><span class="s2">"elevation"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">feats</span><span class="p">]):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'"elevation" value missing for weir files.'</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">feat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">feats</span><span class="p">):</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-                <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">stype</span><span class="si">:</span><span class="s2">s</span><span class="si">}{</span><span class="n">name</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="n">rows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">feat</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">])</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stype</span><span class="si">:</span><span class="s2">s</span><span class="si">}{</span><span class="n">name</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">"</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">feat</span><span class="p">[</span><span class="s2">"x"</span><span class="p">])</span>
             <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-            <span class="n">a</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">feat</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">])</span>
-            <span class="n">a</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">feat</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">])</span>
-            <span class="k">if</span> <span class="n">stype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;weir&quot;</span><span class="p">:</span>
-                <span class="n">a</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">feat</span><span class="p">[</span><span class="s2">&quot;elevation&quot;</span><span class="p">]</span>
-                <span class="n">a</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;par1&quot;</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">)</span>
+            <span class="n">a</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">feat</span><span class="p">[</span><span class="s2">"x"</span><span class="p">])</span>
+            <span class="n">a</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">feat</span><span class="p">[</span><span class="s2">"y"</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">stype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"weir"</span><span class="p">:</span>
+                <span class="n">a</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">feat</span><span class="p">[</span><span class="s2">"elevation"</span><span class="p">]</span>
+                <span class="n">a</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"par1"</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">)</span>
             <span class="n">s</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
             <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
-            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">rows</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">cols</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">rows</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">cols</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span></div>
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">write_bdr</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">gdf_bdr</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write SFINCS downstream river boundary points file (.bdr).</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_bdr</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">gdf_bdr</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"</span><span class="si">%.1f</span><span class="s2">"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write SFINCS downstream river boundary points file (.bdr).</span>
 
 <span class="sd">    Each row:</span>
 <span class="sd">    xbdr ybdr xbdr_in ybdr_in slope distance</span>
@@ -662,41 +662,41 @@
 <span class="sd">    NOTE: This version expects geometry to be LineString with 2 vertices:</span>
 <span class="sd">    - first vertex: boundary point</span>
 <span class="sd">    - second vertex: inland control point</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="c1"># expected columns for river boundary structures</span>
     <span class="n">gdf</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">gdf_bdr</span><span class="p">)</span>
     <span class="c1"># get geometry linestring and convert to xsnk, ysnk, xsrc, ysrc</span>
     <span class="n">endpoints</span> <span class="o">=</span> <span class="n">gdf</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">index_parts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">unstack</span><span class="p">()</span>
-    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;xbdr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">x</span>
-    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;ybdr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">y</span>
-    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;x_bdr_in&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">x</span>
-    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;y_bdr_in&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">y</span>
-    <span class="n">gdf</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">&quot;geometry&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">"xbdr"</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">x</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">"ybdr"</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">y</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">"x_bdr_in"</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">x</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">"y_bdr_in"</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">y</span>
+    <span class="n">gdf</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">"geometry"</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># required columns</span>
-    <span class="n">required</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;slope&quot;</span><span class="p">,</span> <span class="s2">&quot;distance&quot;</span><span class="p">]</span>
+    <span class="n">required</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"slope"</span><span class="p">,</span> <span class="s2">"distance"</span><span class="p">]</span>
     <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">required</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing required columns in gdf_bdr: </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Missing required columns in gdf_bdr: </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="c1"># order columns as SFINCS expects</span>
-    <span class="n">gdf</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[[</span><span class="s2">&quot;xbdr&quot;</span><span class="p">,</span> <span class="s2">&quot;ybdr&quot;</span><span class="p">,</span> <span class="s2">&quot;x_bdr_in&quot;</span><span class="p">,</span> <span class="s2">&quot;y_bdr_in&quot;</span><span class="p">,</span> <span class="s2">&quot;slope&quot;</span><span class="p">,</span> <span class="s2">&quot;distance&quot;</span><span class="p">]]</span>
+    <span class="n">gdf</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[[</span><span class="s2">"xbdr"</span><span class="p">,</span> <span class="s2">"ybdr"</span><span class="p">,</span> <span class="s2">"x_bdr_in"</span><span class="p">,</span> <span class="s2">"y_bdr_in"</span><span class="p">,</span> <span class="s2">"slope"</span><span class="p">,</span> <span class="s2">"distance"</span><span class="p">]]</span>
 
     <span class="c1"># format coords</span>
-    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;xbdr&quot;</span><span class="p">,</span> <span class="s2">&quot;ybdr&quot;</span><span class="p">,</span> <span class="s2">&quot;x_bdr_in&quot;</span><span class="p">,</span> <span class="s2">&quot;y_bdr_in&quot;</span><span class="p">]:</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"xbdr"</span><span class="p">,</span> <span class="s2">"ybdr"</span><span class="p">,</span> <span class="s2">"x_bdr_in"</span><span class="p">,</span> <span class="s2">"y_bdr_in"</span><span class="p">]:</span>
         <span class="n">gdf</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">fmt</span> <span class="o">%</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
 
-    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;slope&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;slope&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;distance&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;distance&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">"slope"</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="s2">"slope"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">"distance"</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="s2">"distance"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="n">Path</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">gdf</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">gdf</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">" "</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="write_drn">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.writers.write_drn.html#hydromt_sfincs.writers.write_drn">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">write_drn</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">gdf_drainage</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write structure files from list of dictionaries.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_drn</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">gdf_drainage</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"</span><span class="si">%.1f</span><span class="s2">"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write structure files from list of dictionaries.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -706,76 +706,76 @@
 <span class="sd">        Dataframe with drainage structure parameters and geometry.</span>
 <span class="sd">    fmt : str</span>
 <span class="sd">        Format for coordinate values.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1"># expected columns for drainage structures</span>
     <span class="n">col_names</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="s2">&quot;xsnk&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;ysnk&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;xsrc&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;ysrc&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;par1&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;par2&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;par3&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;par4&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;par5&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;par6&quot;</span><span class="p">,</span>
+        <span class="s2">"xsnk"</span><span class="p">,</span>
+        <span class="s2">"ysnk"</span><span class="p">,</span>
+        <span class="s2">"xsrc"</span><span class="p">,</span>
+        <span class="s2">"ysrc"</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">,</span>
+        <span class="s2">"par1"</span><span class="p">,</span>
+        <span class="s2">"par2"</span><span class="p">,</span>
+        <span class="s2">"par3"</span><span class="p">,</span>
+        <span class="s2">"par4"</span><span class="p">,</span>
+        <span class="s2">"par5"</span><span class="p">,</span>
+        <span class="s2">"par6"</span><span class="p">,</span>
     <span class="p">]</span>
 
     <span class="n">gdf</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">gdf_drainage</span><span class="p">)</span>
 
     <span class="c1"># get geometry linestring and convert to xsnk, ysnk, xsrc, ysrc</span>
     <span class="n">endpoints</span> <span class="o">=</span> <span class="n">gdf</span><span class="o">.</span><span class="n">boundary</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">index_parts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">unstack</span><span class="p">()</span>
-    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;xsnk&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">x</span>
-    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;ysnk&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">y</span>
-    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;xsrc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">x</span>
-    <span class="n">gdf</span><span class="p">[</span><span class="s2">&quot;ysrc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">y</span>
-    <span class="n">gdf</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">&quot;geometry&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">"xsnk"</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">x</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">"ysnk"</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">y</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">"xsrc"</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">x</span>
+    <span class="n">gdf</span><span class="p">[</span><span class="s2">"ysrc"</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoints</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">y</span>
+    <span class="n">gdf</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">"geometry"</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># reorder columns based on col_names</span>
     <span class="n">gdf</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="n">col_names</span><span class="p">]</span>
 
     <span class="c1"># change the format/precision of the coordinates according to fmt</span>
-    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;xsnk&quot;</span><span class="p">,</span> <span class="s2">&quot;ysnk&quot;</span><span class="p">,</span> <span class="s2">&quot;xsrc&quot;</span><span class="p">,</span> <span class="s2">&quot;ysrc&quot;</span><span class="p">]:</span>
-        <span class="n">precision</span> <span class="o">=</span> <span class="n">fmt</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;%&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"xsnk"</span><span class="p">,</span> <span class="s2">"ysnk"</span><span class="p">,</span> <span class="s2">"xsrc"</span><span class="p">,</span> <span class="s2">"ysrc"</span><span class="p">]:</span>
+        <span class="n">precision</span> <span class="o">=</span> <span class="n">fmt</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"%"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"f"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
         <span class="n">gdf</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">precision</span><span class="p">))</span>
 
     <span class="c1"># write to file</span>
-    <span class="k">if</span> <span class="n">fmt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;%&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">fmt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"%"</span><span class="p">:</span>
         <span class="n">fmt</span> <span class="o">=</span> <span class="n">fmt</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">xsnk</span><span class="si">:{</span><span class="n">fmt</span><span class="si">}}</span><span class="s2"> </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">ysnk</span><span class="si">:{</span><span class="n">fmt</span><span class="si">}}</span><span class="s2"> </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">xsrc</span><span class="si">:{</span><span class="n">fmt</span><span class="si">}}</span><span class="s2"> </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">ysrc</span><span class="si">:{</span><span class="n">fmt</span><span class="si">}}</span><span class="s2"> &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">type</span><span class="si">:</span><span class="s2">2.0f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">par1</span><span class="si">:</span><span class="s2">10.3f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">par2</span><span class="si">:</span><span class="s2">10.3f</span><span class="si">}</span><span class="s2"> &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">par3</span><span class="si">:</span><span class="s2">10.3f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">par4</span><span class="si">:</span><span class="s2">10.3f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">par5</span><span class="si">:</span><span class="s2">10.3f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">par6</span><span class="si">:</span><span class="s2">10.3f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">xsnk</span><span class="si">:{</span><span class="n">fmt</span><span class="si">}}</span><span class="s2"> </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">ysnk</span><span class="si">:{</span><span class="n">fmt</span><span class="si">}}</span><span class="s2"> </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">xsrc</span><span class="si">:{</span><span class="n">fmt</span><span class="si">}}</span><span class="s2"> </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">ysrc</span><span class="si">:{</span><span class="n">fmt</span><span class="si">}}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">type</span><span class="si">:</span><span class="s2">2.0f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">par1</span><span class="si">:</span><span class="s2">10.3f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">par2</span><span class="si">:</span><span class="s2">10.3f</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">par3</span><span class="si">:</span><span class="s2">10.3f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">par4</span><span class="si">:</span><span class="s2">10.3f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">par5</span><span class="si">:</span><span class="s2">10.3f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">par6</span><span class="si">:</span><span class="s2">10.3f</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span>
             <span class="p">)</span></div>
 
-    <span class="c1"># gdf.to_csv(fn, sep=&quot; &quot;, index=False, header=False)</span>
+    <span class="c1"># gdf.to_csv(fn, sep=" ", index=False, header=False)</span>
 
 
 <span class="c1">## XY files: bnd / src ##</span>
 <div class="viewcode-block" id="write_xyn">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.writers.write_xyn.html#hydromt_sfincs.writers.write_xyn">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">write_xyn</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sfincs.obs&quot;</span><span class="p">,</span> <span class="n">gdf</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2">&quot;</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write xyn files, for example observation points with names. When name column is not present, it will be generated as &quot;point001&quot;, &quot;point002&quot;, etc.&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_xyn</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"sfincs.obs"</span><span class="p">,</span> <span class="n">gdf</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"</span><span class="si">%.1f</span><span class="s2">"</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Write xyn files, for example observation points with names. When name column is not present, it will be generated as "point001", "point002", etc."""</span>
     <span class="c1"># strip %-sign of fmt if present</span>
-    <span class="n">fmt</span> <span class="o">=</span> <span class="n">fmt</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;%&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">fmt</span> <span class="o">=</span> <span class="n">fmt</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"%"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
 
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">point</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">iterfeatures</span><span class="p">():</span>
             <span class="c1"># only take first two coordinates if geometry is 3D</span>
-            <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">point</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">][</span><span class="s2">&quot;coordinates&quot;</span><span class="p">][:</span><span class="mi">2</span><span class="p">]</span>
-            <span class="k">if</span> <span class="s2">&quot;properties&quot;</span> <span class="ow">in</span> <span class="n">point</span> <span class="ow">and</span> <span class="s2">&quot;name&quot;</span> <span class="ow">in</span> <span class="n">point</span><span class="p">[</span><span class="s2">&quot;properties&quot;</span><span class="p">]:</span>
-                <span class="n">name</span> <span class="o">=</span> <span class="n">point</span><span class="p">[</span><span class="s2">&quot;properties&quot;</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">point</span><span class="p">[</span><span class="s2">"geometry"</span><span class="p">][</span><span class="s2">"coordinates"</span><span class="p">][:</span><span class="mi">2</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s2">"properties"</span> <span class="ow">in</span> <span class="n">point</span> <span class="ow">and</span> <span class="s2">"name"</span> <span class="ow">in</span> <span class="n">point</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">]:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">point</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
-                <span class="c1"># name = &quot;point&quot; + str(point[&quot;id&quot;])</span>
+                <span class="c1"># name = "point" + str(point["id"])</span>
             <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">string</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">x</span><span class="si">:{</span><span class="n">fmt</span><span class="si">}}</span><span class="s1"> </span><span class="si">{</span><span class="n">y</span><span class="si">:{</span><span class="n">fmt</span><span class="si">}}</span><span class="s1"> &quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&quot;</span><span class="se">\n</span><span class="s1">&#39;</span>
+                <span class="n">string</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">x</span><span class="si">:{</span><span class="n">fmt</span><span class="si">}}</span><span class="s1"> </span><span class="si">{</span><span class="n">y</span><span class="si">:{</span><span class="n">fmt</span><span class="si">}}</span><span class="s1"> "</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">"</span><span class="se">\n</span><span class="s1">'</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">string</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">x</span><span class="si">:{</span><span class="n">fmt</span><span class="si">}}</span><span class="s2"> </span><span class="si">{</span><span class="n">y</span><span class="si">:{</span><span class="n">fmt</span><span class="si">}}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="n">string</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">x</span><span class="si">:{</span><span class="n">fmt</span><span class="si">}}</span><span class="s2"> </span><span class="si">{</span><span class="n">y</span><span class="si">:{</span><span class="n">fmt</span><span class="si">}}</span><span class="se">\n</span><span class="s2">"</span>
             <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">string</span><span class="p">)</span></div>
 
 
@@ -787,7 +787,7 @@
     <span class="n">root</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write model vector (geoms) variables to geojson files.</span>
+<span class="w">    </span><span class="sd">"""Write model vector (geoms) variables to geojson files.</span>
 
 <span class="sd">    NOTE: these files are not used by the model by just saved for visualization/</span>
 <span class="sd">    analysis purposes.</span>
@@ -802,9 +802,9 @@
 <span class="sd">    root: Path, str, optional</span>
 <span class="sd">        The output folder path.</span>
 <span class="sd">    kwargs:</span>
-<span class="sd">        Key-word arguments passed to geopandas.GeoDataFrame.to_file(driver=&#39;GeoJSON&#39;).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">driver</span><span class="o">=</span><span class="s2">&quot;GeoJSON&quot;</span><span class="p">)</span>  <span class="c1"># fixed</span>
+<span class="sd">        Key-word arguments passed to geopandas.GeoDataFrame.to_file(driver='GeoJSON').</span>
+<span class="sd">    """</span>
+    <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">driver</span><span class="o">=</span><span class="s2">"GeoJSON"</span><span class="p">)</span>  <span class="c1"># fixed</span>
 
     <span class="c1"># check root</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
@@ -816,21 +816,21 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="n">gdf</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">to_gdf</span><span class="p">()</span>
         <span class="k">except</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Variable </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> could not be written to vector file.&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Variable </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> could not be written to vector file."</span><span class="p">)</span>
             <span class="k">pass</span>
 
-    <span class="n">gdf</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.geojson&quot;</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">gdf</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.geojson"</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">write_raster</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span>
     <span class="n">root</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">mask</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">driver</span><span class="o">=</span><span class="s2">&quot;GTiff&quot;</span><span class="p">,</span>
-    <span class="n">compress</span><span class="o">=</span><span class="s2">&quot;deflate&quot;</span><span class="p">,</span>
+    <span class="n">driver</span><span class="o">=</span><span class="s2">"GTiff"</span><span class="p">,</span>
+    <span class="n">compress</span><span class="o">=</span><span class="s2">"deflate"</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write model 2D raster variables to geotiff files.</span>
+<span class="w">    </span><span class="sd">"""Write model 2D raster variables to geotiff files.</span>
 
 <span class="sd">    NOTE: these files are not used by the model by just saved for visualization/</span>
 <span class="sd">    analysis purposes.</span>
@@ -839,14 +839,14 @@
 <span class="sd">    ----------</span>
 <span class="sd">    variables: str, list, optional</span>
 <span class="sd">        Model variables are a combination of attribute and layer (optional) using &lt;attribute&gt;.&lt;layer&gt; syntax.</span>
-<span class="sd">        Known ratster attributes are [&quot;grid&quot;, &quot;states&quot;, &quot;results&quot;].</span>
+<span class="sd">        Known ratster attributes are ["grid", "states", "results"].</span>
 <span class="sd">        Different variables can be combined in a list.</span>
-<span class="sd">        By default, variables is [&quot;grid&quot;, &quot;states&quot;, &quot;results.hmax&quot;]</span>
+<span class="sd">        By default, variables is ["grid", "states", "results.hmax"]</span>
 <span class="sd">    root: Path, str, optional</span>
 <span class="sd">        The output folder path. If None it defaults to the &lt;model_root&gt;/gis folder (Default)</span>
 <span class="sd">    kwargs:</span>
-<span class="sd">        Key-word arguments passed to hydromt.RasterDataset.to_raster(driver=&#39;GTiff&#39;, compress=&#39;lzw&#39;).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        Key-word arguments passed to hydromt.RasterDataset.to_raster(driver='GTiff', compress='lzw').</span>
+<span class="sd">    """</span>
 
     <span class="c1"># check variables</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
@@ -856,16 +856,16 @@
         <span class="n">variables</span> <span class="o">=</span> <span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Unsupported data type for writing raster: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2">. &quot;</span>
-            <span class="s2">&quot;Expected xr.Dataset or xr.DataArray.&quot;</span>
+            <span class="sa">f</span><span class="s2">"Unsupported data type for writing raster: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2">. "</span>
+            <span class="s2">"Expected xr.Dataset or xr.DataArray."</span>
         <span class="p">)</span>
 
     <span class="c1"># check mask</span>
     <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="s2">&quot;mask&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
-            <span class="n">mask</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;mask&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s2">"mask"</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"mask"</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No mask provided and no &#39;mask&#39; variable found in data.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No mask provided and no 'mask' variable found in data."</span><span class="p">)</span>
 
     <span class="c1"># check root</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">root</span><span class="p">):</span>
@@ -877,23 +877,23 @@
         <span class="n">name</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">name</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
             <span class="c1"># try to reduce to 2D by taking maximum over time dimension</span>
-            <span class="k">if</span> <span class="s2">&quot;time&quot;</span> <span class="ow">in</span> <span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
-                <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="s2">&quot;timemax&quot;</span> <span class="ow">in</span> <span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
-                <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="s2">&quot;timemax&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">"time"</span> <span class="ow">in</span> <span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+                <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="s2">"time"</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="s2">"timemax"</span> <span class="ow">in</span> <span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+                <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="s2">"timemax"</span><span class="p">)</span>
             <span class="c1"># if still not 2D, skip</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Variable </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> has more than 2 dimensions: skipping.&quot;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Variable </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> has more than 2 dimensions: skipping."</span><span class="p">)</span>
                 <span class="k">continue</span>
         <span class="c1"># If the raster type is float, set nodata to np.nan</span>
-        <span class="k">if</span> <span class="n">da</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s2">&quot;float32&quot;</span> <span class="ow">or</span> <span class="n">da</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s2">&quot;float64&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">da</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s2">"float32"</span> <span class="ow">or</span> <span class="n">da</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s2">"float64"</span><span class="p">:</span>
             <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
         <span class="c1"># only write active cells to gis files</span>
         <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span><span class="p">)</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># make sure orientation is N-&gt;S</span>
             <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">flipud</span><span class="p">()</span>
         <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">to_raster</span><span class="p">(</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.tif&quot;</span><span class="p">),</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.tif"</span><span class="p">),</span>
             <span class="n">driver</span><span class="o">=</span><span class="n">driver</span><span class="p">,</span>
             <span class="n">compress</span><span class="o">=</span><span class="n">compress</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
@@ -901,7 +901,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">write_netcdf_safely</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">abs_file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    NetCDF files have the tendency to get locked by other processes (e.g. other notebooks), or because they were</span>
 <span class="sd">    opened in a lazy manner. This function attempts to write the dataset to the specified path,</span>
 <span class="sd">    only when it actually changed, and if the file is locked, it will create a versioned file instead.</span>
@@ -914,20 +914,20 @@
 <span class="sd">        Absolute target path for the NetCDF file.</span>
 <span class="sd">    encoding: dict, optional</span>
 <span class="sd">        Encoding dictionary passed to xarray.to_netcdf, here for instance used for time variable;</span>
-<span class="sd">        e.g. encoding = dict(time={&quot;units&quot;: f&quot;minutes since {tref_str}&quot;, &quot;dtype&quot;: &quot;float64&quot;}))</span>
+<span class="sd">        e.g. encoding = dict(time={"units": f"minutes since {tref_str}", "dtype": "float64"}))</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    Path</span>
 <span class="sd">        The path the dataset was actually written to (may be versioned if original locked).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>  <span class="c1"># ensure fully in memory</span>
 
     <span class="c1"># Step 1: skip if file exists and dataset is unchanged</span>
     <span class="k">if</span> <span class="n">abs_file_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">existing_ds</span> <span class="o">=</span> <span class="n">GeoDataset</span><span class="o">.</span><span class="n">from_netcdf</span><span class="p">(</span>
-                <span class="n">abs_file_path</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span>
+                <span class="n">abs_file_path</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="s2">"auto"</span>
             <span class="p">)</span>
             <span class="n">changed</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">ds</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">existing_ds</span><span class="p">)</span>
             <span class="n">existing_ds</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
@@ -935,7 +935,7 @@
             <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># fail-safe</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">changed</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No changes detected; skipping write to </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No changes detected; skipping write to </span><span class="si">{</span><span class="n">abs_file_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">abs_file_path</span>
 
     <span class="c1"># Step 2: remove cryptic encoding per variable</span>
@@ -943,7 +943,7 @@
         <span class="n">ds</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">encoding</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>  <span class="c1"># remove all encoding hints</span>
 
     <span class="c1"># Step 3: write to temporary file</span>
-    <span class="n">tmp_fd</span><span class="p">,</span> <span class="n">tmp_path</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.nc&quot;</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="n">abs_file_path</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
+    <span class="n">tmp_fd</span><span class="p">,</span> <span class="n">tmp_path</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">".nc"</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="n">abs_file_path</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
     <span class="n">os</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">tmp_fd</span><span class="p">)</span>
     <span class="n">ds</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">to_xy</span><span class="p">()</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">)</span>
 
@@ -960,12 +960,12 @@
         <span class="p">)</span>
         <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-            <span class="n">versioned_path</span> <span class="o">=</span> <span class="n">parent</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">_v</span><span class="si">{</span><span class="n">i</span><span class="si">}{</span><span class="n">ext</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">versioned_path</span> <span class="o">=</span> <span class="n">parent</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">_v</span><span class="si">{</span><span class="n">i</span><span class="si">}{</span><span class="n">ext</span><span class="si">}</span><span class="s2">"</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">versioned_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
                 <span class="k">break</span>
             <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">,</span> <span class="n">versioned_path</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Original file locked. Saved new version as </span><span class="si">{</span><span class="n">versioned_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Original file locked. Saved new version as </span><span class="si">{</span><span class="n">versioned_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">final_path</span> <span class="o">=</span> <span class="n">versioned_path</span>
 
     <span class="k">return</span> <span class="n">final_path</span>
