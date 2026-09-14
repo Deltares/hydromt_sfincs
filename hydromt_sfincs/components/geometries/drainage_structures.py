@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Union
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 import tomli_w
 from shapely.geometry import LineString
@@ -31,6 +32,8 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 # regardless of structure type.
 _DEFAULTS: dict = {
     "q": 0.0,
+    # Culvert discharge coefficient. Gates use a different default -- see
+    # _GATE_FLOW_COEF below.
     "flow_coef": 0.6,
     "direction": "both",
     "width": 10.0,
@@ -42,7 +45,15 @@ _DEFAULTS: dict = {
     "submergence_ratio": 0.67,
     "opening_duration": 0.0,
     "closing_duration": 0.0,
+    "obs_1_x": np.nan,
+    "obs_1_y": np.nan,
+    "obs_2_x": np.nan,
+    "obs_2_y": np.nan,
 }
+
+# Gates use a different discharge coefficient default from culverts (the
+# 0.6 in _DEFAULTS above is the culvert value).
+_GATE_FLOW_COEF: float = 1.0
 
 # Valid gate-rule operations (see sfincs_src_structures.f90): each rule is
 # an {"operation": ..., "when": ...} dict; rules are evaluated in order and
@@ -133,9 +144,20 @@ class SfincsDrainageStructures(ModelComponent):
         """
         for col, default in _DEFAULTS.items():
             gdf[col] = default
+        # Gates use a different flow_coef default than the culvert value
+        # just stamped above.
+        gdf.loc[gdf["type"] == 4, "flow_coef"] = _GATE_FLOW_COEF
         # Ordered list of gate control rules per row; each entry is an
         # {"operation": "open"/"close"/"hold", "when": "<expr>"} dict.
         gdf["rules"] = [[] for _ in range(len(gdf))]
+        # Observation points are where SFINCS senses z1/z2 for the control
+        # rules; they are independent of src_1/src_2, which are where water
+        # is actually removed and added. When a file omits them, the source
+        # points are the only sensible fallback.
+        for i, geom in enumerate(gdf.geometry):
+            coords = list(geom.coords)
+            gdf.at[i, "obs_1_x"], gdf.at[i, "obs_1_y"] = coords[0]
+            gdf.at[i, "obs_2_x"], gdf.at[i, "obs_2_y"] = coords[-1]
         return gdf
 
     def read(self, filename: str | Path = None):
@@ -298,6 +320,18 @@ class SfincsDrainageStructures(ModelComponent):
             ztype = entry["_toml_type"]
             direction = str(entry.get("direction", "") or "").lower()
             t = int(gdf.at[idx, "type"])
+
+            # Observation points apply to every type; default (stamped by
+            # _set_defaults) is the structure's own src points.
+            obs_1 = entry.get("obs_1")
+            if obs_1 is not None:
+                gdf.at[idx, "obs_1_x"] = float(obs_1[0])
+                gdf.at[idx, "obs_1_y"] = float(obs_1[1])
+            obs_2 = entry.get("obs_2")
+            if obs_2 is not None:
+                gdf.at[idx, "obs_2_x"] = float(obs_2[0])
+                gdf.at[idx, "obs_2_y"] = float(obs_2[1])
+
             if t == 1:
                 gdf.at[idx, "q"] = float(entry.get("q", _DEFAULTS["q"]))
             elif t == 2:
@@ -320,6 +354,9 @@ class SfincsDrainageStructures(ModelComponent):
                 )
                 gdf.at[idx, "mannings_n"] = float(
                     entry.get("mannings_n", _DEFAULTS["mannings_n"])
+                )
+                gdf.at[idx, "flow_coef"] = float(
+                    entry.get("flow_coef", _GATE_FLOW_COEF)
                 )
                 closing = float(
                     entry.get("closing_duration", _DEFAULTS["closing_duration"])
@@ -562,6 +599,15 @@ class SfincsDrainageStructures(ModelComponent):
                 "src_1": [x1, y1],
                 "src_2": [x2, y2],
             }
+            # SFINCS defaults obs to src when the keys are absent, so only
+            # emit them when they differ from src -- writing them when
+            # equal would add keys the source file never had.
+            obs_1_x, obs_1_y = float(row["obs_1_x"]), float(row["obs_1_y"])
+            obs_2_x, obs_2_y = float(row["obs_2_x"]), float(row["obs_2_y"])
+            if (obs_1_x, obs_1_y) != (x1, y1):
+                entry["obs_1"] = [obs_1_x, obs_1_y]
+            if (obs_2_x, obs_2_y) != (x2, y2):
+                entry["obs_2"] = [obs_2_x, obs_2_y]
             if t == 1:
                 entry["q"] = float(row["q"])
             elif t == 2:
@@ -574,6 +620,7 @@ class SfincsDrainageStructures(ModelComponent):
                 entry["width"] = float(row["width"])
                 entry["sill_elevation"] = float(row["sill_elevation"])
                 entry["mannings_n"] = float(row["mannings_n"])
+                entry["flow_coef"] = float(row["flow_coef"])
                 entry["opening_duration"] = float(row["opening_duration"])
                 entry["closing_duration"] = float(row["closing_duration"])
             elif t == 5:
