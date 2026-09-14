@@ -32,6 +32,8 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 # regardless of structure type.
 _DEFAULTS: dict = {
     "q": 0.0,
+    # Culvert discharge coefficient. Gates use a different default -- see
+    # _GATE_FLOW_COEF below.
     "flow_coef": 0.6,
     "direction": "both",
     "width": 10.0,
@@ -48,6 +50,10 @@ _DEFAULTS: dict = {
     "obs_2_x": np.nan,
     "obs_2_y": np.nan,
 }
+
+# Gates use a different discharge coefficient default from culverts (the
+# 0.6 in _DEFAULTS above is the culvert value).
+_GATE_FLOW_COEF: float = 1.0
 
 # Valid gate-rule operations (see sfincs_src_structures.f90): each rule is
 # an {"operation": ..., "when": ...} dict; rules are evaluated in order and
@@ -138,6 +144,9 @@ class SfincsDrainageStructures(ModelComponent):
         """
         for col, default in _DEFAULTS.items():
             gdf[col] = default
+        # Gates use a different flow_coef default than the culvert value
+        # just stamped above.
+        gdf.loc[gdf["type"] == 4, "flow_coef"] = _GATE_FLOW_COEF
         # Ordered list of gate control rules per row; each entry is an
         # {"operation": "open"/"close"/"hold", "when": "<expr>"} dict.
         gdf["rules"] = [[] for _ in range(len(gdf))]
@@ -347,7 +356,7 @@ class SfincsDrainageStructures(ModelComponent):
                     entry.get("mannings_n", _DEFAULTS["mannings_n"])
                 )
                 gdf.at[idx, "flow_coef"] = float(
-                    entry.get("flow_coef", _DEFAULTS["flow_coef"])
+                    entry.get("flow_coef", _GATE_FLOW_COEF)
                 )
                 closing = float(
                     entry.get("closing_duration", _DEFAULTS["closing_duration"])

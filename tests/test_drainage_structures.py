@@ -209,9 +209,9 @@ def test_drainage_structures_obs_independent_of_src(model_config, tmp_path):
 def test_drainage_structures_gate_flow_coef(model_config, tmp_path):
     """A gate's ``flow_coef`` survives a round trip at a non-default value.
 
-    The component default (also what a file omitting the key falls back
-    to) is 0.6; this file sets 0.9 so a regression back to the default
-    would be caught.
+    The gate default (also what a file omitting the key falls back to) is
+    1.0 -- distinct from the culvert default of 0.6 -- so this file sets
+    0.9 to make sure a regression back to either default would be caught.
     """
     entry = _gate_entry(src_1=SRC_1_B, src_2=SRC_2_B, flow_coef=0.9)
     toml_path = tmp_path / "sfincs.toml.drn"
@@ -229,13 +229,44 @@ def test_drainage_structures_gate_flow_coef(model_config, tmp_path):
     row2 = model_config.drainage_structures.data.iloc[0]
     assert row2["flow_coef"] == pytest.approx(0.9)
 
-    # A file that omits flow_coef entirely falls back to the component
-    # default (0.6) -- see open question in the PR about whether that
-    # matches SFINCS's own default for a gate.
-    model_config.drainage_structures.clear()
+
+def test_drainage_structures_gate_flow_coef_defaults_to_one(model_config, tmp_path):
+    """A gate with no ``flow_coef`` in the file gets the gate default, 1.0.
+
+    Confirmed with the branch author: a gate's flow_coef should default to
+    1.0, not the culvert value of 0.6 that hydromt used to stamp on every
+    type via ``_DEFAULTS``.
+    """
     entry_no_fc = _gate_entry(src_1=SRC_1_B, src_2=SRC_2_B, flow_coef=None)
-    toml_path2 = tmp_path / "sfincs_no_flow_coef.toml.drn"
-    _write_toml(toml_path2, [entry_no_fc])
-    model_config.drainage_structures.read_toml(toml_path2)
-    row3 = model_config.drainage_structures.data.iloc[0]
-    assert row3["flow_coef"] == pytest.approx(0.6)
+    toml_path = tmp_path / "sfincs_no_flow_coef.toml.drn"
+    _write_toml(toml_path, [entry_no_fc])
+
+    model_config.root.set(tmp_path, mode="r+")
+    model_config.drainage_structures.read_toml(toml_path)
+    row = model_config.drainage_structures.data.iloc[0]
+    assert row["flow_coef"] == pytest.approx(1.0)
+
+
+def test_drainage_structures_culvert_flow_coef_default_unchanged(
+    model_config, tmp_path
+):
+    """A culvert with no ``flow_coef`` still defaults to 0.6.
+
+    Regression guard: the gate default of 1.0 must not leak into the
+    culvert_simple/culvert types, which keep the pre-existing 0.6 default.
+    """
+    entry = {
+        "type": "culvert_simple",
+        "name": "CULV01",
+        "src_1": list(SRC_1_B),
+        "src_2": list(SRC_2_B),
+        "direction": "both",
+    }
+    toml_path = tmp_path / "sfincs.toml.drn"
+    _write_toml(toml_path, [entry])
+
+    model_config.root.set(tmp_path, mode="r+")
+    model_config.drainage_structures.read_toml(toml_path)
+    row = model_config.drainage_structures.data.iloc[0]
+    assert int(row["type"]) == 2
+    assert row["flow_coef"] == pytest.approx(0.6)
