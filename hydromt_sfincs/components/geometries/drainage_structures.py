@@ -589,9 +589,16 @@ class SfincsDrainageStructures(ModelComponent):
                 "name": name,
                 "src_1": [x1, y1],
                 "src_2": [x2, y2],
-                "obs_1": [float(row["obs_1_x"]), float(row["obs_1_y"])],
-                "obs_2": [float(row["obs_2_x"]), float(row["obs_2_y"])],
             }
+            # SFINCS defaults obs to src when the keys are absent, so only
+            # emit them when they differ from src -- writing them when
+            # equal would add keys the source file never had.
+            obs_1_x, obs_1_y = float(row["obs_1_x"]), float(row["obs_1_y"])
+            obs_2_x, obs_2_y = float(row["obs_2_x"]), float(row["obs_2_y"])
+            if (obs_1_x, obs_1_y) != (x1, y1):
+                entry["obs_1"] = [obs_1_x, obs_1_y]
+            if (obs_2_x, obs_2_y) != (x2, y2):
+                entry["obs_2"] = [obs_2_x, obs_2_y]
             if t == 1:
                 entry["q"] = float(row["q"])
             elif t == 2:

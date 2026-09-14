@@ -5,6 +5,8 @@ Covers the ``obs_1``/``obs_2`` and gate ``flow_coef`` fields, which
 all; flow_coef was only handled for culvert types, not gates).
 """
 
+import tomllib
+
 import tomli_w
 import pytest
 
@@ -128,6 +130,41 @@ def test_drainage_structures_obs_defaults_to_src(model_config, tmp_path):
 
     model_config.root.set(tmp_path, mode="r+")
     model_config.drainage_structures.read_toml(toml_path)
+    row = model_config.drainage_structures.data.iloc[0]
+
+    assert row["obs_1_x"] == pytest.approx(SRC_1_B[0])
+    assert row["obs_1_y"] == pytest.approx(SRC_1_B[1])
+    assert row["obs_2_x"] == pytest.approx(SRC_2_B[0])
+    assert row["obs_2_y"] == pytest.approx(SRC_2_B[1])
+
+
+def test_drainage_structures_obs_equal_to_src_omitted_on_write(model_config, tmp_path):
+    """obs == src round-trips through omission: no obs_1/obs_2 keys are written.
+
+    SFINCS itself defaults obs to src when the keys are absent, so writing
+    them when they equal src would add keys the source file never had. A
+    gate whose obs is explicitly set equal to src (as well as one that
+    never specified obs at all) must therefore write no obs_1/obs_2 keys,
+    and reading that file back must still yield obs columns equal to src.
+    """
+    entry = _gate_entry(src_1=SRC_1_B, src_2=SRC_2_B, obs_1=SRC_1_B, obs_2=SRC_2_B)
+    toml_path = tmp_path / "sfincs.toml.drn"
+    _write_toml(toml_path, [entry])
+
+    model_config.root.set(tmp_path, mode="r+")
+    model_config.drainage_structures.read_toml(toml_path)
+
+    out_path = tmp_path / "roundtrip.toml.drn"
+    model_config.drainage_structures.write_toml(out_path)
+
+    with open(out_path, "rb") as f:
+        doc = tomllib.load(f)
+    written = doc["src_structure"][0]
+    assert "obs_1" not in written
+    assert "obs_2" not in written
+
+    model_config.drainage_structures.clear()
+    model_config.drainage_structures.read_toml(out_path)
     row = model_config.drainage_structures.data.iloc[0]
 
     assert row["obs_1_x"] == pytest.approx(SRC_1_B[0])
