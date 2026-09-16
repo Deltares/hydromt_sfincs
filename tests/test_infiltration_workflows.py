@@ -160,14 +160,14 @@ def test_bucket_loss_defaults_split_between_legacy_and_landuse(model):
     lulc = xr.where(model.grid.data["dep"] < -0.5, 24, 41)
     lulc.raster.set_crs(model.crs)
 
-    model.infiltration.create_bucket(hsg=hsg, ksat=ksat)
+    model.infiltration.create_bucket_from_soil(hsg=hsg, ksat=ksat)
     assert np.isclose(
         model.grid.data["bucket_loss"].where(model.grid.mask > 0).mean(),
         0.0,
         atol=1e-6,
     )
 
-    model.infiltration.create_bucket(hsg=hsg, ksat=ksat, lulc=lulc)
+    model.infiltration.create_bucket_from_soil(hsg=hsg, ksat=ksat, lulc=lulc)
     assert np.isclose(
         model.grid.data["bucket_loss"].where(model.grid.mask > 0).mean(),
         0.10,

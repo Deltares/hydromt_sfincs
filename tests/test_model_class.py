@@ -377,17 +377,17 @@ def test_infiltration_estimators_from_hsg(model):
     ksat = xr.where(model.grid.data["dep"] < 0.0, 0.5, 5.0)
     ksat.raster.set_crs(model.crs)
 
-    model.infiltration.create_green_ampt(hsg=hsg, ksat=ksat)
+    model.infiltration.create_green_ampt_from_soil(hsg=hsg, ksat=ksat)
     assert float(model.grid.data["psi"].where(model.grid.mask > 0).max()) > 0.0
     assert float(model.grid.data["sigma"].where(model.grid.mask > 0).max()) > 0.0
     assert float(model.grid.data["ks"].where(model.grid.mask > 0).max()) > 0.0
 
-    model.infiltration.create_horton(hsg=hsg, ksat=ksat)
+    model.infiltration.create_horton_from_soil(hsg=hsg, ksat=ksat)
     assert float(model.grid.data["f0"].where(model.grid.mask > 0).max()) > 0.0
     assert float(model.grid.data["fc"].where(model.grid.mask > 0).max()) > 0.0
     assert float(model.grid.data["kd"].where(model.grid.mask > 0).max()) > 0.0
 
-    model.infiltration.create_bucket(hsg=hsg, ksat=ksat)
+    model.infiltration.create_bucket_from_soil(hsg=hsg, ksat=ksat)
     assert float(model.grid.data["bucket_smax"].where(model.grid.mask > 0).max()) > 0.0
     assert float(model.grid.data["bucket_k"].where(model.grid.mask > 0).max()) > 0.0
 

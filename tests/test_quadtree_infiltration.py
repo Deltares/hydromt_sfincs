@@ -19,16 +19,18 @@ def test_quadtree_infiltration(model, quadtree_model):
     # add to quadtree model
     quadtree_model.quadtree_infiltration.create_constant(qinf, reproj_method="nearest")
     assert quadtree_model.config.get("qinf") is None  # qinf removed from config
-    assert quadtree_model.config.get("infiltration_file") is not None  # qinf file set
+    assert quadtree_model.config.get("infiltrationfile") is not None  # qinf file set
     assert (
-        quadtree_model.config.get("infiltration_type") == "c2d"
+        quadtree_model.config.get("infiltrationtype") == "c2d"
     )  # infiltration type set to c2d
     assert "qinf" in quadtree_model.quadtree_grid.data
-    assert (
-        quadtree_model.quadtree_grid.data["qinf"]
-        .where(quadtree_model.quadtree_grid.mask > 0)
-        .max()
-        == 0.1
+    assert np.isclose(
+        float(
+            quadtree_model.quadtree_grid.data["qinf"]
+            .where(quadtree_model.quadtree_grid.mask > 0)
+            .max()
+        ),
+        0.1,
     )
 
     # set cn infiltration based on regular grid model elevation
@@ -37,14 +39,17 @@ def test_quadtree_infiltration(model, quadtree_model):
     cn.raster.set_crs(model.crs)
     quadtree_model.quadtree_infiltration.create_cn(cn, reproj_method="nearest")
     assert (
-        quadtree_model.config.get("infiltration_type") == "cna"
+        quadtree_model.config.get("infiltrationtype") == "cna"
     )  # infiltration type set to cna
     assert "scs" in quadtree_model.quadtree_grid.data
-    assert (
-        quadtree_model.quadtree_grid.data["scs"].where(
-            quadtree_model.quadtree_grid.mask > 0
-        )
-    ).max() == 10
+    assert np.isclose(
+        float(
+            quadtree_model.quadtree_grid.data["scs"]
+            .where(quadtree_model.quadtree_grid.mask > 0)
+            .max()
+        ),
+        10,
+    )
 
     # set cn infiltration with recovery based on regular grid model elevation
     lulc = xr.where(model.grid.data["dep"] < -0.5, 70, 30)
@@ -65,7 +70,7 @@ def test_quadtree_infiltration(model, quadtree_model):
     assert "seff" in quadtree_model.quadtree_grid.data
     assert "ks" in quadtree_model.quadtree_grid.data
     assert (
-        quadtree_model.config.get("infiltration_type") == "cnb"
+        quadtree_model.config.get("infiltrationtype") == "cnb"
     )  # infiltration type set to cnb
 
     # Write model
