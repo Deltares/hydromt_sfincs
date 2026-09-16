@@ -59,9 +59,7 @@ class SfincsInfiltration(ModelComponent):
             return source.copy()
         return self.data_catalog.get_dataframe(
             source,
-            source_kwargs={
-                "driver": {"name": "pandas", "options": {"index_col": 0}}
-            },
+            source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
         )
 
     @staticmethod
@@ -254,7 +252,9 @@ class SfincsInfiltration(ModelComponent):
             )
         elif lulc is not None:
             if reclass_table is None:
-                raise IOError(f"Infiltration mapping file should be provided for {lulc}")
+                raise IOError(
+                    f"Infiltration mapping file should be provided for {lulc}"
+                )
             da_lulc = self._as_dataarray(self._read_rasterdataset(lulc))
             df_map = self._read_dataframe(reclass_table)
             da_qinf = da_lulc.raster.reclassify(df_map[["qinf"]])["qinf"]
@@ -265,6 +265,35 @@ class SfincsInfiltration(ModelComponent):
             )
         self._set_layers({"qinf": da_qinf}, flavor="c2d")
 
+        # reproject infiltration data to model grid
+        da_inf = da_inf.raster.mask_nodata()  # set nodata to nan
+        da_inf = da_inf.raster.reproject_like(self.mask, method=reproj_method)
+
+        # check on nan values
+        if np.logical_and(np.isnan(da_inf), self.mask >= 1).any():
+            logger.warning("NaN values found in infiltration data; filled with 0")
+            da_inf = da_inf.fillna(0)
+        da_inf.raster.set_nodata(-9999.0)
+
+        # set grid
+        mname = "qinf"
+        da_inf.attrs.update(**_ATTRS.get(mname, {}))
+        self.model.grid.set(da_inf, name=mname)
+
+        # update config: remove default inf and set qinf map
+        self.model.config.set(f"{mname}file", f"sfincs.{mname}")
+        # set spatially uniform qinf to None in config
+        self.model.config.set("qinf", None)
+
+        # loop over other infiltration methods ATTRS and remove them from config when present
+        for name in _ATTRS.keys():
+            if name != mname:
+                # get from config
+                if self.model.config.get(f"{name}file", None) is not None:
+                    logger.info(f"Removing {name}file from model config.")
+                    self.model.config.set(f"{name}file", None)
+
+    # Function to create curve number for SFINCS
     @hydromt_step
     def create_cn(self, cn, antecedent_moisture="avg", reproj_method="med"):
         """Create Curve Number infiltration without recovery."""
@@ -274,6 +303,24 @@ class SfincsInfiltration(ModelComponent):
         da_scs = workflows.cn_to_s(da_cn, self.mask > 0).round(3)
         self._set_layers({"scs": da_scs}, flavor="cna")
 
+        # set grid
+        mname = "scs"
+        da_scs.attrs.update(**_ATTRS.get(mname, {}))
+        self.model.grid.set(da_scs, name=mname)
+        # update config:
+        self.model.config.set(f"{mname}file", f"sfincs.{mname}")
+        # set spatially unfiform qinf to None in config
+        self.model.config.set("qinf", None)
+
+        # loop over other infiltration methods ATTRS and remove them from config when present
+        for name in _ATTRS.keys():
+            if name != mname:
+                # get from config
+                if self.model.config.get(f"{name}file", None) is not None:
+                    logger.info(f"Removing {name}file from model config.")
+                    self.model.config.set(f"{name}file", None)
+
+    # Function to create curve number for SFINCS including recovery via saturated hydraulic conductivity [mm/hr]
     @hydromt_step
     def create_cn_with_recovery(
         self,
@@ -340,7 +387,9 @@ class SfincsInfiltration(ModelComponent):
             if reclass_table is None and hsg is not None:
                 reclass_table = self._default_lookup("green_ampt")
             if reclass_table is None:
-                raise ValueError("A reclass_table is required for Green-Ampt estimation.")
+                raise ValueError(
+                    "A reclass_table is required for Green-Ampt estimation."
+                )
             da_soil = self._as_dataarray(self._read_rasterdataset(soil_source))
             df_map = self._read_dataframe(reclass_table)
             da_ksat = None

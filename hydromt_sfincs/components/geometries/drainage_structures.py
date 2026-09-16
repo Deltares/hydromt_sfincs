@@ -10,7 +10,7 @@ from shapely.geometry import LineString
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers, writers
 
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel
@@ -114,7 +114,7 @@ class SfincsDrainageStructures(ModelComponent):
 
         # Read input file:
         # TODO we can move the utils to here, since only used here?
-        gdf = utils.read_drn(abs_file_path, crs=self.model.crs)
+        gdf = readers.read_drn(abs_file_path, crs=self.model.crs)
 
         # Add to self._data
         self.set(gdf, merge=False)
@@ -146,15 +146,14 @@ class SfincsDrainageStructures(ModelComponent):
             fmt = "%11.1f"
 
         # TODO we can move the utils to here, since only used here?
-        utils.write_drn(abs_file_path, self.data, fmt=fmt)
+        writers.write_drn(abs_file_path, self.data, fmt=fmt)
 
         # write also as geojson:
         if self.model.write_gis:
-            utils.write_vector(
+            writers.write_vector(
                 self.data,
                 name="drn",
                 root=join(self.model.root.path, "gis"),
-                logger=logger,
             )
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):

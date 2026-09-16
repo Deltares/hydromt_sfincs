@@ -279,15 +279,26 @@ def plot_basemap(
         if variable in depth_vars and variable in ds:
             # auto-determine vmin and vmax
             vmin, vmax = ds[variable].raster.mask_nodata().quantile([0.0, 0.98]).values
-            # make sure vmin and vmax are different
-            if vmin == vmax:
-                vmax = vmin + 1
-            # overrule auto vmin and vmax with user input
-            vmin, vmax = int(kwargs.pop("vmin", vmin)), int(kwargs.pop("vmax", vmax))
-            c_dem = plt.cm.terrain(np.linspace(0.25, 1, vmax))
-            if vmin < 0:
-                c_bat = plt.cm.terrain(np.linspace(0, 0.17, max(1, abs(vmin))))
+            # overrule auto vmin and vmax with user input; keep as float for norm
+            vmin = float(kwargs.pop("vmin", vmin))
+            vmax = float(kwargs.pop("vmax", vmax))
+            # make sure vmin and vmax are different after possible int truncation
+            if vmax <= vmin:
+                vmax = vmin + 1.0
+            # build colormap: proportional sea/land sections based on data range
+            n_land = max(2, round(max(0.0, vmax)))
+            n_sea = max(1, round(-vmin)) if vmin < 0 else 0
+            if vmax <= 0:
+                # all terrain at or below sea level: use only bathymetric colors
+                c_dem = plt.cm.terrain(np.linspace(0, 0.17, max(2, n_sea)))
+            elif n_sea > 0:
+                # terrain straddles sea level: combine sea and land colors
+                c_bat = plt.cm.terrain(np.linspace(0, 0.17, n_sea))
+                c_dem = plt.cm.terrain(np.linspace(0.25, 1, n_land))
                 c_dem = np.vstack((c_bat, c_dem))
+            else:
+                # all terrain above sea level: use only land colors
+                c_dem = plt.cm.terrain(np.linspace(0.25, 1, n_land))
             cmap = colors.LinearSegmentedColormap.from_list("dem", c_dem)
             norm = colors.Normalize(vmin=vmin, vmax=vmax)
             cmap, norm = kwargs.pop("cmap", cmap), kwargs.pop("norm", norm)

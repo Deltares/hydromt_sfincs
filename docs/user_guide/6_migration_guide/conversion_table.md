@@ -5,7 +5,7 @@
 | `SfincsModel.setup_dep()` | `SfincsModel.elevation.create()` | datasets_dep → elevation_list, elevtn → elevation |
 | `SfincsModel.setup_mask_active()` | `SfincsModel.mask.create_active()` | mask → removed, mask_buffer → removed, include_mask → include_polygon, extra_option1 → include_zmin, extra_option2 → include_zmax, exclude_mask → exclude_polygon, extra_option3 → exclude_zmin, extra_option4 → exclude_zmax |
 | `SfincsModel.setup_mask_bounds()` | `SfincsModel.mask.create_boundary()` | include_mask → include_polygon, extra_option1 → include_zmin, extra_option2 → include_zmax, exclude_mask → exclude_polygon, extra_option3 → exclude_zmin, extra_option4 → exclude_zmax |
-| `SfincsModel.setup_subgrid()` | `SfincsModel.subgrid.create()` | datasets_dep → elevation_list, datasets_rgh → roughness_list, datasets_riv → river_list, nr_levels → nlevels |
+| `SfincsModel.setup_subgrid()` | `SfincsModel.subgrid.create()` | datasets_dep → elevation_list, datasets_rgh → roughness_list, datasets_riv → river_list, nlevels → nr_levels |
 | `SfincsModel.setup_river_inflow()` | `SfincsModel.river.create_inflow()` | unchanged |
 | `SfincsModel.setup_river_outflow()` | `TODO()` | unchanged |
 | `SfincsModel.setup_constant_infiltration()` | `SfincsModel.infiltration.create_constant()` | unchanged |

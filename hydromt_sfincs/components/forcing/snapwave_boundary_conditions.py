@@ -1,18 +1,15 @@
 import logging
-from os.path import join
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Union
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from pyproj import Transformer
-import shapely
 import xarray as xr
 
 from hydromt import hydromt_step
 from hydromt.gis.vector import GeoDataset
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers, utils, writers
 from .boundary_conditions import SfincsBoundaryBase
 
 if TYPE_CHECKING:
@@ -105,7 +102,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             )
 
         # Read bnd file
-        gdf = utils.read_xy(abs_file_path, crs=self.model.crs)
+        gdf = readers.read_xy(abs_file_path, crs=self.model.crs)
 
         return gdf
 
@@ -158,7 +155,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             )
 
         # Read timeseries file (this creates one DataFrame with all timeseries)
-        df = utils.read_timeseries(abs_file_path, tref=self.model.config.get("tref"))
+        df = readers.read_timeseries(abs_file_path, tref=self.model.config.get("tref"))
         df.index.name = "time"
         df.columns.name = "index"
 
@@ -264,7 +261,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
 
         gdf = self.data.vector.to_gdf()
 
-        utils.write_xy(abs_file_path, gdf, fmt=fmt)
+        writers.write_xy(abs_file_path, gdf, fmt=fmt)
 
     def write_boundary_conditions_timeseries_all(self, filename: str | Path = None):
         """Write SnapWave boundary condition timeseries (*.bhs, *.btp, *.bwd, *.bds) files for all variables"""
@@ -294,7 +291,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         df = da.to_pandas()
 
         # Write to file
-        utils.write_timeseries(
+        writers.write_timeseries(
             abs_file_path, df, self.model.config.get("tref"), fmt="%7.2f"
         )
 
@@ -334,7 +331,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
         ds = ds.rename({"index": "stations"}) if "index" in ds.dims else ds
 
         # Write netcdf file safely (might get locked)
-        final_path = utils.write_netcdf_safely(ds, abs_file_path, encoding=encoding)
+        final_path = writers.write_netcdf_safely(ds, abs_file_path, encoding=encoding)
         if final_path != abs_file_path:
             self.model.config.set("netsnapwavefile", final_path.name)
 

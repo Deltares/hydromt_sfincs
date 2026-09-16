@@ -179,7 +179,7 @@ def test_create_timeseries(quadtree_model_config):
     assert len(point_data.time) == 49  # 49 hours with 1 hour timestep
 
     # also check that the min, max of the other points are still the same
-    point_data = mod.snapwave_boundary_conditions.data["hs"].sel(index=2)
+    point_data = mod.snapwave_boundary_conditions.data["hs"].sel(index=0)
     assert point_data.values.min() == 3
     assert point_data.values.max() == 3
     # but length has changed accordingly
@@ -327,6 +327,16 @@ def test_create_from_grid(quadtree_model_config):
 
     # Make sure that data is updated
     assert not mod.snapwave_boundary_conditions.data.equals(da_org)
+
+
+def test_quadtree_snapwave_mask_create_active_model_kwarg(quadtree_model_config):
+    mod = quadtree_model_config
+
+    mod.quadtree_snapwave_mask.create_active(model="snapwave", copy_sfincsmask=True)
+    assert "snapwave_mask" in mod.quadtree_grid.data
+
+    with pytest.raises(ValueError):
+        mod.quadtree_snapwave_mask.create_active(model="sfincs")
 
 
 def test_delete_clear(quadtree_model_config):

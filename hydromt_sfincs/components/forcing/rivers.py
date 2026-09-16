@@ -11,7 +11,7 @@ import xarray as xr
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import utils, workflows
+from hydromt_sfincs import workflows, writers
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -70,11 +70,10 @@ class SfincsRivers(ModelComponent):
 
         # write also as geojson:
         if self.model.write_gis:
-            utils.write_vector(
+            writers.write_vector(
                 self.data,
                 name="river_centerlines",
                 root=join(self.model.root.path, "gis"),
-                logger=logger,
             )
 
     @hydromt_step

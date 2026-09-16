@@ -23,6 +23,13 @@ def tmp_dir(tmp_path_factory):
     return tmp_path_factory.mktemp("data")
 
 
+@pytest.fixture(scope="session")
+def config_path() -> Path:
+    p = Path(TESTMODELDIR, "sfincs.inp")
+    assert p.is_file()
+    return p
+
+
 @pytest.fixture
 def data_catalog():
     return DataCatalog("artifact_data")
@@ -73,7 +80,7 @@ def quadtree_model_config():
 @pytest.fixture
 def quadtree_model(tmp_dir):
     root = join(TESTDATADIR, "sfincs_test_quadtree")
-    mod = SfincsModel(root=root, mode="r")
+    mod = SfincsModel(root=root, mode="r", data_libs=["artifact_data", local_data_yaml])
     mod.read()
     mod.root.set(tmp_dir, mode="r+")
     return mod

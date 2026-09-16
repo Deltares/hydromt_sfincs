@@ -36,6 +36,10 @@ def test_weirs_io(model_config, tmp_path):
     # check if file is made
     assert isfile(weirfile)
 
+    # check if also a geojson is made
+    geojsonfile = join(tmp_path, "gis", "weir.geojson")
+    assert isfile(geojsonfile)
+
     # read in again
     model_config.weirs.read(weirfile)
     obs1 = model_config.weirs.data
@@ -232,5 +236,20 @@ def test_weirs_clear(model_config):
     assert model_config.weirs.data.empty
 
 
-# def test_weirs_gis(model):
-# goal: check writing of geojson
+@pytest.mark.parametrize(
+    "model_fixture",
+    ["model", "quadtree_model"],
+)
+def test_snap_to_grid(request, model_fixture):
+    model = request.getfixturevalue(model_fixture)
+
+    # start with existing weir
+    gdf_weir = model.weirs.data
+
+    # snap to grid
+    gdf_snap = model.quadtree_grid.snap_to_grid(gdf_weir)
+
+    # basic checks
+    assert not gdf_snap.geometry.is_empty.any()
+    assert len(gdf_snap) != len(gdf_weir)
+    assert gdf_snap.crs == gdf_weir.crs

@@ -3,17 +3,15 @@ from os.path import join
 from pathlib import Path
 from typing import TYPE_CHECKING, Union, List
 
-import numpy as np
-
 import geopandas as gpd
 import pandas as pd
-from shapely import Point, node
+from shapely import Point
 from shapely.geometry import LineString
 
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers, writers
 
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel
@@ -82,7 +80,7 @@ class SfincsRiverBoundaryPoints(ModelComponent):
 
         # Read input file:
         # TODO we can move the utils to here, since only used here?
-        gdf = utils.read_bdr(abs_file_path, crs=self.model.crs)
+        gdf = readers.read_bdr(abs_file_path, crs=self.model.crs)
 
         # Add to self._data
         self.set(gdf, merge=False)
@@ -114,15 +112,14 @@ class SfincsRiverBoundaryPoints(ModelComponent):
             fmt = "%11.1f"
 
         # TODO we can move the utils to here, since only used here?
-        utils.write_bdr_points(abs_file_path, self.data, fmt=fmt)
+        writers.write_bdr(abs_file_path, self.data, fmt=fmt)
 
         # write also as geojson:
         if self.model.write_gis:
-            utils.write_vector(
+            writers.write_vector(
                 self.data,
                 name="bdr",
                 root=join(self.model.root.path, "gis"),
-                logger=logger,
             )
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):

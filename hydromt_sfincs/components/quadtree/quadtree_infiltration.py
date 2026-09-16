@@ -64,9 +64,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             return source.copy()
         return self.data_catalog.get_dataframe(
             source,
-            source_kwargs={
-                "driver": {"name": "pandas", "options": {"index_col": 0}}
-            },
+            source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
         )
 
     @staticmethod
@@ -205,7 +203,10 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             variables = flavor_variables(flavor)
         filename.parent.mkdir(parents=True, exist_ok=True)
         ds = sidecar_dataset(
-            {name: np.asarray(self.data[name].values, dtype=np.float32) for name in variables},
+            {
+                name: np.asarray(self.data[name].values, dtype=np.float32)
+                for name in variables
+            },
             len(self.mask.values),
         )
         ds.to_netcdf(filename)
@@ -268,7 +269,9 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             )
         elif lulc is not None:
             if reclass_table is None:
-                raise IOError(f"Infiltration mapping file should be provided for {lulc}")
+                raise IOError(
+                    f"Infiltration mapping file should be provided for {lulc}"
+                )
             da_lulc = self._as_dataarray(self._read_rasterdataset(lulc))
             df_map = self._read_dataframe(reclass_table)
             da_qinf = da_lulc.raster.reclassify(df_map[["qinf"]])["qinf"]
@@ -279,6 +282,45 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             )
         self._set_layers({"qinf": da_qinf}, flavor="c2d")
 
+        # set nodata to nan before reprojecting/interpolating
+        da_inf = da_inf.raster.mask_nodata()
+
+        n_cells = self.data.grid.n_face
+        qinf = np.full(n_cells, np.nan)
+
+        # Function to compute infiltration values for a chunk of the quadtree grid
+        def compute_constant_infiltration(da_like, ilev=None):
+            # reproject infiltration data to model grid
+            da_out = da_inf.raster.reproject_like(da_like, method=reproj_method)
+            return da_out
+
+        # Compute constant infiltration in chunks over the quadtree grid
+        self.compute_quadtree(
+            compute_constant_infiltration,
+            qinf,
+            nrmax=nrmax,
+        )
+
+        # check on nan values
+        if np.logical_and(np.isnan(qinf), self.mask >= 1).any():
+            logger.warning("NaN values found in infiltration data; filled with 0")
+            qinf = np.where(np.isnan(qinf), 0, qinf)
+
+        # Convert constant qinf to ugrid-dataarray and set in self.data
+        da = xr.DataArray(qinf, dims=[self.data.grid.face_dimension])
+        uda = xu.UgridDataArray(da, self.data.grid)
+        self.model.quadtree_grid.set(uda, name="qinf")
+
+        # Update config: remove default inf and set qinf map
+        self.model.config.update(
+            {
+                "infiltration_file": "infiltration.nc",
+                "infiltration_type": "c2d",
+                "qinf": None,
+            }
+        )
+
+    # Function to create curve number for SFINCS quadtree
     @hydromt_step
     def create_cn(self, cn, antecedent_moisture="avg", reproj_method="median"):
         """Create Curve Number infiltration without recovery for quadtree grids."""
@@ -358,7 +400,9 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             if reclass_table is None and hsg is not None:
                 reclass_table = self._default_lookup("green_ampt")
             if reclass_table is None:
-                raise ValueError("A reclass_table is required for Green-Ampt estimation.")
+                raise ValueError(
+                    "A reclass_table is required for Green-Ampt estimation."
+                )
             da_lulc = None
             df_modifiers = None
             if lulc is not None:
@@ -596,12 +640,12 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                     "drainage_factor",
                 )
                 loss_value = 0.10 if bucket_loss is None else bucket_loss
-                layers["bucket_smax"] = (
-                    layers["bucket_smax"] * storage_factor
-                ).astype(np.float32)
-                layers["bucket_k"] = (
-                    layers["bucket_k"] * drainage_factor
-                ).astype(np.float32)
+                layers["bucket_smax"] = (layers["bucket_smax"] * storage_factor).astype(
+                    np.float32
+                )
+                layers["bucket_k"] = (layers["bucket_k"] * drainage_factor).astype(
+                    np.float32
+                )
                 layers["bucket_loss"] = self._constant_layer(loss_value, "bucket_loss")
             else:
                 ds = workflows.bucket_from_soil(

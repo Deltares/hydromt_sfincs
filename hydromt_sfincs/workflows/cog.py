@@ -9,7 +9,7 @@ import rasterio
 from rasterio.enums import Resampling
 from rasterio.transform import from_origin
 
-__all__ = ["make_index_cog", "make_topobathy_cog"]
+__all__ = ["make_quadtree_index_cog", "make_topobathy_cog"]
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ def make_topobathy_cog(
         dst.write(zz, 1)
 
 
-def make_index_cog(
+def make_quadtree_index_cog(
     quadtree_grid,
     filename: Union[str, Path],
     filename_topobathy: Union[str, Path],
