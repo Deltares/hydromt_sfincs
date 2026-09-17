@@ -8,11 +8,19 @@ import numpy as np
 import rasterio
 from rasterio.enums import Resampling
 from rasterio.transform import from_origin
+from rasterio.warp import transform as _warp_transform
 
 __all__ = ["make_quadtree_index_cog", "make_topobathy_cog"]
 
 logger = logging.getLogger(__name__)
 
+
+
+def transform_coords(src_crs, dst_crs, xx: np.ndarray, yy: np.ndarray):
+    """Transform 2-D coordinate arrays from ``src_crs`` to ``dst_crs``."""
+    shape = np.shape(xx)
+    xt, yt = _warp_transform(src_crs, dst_crs, np.ravel(xx), np.ravel(yy))
+    return np.reshape(xt, shape), np.reshape(yt, shape)
 
 def make_topobathy_cog(
     quadtree_grid,
@@ -103,13 +111,19 @@ def make_quadtree_index_cog(
         transform = src.transform
         width = src.width
         height = src.height
-        quadtree_grid.model.crs = src.crs
+        src_crs = src.crs
 
     x0, y0, x1, y1 = bounds.left, bounds.bottom, bounds.right, bounds.top
 
     xx = np.arange(x0, x1, dx) + 0.5 * dx
     yy = np.arange(y1, y0, -dx) - 0.5 * dx
     xx, yy = np.meshgrid(xx, yy)
+
+    # The index lookup expects coordinates in the model CRS. The model CRS
+    # is read-only, so transform the pixel centres instead of overwriting it.
+    model_crs = quadtree_grid.model.crs
+    if model_crs is not None and src_crs is not None and src_crs != model_crs:
+        xx, yy = transform_coords(src_crs, model_crs, xx, yy)
 
     nodata = 2147483647
     indices = quadtree_grid.get_indices_at_points(xx, yy)
@@ -126,7 +140,7 @@ def make_quadtree_index_cog(
         width=width,
         count=1,
         dtype=ii.dtype,
-        crs=quadtree_grid.model.crs,
+        crs=src_crs,
         transform=transform,
         nodata=nodata,
         overview_resampling=Resampling.nearest,

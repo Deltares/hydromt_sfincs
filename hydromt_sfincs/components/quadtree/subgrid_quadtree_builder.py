@@ -235,6 +235,11 @@ class SubgridTableQuadtree:
         self.z_zmax = np.zeros(npc, dtype=np.float32)
         self.z_volmax = np.zeros(npc, dtype=np.float32)
         self.z_level = np.zeros((nr_levels, npc), dtype=np.float32)
+        self.z_dzbdx = np.zeros(npc, dtype=np.float32)
+        self.z_dzbdy = np.zeros(npc, dtype=np.float32)
+        self.z_zmean = np.zeros(npc, dtype=np.float32)
+        self.z_volmax_res = np.zeros(npc, dtype=np.float32)
+        self.z_level_res = np.zeros((nr_levels, npc), dtype=np.float32)
         self.uv_zmin = np.zeros(npuv, dtype=np.float32)
         self.uv_zmax = np.zeros(npuv, dtype=np.float32)
         self.uv_havg = np.zeros((nr_levels, npuv), dtype=np.float32)
@@ -469,6 +474,11 @@ class SubgridTableQuadtree:
                         self.z_zmax[index_cells_in_block],
                         self.z_volmax[index_cells_in_block],
                         self.z_level[:, index_cells_in_block],
+                        self.z_dzbdx[index_cells_in_block],
+                        self.z_dzbdy[index_cells_in_block],
+                        self.z_zmean[index_cells_in_block],
+                        self.z_volmax_res[index_cells_in_block],
+                        self.z_level_res[:, index_cells_in_block],
                     ) = process_block_cells(
                         zg,  # depth array
                         nr_cells_in_block,  # number of cells in this block
@@ -483,6 +493,7 @@ class SubgridTableQuadtree:
                         nr_levels,  # number of levels
                         max_gradient,  # maximum gradient
                         crs.is_geographic,  # is geographic
+                        float(grid.attrs["rotation"]),  # grid rotation (degrees)
                     )
 
                     if progress_bar:
@@ -837,6 +848,51 @@ class SubgridTableQuadtree:
         self.ds["z_level"] = xr.DataArray(
             np.transpose(self.z_level), dims=["np", "levels"]
         )
+        self.ds["z_dzbdx"] = xr.DataArray(
+            self.z_dzbdx,
+            dims=["np"],
+            attrs={
+                "long_name": "mean bed slope in x direction",
+                "units": "m/m",
+                "description": "least-squares plane fit through the subgrid pixels of the cell, along true x (east), independent of grid rotation",
+            },
+        )
+        self.ds["z_dzbdy"] = xr.DataArray(
+            self.z_dzbdy,
+            dims=["np"],
+            attrs={
+                "long_name": "mean bed slope in y direction",
+                "units": "m/m",
+                "description": "least-squares plane fit through the subgrid pixels of the cell, along true y (north), independent of grid rotation",
+            },
+        )
+        self.ds["z_zmean"] = xr.DataArray(
+            self.z_zmean,
+            dims=["np"],
+            attrs={
+                "long_name": "mean bed level of the subgrid pixels",
+                "units": "m",
+                "description": "zslope = z_dzbdx * (x - xc) + z_dzbdy * (y - yc) with (xc, yc) the cell centre; residual z' = z - z_zmean - zslope",
+            },
+        )
+        self.ds["z_volmax_res"] = xr.DataArray(
+            self.z_volmax_res,
+            dims=["np"],
+            attrs={
+                "long_name": "volume at which the residual table is fully wet",
+                "units": "m3",
+                "description": "volume under a bed-parallel water surface at the highest residual pixel; volume axis of z_level_res is 0 .. z_volmax_res",
+            },
+        )
+        self.ds["z_level_res"] = xr.DataArray(
+            np.transpose(self.z_level_res),
+            dims=["np", "levels"],
+            attrs={
+                "long_name": "residual water level as function of volume",
+                "units": "m",
+                "description": "same construction as z_level but on the residual elevation z'; water surface at a pixel is z_level_res + z_zmean + zslope",
+            },
+        )
         self.ds["uv_zmin"] = xr.DataArray(self.uv_zmin, dims=["npuv"])
         self.ds["uv_zmax"] = xr.DataArray(self.uv_zmax, dims=["npuv"])
         self.ds["uv_havg"] = xr.DataArray(
@@ -869,6 +925,64 @@ class SubgridTableQuadtree:
 
 
 @njit(cache=True)
+def cell_plane(zgc, dxpm, dypm):
+    """Least-squares plane through the subgrid pixels of one cell, and its residual.
+
+    Fits ``z = zmean + dzbdm * (m - mc) + dzbdn * (n - nc)`` through the pixel
+    elevations, with ``zmean`` the pixel mean and ``(mc, nc)`` the cell
+    centre.  Because the pixels form a regular block the two gradients
+    decouple, so each is ``sum(dx * dz) / sum(dx * dx)`` with centred pixel
+    coordinates.  Row index runs with n, column index with m, so the gradients
+    are along the grid axes; the caller rotates them to true x/y.  The
+    residual ``z' = z - zmean - zslope`` has zero mean and does not depend on
+    the grid rotation.
+
+    Parameters
+    ----------
+    zgc : np.ndarray (refi, refi)
+        Pixel elevations of the cell [m].
+    dxpm, dypm : float
+        Pixel size in x and y [m].
+
+    Returns
+    -------
+    zmean : float
+        Mean pixel elevation [m].
+    dzbdm, dzbdn : float
+        Bed slope along the grid m and n axes [m/m], positive when the bed
+        rises with m / n.
+    zres : np.ndarray (refi, refi)
+        Residual elevation ``z - zmean - zslope`` [m].
+    """
+    ny, nx = zgc.shape
+    xm = 0.5 * (nx - 1)
+    ym = 0.5 * (ny - 1)
+    zmean = np.mean(zgc)
+    sxz = 0.0
+    syz = 0.0
+    sxx = 0.0
+    syy = 0.0
+    for i in range(ny):
+        dy = (i - ym) * dypm
+        for j in range(nx):
+            dx = (j - xm) * dxpm
+            dz = zgc[i, j] - zmean
+            sxz += dx * dz
+            syz += dy * dz
+            sxx += dx * dx
+            syy += dy * dy
+    dzbdm = sxz / sxx if sxx > 0.0 else 0.0
+    dzbdn = syz / syy if syy > 0.0 else 0.0
+    zres = np.empty_like(zgc)
+    for i in range(ny):
+        dy = (i - ym) * dypm
+        for j in range(nx):
+            dx = (j - xm) * dxpm
+            zres[i, j] = zgc[i, j] - zmean - dzbdm * dx - dzbdn * dy
+    return zmean, dzbdm, dzbdn, zres
+
+
+@njit(cache=True)
 def process_block_cells(
     zg,  # array with bathy/topo values for this block
     nr_cells_in_block,  # number of cells in this block
@@ -883,13 +997,25 @@ def process_block_cells(
     nr_levels,  # number of levels
     max_gradient,  # maximum gradient
     is_geographic,  # is geographic
+    rotation,  # grid rotation (degrees, counter-clockwise from true x)
 ):
     """calculate subgrid properties for a single block of cells"""
+
+    # Rotation of the grid axes, used to express the bed slope in true x/y
+    cosrot = np.cos(np.deg2rad(rotation))
+    sinrot = np.sin(np.deg2rad(rotation))
 
     z_zmin = np.full((nr_cells_in_block), fill_value=np.nan, dtype=np.float32)
     z_zmax = np.full((nr_cells_in_block), fill_value=np.nan, dtype=np.float32)
     z_volmax = np.full((nr_cells_in_block), fill_value=np.nan, dtype=np.float32)
     z_level = np.full(
+        (nr_levels, nr_cells_in_block), fill_value=np.nan, dtype=np.float32
+    )
+    z_dzbdx = np.full((nr_cells_in_block), fill_value=np.nan, dtype=np.float32)
+    z_dzbdy = np.full((nr_cells_in_block), fill_value=np.nan, dtype=np.float32)
+    z_zmean = np.full((nr_cells_in_block), fill_value=np.nan, dtype=np.float32)
+    z_volmax_res = np.full((nr_cells_in_block), fill_value=np.nan, dtype=np.float32)
+    z_level_res = np.full(
         (nr_levels, nr_cells_in_block), fill_value=np.nan, dtype=np.float32
     )
 
@@ -925,11 +1051,32 @@ def process_block_cells(
         z_volmax[ic] = v[-1]
         z_level[:, ic] = z
 
+        # Mean bed level and slope of the cell (least-squares plane through
+        # the pixels), slope computed along the grid axes and rotated to true
+        # x/y, and the residual elevation z' = z - zmean - zslope
+        zmean, dzbdm, dzbdn, zres = cell_plane(zgc, dxpm, dypm)
+        z_zmean[ic] = zmean
+        z_dzbdx[ic] = dzbdm * cosrot - dzbdn * sinrot
+        z_dzbdy[ic] = dzbdm * sinrot + dzbdn * cosrot
+
+        # Volume -> residual level table (same construction as z_level, on z').
+        # No lower clamp: residuals are centred on zero.
+        zr, vr, _, _ = subgrid_v_table(
+            zres.flatten(), dxpm, dypm, nr_levels, -1.0e6, max_gradient
+        )
+        z_volmax_res[ic] = vr[-1]
+        z_level_res[:, ic] = zr
+
     return (
         z_zmin,
         z_zmax,
         z_volmax,
         z_level,
+        z_dzbdx,
+        z_dzbdy,
+        z_zmean,
+        z_volmax_res,
+        z_level_res,
     )
 
 
