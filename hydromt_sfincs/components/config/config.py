@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs.readers import read_config
 from hydromt_sfincs.components.config.config_variables import SfincsConfigVariables
 
 if TYPE_CHECKING:
@@ -18,10 +17,10 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 class SfincsConfig(ModelComponent):
     """ " Class to read and write SFINCS configuration files (sfincs.inp).
 
-    This class provides methods for reading and writing SFINCS configuration files,
-    updating configuration variables, and managing file paths for model input files.
-    It uses a Pydantic model ([`SfincsConfigVariables`](hydromt_sfincs.components.config.config.SfincsConfigVariables))
-    for validation and serialization of configuration variables.
+    This class is the interface between the model and its
+    ([`SfincsConfigVariables`](hydromt_sfincs.components.config.config.SfincsConfigVariables))
+    data attribute, which performs the actual reading, writing and validation of
+    configuration variables. It manages file paths and the model's grid/root state.
 
     See Also
     --------
@@ -56,26 +55,35 @@ class SfincsConfig(ModelComponent):
             self._filename = self.model.root.path.resolve() / "sfincs.inp"
         return Path(self._filename)
 
-    def read(self) -> None:
+    def read(self, update_changed_field_names: bool = False) -> None:
         """Read a text file with the sfincs configuration from the root folder and populate
         the SfincsConfigVariables. This function also determines the grid type and updates
-        the grid properties of the SfincsModel (e.g. crs and extent)."""
+        the grid properties of the SfincsModel (e.g. crs and extent).
 
-        self.root._assert_read_mode
+        Parameters:
+        -----------
+        update_changed_field_names (bool):
+            If True, migrate legacy configuration keys to their current names.
+            Default is False.
+        """
 
-        # Read the config file
-        inp_dict = read_config(filename=self.filename)
+        self.root._assert_read_mode()
 
-        # FIXME: when reading an existing config, you don't want to start with all possible variables?
-        # Convert dictionary to SfincsConfig instance
-        self._data = self.data.model_copy(update=inp_dict)
+        self._data = SfincsConfigVariables.read(
+            self.filename,
+            update_changed_field_names=update_changed_field_names,
+        )
 
         # Update the grid properties from the configuration
         # This will either drop the quadtree component or the regular component?
         self.update_grid_from_config()
 
     def write(
-        self, filename: str = "sfincs.inp", write_description: bool = False
+        self,
+        filename: str = "sfincs.inp",
+        write_description: bool = False,
+        write_comments: bool = False,
+        explicit_only: bool = False,
     ) -> None:
         """Write the SfincsConfigVariables to a text file in the root folder of the model.
 
@@ -84,78 +92,26 @@ class SfincsConfig(ModelComponent):
         filename (str):
             The name of the file to write the configuration to. Default is "sfincs.inp".
         write_description (bool):
-            If True, include variable descriptions in the output file.  Default is False.
+            If True, append the schema field description as a trailing comment.
+            Default is False.
+        write_comments (bool):
+            If True, append the original inline comment read from the source
+            file (if any) as a trailing comment, taking priority over
+            write_description for keys that have one. Default is False.
+        explicit_only (bool):
+            If True, write only fields explicitly read or set. Default is False.
         """
-
-        self.root._assert_write_mode
+        self.root._assert_write_mode()
 
         if not isabs(filename) and self.root.path:
             self._filename = self.root.path / filename
 
-        # Create parent directories if they do not exist
-        self.filename.parent.mkdir(parents=True, exist_ok=True)
-
-        # exclude_unset: Whether to exclude fields that have not been explicitly set.
-        # exclude_defaults: Whether to exclude fields that are set to their default value.
-        # exclude_none: Whether to exclude fields that have a value of `None`.
-        # include: A set of fields to include in the output.
-        # exclude: A set of fields to exclude from the output.
-
-        model_fields = SfincsConfigVariables.model_fields
-        data_dict = self.data.model_dump()
-
-        with open(self.filename, "w") as fid:
-            for key, value in data_dict.items():
-                # Never write None
-                if value is None:
-                    continue
-
-                field_info = model_fields.get(key)
-                extra = (field_info.json_schema_extra or {}) if field_info else {}
-
-                # Evaluate condition when present
-                condition = extra.get("condition")
-                if condition is not None:
-                    try:
-                        if not eval(condition, {}, data_dict):  # noqa: S307
-                            continue
-                    except Exception:
-                        pass  # condition evaluation failed — write anyway
-
-                # Decide always vs skip-if-default
-                always = extra.get("always", False)
-                if not always:
-                    if field_info is not None:
-                        try:
-                            if value == field_info.default:
-                                continue
-                        except Exception:
-                            pass  # exotic default type — write anyway
-
-                # Serialise and write
-                # Preserve float type if the field is declared as float
-                if field_info is not None and field_info.annotation is float:
-                    value = float(value) if not isinstance(value, float) else value
-                else:
-                    value = convert_to_number(value)
-
-                if isinstance(value, (int, float)):
-                    string = f"{key.ljust(20)} = {value}"
-                elif isinstance(value, list):
-                    valstr = " ".join([str(v) for v in value])
-                    string = f"{key.ljust(20)} = {valstr}"
-                elif hasattr(value, "strftime"):
-                    dstr = value.strftime("%Y%m%d %H%M%S")
-                    string = f"{key.ljust(20)} = {dstr}"
-                else:
-                    string = f"{key.ljust(20)} = {value}"
-
-                if key in model_fields:
-                    description = model_fields[key].description
-                    if description and write_description:
-                        string = string.ljust(50) + f" # {description}"
-
-                fid.write(string + "\n")
+        self.data.write(
+            self.filename,
+            write_description=write_description,
+            write_comments=write_comments,
+            explicit_only=explicit_only,
+        )
 
     def get(self, key: str, fallback: Any = None, abs_path: bool = False) -> Any:
         """Get the value for a specific key with validation check.
@@ -170,7 +126,7 @@ class SfincsConfig(ModelComponent):
             If True and the value is a string or Path, return the absolute path.
         """
 
-        value = self.data.model_dump().get(key, fallback)
+        value = getattr(self.data, key, fallback)
 
         if value is None and fallback is not None:
             value = fallback
@@ -203,22 +159,7 @@ class SfincsConfig(ModelComponent):
             If True, skips validation of the new value. Default is False, meaning pydantic validation will be performed.
             This checks amongst others for correct data types and valid ranges.
         """
-
-        if not hasattr(self.data, key):
-            # Give warning for now instead of error, since you might want to set custom variables that are not in the config model?
-            logger.warning(
-                f"'{key}' is not a valid attribute of SfincsConfig. Adding it as a custom attribute."
-            )
-            setattr(self._data, key, value)
-            return
-
-        if not skip_validation:
-            # Merge full data to run full validation, including mode="before" for datetimes
-            new_data = self.data.model_dump()
-            new_data[key] = value
-            self._data = self.data.__class__.model_validate(new_data)
-        else:
-            setattr(self._data, key, value)
+        self._data = self.data.set_value(key, value, skip_validation=skip_validation)
 
     @hydromt_step
     def update(
@@ -249,13 +190,7 @@ class SfincsConfig(ModelComponent):
 
         if updates:
             logger.info(f"Updating {len(updates)} attributes in model config.")
-            if skip_validation:
-                # Bulk update without validation
-                self._data = self._data.model_update(updates)
-            else:
-                new_data = self.data.model_dump()
-                new_data.update(updates)
-                self._data = self.data.__class__.model_validate(new_data)
+            self._data = self.data.set_values(updates, skip_validation=skip_validation)
 
     def update_grid_from_config(self) -> None:
         """Update the grid properties from the configuration. This method determines the grid type
@@ -351,14 +286,3 @@ class SfincsConfig(ModelComponent):
             return (root_path / value_path).resolve()
         else:
             return value_path
-
-
-def convert_to_number(value):
-    """Convert a value to a number if possible, otherwise return the original value."""
-    try:
-        if isinstance(value, str):
-            value = value.strip()
-        num = float(value)
-        return int(num) if num.is_integer() else num
-    except (ValueError, TypeError):
-        return value
