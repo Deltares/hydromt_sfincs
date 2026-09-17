@@ -87,13 +87,25 @@ def make_quadtree_index_cog(
     quadtree_grid,
     filename: Union[str, Path],
     filename_topobathy: Union[str, Path],
-) -> None:
+    structures=None,
+) -> int:
     """Write a COG raster mapping each pixel to a quadtree cell index.
 
     The output raster matches the resolution and grid of
     ``filename_topobathy`` (typically produced by
     :py:func:`make_topobathy_cog`). Pixels that do not fall inside any
     active cell are filled with the ``uint32`` sentinel ``2147483647``.
+
+    With ``structures`` (thin dams, weirs, flood walls) the index is made
+    structure-aware in the same step: a pixel whose straight link to its own
+    cell centre crosses a structure is handed to the nearest cell centre it
+    can reach without crossing one, which is the rule SFINCS itself uses to
+    block faces, so the flood map follows the real structure instead of the
+    grid-snapped one. The file then has four bands: the index, and per pixel
+    the ids of surrounding cells that lie across a structure, which the
+    flood map's blend and trend surface modes read so they never
+    interpolate across a structure. See
+    :py:func:`hydromt_sfincs.workflows.flood_map.apply_structures_to_index_cog`.
 
     Parameters
     ----------
@@ -104,6 +116,14 @@ def make_quadtree_index_cog(
         Output COG file path.
     filename_topobathy : str or Path
         Reference topobathy COG whose grid / CRS define the output.
+    structures : iterable of shapely LineString / MultiLineString, optional
+        Structures in the model CRS. ``None`` or empty writes a plain
+        single-band index.
+
+    Returns
+    -------
+    int
+        Number of pixels reassigned across structures (0 without structures).
     """
     with rasterio.open(filename_topobathy) as src:
         bounds = src.bounds
@@ -132,13 +152,39 @@ def make_quadtree_index_cog(
     ii = np.empty((height, width), dtype=np.uint32)
     ii[:, :] = indices
 
+    lines = [g for g in (structures or []) if g is not None and not g.is_empty]
+    n_reassigned = 0
+    blocked = None
+    if lines:
+        from hydromt_sfincs.workflows.flood_map import (
+            STRUCTURES_TAG,
+            blocked_cells_for_pixels,
+            reassign_index_for_structures,
+            structures_to_tag,
+        )
+
+        # Work in the raster CRS: cell centres and structures come in the
+        # model CRS and are transformed when the topobathy uses another one.
+        xy = quadtree_grid.data.grid.face_coordinates
+        xc, yc = xy[:, 0].astype(float), xy[:, 1].astype(float)
+        if model_crs is not None and src_crs is not None and src_crs != model_crs:
+            from pyproj import Transformer
+            from shapely.ops import transform as shp_transform
+
+            tr = Transformer.from_crs(model_crs, src_crs, always_xy=True)
+            xc, yc = tr.transform(xc, yc)
+            lines = [shp_transform(tr.transform, g) for g in lines]
+        ii, changed = reassign_index_for_structures(ii, transform, lines, xc, yc, nodata)
+        n_reassigned = int(changed.sum())
+        blocked = blocked_cells_for_pixels(ii, transform, lines, xc, yc, nodata)
+
     with rasterio.open(
         filename,
         "w",
         driver="COG",
         height=height,
         width=width,
-        count=1,
+        count=1 if blocked is None else 4,
         dtype=ii.dtype,
         crs=src_crs,
         transform=transform,
@@ -146,3 +192,10 @@ def make_quadtree_index_cog(
         overview_resampling=Resampling.nearest,
     ) as dst:
         dst.write(ii, 1)
+        dst.set_band_description(1, "cell index")
+        if blocked is not None:
+            for j in range(3):
+                dst.write(blocked[j], j + 2)
+                dst.set_band_description(j + 2, f"blocked cell {j + 1}")
+            dst.update_tags(**{STRUCTURES_TAG: structures_to_tag(lines)})
+    return n_reassigned

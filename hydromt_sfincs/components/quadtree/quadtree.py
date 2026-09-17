@@ -7,14 +7,13 @@ utilities used by DelftDashboard such as map overlays and grid snapping.
 """
 
 import logging
-import os
 from os.path import isfile
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Union
 
 import geopandas as gpd
 import numpy as np
-from pyproj import CRS, Transformer
+from pyproj import CRS
 import shapely
 
 import xarray as xr
@@ -30,10 +29,7 @@ from hydromt_sfincs.workflows.cog import make_quadtree_index_cog, make_topobathy
 from hydromt_sfincs.workflows.map_overlay import MeshOverlay
 from hydromt_sfincs.workflows.tiling import (
     create_topobathy_tiles,
-    int2png,
     make_index_tiles,
-    tile_window,
-    write_html,
 )
 from .quadtree_builder import build_quadtree_xugrid, cut_inactive_cells
 
@@ -920,11 +916,15 @@ class SfincsQuadtreeGrid(MeshComponent):
         self,
         filename: Union[str, Path],
         filename_topobathy: Union[str, Path],
-    ) -> None:
+        structures="model",
+    ) -> int:
         """Write a COG raster mapping each pixel to a quadtree cell index.
 
         Thin wrapper around
         :py:func:`hydromt_sfincs.workflows.cog.make_quadtree_index_cog`.
+        By default the model's thin dams and weirs are included, which makes
+        the index structure-aware (four bands) so flood maps follow the real
+        structures instead of the grid-snapped ones.
 
         Parameters
         ----------
@@ -932,11 +932,30 @@ class SfincsQuadtreeGrid(MeshComponent):
             Output COG file path.
         filename_topobathy : str or Path
             Reference topobathy COG whose grid / CRS define the output.
+        structures : "model", None or iterable of shapely lines, optional
+            ``"model"`` (default) uses the model's thin dams and weirs,
+            ``None`` writes a plain index, or pass geometries in the model
+            CRS.
+
+        Returns
+        -------
+        int
+            Number of pixels reassigned across structures.
         """
-        make_quadtree_index_cog(
+        if isinstance(structures, str) and structures == "model":
+            structures = []
+            for name in ("thin_dams", "weirs"):
+                try:
+                    gdf = getattr(self.model, name).data
+                except Exception:
+                    continue
+                if gdf is not None and len(gdf) > 0:
+                    structures.extend(gdf.geometry.tolist())
+        return make_quadtree_index_cog(
             quadtree_grid=self,
             filename=filename,
             filename_topobathy=filename_topobathy,
+            structures=structures,
         )
 
 
