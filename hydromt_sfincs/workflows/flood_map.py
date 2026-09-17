@@ -8,7 +8,7 @@ or PNG, renders Web Mercator overlays for a map viewer and matplotlib plots.
 Two methods are available. ``"level"`` projects the horizontal cell water
 level onto the pixels. ``"slope"`` reconstructs a bed-parallel water surface
 per cell from the subgrid tables (``z_zmean``, ``z_dzbdx``, ``z_dzbdy``,
-``z_level_res``) and the cell volume, with per-cell, blended or bed-trend
+``z_level_res``) and the cell volume, per cell or blended at the faces,
 surfaces, and rules that keep a horizontal surface in submerged, sea-touching,
 non-planar and ponded cells.
 
@@ -127,13 +127,11 @@ class FloodMap:
         self.yc = None
         self.area = None
         # "slope" method options, see set_slope_options()
-        self.volume_mode = "pixels"
         self.slope_zmin = None
-        self.slope_max_residual_ratio = None
         self.slope_max_residual_relief = 10.0
-        self.surface_mode = "cell"
-        self.smoothing_max_jump = 1.0
-        self.flat_level_rule = False
+        self.blend = True
+        self.max_jump = 1.0
+        self.flat_level_rule = True
         self.flat_level_ratio = 0.2
         self.flat_level_min_drop = 0.25
         self.flat_level_min_neighbours = 2
@@ -203,7 +201,7 @@ class FloodMap:
         self.indices = rasterio.open(self.index_file)
         # A structure-aware index (see apply_structures_to_index_cog) carries, in
         # bands 2-4, the cells across a structure from each pixel; the blend
-        # and trend surface modes read those, so no structures are needed at
+        # surface option reads those, so no structures are needed at
         # map time. The stored geometry tag is kept only as a fallback.
         self._index_has_blocked = self.indices.count >= 4
         if not self._index_has_blocked:
@@ -240,16 +238,23 @@ class FloodMap:
         self.zs = zs
 
     def set_volume(self, volume: np.ndarray | None) -> None:
-        """Set the subgrid cell volumes used by the ``"slope"`` method.
+        """Set the subgrid cell volumes.
+
+        With a volume both methods are mass-consistent: the ``"level"``
+        method draws each cell at the horizontal level that holds its volume
+        on the DEM pixels, and the ``"slope"`` method distributes the volume
+        under a tilted surface. Without it the ``"level"`` method projects
+        the water level set with :meth:`set_water_level`, and the ``"slope"``
+        method recovers the volume from that level by inverting the
+        ``z_level`` table; both under-represent thin sheets on rough cells,
+        because the solver's level is interpolated in a coarse table.
 
         Parameters
         ----------
         volume : np.ndarray | None
             1-D array of subgrid cell volumes (m3) indexed by cell index,
-            typically ``zvolmax`` from the SFINCS map file. NaN marks dry
-            cells. When ``None``, the volume is recovered from the water level
-            by inverting the ``z_level`` table, which loses resolution on
-            steep cells.
+            typically ``zvolmax`` or ``subgrid_volume`` from the SFINCS map
+            file. NaN marks dry cells.
         """
         self.volume = None if volume is None else np.asarray(volume, dtype=np.float64)
 
@@ -327,7 +332,7 @@ class FloodMap:
     def set_structures(self, lines) -> None:
         """Set structures that water surfaces must not be interpolated across.
 
-        In the ``"blend"`` and ``"trend"`` surface modes a neighbouring cell
+        With ``blend`` a neighbouring cell
         contributes to a pixel only if the straight link between them does
         not cross a structure, which is the same rule SFINCS uses to block a
         face (the link between two cell centres crossing the line). A
@@ -408,13 +413,10 @@ class FloodMap:
 
     def set_slope_options(
         self,
-        volume_mode: str | None = None,
         slope_zmin: float | None | object = _KEEP,
-        max_residual_ratio: float | None | object = _KEEP,
         max_residual_relief: float | None | object = _KEEP,
-        surface_mode: str | None = None,
-        smoothing_max_jump: float | None = None,
-        surface_smoothing: bool | None = None,
+        blend: bool | None = None,
+        max_jump: float | None = None,
         flat_level_rule: bool | None = None,
         flat_level_ratio: float | None = None,
         flat_level_min_drop: float | None = None,
@@ -426,15 +428,39 @@ class FloodMap:
 
         Parameters
         ----------
+        slope_zmin : float | None
+            Cells whose lowest pixel (``z_zmin``) is below this level keep a
+            horizontal surface, e.g. ``0.0`` to exclude cells touching the
+            sea. Pass ``None`` to disable the test (the initial state).
+        max_residual_relief : float | None
+            Cells whose residual relief (highest minus lowest residual)
+            exceeds this many metres keep a horizontal surface. This is the
+            cliff and gully test: such cells hold water at a level a plane
+            cannot describe. Default 10.0; ``None`` disables it.
+        blend : bool | None
+            ``False``: each pixel uses the surface of its own
+            cell, ``z_zmean + eta`` plus the cell's slope plane; exact
+            per-cell volume, the surface jumps at cell faces. ``True`` (default): the
+            surfaces of the three surrounding cell centres, each extended
+            along its own plane to the pixel, are averaged with barycentric
+            weights, so the jumps become ramps. Dry cells stay dry and
+            horizontal-rule cells keep their own level and do not influence
+            their neighbours; a structure-aware index keeps the blend from
+            crossing structures.
+        max_jump : float | None
+            Step tolerance (m) for ``blend``: a neighbour joins the average
+            only when its surface at the pixel lies within this distance of
+            the pixel's own cell surface, so real steps keep their jump.
+            Default 1.0.
         flat_level_rule : bool | None
             When ``True``, a cell whose water level differs from that of at
             least ``flat_level_min_neighbours`` neighbours by less than
             ``flat_level_ratio`` times the drop in lowest pixel between them
             (for drops above ``flat_level_min_drop``) is treated as ponded
             water: it keeps a horizontal surface at its own level and does
-            not influence its neighbours in the blend and trend modes. Sheet
-            flow on a slope has a level difference close to the bed drop and
-            is not affected. Default ``False``.
+            not influence its neighbours in the blend. Sheet flow on a slope
+            has a level difference close to the bed drop and is not
+            affected. Default ``True``.
         flat_level_ratio : float | None
             Level difference over bed drop below which a pair counts as flat.
             Default 0.2.
@@ -443,76 +469,15 @@ class FloodMap:
             cells side by side along a contour are not compared. Default 0.25.
         flat_level_min_neighbours : int | None
             Number of flat neighbours needed to flag a cell. Default 2.
-        surface_mode : str | None
-            How the water surface is built from the per-cell results.
-
-            ``"cell"`` (default): each pixel uses the surface of its own
-            cell, ``z_zmean + eta`` plus the cell's slope plane. Exact
-            per-cell volume; the surface jumps at cell faces.
-
-            ``"blend"``: barycentric blend of the surfaces of the three
-            surrounding cell centres, each extrapolated along its own plane
-            to the pixel. Vertices whose surface differs from the own-cell
-            surface by more than ``smoothing_max_jump`` are dropped.
-
-            ``"trend"``: a continuous bed trend is interpolated from the
-            cell means between centres; residuals, the volume inversion and
-            the sheet level ``eta`` are all taken against that trend, and
-            ``eta`` is interpolated between centres. The surface is
-            continuous everywhere; per-cell volume is approximate.
-
-            In all modes dry cells stay dry and horizontal-rule cells keep
-            their own horizontal level.
-        smoothing_max_jump : float | None
-            Step tolerance (m) for the ``"blend"`` and ``"trend"`` modes: a
-            neighbour joins the interpolation only when its surface
-            (``"blend"``) or sheet level (``"trend"``) lies within this
-            distance of the pixel's own cell value, so real steps keep their
-            jump. Default 1.0.
-        surface_smoothing : bool | None
-            Backwards-compatible switch: ``True`` selects ``"blend"``,
-            ``False`` selects ``"cell"``.
-        volume_mode : str | None
-            ``"pixels"`` (default): the residual level of a cell is found by
-            distributing its volume over the residual elevations of the
-            topobathy pixels in the cell, so the map holds the cell volume
-            exactly at the raster resolution in use. ``"table"``: the level
-            is read from the ``z_level_res`` table, which was built on the
-            subgrid pixels; faster, but with a raster of different resolution
-            the wet pixel set no longer matches the volume for thin sheets.
-        slope_zmin : float | None
-            Cells whose lowest pixel (``z_zmin``) is below this level keep a
-            horizontal surface, e.g. ``0.0`` to exclude cells touching the
-            sea. Pass ``None`` to disable the test (the initial state).
-        max_residual_ratio : float | None
-            Cells whose residual relief exceeds this fraction of the raw
-            relief keep a horizontal surface. Off by default (``None``): on
-            gentle terrain an embankment or ditch already gives a high ratio
-            although a tilted sheet is perfectly adequate there.
-        max_residual_relief : float | None
-            Cells whose residual relief (highest minus lowest residual)
-            exceeds this many metres keep a horizontal surface. This is the
-            cliff and gully test: such cells hold water at a level a plane
-            cannot describe. Default 10.0; ``None`` disables it.
         """
-        if volume_mode is not None:
-            if volume_mode not in ("pixels", "table"):
-                raise ValueError("volume_mode must be 'pixels' or 'table'")
-            self.volume_mode = volume_mode
         if slope_zmin is not _KEEP:
             self.slope_zmin = slope_zmin
-        if max_residual_ratio is not _KEEP:
-            self.slope_max_residual_ratio = max_residual_ratio
         if max_residual_relief is not _KEEP:
             self.slope_max_residual_relief = max_residual_relief
-        if surface_mode is not None:
-            if surface_mode not in ("cell", "blend", "trend"):
-                raise ValueError("surface_mode must be 'cell', 'blend' or 'trend'")
-            self.surface_mode = surface_mode
-        if surface_smoothing is not None:
-            self.surface_mode = "blend" if surface_smoothing else "cell"
-        if smoothing_max_jump is not None:
-            self.smoothing_max_jump = float(smoothing_max_jump)
+        if blend is not None:
+            self.blend = bool(blend)
+        if max_jump is not None:
+            self.max_jump = float(max_jump)
         if flat_level_rule is not None:
             self.flat_level_rule = bool(flat_level_rule)
         if flat_level_ratio is not None:
@@ -591,7 +556,7 @@ class FloodMap:
                 + sy[verts] * (pi[:, 1:2] - yc[verts])
             )
             own_here = zs_own[i0:i1][inside].astype(np.float64)[:, None]
-            admissible = wet[verts] & (np.abs(zv - own_here) <= self.smoothing_max_jump)
+            admissible = wet[verts] & (np.abs(zv - own_here) <= self.max_jump)
             if near is not None or self._blocked is not None:
                 admissible = self._drop_crossing(
                     admissible,
@@ -611,6 +576,24 @@ class FloodMap:
         out[~wet[own]] = zs_own[~wet[own]]
         return out
 
+    def _level_from_volume(
+        self, indices: np.ndarray, zb: xr.DataArray, valid: np.ndarray
+    ) -> np.ndarray:
+        """Horizontal water level per cell that holds the cell volume on the pixels.
+
+        Solves ``sum_i max(W - zb_i, 0) * px_area = volume`` over the DEM
+        pixels of each cell. Dry cells get ``-inf``; cells without pixels in
+        the block get NaN.
+        """
+        ncell = self.volume.size
+        vol = np.where(np.isfinite(self.volume), self.volume, 0.0).reshape(ncell)
+        px_area = float(abs(zb.rio.resolution()[0] * zb.rio.resolution()[1]))
+        own = np.asarray(indices)[valid].ravel().astype(np.int64)
+        zbv = zb.to_numpy()[valid].astype(np.float64)
+        w = self._residual_level_pixels(own, zbv, vol, px_area)
+        w[vol <= 0.0] = -np.inf
+        return w
+
     def _cell_volume_from_level(self, zs: np.ndarray) -> np.ndarray:
         """Invert the ``z_level`` table: cell volume at water level ``zs``."""
         sg = self.subgrid
@@ -627,28 +610,6 @@ class FloodMap:
         vol = (j + w) * vmax / (nlev - 1)
         vol = np.where(zs >= zmax, vmax + (zs - zmax) * self.area, vol)
         return np.where(zs <= zl[:, 0], 0.0, vol)
-
-    def _residual_level(self, vol: np.ndarray) -> np.ndarray:
-        """Residual water level ``eta`` at cell volume ``vol`` from ``z_level_res``.
-
-        Inside the table the level is interpolated linearly in volume, as
-        SFINCS does for ``z_level``; above it the surface rises linearly with
-        the cell area, which also covers cells with a flat residual table.
-        """
-        sg = self.subgrid
-        zl = sg["z_level_res"]
-        vmax = sg["z_volmax_res"]
-        ncell, nlev = zl.shape
-        safe_vmax = np.where(vmax > 0.0, vmax, 1.0)
-        frac = np.where(vmax > 0.0, vol / safe_vmax, np.inf)
-        pos = np.clip(frac * (nlev - 1), 0.0, nlev - 1.0)
-        j = np.minimum(np.floor(pos).astype(int), nlev - 2)
-        w = pos - j
-        rows = np.arange(ncell)
-        eta_in = zl[rows, j] * (1.0 - w) + zl[rows, j + 1] * w
-        eta_above = zl[:, -1] + (vol - vmax) / self.area
-        eta = np.where(frac < 1.0, eta_in, eta_above)
-        return np.where(vol > 0.0, eta, zl[:, 0])
 
     def _residual_level_pixels(
         self,
@@ -754,12 +715,16 @@ class FloodMap:
         res_relief = sg["z_level_res"][:, -1] - sg["z_level_res"][:, 0]
         if self.slope_max_residual_relief is not None:
             horizontal |= res_relief > self.slope_max_residual_relief
-        if self.slope_max_residual_ratio is not None:
-            raw_relief = np.maximum(sg["z_zmax"] - sg["z_level"][:, 0], 1.0e-3)
-            horizontal |= res_relief > self.slope_max_residual_ratio * raw_relief
         if zs_cell is None:
             zs_cell = sg["z_zmax"] + (vol - sg["z_volmax"]) / self.area
         zs_cell = np.where(np.isfinite(zs_cell), zs_cell, -np.inf)
+        # Level used to draw horizontal-rule cells: the horizontal level that
+        # holds the cell volume on the DEM pixels (mass-consistent). The
+        # solver's own level zs_cell is still what the flat-level rule tests.
+        zs_draw = zs_cell
+        if self.volume is not None:
+            w = self._level_from_volume(indices, zb, valid)
+            zs_draw = np.where(np.isfinite(w), w, zs_cell)
 
         # Pixel offsets from the cell centre, in float32 relative to an origin
         x0 = float(self.xc.min())
@@ -787,24 +752,18 @@ class FloodMap:
 
         px_area = float(abs(zb.rio.resolution()[0] * zb.rio.resolution()[1]))
 
-        if self.surface_mode == "trend":
-            return self._surface_trend(
-                k, valid, xx, yy, xc, yc, plane, zb, px_area, vol, horizontal, zs_cell
-            )
-
-        if self.volume_mode == "pixels":
-            zres = zb.to_numpy()[valid].astype(np.float32) - plane[valid]
-            eta = self._residual_level_pixels(k[valid].ravel(), zres, vol, px_area)
-            eta = np.where(np.isfinite(eta), eta, self._residual_level(vol))
-        else:
-            eta = self._residual_level(vol)
+        # Sheet level per cell: the cell volume distributed over the residual
+        # elevations of the pixels in the cell (exact at this raster resolution)
+        zres = zb.to_numpy()[valid].astype(np.float32) - plane[valid]
+        eta = self._residual_level_pixels(k[valid].ravel(), zres, vol, px_area)
+        eta = np.where(np.isfinite(eta), eta, 0.0)
 
         zs_tilt = eta.astype(np.float32)[k] + plane
-        zs_pix = np.where(horizontal[k], zs_cell.astype(np.float32)[k], zs_tilt)
+        zs_pix = np.where(horizontal[k], zs_draw.astype(np.float32)[k], zs_tilt)
 
-        if self.surface_mode == "blend":
+        if self.blend:
             # Per-cell surface: centre level and slope (zero for horizontal cells)
-            w_cell = np.where(horizontal, zs_cell, eta + sg["z_zmean"])
+            w_cell = np.where(horizontal, zs_draw, eta + sg["z_zmean"])
             sx = np.where(horizontal, 0.0, sg["z_dzbdx"])
             sy = np.where(horizontal, 0.0, sg["z_dzbdy"])
             # Horizontal-rule cells (sea, ponds, submerged, non-planar) keep
@@ -878,164 +837,6 @@ class FloodMap:
             self._triangulation = Delaunay(np.column_stack([xc, yc]))
         return self._triangulation
 
-    def _barycentric(
-        self, px: np.ndarray, py: np.ndarray, xc: np.ndarray, yc: np.ndarray, chunk: int = 2_000_000
-    ) -> tuple[np.ndarray, np.ndarray]:
-        """Simplex index and barycentric weights of pixels in the centre triangulation.
-
-        Returns
-        -------
-        simplex : np.ndarray (npix,) int32
-            Triangle index per pixel, -1 outside the triangulation.
-        bary : np.ndarray (npix, 3) float32
-            Barycentric weights of the triangle's three vertices (0 outside).
-        """
-        tri = self._get_triangulation(xc, yc)
-        npix = px.size
-        simplex = np.full(npix, -1, dtype=np.int32)
-        bary = np.zeros((npix, 3), dtype=np.float32)
-        for i0 in range(0, npix, chunk):
-            i1 = min(i0 + chunk, npix)
-            p = np.column_stack([px[i0:i1], py[i0:i1]]).astype(np.float64)
-            s = tri.find_simplex(p)
-            inside = s >= 0
-            if not inside.any():
-                continue
-            T = tri.transform[s[inside]]
-            b = np.einsum("nij,nj->ni", T[:, :2, :], p[inside] - T[:, 2, :])
-            bb = np.clip(np.column_stack([b, 1.0 - b.sum(axis=1)]), 0.0, 1.0)
-            simplex[i0:i1][inside] = s[inside]
-            bary[i0:i1][inside] = bb.astype(np.float32)
-        return simplex, bary
-
-    def _interp_cells(
-        self,
-        values: np.ndarray,
-        admissible: np.ndarray,
-        simplex: np.ndarray,
-        bary: np.ndarray,
-        fallback: np.ndarray,
-        ref: np.ndarray | None = None,
-        max_jump: float | None = None,
-        chunk: int = 2_000_000,
-        pxy: np.ndarray | None = None,
-        near: np.ndarray | None = None,
-        centres: np.ndarray | None = None,
-    ) -> np.ndarray:
-        """Barycentric interpolation of a per-cell quantity at the pixels.
-
-        With ``pxy`` (pixel coordinates), ``near`` (pixels close to a
-        structure) and ``centres`` given, a vertex is dropped when the link
-        from the pixel to that cell centre crosses a structure.
-
-        Vertices that are not admissible, or whose value differs from
-        ``ref`` by more than ``max_jump``, are dropped and the weights
-        renormalised; pixels without an admissible vertex, or outside the
-        triangulation, take ``fallback``.
-        """
-        tri = self._triangulation
-        out = fallback.astype(np.float32).copy()
-        npix = simplex.size
-        for i0 in range(0, npix, chunk):
-            i1 = min(i0 + chunk, npix)
-            s = simplex[i0:i1]
-            inside = s >= 0
-            if not inside.any():
-                continue
-            verts = tri.simplices[s[inside]]
-            bw = bary[i0:i1][inside].astype(np.float64)
-            adm = admissible[verts]
-            if (near is not None and pxy is not None) or self._blocked is not None:
-                adm = self._drop_crossing(
-                    adm.copy(),
-                    None if pxy is None else pxy[i0:i1][inside],
-                    verts,
-                    centres,
-                    None if near is None else near[i0:i1][inside],
-                    None if self._blocked is None else self._blocked[:, i0:i1][:, inside],
-                )
-            w = bw * adm
-            vals = values[verts]
-            if max_jump is not None:
-                if ref is not None:
-                    r = ref[i0:i1][inside][:, None]
-                else:
-                    # symmetric reference: the nearest admissible vertex
-                    r = vals[np.arange(vals.shape[0]), np.argmax(w, axis=1)][:, None]
-                w = w * (np.abs(vals - r) <= max_jump)
-            wsum = w.sum(axis=1)
-            ok = wsum > 1.0e-6
-            est = (w * vals).sum(axis=1) / np.where(ok, wsum, 1.0)
-            idx = np.arange(i0, i1)[inside]
-            out[idx[ok]] = est[ok].astype(np.float32)
-        return out
-
-    def _surface_trend(
-        self,
-        k: np.ndarray,
-        valid: np.ndarray,
-        xx: np.ndarray,
-        yy: np.ndarray,
-        xc: np.ndarray,
-        yc: np.ndarray,
-        plane: np.ndarray,
-        zb: xr.DataArray,
-        px_area: float,
-        vol: np.ndarray,
-        horizontal: np.ndarray,
-        zs_cell: np.ndarray,
-    ) -> np.ndarray:
-        """Per-pixel water surface for ``surface_mode="trend"``.
-
-        A continuous bed trend ``T(x)`` is the barycentric interpolation of
-        the cell means ``z_zmean`` between cell centres (own-cell plane
-        outside the triangulation). Every pixel's residual is taken against
-        that trend, the cell volume is inverted on those residuals to give a
-        sheet level ``eta`` per cell, and ``eta`` is interpolated between
-        centres in the same way. The surface ``T + eta`` is then continuous
-        everywhere. Horizontal-rule cells keep their own level and are left
-        out of the ``eta`` interpolation; dry cells stay dry.
-        """
-        sg = self.subgrid
-        own = k[valid].ravel()
-        px = xx[valid].astype(np.float64)
-        py = yy[valid].astype(np.float64)
-        simplex, bary = self._barycentric(px, py, xc.astype(np.float64), yc.astype(np.float64))
-
-        # Continuous bed trend
-        zmean = sg["z_zmean"]
-        trend = self._interp_cells(
-            zmean, np.isfinite(zmean), simplex, bary, fallback=plane[valid]
-        )
-
-        # Sheet level per cell from the volume, on residuals against the trend
-        zres = zb.to_numpy()[valid].astype(np.float32) - trend
-        eta = self._residual_level_pixels(own, zres, vol, px_area)
-        eta = np.where(np.isfinite(eta), eta, 0.0)
-
-        # Sheet level at the pixel, interpolated between wet tilted cells
-        wet = (vol > 0.0) & ~horizontal
-        near = self._structure_near_mask(zb, valid)
-        eta_pix = self._interp_cells(
-            eta,
-            wet,
-            simplex,
-            bary,
-            fallback=eta[own],
-            ref=None,
-            max_jump=self.smoothing_max_jump,
-            pxy=np.column_stack([px, py]) if near is not None else None,
-            near=near,
-            centres=np.column_stack([xc, yc]).astype(np.float64),
-        )
-        zs_valid = trend + eta_pix
-        zs_valid = np.where(horizontal[own], zs_cell.astype(np.float32)[own], zs_valid)
-        zs_valid[~(vol[own] > 0.0)] = -np.inf
-
-        zs_pix = np.full(k.shape, -np.inf, dtype=np.float32)
-        zs_pix[valid] = zs_valid
-        return zs_pix
-
     def make(
         self,
         max_pixel_size: float = 0.0,
@@ -1077,15 +878,14 @@ class FloodMap:
         # Pad the box by one coarse cell and crop the result afterwards.
         clip_bbox = bbox
         crop_back = False
-        if (
-            bbox is not None
-            and self.method == "slope"
-            and (self.volume_mode == "pixels" or self.surface_mode == "trend")
-            and self.area is not None
-        ):
-            pad = float(np.sqrt(np.nanmax(self.area)))
-            if zb.rio.crs is not None and zb.rio.crs.is_geographic:
-                pad = pad / 111111.0
+        if bbox is not None and (self.method == "slope" or self.volume is not None):
+            if self.area is not None:
+                pad = float(np.sqrt(np.nanmax(self.area)))
+                if zb.rio.crs is not None and zb.rio.crs.is_geographic:
+                    pad = pad / 111111.0
+            else:
+                # no cell geometry known: pad by a tenth of the window
+                pad = 0.1 * max(bbox[2] - bbox[0], bbox[3] - bbox[1])
             clip_bbox = (bbox[0] - pad, bbox[1] - pad, bbox[2] + pad, bbox[3] + pad)
             crop_back = True
         if clip_bbox is not None:
@@ -1104,7 +904,7 @@ class FloodMap:
                 minx=clip_bbox[0], miny=clip_bbox[1], maxx=clip_bbox[2], maxy=clip_bbox[3]
             )
         # Structure-aware index: bands 2-4 hold the cells across a structure
-        # from each pixel, used by the blend and trend surface modes.
+        # from each pixel, used by the blend.
         blocked_full = None
         if "band" in indices.dims and indices.sizes["band"] >= 4:
             blocked_full = indices.isel(band=slice(1, 4)).to_numpy()
@@ -1117,10 +917,11 @@ class FloodMap:
         indices = np.squeeze(indices.to_numpy()[:])
         indices[np.where(indices == nan_val_indices)] = 0
 
+        valid = ~no_data_mask.to_numpy() & np.isfinite(zb.to_numpy())
+        if zb.rio.nodata is not None:
+            valid &= zb.to_numpy() != zb.rio.nodata
+
         if self.method == "slope":
-            valid = ~no_data_mask.to_numpy() & np.isfinite(zb.to_numpy())
-            if zb.rio.nodata is not None:
-                valid &= zb.to_numpy() != zb.rio.nodata
             self._blocked = None
             if blocked_full is not None:
                 bl = blocked_full[:, valid].astype(np.int64)
@@ -1130,6 +931,13 @@ class FloodMap:
             self._blocked = None
         elif isinstance(self.zs, float):
             h = np.full(zb.shape, self.zs) - zb.to_numpy()[:]
+        elif self.volume is not None:
+            # Horizontal level per cell that holds the cell volume on the DEM
+            # pixels (mass-consistent), rather than the solver's zsmax, which
+            # is interpolated in a coarse table and under-represents thin
+            # sheets on rough cells.
+            zs_cell = self._level_from_volume(indices, zb, valid)
+            h = zs_cell[indices] - zb.to_numpy()[:]
         else:
             h = self.zs[indices] - zb.to_numpy()[:]
         h[no_data_mask] = np.nan
@@ -1727,7 +1535,7 @@ def reproject_bbox(
 # as a pre-processing step: a pixel whose link to its own cell centre crosses
 # a structure is handed to the nearest centre it can reach without crossing
 # one, and the cells across a structure from each pixel are stored in extra
-# bands so the blend and trend surface modes need no geometry at map time.
+# bands so the blend need no geometry at map time.
 
 #: GeoTIFF tag under which a structure-aware index COG stores its structures
 STRUCTURES_TAG = "SFINCS_STRUCTURES_GEOJSON"
@@ -1917,7 +1725,7 @@ def blocked_cells_for_pixels(
 ) -> np.ndarray:
     """Cells across a structure from each pixel, for the surface interpolation.
 
-    The blend and trend surface modes of ``FloodMap`` interpolate between the
+    The blend option of ``FloodMap`` interpolates between the
     three cell centres of the Delaunay triangle around a pixel. This returns,
     per pixel, the ids of those vertex cells whose link to the pixel crosses
     a structure, so the interpolation can leave them out without any
@@ -1980,7 +1788,7 @@ def apply_structures_to_index_cog(
     (``nodata`` where none), see :func:`blocked_cells_for_pixels`. A
     ``FloodMap`` that loads such an index uses both without being given the
     structures again: band 1 for the level of every pixel, bands 2-4 to keep
-    the blend and trend surface modes from interpolating across a structure.
+    the blend from interpolating across a structure.
     The structures themselves are stored as a GeoJSON tag for reference.
 
     Parameters
