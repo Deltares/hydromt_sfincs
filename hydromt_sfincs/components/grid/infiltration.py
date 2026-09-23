@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Iterable, Union
 
 import numpy as np
 import pandas as pd
@@ -44,14 +44,14 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         super().__init__(model=model)
 
     @property
-    def data(self):
+    def data(self) -> xr.Dataset:
         return self.model.grid.data
 
     @property
-    def mask(self):
+    def mask(self) -> xr.DataArray:
         return self.model.grid.mask
 
-    def _set_layers(self, layers: dict[str, xr.DataArray], flavor: str):
+    def _set_layers(self, layers: dict[str, xr.DataArray], flavor: str) -> None:
         self.clear()
         for name, da in layers.items():
             da = da.astype(np.float32)
@@ -70,7 +70,9 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
             self.model.grid.set(da)
         configure(self.model.config, flavor=flavor, grid_type="regular")
 
-    def _read_sidecar(self, filename: Path, variables):
+    def _read_sidecar(
+        self, filename: Path, variables: Iterable[str]
+    ) -> dict[str, xr.DataArray]:
         if not filename.exists():
             raise FileNotFoundError(filename)
         with xr.open_dataset(filename) as ds:
@@ -86,7 +88,7 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
                 )
         return layers
 
-    def read(self):
+    def read(self) -> None:
         """Read infiltration data not handled by the grid component."""
         flavor = configured_flavor(self.model.config)
         if flavor is None or flavor == "con":
@@ -111,7 +113,7 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         self._set_layers(layers, flavor=flavor)
         self.model.config.set("infiltrationfile", Path(inffile).name)
 
-    def write(self):
+    def write(self) -> None:
         """Write regular-grid infiltration sidecars not handled by the grid."""
         if not all(name in self.data for name in BUCKET_VARS):
             return
@@ -129,19 +131,28 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         ds.to_netcdf(bucketfile)
 
     @hydromt_step
-    def create_uniform_constant(self, qinf: float):
-        """Create a uniform constant infiltration rate in model config."""
+    def create_uniform_constant(self, qinf: float) -> None:
+        """Create a uniform constant infiltration rate in model config.
+
+        Sets the ``qinf`` config entry and clears any existing infiltration
+        layers; no grid layers are added.
+
+        Parameters
+        ----------
+        qinf : float
+            Uniform infiltration rate [mm/hr].
+        """
         self.clear()
         self.model.config.set("qinf", float(qinf))
 
     @hydromt_step
     def create_constant(
         self,
-        qinf: Union[str, Path, xr.DataArray] | None = None,
-        lulc: Union[str, Path, xr.DataArray] | None = None,
-        reclass_table: Union[str, Path, pd.DataFrame] | None = None,
-        reproj_method="average",
-    ):
+        qinf: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        reclass_table: Union[str, Path, pd.DataFrame, None] = None,
+        reproj_method: str = "average",
+    ) -> None:
         """Create spatially varying constant infiltration rate.
 
         Adds model layers to SfincsModel.grid.data:
@@ -249,13 +260,28 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
     @hydromt_step
     def create_cn(
         self,
-        cn: Union[str, Path, xr.DataArray],
+        cn: Union[str, Path, xr.DataArray, xr.Dataset],
         antecedent_moisture: str = "avg",
         reproj_method: str = "med",
-    ):
+    ) -> None:
         """Create Curve Number infiltration without recovery.
 
-        Adds the **scs** map: potential maximum soil moisture retention [inch].
+        Adds model layers:
+
+        * **scs** map: potential maximum soil moisture retention [inch]
+
+        Parameters
+        ----------
+        cn : str, Path, or RasterDataset
+            Curve number data. Dataset inputs must contain a ``cn`` variable, or
+            ``cn_<antecedent_moisture>`` when ``antecedent_moisture`` is set.
+        antecedent_moisture : {'dry', 'avg', 'wet'}, optional
+            Antecedent runoff condition used to select the source variable. Set to
+            None when the input already holds adjusted curve numbers.
+            By default 'avg'.
+        reproj_method : str, optional
+            Resampling method for reprojecting the curve number data to the model grid.
+            By default 'med'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`
         """
         # Add logger info
         logger.info(
@@ -285,12 +311,12 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
     @hydromt_step
     def create_cn_from_landuse_hsg(
         self,
-        lulc,
-        hsg,
-        reclass_table,
-        antecedent_moisture="avg",
-        reproj_method="med",
-    ):
+        lulc: Union[str, Path, xr.DataArray, xr.Dataset],
+        hsg: Union[str, Path, xr.DataArray, xr.Dataset],
+        reclass_table: Union[str, Path, pd.DataFrame],
+        antecedent_moisture: str = "avg",
+        reproj_method: str = "med",
+    ) -> None:
         """Create Curve Number infiltration from land use and HSG.
 
         Adds model layers:
@@ -337,36 +363,44 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
     @hydromt_step
     def create_cn_with_recovery(
         self,
-        lulc,
-        hsg,
-        ksat,
-        reclass_table,
-        effective,
-        factor_ksat=3.6,
-        block_size=2000,
-    ):
+        lulc: Union[str, Path, xr.DataArray, xr.Dataset],
+        hsg: Union[str, Path, xr.DataArray, xr.Dataset],
+        ksat: Union[str, Path, xr.DataArray, xr.Dataset],
+        reclass_table: Union[str, Path, pd.DataFrame],
+        effective: float,
+        factor_ksat: float = 3.6,
+        block_size: int = 2000,
+    ) -> None:
         """Create Curve Number infiltration with recovery.
 
-        Adds **smax**, **seff**, and **ks** maps. The block traversal is handled
-        by :py:meth:`SfincsRegularGridMixin.compute_regular_grid`; each block
-        uses :py:func:`hydromt_sfincs.workflows.curve_number_with_recovery`.
+        Adds model layers:
+
+        * **smax** map: maximum soil moisture retention [m]
+        * **seff** map: effective soil moisture retention [m]
+        * **ks** map: saturated hydraulic conductivity [mm/hr]
+
+        The block traversal is handled by
+        :py:meth:`SfincsRegularGridMixin.compute_regular_grid`; each block uses
+        :py:func:`hydromt_sfincs.workflows.curve_number_with_recovery`.
 
         Parameters
-        ---------
+        ----------
         lulc : str, Path, or RasterDataset
-            Landuse/landcover data set
+            Landuse/landcover data set.
         hsg : str, Path, or RasterDataset
-            HSG (Hydrological Similarity Group) in integers
+            Hydrologic soil group map in integers.
         ksat : str, Path, or RasterDataset
-            Ksat (saturated hydraulic conductivity) [mm/hr]
-        reclass_table : str, Path, or RasterDataset
-            reclass table to relate landcover with soiltype
+            Saturated hydraulic conductivity, in the units implied by ``factor_ksat``.
+        reclass_table : str, Path, or DataFrame
+            Reclassification table relating land cover and soil type to curve numbers.
         effective : float
-            estimate of percentage effective soil, e.g. 0.50 for 50%
-        factor_ksat : float
-            Factor to convert units of Ksat, e.g. from micrometer per second to mm/hr.
-        block_size : float
-            maximum block size - use larger values will get more data in memory but can be faster, default=2000
+            Fraction of ``smax`` that is effective soil retention, e.g. 0.50 for 50%.
+        factor_ksat : float, optional
+            Factor used to convert Ksat units to mm/hr, by default 3.6
+            (micrometer per second to mm/hr).
+        block_size : int, optional
+            Maximum block size in model cells. Larger values hold more data in
+            memory but can be faster, by default 2000.
         """
 
         # Add logger info
@@ -426,11 +460,11 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
     @hydromt_step
     def create_green_ampt(
         self,
-        psi,
-        sigma,
-        ks,
-        reproj_method="average",
-    ):
+        psi: Union[str, Path, xr.DataArray, xr.Dataset],
+        sigma: Union[str, Path, xr.DataArray, xr.Dataset],
+        ks: Union[str, Path, xr.DataArray, xr.Dataset],
+        reproj_method: str = "average",
+    ) -> None:
         """Create Green-Ampt infiltration from final parameter maps.
 
         Adds model layers:
@@ -463,16 +497,22 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
     @hydromt_step
     def create_green_ampt_from_soil(
         self,
-        hsg,
-        ksat=None,
-        lulc=None,
-        reclass_table=None,
-        lulc_modifiers=None,
-        dual_hsg="drained",
-        factor_ksat=3.6,
-        reproj_method="average",
-    ):
+        hsg: Union[str, Path, xr.DataArray, xr.Dataset],
+        ksat: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        reclass_table: Union[str, Path, pd.DataFrame, None] = None,
+        lulc_modifiers: Union[str, Path, pd.DataFrame, None] = None,
+        dual_hsg: str = "drained",
+        factor_ksat: float = 3.6,
+        reproj_method: str = "average",
+    ) -> None:
         """Estimate Green-Ampt infiltration from HSG and optional landuse.
+
+        Adds model layers:
+
+        * **psi** map: wetting front suction head [mm]
+        * **sigma** map: soil moisture deficit [-]
+        * **ks** map: saturated hydraulic conductivity [mm/hr]
 
         Parameters
         ----------
@@ -483,17 +523,20 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
             Saturated hydraulic conductivity map. If provided, it overrides or
             derives ``ks`` values from the reclassification table.
         lulc : str, Path, or RasterDataset, optional
-            Land-use map used to apply NLCD infiltration modifiers.
+            Land-use map used to apply infiltration modifiers. Its classes must
+            match the index of ``lulc_modifiers``.
         reclass_table : str, Path, or DataFrame, optional
             Table mapping HSG classes to Green-Ampt parameters.
         lulc_modifiers : str, Path, or DataFrame, optional
-            Table with land-use modifier factors.
+            Table with land-use modifier factors, indexed by land-use class. By
+            default the bundled NLCD table is used.
         dual_hsg : {None, 'native', 'drained'}, optional
-            How to handle dual HSG classes.
+            How to handle dual HSG classes, by default 'drained'.
         factor_ksat : float, optional
-            Factor used to convert Ksat units to mm/hr.
+            Factor used to convert Ksat units to mm/hr, by default 3.6.
         reproj_method : str, optional
             Resampling method for reprojecting final parameter maps to the model grid.
+            By default 'average'.
         """
         if reclass_table is None:
             reclass_table = Path(DATADIR) / "infiltration" / "hsg_green_ampt.csv"
@@ -562,11 +605,11 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
     @hydromt_step
     def create_horton(
         self,
-        f0,
-        fc,
-        kd,
-        reproj_method="average",
-    ):
+        f0: Union[str, Path, xr.DataArray, xr.Dataset],
+        fc: Union[str, Path, xr.DataArray, xr.Dataset],
+        kd: Union[str, Path, xr.DataArray, xr.Dataset],
+        reproj_method: str = "average",
+    ) -> None:
         """Create Horton infiltration from final parameter maps.
 
         Adds model layers:
@@ -599,16 +642,22 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
     @hydromt_step
     def create_horton_from_soil(
         self,
-        hsg,
-        ksat=None,
-        lulc=None,
-        reclass_table=None,
-        lulc_modifiers=None,
-        dual_hsg="drained",
-        factor_ksat=3.6,
-        reproj_method="average",
-    ):
+        hsg: Union[str, Path, xr.DataArray, xr.Dataset],
+        ksat: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        reclass_table: Union[str, Path, pd.DataFrame, None] = None,
+        lulc_modifiers: Union[str, Path, pd.DataFrame, None] = None,
+        dual_hsg: str = "drained",
+        factor_ksat: float = 3.6,
+        reproj_method: str = "average",
+    ) -> None:
         """Estimate Horton infiltration from HSG and optional landuse.
+
+        Adds model layers:
+
+        * **f0** map: initial infiltration capacity [mm/hr]
+        * **fc** map: asymptotic infiltration capacity [mm/hr]
+        * **kd** map: Horton decay coefficient [hr-1]
 
         Parameters
         ----------
@@ -619,17 +668,20 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
             Saturated hydraulic conductivity map. If provided, it overrides or
             derives ``fc`` values from the reclassification table.
         lulc : str, Path, or RasterDataset, optional
-            Land-use map used to apply NLCD infiltration modifiers.
+            Land-use map used to apply infiltration modifiers. Its classes must
+            match the index of ``lulc_modifiers``.
         reclass_table : str, Path, or DataFrame, optional
             Table mapping HSG classes to Horton parameters.
         lulc_modifiers : str, Path, or DataFrame, optional
-            Table with land-use modifier factors.
+            Table with land-use modifier factors, indexed by land-use class. By
+            default the bundled NLCD table is used.
         dual_hsg : {None, 'native', 'drained'}, optional
-            How to handle dual HSG classes.
+            How to handle dual HSG classes, by default 'drained'.
         factor_ksat : float, optional
-            Factor used to convert Ksat units to mm/hr.
+            Factor used to convert Ksat units to mm/hr, by default 3.6.
         reproj_method : str, optional
             Resampling method for reprojecting final parameter maps to the model grid.
+            By default 'average'.
         """
         if reclass_table is None:
             reclass_table = Path(DATADIR) / "infiltration" / "hsg_horton.csv"
@@ -698,11 +750,11 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
     @hydromt_step
     def create_bucket(
         self,
-        bucket_smax,
-        bucket_k,
-        bucket_loss=None,
-        reproj_method="average",
-    ):
+        bucket_smax: Union[str, Path, xr.DataArray, xr.Dataset],
+        bucket_k: Union[str, Path, xr.DataArray, xr.Dataset],
+        bucket_loss: Union[float, str, Path, xr.DataArray, xr.Dataset, None] = None,
+        reproj_method: str = "average",
+    ) -> None:
         """Create bucket infiltration from final parameter maps.
 
         Adds model layers:
@@ -759,17 +811,23 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
     @hydromt_step
     def create_bucket_from_soil(
         self,
-        hsg,
-        ksat=None,
-        lulc=None,
-        reclass_table=None,
-        lulc_modifiers=None,
-        dual_hsg="drained",
-        factor_ksat=3.6,
-        bucket_loss=None,
-        reproj_method="average",
-    ):
+        hsg: Union[str, Path, xr.DataArray, xr.Dataset],
+        ksat: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        reclass_table: Union[str, Path, pd.DataFrame, None] = None,
+        lulc_modifiers: Union[str, Path, pd.DataFrame, None] = None,
+        dual_hsg: str = "drained",
+        factor_ksat: float = 3.6,
+        bucket_loss: Union[float, None] = None,
+        reproj_method: str = "average",
+    ) -> None:
         """Estimate bucket infiltration from HSG and optional landuse.
+
+        Adds model layers:
+
+        * **bucket_smax** map: bucket maximum storage [mm]
+        * **bucket_k** map: bucket drainage coefficient [hr-1]
+        * **bucket_loss** map: bucket loss fraction [-]
 
         Parameters
         ----------
@@ -780,20 +838,23 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
             Saturated hydraulic conductivity map. If provided, it helps derive
             ``bucket_k`` values.
         lulc : str, Path, or RasterDataset, optional
-            Land-use map used to apply NLCD infiltration modifiers.
+            Land-use map used to apply infiltration modifiers. Its classes must
+            match the index of ``lulc_modifiers``.
         reclass_table : str, Path, or DataFrame, optional
             Table mapping HSG classes to bucket parameters.
         lulc_modifiers : str, Path, or DataFrame, optional
-            Table with land-use modifier factors.
+            Table with land-use modifier factors, indexed by land-use class. By
+            default the bundled NLCD table is used.
         dual_hsg : {None, 'native', 'drained'}, optional
-            How to handle dual HSG classes.
+            How to handle dual HSG classes, by default 'drained'.
         factor_ksat : float, optional
-            Factor used to convert Ksat units to mm/hr.
+            Factor used to convert Ksat units to mm/hr, by default 3.6.
         bucket_loss : float, optional
             Uniform bucket loss fraction. Defaults to 0.0 without land use and
             0.10 with land-use modifiers.
         reproj_method : str, optional
             Resampling method for reprojecting final parameter maps to the model grid.
+            By default 'average'.
         """
         if reclass_table is None:
             reclass_table = Path(DATADIR) / "infiltration" / "hsg_bucket.csv"
@@ -860,7 +921,7 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
             layers[name] = da.raster.reproject_like(self.mask, method=reproj_method)
         self._set_layers(layers, flavor="bkt")
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all infiltration layers from the model."""
         self.model.grid._data = clear_data(self.data, keep=())
         reset_config(self.model.config)
