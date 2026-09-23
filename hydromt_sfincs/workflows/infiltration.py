@@ -10,8 +10,6 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from hydromt_sfincs.workflows.landuse import cn_to_s
-
 __all__ = [
     "ALL_VARS",
     "BUCKET_VARS",
@@ -29,6 +27,7 @@ __all__ = [
     "bucket_from_soil",
     "classify_nlcd_groups",
     "clear_data",
+    "cn_to_s",
     "configure",
     "configured_flavor",
     "constant_infiltration_from_ksat_lulc",
@@ -537,6 +536,24 @@ def classify_nlcd_groups(da_lulc: xr.DataArray) -> xr.DataArray:
     return da_groups.where(np.isfinite(da_lulc), 0)
 
 
+def cn_to_s(da_cn, da_mask=None, nodata=-9999, output_unit="inch"):
+    """Convert Curve Numbers to potential maximum soil moisture retention S."""
+    # nodata is mapped to CN 100 (zero infiltration); CN is floored at 1
+    da_cn = np.maximum(1, da_cn.raster.mask_nodata().fillna(100))
+    da_s = np.maximum(1000 / da_cn - 10, 0).round(3)
+    if output_unit == "m":
+        da_s = da_s * INCH_TO_METER
+    elif output_unit != "inch":
+        raise ValueError("output_unit must be either 'inch' or 'm'.")
+    if da_mask is not None:
+        da_s = da_s.where(da_mask, nodata)
+    try:
+        da_s.raster.set_nodata(nodata)
+    except Exception:
+        pass
+    return da_s
+
+
 def curve_number_from_landuse_hsg(
     da_landuse: xr.DataArray,
     da_hsg: xr.DataArray,
@@ -578,16 +595,31 @@ def curve_number_with_recovery(
     *,
     effective: float,
     factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
+    ksat_max: float | None = 100.0,
     da_mask: xr.DataArray | None = None,
 ) -> xr.Dataset:
     """Estimate SCS curve-number-with-recovery parameters.
 
     All inputs must be already-read xarray objects and a pandas DataFrame.
+
+    Parameters
+    ----------
+    effective : float
+        Fraction of ``smax`` that is effective soil retention, e.g. 0.5 for 50%.
+    factor_ksat : float, optional
+        Factor converting Ksat to mm/hr, by default micrometer per second to mm/hr.
+    ksat_max : float, optional
+        Upper cap applied to raw Ksat before unit conversion, following the
+        recovery-rate ranges of SWMM Table 4.7. Set to None to disable.
+    da_mask : xr.DataArray, optional
+        If given, outputs are reprojected onto this grid using 'average'.
     """
     da_cn = curve_number_from_landuse_hsg(da_landuse, da_hsg, df_map)
     da_cn = da_cn.where(da_cn > 0.0)
     da_smax = cn_to_s(da_cn, output_unit="m", nodata=0.0).astype(np.float32)
     da_smax.name = "smax"
+    if ksat_max is not None:
+        da_ksat = np.minimum(da_ksat, ksat_max)
     da_ks = ksat_to_mmhr(da_ksat, factor_ksat=factor_ksat).astype(np.float32)
     da_ks.name = "ks"
     if da_mask is not None:

@@ -343,14 +343,14 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         ksat,
         reclass_table,
         effective,
-        factor_ksat=1,
+        factor_ksat=3.6,
         block_size=2000,
     ):
         """Create Curve Number infiltration with recovery.
 
         Adds **smax**, **seff**, and **ks** maps. The block traversal is handled
         by :py:meth:`SfincsRegularGridMixin.compute_regular_grid`; each block
-        uses :py:func:`hydromt_sfincs.workflows.curvenumber.scs_recovery_determination`.
+        uses :py:func:`hydromt_sfincs.workflows.curve_number_with_recovery`.
 
         Parameters
         ---------
@@ -365,8 +365,7 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         effective : float
             estimate of percentage effective soil, e.g. 0.50 for 50%
         factor_ksat : float
-            Additional factor to apply after ``scs_recovery_determination``. The
-            underlying workflow already converts micrometers per second to mm/hr.
+            Factor to convert units of Ksat, e.g. from micrometer per second to mm/hr.
         block_size : float
             maximum block size - use larger values will get more data in memory but can be faster, default=2000
         """
@@ -381,10 +380,15 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         da_HSG = self.data_catalog.get_rasterdataset(
             hsg, bbox=self.model.bbox, buffer=10
         )
+        da_HSG = da_HSG.raster.reproject_like(da_landuse, method="nearest")
         da_Ksat = self.data_catalog.get_rasterdataset(
             ksat, bbox=self.model.bbox, buffer=10
         )
-        df_map = self.data_catalog.get_dataframe(reclass_table)
+        da_Ksat = da_Ksat.raster.reproject_like(da_landuse, method="average")
+        df_map = self.data_catalog.get_dataframe(
+            reclass_table,
+            source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
+        )
 
         # Define outputs
         layers = {
@@ -403,21 +407,16 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
             )  # assume 1 degree is 111km
 
         def compute_cn_recovery_block(da_like):
-            da_smax, da_ks = workflows.curvenumber.scs_recovery_determination(
+            ds = workflows.curve_number_with_recovery(
                 da_landuse,
                 da_HSG,
                 da_Ksat,
                 df_map,
-                da_like,
+                effective=effective,
+                factor_ksat=factor_ksat,
+                da_mask=da_like,
             )
-            da_ks = da_ks * factor_ksat
-            da_seff = da_smax * effective
-            da_seff.raster.set_nodata(da_smax.raster.nodata)
-            return {
-                "smax": da_smax,
-                "seff": da_seff,
-                "ks": da_ks,
-            }
+            return {name: ds[name] for name in ("smax", "seff", "ks")}
 
         layers = self.compute_regular_grid(
             compute_cn_recovery_block,
