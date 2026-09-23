@@ -11,7 +11,7 @@ from hydromt.model.components import ModelComponent
 
 from hydromt_sfincs import DATADIR, workflows
 from hydromt_sfincs.components.grid.regulargrid_mixin import SfincsRegularGridMixin
-from hydromt_sfincs.workflows.infiltration import (
+from hydromt_sfincs.components.infiltration_common import (
     BUCKET_VARS,
     DEFAULT_BUCKETFILE,
     VARIABLES,

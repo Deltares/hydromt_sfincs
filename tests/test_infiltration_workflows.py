@@ -119,13 +119,14 @@ def test_cn_to_s_units_and_invalid():
 
 def test_curve_number_from_landuse_hsg_expected_values():
     df_map = pd.DataFrame({1: [30.0, 77.0], 2: [55.0, 85.0]}, index=[41, 24])
-    da_landuse = _raster([[41, 24, 41]], "lulc", dtype=np.int16)
-    da_hsg = _raster([[1, 2, 3]], "hsg", dtype=np.int16)
+    da_landuse = _raster([[41, 24, 41], [24, 41, 24]], "lulc", dtype=np.int16)
+    da_hsg = _raster([[1, 2, 3], [1, 1, 2]], "hsg", dtype=np.int16)
 
     da_cn = workflows.curve_number_from_landuse_hsg(da_landuse, da_hsg, df_map)
 
     assert np.isclose(float(da_cn.values[0, 0]), 30.0)
     assert np.isclose(float(da_cn.values[0, 1]), 85.0)
+    assert np.isclose(float(da_cn.values[1, 0]), 77.0)
     # HSG 3 is absent from the table, so the combination stays unmapped
     assert np.isnan(da_cn.values[0, 2])
 

@@ -290,7 +290,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         if len(variables) > 0:
             for var in variables:
                 if var["variable"] == "infiltration":
-                    from hydromt_sfincs.workflows.infiltration import (
+                    from hydromt_sfincs.components.infiltration_common import (
                         ALL_VARS,
                         flavor_variables,
                     )

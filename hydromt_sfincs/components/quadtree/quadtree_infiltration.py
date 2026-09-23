@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable, Union
 
 import numpy as np
 import pandas as pd
@@ -11,8 +11,7 @@ from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
 from hydromt_sfincs import DATADIR, workflows
-from hydromt_sfincs.components.quadtree import SfincsQuadtreeMixin
-from hydromt_sfincs.workflows.infiltration import (
+from hydromt_sfincs.components.infiltration_common import (
     BUCKET_VARS,
     DEFAULT_BUCKETFILE,
     DEFAULT_INFILTRATIONFILE,
@@ -25,6 +24,7 @@ from hydromt_sfincs.workflows.infiltration import (
     reset_config,
     sidecar_dataset,
 )
+from hydromt_sfincs.components.quadtree import SfincsQuadtreeMixin
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -44,14 +44,18 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         super().__init__(model=model)
 
     @property
-    def data(self):
+    def data(self) -> xu.UgridDataset:
         return self.model.quadtree_grid.data
 
     @property
-    def mask(self):
+    def mask(self) -> xu.UgridDataArray:
         return self.model.quadtree_grid.mask
 
-    def _set_layers(self, layers, flavor: str):
+    def _set_layers(
+        self,
+        layers: dict[str, Union[np.ndarray, xr.DataArray, xu.UgridDataArray]],
+        flavor: str,
+    ) -> None:
         self.clear()
         for name, layer in layers.items():
             values = (
@@ -68,7 +72,9 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
 
         configure(self.model.config, flavor=flavor, grid_type="quadtree")
 
-    def get_vars_by_infiltration_type(self, infiltration_type: str):
+    def get_vars_by_infiltration_type(
+        self, infiltration_type: str
+    ) -> tuple[list[str], list[str]]:
         """Return infiltration variables to write and stale variables to remove."""
         write_vars = list(flavor_variables(infiltration_type))
         data_vars = self.data if isinstance(self.data, dict) else self.data.data_vars
@@ -77,7 +83,9 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         ]
         return write_vars, remove_vars
 
-    def _read_sidecar(self, filename: Path, variables):
+    def _read_sidecar(
+        self, filename: Path, variables: Iterable[str]
+    ) -> dict[str, xr.DataArray]:
         if not filename.exists():
             raise FileNotFoundError(filename)
         with xr.open_dataset(filename) as ds:
@@ -91,7 +99,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                 layers[name] = da
         return layers
 
-    def read(self):
+    def read(self) -> None:
         """Read quadtree infiltration sidecars."""
         flavor = configured_flavor(self.model.config)
         if flavor is None or flavor == "con":
@@ -116,7 +124,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         self._set_layers(layers, flavor=flavor)
         self.model.config.set("infiltrationfile", Path(inffile).name)
 
-    def write(self):
+    def write(self) -> None:
         """Write quadtree infiltration sidecars."""
         flavor = configured_flavor(self.model.config)
         if flavor is None or flavor == "con":
@@ -142,20 +150,29 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         ds.to_netcdf(filename)
 
     @hydromt_step
-    def create_uniform_constant(self, qinf: float):
-        """Create a uniform constant infiltration rate in model config."""
+    def create_uniform_constant(self, qinf: float) -> None:
+        """Create a uniform constant infiltration rate in model config.
+
+        Sets the ``qinf`` config entry and clears any existing infiltration
+        layers; no grid layers are added.
+
+        Parameters
+        ----------
+        qinf : float
+            Uniform infiltration rate [mm/hr].
+        """
         self.clear()
         self.model.config.set("qinf", float(qinf))
 
     @hydromt_step
     def create_constant(
         self,
-        qinf=None,
-        lulc=None,
-        reclass_table=None,
-        reproj_method="average",
-        nrmax=2000,
-    ):
+        qinf: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        reclass_table: Union[str, Path, pd.DataFrame, None] = None,
+        reproj_method: str = "average",
+        nrmax: int = 2000,
+    ) -> None:
         """Create spatially varying constant infiltration rate.
 
         Adds model layers to SfincsModel.quadtree_grid.data:
@@ -275,7 +292,13 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         self._set_layers({"qinf": qinf}, flavor="c2d")
 
     @hydromt_step
-    def create_cn(self, cn, antecedent_moisture="avg", reproj_method="med", nrmax=2000):
+    def create_cn(
+        self,
+        cn: Union[str, Path, xr.DataArray, xr.Dataset],
+        antecedent_moisture: Union[str, None] = "avg",
+        reproj_method: str = "med",
+        nrmax: int = 2000,
+    ) -> None:
         """Create Curve Number infiltration without recovery for quadtree grids.
 
         Adds model layers:
@@ -283,17 +306,19 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         * **scs** map: potential maximum soil moisture retention [inch]
 
         Parameters
-        ---------
+        ----------
         cn : str, Path, or RasterDataset
-            Name of gridded curve number map.
+            Curve number data. Dataset inputs must contain a ``cn`` variable, or
+            ``cn_<antecedent_moisture>`` when ``antecedent_moisture`` is set.
         antecedent_moisture : {'dry', 'avg', 'wet'}, optional
-            Antecedent runoff conditions.
-            By default `avg`
+            Antecedent runoff condition used to select the source variable. Set to
+            None when the input already holds adjusted curve numbers.
+            By default 'avg'.
         reproj_method : str, optional
             Resampling method for reprojecting curve number data to quadtree blocks.
+            By default 'med'.
         nrmax : int, optional
-            Maximum number of cells per quadtree block.
-
+            Maximum number of cells per quadtree block, by default 2000.
         """
         # Add logger info
         logger.info(
@@ -338,12 +363,12 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
     @hydromt_step
     def create_cn_from_landuse_hsg(
         self,
-        lulc,
-        hsg,
-        reclass_table,
-        antecedent_moisture="avg",
-        reproj_method="median",
-    ):
+        lulc: Union[str, Path, xr.DataArray, xr.Dataset],
+        hsg: Union[str, Path, xr.DataArray, xr.Dataset],
+        reclass_table: Union[str, Path, pd.DataFrame],
+        antecedent_moisture: str = "avg",
+        reproj_method: str = "med",
+    ) -> None:
         """Create Curve Number infiltration from land use and HSG.
 
         Adds model layers:
@@ -363,28 +388,26 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             By default `avg`
         reproj_method : str, optional
             Resampling method for reprojecting curve number data to quadtree blocks.
+            By default 'med'.
         """
 
         da_lulc = self.data_catalog.get_rasterdataset(
             lulc, bbox=self.model.bbox, buffer=10, variables=["lulc"]
         )
-        if isinstance(da_lulc, xr.Dataset):
-            da_lulc = next(iter(da_lulc.data_vars.values()))
         da_hsg = self.data_catalog.get_rasterdataset(
             hsg, bbox=self.model.bbox, buffer=10, variables=["hsg"]
         )
-        if isinstance(da_hsg, xr.Dataset):
-            da_hsg = next(iter(da_hsg.data_vars.values()))
         df_map = self.data_catalog.get_dataframe(
             reclass_table,
             source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
         )
-        da_hsg = da_hsg.raster.reproject_like(da_lulc, method="nearest")
+
         da_cn = workflows.curve_number_from_landuse_hsg(da_lulc, da_hsg, df_map)
         da_cn = workflows.adjust_curve_number(
             da_cn,
             antecedent_moisture=antecedent_moisture,
         )
+
         self.create_cn(
             da_cn,
             antecedent_moisture=None,
@@ -394,72 +417,87 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
     @hydromt_step
     def create_cn_with_recovery(
         self,
-        lulc,
-        hsg,
-        ksat,
-        reclass_table,
-        effective,
-        factor_ksat=3.6,
-        block_size=2000,
-    ):
+        lulc: Union[str, Path, xr.DataArray, xr.Dataset],
+        hsg: Union[str, Path, xr.DataArray, xr.Dataset],
+        ksat: Union[str, Path, xr.DataArray, xr.Dataset],
+        reclass_table: Union[str, Path, pd.DataFrame],
+        effective: float,
+        factor_ksat: float = 3.6,
+        block_size: int = 2000,
+    ) -> None:
         """Create Curve Number infiltration with recovery for quadtree grids.
 
-        Adds **smax**, **seff**, and **ks** maps on quadtree faces. Input data are
-        read by the component; the computation receives xarray objects and a
-        pandas DataFrame.
+        Adds model layers:
+
+        * **smax** map: maximum soil moisture retention [m]
+        * **seff** map: effective soil moisture retention [m]
+        * **ks** map: saturated hydraulic conductivity [mm/hr]
+
+        Input data are read by the component; each quadtree block is passed to
+        :py:func:`hydromt_sfincs.workflows.curve_number_with_recovery`.
+
+        Parameters
+        ----------
+        lulc : str, Path, or RasterDataset
+            Landuse/landcover data set.
+        hsg : str, Path, or RasterDataset
+            Hydrologic soil group map in integers.
+        ksat : str, Path, or RasterDataset
+            Saturated hydraulic conductivity, in the units implied by ``factor_ksat``.
+        reclass_table : str, Path, or DataFrame
+            Reclassification table relating land cover and soil type to curve numbers.
+        effective : float
+            Fraction of ``smax`` that is effective soil retention, e.g. 0.50 for 50%.
+        factor_ksat : float, optional
+            Factor used to convert Ksat units to mm/hr, by default 3.6
+            (micrometer per second to mm/hr).
+        block_size : int, optional
+            Maximum number of cells per quadtree block, by default 2000.
         """
-        del block_size  # kept for backwards compatibility
-        da_landuse = self.data_catalog.get_rasterdataset(
+
+        da_lulc = self.data_catalog.get_rasterdataset(
             lulc, bbox=self.model.bbox, buffer=10
         )
-        if isinstance(da_landuse, xr.Dataset):
-            da_landuse = next(iter(da_landuse.data_vars.values()))
         da_hsg = self.data_catalog.get_rasterdataset(
             hsg, bbox=self.model.bbox, buffer=10
         )
-        if isinstance(da_hsg, xr.Dataset):
-            da_hsg = next(iter(da_hsg.data_vars.values()))
-        da_hsg = da_hsg.raster.reproject_like(da_landuse, method="nearest")
         da_ksat = self.data_catalog.get_rasterdataset(
             ksat, bbox=self.model.bbox, buffer=10
         )
-        if isinstance(da_ksat, xr.Dataset):
-            da_ksat = next(iter(da_ksat.data_vars.values()))
-        da_ksat = da_ksat.raster.reproject_like(da_landuse, method="average")
         df_map = self.data_catalog.get_dataframe(
             reclass_table,
             source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
         )
-        ds = workflows.curve_number_with_recovery(
-            da_landuse,
-            da_hsg,
-            da_ksat,
-            df_map,
-            effective=effective,
-            factor_ksat=factor_ksat,
-        )
+
         outputs = {
             name: np.full(self.data.grid.n_face, np.nan)
             for name in ("smax", "seff", "ks")
         }
 
-        def compute_block(da_like, ilev=None):
-            return tuple(
-                ds[name].raster.reproject_like(da_like, method="average")
-                for name in outputs
+        def compute_cn_recovery_block(da_like, ilev=None):
+            ds = workflows.curve_number_with_recovery(
+                da_lulc,
+                da_hsg,
+                da_ksat,
+                df_map,
+                effective=effective,
+                factor_ksat=factor_ksat,
+                da_mask=da_like,
             )
+            return tuple(ds[name] for name in outputs)
 
-        self.compute_quadtree(compute_block, outputs)
+        self.compute_quadtree(compute_cn_recovery_block, outputs, nrmax=block_size)
+
         self._set_layers(outputs, flavor="cnb")
 
     @hydromt_step
     def create_green_ampt(
         self,
-        psi,
-        sigma,
-        ks,
-        reproj_method="average",
-    ):
+        psi: Union[str, Path, xr.DataArray, xr.Dataset],
+        sigma: Union[str, Path, xr.DataArray, xr.Dataset],
+        ks: Union[str, Path, xr.DataArray, xr.Dataset],
+        reproj_method: str = "average",
+    ) -> None:
         """Create Green-Ampt infiltration from final parameter maps.
 
         Adds model layers:
@@ -470,7 +508,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
 
         Parameters
         ----------
-        psi, sigma, ks : str, Path, RasterDataset, or UgridDataArray
+        psi, sigma, ks : str, Path, or RasterDataset
             Data with final Green-Ampt parameters. Dataset inputs must contain
             variables named ``psi``, ``sigma``, and ``ks`` respectively.
         reproj_method : str, optional
@@ -480,19 +518,9 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         layers = {}
         raster_sources = {}
         for name, source in zip(names, (psi, sigma, ks)):
-            if isinstance(source, xu.UgridDataArray):
-                layers[name] = source
-                continue
-            if isinstance(source, xu.UgridDataset):
-                layers[name] = source[name]
-                continue
             da = self.data_catalog.get_rasterdataset(
-                source, bbox=self.model.bbox, buffer=10
+                source, bbox=self.model.bbox, buffer=10, variables=[name]
             )
-            if isinstance(da, xr.Dataset):
-                if name not in da.data_vars:
-                    raise ValueError(f"Could not find variable {name} in {source}")
-                da = da[name]
             raster_sources[name] = da.raster.mask_nodata()
 
         if raster_sources:
@@ -515,16 +543,22 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
     @hydromt_step
     def create_green_ampt_from_soil(
         self,
-        hsg,
-        ksat=None,
-        lulc=None,
-        reclass_table=None,
-        lulc_modifiers=None,
-        dual_hsg="drained",
-        factor_ksat=3.6,
-        reproj_method="average",
-    ):
+        hsg: Union[str, Path, xr.DataArray, xr.Dataset],
+        ksat: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        reclass_table: Union[str, Path, pd.DataFrame, None] = None,
+        lulc_modifiers: Union[str, Path, pd.DataFrame, None] = None,
+        dual_hsg: Union[str, None] = "drained",
+        factor_ksat: float = 3.6,
+        reproj_method: str = "average",
+    ) -> None:
         """Estimate Green-Ampt infiltration from HSG and optional landuse.
+
+        Adds model layers:
+
+        * **psi** map: wetting front suction head [mm]
+        * **sigma** map: soil moisture deficit [-]
+        * **ks** map: saturated hydraulic conductivity [mm/hr]
 
         Parameters
         ----------
@@ -535,26 +569,27 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             Saturated hydraulic conductivity map. If provided, it overrides or
             derives ``ks`` values from the reclassification table.
         lulc : str, Path, or RasterDataset, optional
-            Land-use map used to apply NLCD infiltration modifiers.
+            Land-use map used to apply infiltration modifiers. Its classes must
+            match the index of ``lulc_modifiers``.
         reclass_table : str, Path, or DataFrame, optional
             Table mapping HSG classes to Green-Ampt parameters.
         lulc_modifiers : str, Path, or DataFrame, optional
-            Table with land-use modifier factors.
+            Table with land-use modifier factors, indexed by land-use class. By
+            default the bundled NLCD table is used.
         dual_hsg : {None, 'native', 'drained'}, optional
-            How to handle dual HSG classes.
+            How to handle dual HSG classes, by default 'drained'.
         factor_ksat : float, optional
-            Factor used to convert Ksat units to mm/hr.
+            Factor used to convert Ksat units to mm/hr, by default 3.6.
         reproj_method : str, optional
-            Resampling method for reprojecting final parameter maps to quadtree blocks.
+            Resampling method for reprojecting final parameter maps to quadtree
+            blocks. By default 'average'.
         """
         if reclass_table is None:
             reclass_table = Path(DATADIR) / "infiltration" / "hsg_green_ampt.csv"
 
-        da_soil = self.data_catalog.get_rasterdataset(
+        da_hsg = self.data_catalog.get_rasterdataset(
             hsg, bbox=self.model.bbox, buffer=10, variables=["hsg"]
         )
-        if isinstance(da_soil, xr.Dataset):
-            da_soil = next(iter(da_soil.data_vars.values()))
         df_map = self.data_catalog.get_dataframe(
             reclass_table,
             source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
@@ -564,9 +599,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             da_ksat = self.data_catalog.get_rasterdataset(
                 ksat, bbox=self.model.bbox, buffer=10
             )
-            if isinstance(da_ksat, xr.Dataset):
-                da_ksat = next(iter(da_ksat.data_vars.values()))
-            da_ksat = da_ksat.raster.reproject_like(da_soil, method="average")
+            da_ksat = da_ksat.raster.reproject_like(da_hsg, method="average")
 
         if lulc is not None:
             if lulc_modifiers is None:
@@ -576,9 +609,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             da_lulc = self.data_catalog.get_rasterdataset(
                 lulc, bbox=self.model.bbox, buffer=10, variables=["lulc"]
             )
-            if isinstance(da_lulc, xr.Dataset):
-                da_lulc = da_lulc["lulc"]
-            da_lulc = da_lulc.raster.reproject_like(da_soil, method="nearest")
+            da_lulc = da_lulc.raster.reproject_like(da_hsg, method="nearest")
             df_modifiers = self.data_catalog.get_dataframe(
                 lulc_modifiers,
                 source_kwargs={
@@ -586,7 +617,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                 },
             )
             ds = workflows.green_ampt_from_soil_landuse(
-                da_soil,
+                da_hsg,
                 da_lulc,
                 df_map,
                 df_modifiers,
@@ -596,7 +627,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             )
         else:
             ds = workflows.green_ampt_from_soil(
-                da_soil,
+                da_hsg,
                 df_map,
                 da_ksat=da_ksat,
                 factor_ksat=factor_ksat,
@@ -619,11 +650,11 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
     @hydromt_step
     def create_horton(
         self,
-        f0,
-        fc,
-        kd,
-        reproj_method="average",
-    ):
+        f0: Union[str, Path, xr.DataArray, xr.Dataset],
+        fc: Union[str, Path, xr.DataArray, xr.Dataset],
+        kd: Union[str, Path, xr.DataArray, xr.Dataset],
+        reproj_method: str = "average",
+    ) -> None:
         """Create Horton infiltration from final parameter maps.
 
         Adds model layers:
@@ -644,19 +675,12 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         layers = {}
         raster_sources = {}
         for name, source in zip(names, (f0, fc, kd)):
-            if isinstance(source, xu.UgridDataArray):
-                layers[name] = source
-                continue
-            if isinstance(source, xu.UgridDataset):
-                layers[name] = source[name]
-                continue
             da = self.data_catalog.get_rasterdataset(
-                source, bbox=self.model.bbox, buffer=10
+                source,
+                bbox=self.model.bbox,
+                buffer=10,
+                variables=[name],
             )
-            if isinstance(da, xr.Dataset):
-                if name not in da.data_vars:
-                    raise ValueError(f"Could not find variable {name} in {source}")
-                da = da[name]
             raster_sources[name] = da.raster.mask_nodata()
 
         if raster_sources:
@@ -679,16 +703,22 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
     @hydromt_step
     def create_horton_from_soil(
         self,
-        hsg,
-        ksat=None,
-        lulc=None,
-        reclass_table=None,
-        lulc_modifiers=None,
-        dual_hsg="drained",
-        factor_ksat=3.6,
-        reproj_method="average",
-    ):
+        hsg: Union[str, Path, xr.DataArray, xr.Dataset],
+        ksat: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        reclass_table: Union[str, Path, pd.DataFrame, None] = None,
+        lulc_modifiers: Union[str, Path, pd.DataFrame, None] = None,
+        dual_hsg: Union[str, None] = "drained",
+        factor_ksat: float = 3.6,
+        reproj_method: str = "average",
+    ) -> None:
         """Estimate Horton infiltration from HSG and optional landuse.
+
+        Adds model layers:
+
+        * **f0** map: initial infiltration capacity [mm/hr]
+        * **fc** map: asymptotic infiltration capacity [mm/hr]
+        * **kd** map: Horton decay coefficient [hr-1]
 
         Parameters
         ----------
@@ -699,26 +729,27 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             Saturated hydraulic conductivity map. If provided, it overrides or
             derives ``fc`` values from the reclassification table.
         lulc : str, Path, or RasterDataset, optional
-            Land-use map used to apply NLCD infiltration modifiers.
+            Land-use map used to apply infiltration modifiers. Its classes must
+            match the index of ``lulc_modifiers``.
         reclass_table : str, Path, or DataFrame, optional
             Table mapping HSG classes to Horton parameters.
         lulc_modifiers : str, Path, or DataFrame, optional
-            Table with land-use modifier factors.
+            Table with land-use modifier factors, indexed by land-use class. By
+            default the bundled NLCD table is used.
         dual_hsg : {None, 'native', 'drained'}, optional
-            How to handle dual HSG classes.
+            How to handle dual HSG classes, by default 'drained'.
         factor_ksat : float, optional
-            Factor used to convert Ksat units to mm/hr.
+            Factor used to convert Ksat units to mm/hr, by default 3.6.
         reproj_method : str, optional
-            Resampling method for reprojecting final parameter maps to quadtree blocks.
+            Resampling method for reprojecting final parameter maps to quadtree
+            blocks. By default 'average'.
         """
         if reclass_table is None:
             reclass_table = Path(DATADIR) / "infiltration" / "hsg_horton.csv"
 
-        da_soil = self.data_catalog.get_rasterdataset(
+        da_hsg = self.data_catalog.get_rasterdataset(
             hsg, bbox=self.model.bbox, buffer=10, variables=["hsg"]
         )
-        if isinstance(da_soil, xr.Dataset):
-            da_soil = next(iter(da_soil.data_vars.values()))
         df_map = self.data_catalog.get_dataframe(
             reclass_table,
             source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
@@ -728,9 +759,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             da_ksat = self.data_catalog.get_rasterdataset(
                 ksat, bbox=self.model.bbox, buffer=10
             )
-            if isinstance(da_ksat, xr.Dataset):
-                da_ksat = next(iter(da_ksat.data_vars.values()))
-            da_ksat = da_ksat.raster.reproject_like(da_soil, method="average")
+            da_ksat = da_ksat.raster.reproject_like(da_hsg, method="average")
 
         if lulc is not None:
             if lulc_modifiers is None:
@@ -740,9 +769,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             da_lulc = self.data_catalog.get_rasterdataset(
                 lulc, bbox=self.model.bbox, buffer=10, variables=["lulc"]
             )
-            if isinstance(da_lulc, xr.Dataset):
-                da_lulc = da_lulc["lulc"]
-            da_lulc = da_lulc.raster.reproject_like(da_soil, method="nearest")
+            da_lulc = da_lulc.raster.reproject_like(da_hsg, method="nearest")
             df_modifiers = self.data_catalog.get_dataframe(
                 lulc_modifiers,
                 source_kwargs={
@@ -750,7 +777,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                 },
             )
             ds = workflows.horton_from_soil_landuse(
-                da_soil,
+                da_hsg,
                 da_lulc,
                 df_map,
                 df_modifiers,
@@ -760,7 +787,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             )
         else:
             ds = workflows.horton_from_soil(
-                da_soil,
+                da_hsg,
                 df_map,
                 da_ksat=da_ksat,
                 factor_ksat=factor_ksat,
@@ -782,11 +809,11 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
     @hydromt_step
     def create_bucket(
         self,
-        bucket_smax,
-        bucket_k,
-        bucket_loss=None,
-        reproj_method="average",
-    ):
+        bucket_smax: Union[str, Path, xr.DataArray, xr.Dataset],
+        bucket_k: Union[str, Path, xr.DataArray, xr.Dataset],
+        bucket_loss: Union[float, str, Path, xr.DataArray, xr.Dataset, None] = None,
+        reproj_method: str = "average",
+    ) -> None:
         """Create bucket infiltration from final parameter maps.
 
         Adds model layers:
@@ -797,10 +824,10 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
 
         Parameters
         ----------
-        bucket_smax, bucket_k : str, Path, RasterDataset, or UgridDataArray
+        bucket_smax, bucket_k : str, Path, RasterDataset
             Data with final bucket parameters. Dataset inputs must contain
             variables named ``bucket_smax`` and ``bucket_k`` respectively.
-        bucket_loss : float, str, Path, RasterDataset, or UgridDataArray, optional
+        bucket_loss : float, str, Path, RasterDataset, optional
             Uniform loss fraction or map with final bucket loss fractions.
             Defaults to 0.0.
         reproj_method : str, optional
@@ -810,19 +837,12 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         layers = {}
         raster_sources = {}
         for name, source in zip(names, (bucket_smax, bucket_k)):
-            if isinstance(source, xu.UgridDataArray):
-                layers[name] = source
-                continue
-            if isinstance(source, xu.UgridDataset):
-                layers[name] = source[name]
-                continue
             da = self.data_catalog.get_rasterdataset(
-                source, bbox=self.model.bbox, buffer=10
+                source,
+                bbox=self.model.bbox,
+                buffer=10,
+                variables=[name],
             )
-            if isinstance(da, xr.Dataset):
-                if name not in da.data_vars:
-                    raise ValueError(f"Could not find variable {name} in {source}")
-                da = da[name]
             raster_sources[name] = da.raster.mask_nodata()
 
         if bucket_loss is None or np.isscalar(bucket_loss):
@@ -830,14 +850,10 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                 self.data.grid.n_face,
                 np.float32(0.0 if bucket_loss is None else bucket_loss),
             )
-        elif isinstance(bucket_loss, xu.UgridDataArray):
-            layers["bucket_loss"] = bucket_loss
         else:
             da_loss = self.data_catalog.get_rasterdataset(
-                bucket_loss, bbox=self.model.bbox, buffer=10
+                bucket_loss, bbox=self.model.bbox, buffer=10, variables=["bucket_loss"]
             )
-            if isinstance(da_loss, xr.Dataset):
-                da_loss = da_loss["bucket_loss"]
             raster_sources["bucket_loss"] = da_loss.raster.mask_nodata()
 
         if raster_sources:
@@ -860,17 +876,23 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
     @hydromt_step
     def create_bucket_from_soil(
         self,
-        hsg,
-        ksat=None,
-        lulc=None,
-        reclass_table=None,
-        lulc_modifiers=None,
-        dual_hsg="drained",
-        factor_ksat=3.6,
-        bucket_loss=None,
-        reproj_method="average",
-    ):
+        hsg: Union[str, Path, xr.DataArray, xr.Dataset],
+        ksat: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        reclass_table: Union[str, Path, pd.DataFrame, None] = None,
+        lulc_modifiers: Union[str, Path, pd.DataFrame, None] = None,
+        dual_hsg: Union[str, None] = "drained",
+        factor_ksat: float = 3.6,
+        bucket_loss: Union[float, None] = None,
+        reproj_method: str = "average",
+    ) -> None:
         """Estimate bucket infiltration from HSG and optional landuse.
+
+        Adds model layers:
+
+        * **bucket_smax** map: bucket maximum storage [mm]
+        * **bucket_k** map: bucket drainage coefficient [hr-1]
+        * **bucket_loss** map: bucket loss fraction [-]
 
         Parameters
         ----------
@@ -881,29 +903,30 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             Saturated hydraulic conductivity map. If provided, it helps derive
             ``bucket_k`` values.
         lulc : str, Path, or RasterDataset, optional
-            Land-use map used to apply NLCD infiltration modifiers.
+            Land-use map used to apply infiltration modifiers. Its classes must
+            match the index of ``lulc_modifiers``.
         reclass_table : str, Path, or DataFrame, optional
             Table mapping HSG classes to bucket parameters.
         lulc_modifiers : str, Path, or DataFrame, optional
-            Table with land-use modifier factors.
+            Table with land-use modifier factors, indexed by land-use class. By
+            default the bundled NLCD table is used.
         dual_hsg : {None, 'native', 'drained'}, optional
-            How to handle dual HSG classes.
+            How to handle dual HSG classes, by default 'drained'.
         factor_ksat : float, optional
-            Factor used to convert Ksat units to mm/hr.
+            Factor used to convert Ksat units to mm/hr, by default 3.6.
         bucket_loss : float, optional
             Uniform bucket loss fraction. Defaults to 0.0 without land use and
             0.10 with land-use modifiers.
         reproj_method : str, optional
-            Resampling method for reprojecting final parameter maps to quadtree blocks.
+            Resampling method for reprojecting final parameter maps to quadtree
+            blocks. By default 'average'.
         """
         if reclass_table is None:
             reclass_table = Path(DATADIR) / "infiltration" / "hsg_bucket.csv"
 
-        da_soil = self.data_catalog.get_rasterdataset(
+        da_hsg = self.data_catalog.get_rasterdataset(
             hsg, bbox=self.model.bbox, buffer=10, variables=["hsg"]
         )
-        if isinstance(da_soil, xr.Dataset):
-            da_soil = next(iter(da_soil.data_vars.values()))
         df_map = self.data_catalog.get_dataframe(
             reclass_table,
             source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
@@ -913,9 +936,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             da_ksat = self.data_catalog.get_rasterdataset(
                 ksat, bbox=self.model.bbox, buffer=10
             )
-            if isinstance(da_ksat, xr.Dataset):
-                da_ksat = next(iter(da_ksat.data_vars.values()))
-            da_ksat = da_ksat.raster.reproject_like(da_soil, method="average")
+            da_ksat = da_ksat.raster.reproject_like(da_hsg, method="average")
 
         if lulc is not None:
             if lulc_modifiers is None:
@@ -925,9 +946,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             da_lulc = self.data_catalog.get_rasterdataset(
                 lulc, bbox=self.model.bbox, buffer=10, variables=["lulc"]
             )
-            if isinstance(da_lulc, xr.Dataset):
-                da_lulc = da_lulc["lulc"]
-            da_lulc = da_lulc.raster.reproject_like(da_soil, method="nearest")
+            da_lulc = da_lulc.raster.reproject_like(da_hsg, method="nearest")
             df_modifiers = self.data_catalog.get_dataframe(
                 lulc_modifiers,
                 source_kwargs={
@@ -935,7 +954,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                 },
             )
             ds = workflows.bucket_from_soil_landuse(
-                da_soil,
+                da_hsg,
                 da_lulc,
                 df_map,
                 df_modifiers,
@@ -946,7 +965,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             )
         else:
             ds = workflows.bucket_from_soil(
-                da_soil,
+                da_hsg,
                 df_map,
                 da_ksat=da_ksat,
                 factor_ksat=factor_ksat,
@@ -964,7 +983,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         self.compute_quadtree(compute_block, outputs)
         self._set_layers(outputs, flavor="bkt")
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all infiltration layers from the model."""
         self.model.quadtree_grid._data = clear_data(self.data, keep=())
         reset_config(self.model.config)

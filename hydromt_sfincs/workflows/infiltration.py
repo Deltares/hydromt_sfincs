@@ -1,11 +1,12 @@
-"""Shared infiltration metadata, configuration helpers, and estimation workflows."""
+"""Infiltration estimation workflows.
+
+Metadata, configuration bookkeeping, and grid I/O helpers live in
+:py:mod:`hydromt_sfincs.components.infiltration_common`.
+"""
 
 from __future__ import annotations
 
 import logging
-from collections import OrderedDict
-from dataclasses import dataclass
-from typing import Iterable, Mapping
 
 import numpy as np
 import pandas as pd
@@ -14,348 +15,25 @@ import xarray as xr
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "ALL_VARS",
-    "BUCKET_VARS",
-    "DEFAULT_BUCKETFILE",
-    "DEFAULT_INFILTRATIONFILE",
-    "FLAVORS",
     "INCH_TO_METER",
     "MICROMETER_PER_SECOND_TO_MM_PER_HOUR",
-    "VARIABLES",
     "adjust_curve_number",
-    "bucket_from_soil_landuse",
     "bucket_from_soil",
-    "clear_data",
+    "bucket_from_soil_landuse",
     "cn_to_s",
-    "configure",
-    "configured_flavor",
     "constant_infiltration_from_ksat_lulc",
     "curve_number_from_landuse_hsg",
     "curve_number_with_recovery",
-    "flavor_variables",
-    "get_attrs",
-    "green_ampt_from_soil_landuse",
     "green_ampt_from_soil",
-    "horton_from_soil_landuse",
+    "green_ampt_from_soil_landuse",
     "horton_from_soil",
-    "InfiltrationFlavor",
-    "InfiltrationVariable",
+    "horton_from_soil_landuse",
     "ksat_to_mmhr",
     "normalize_hsg_codes",
-    "regular_active_vector",
-    "regular_vector_to_da",
-    "reset_config",
-    "sidecar_dataset",
 ]
 
 INCH_TO_METER = 0.0254
 MICROMETER_PER_SECOND_TO_MM_PER_HOUR = 3.6
-DEFAULT_INFILTRATIONFILE = "sfincs.infiltration.nc"
-DEFAULT_BUCKETFILE = "sfincs.bucket.nc"
-
-
-@dataclass(frozen=True)
-class InfiltrationVariable:
-    """Metadata for a supported infiltration variable."""
-
-    name: str
-    config_key: str | None
-    default_filename: str | None
-    standard_name: str
-    unit: str
-    fill_value: float = -9999.0
-
-
-@dataclass(frozen=True)
-class InfiltrationFlavor:
-    """Configuration for an infiltration flavor."""
-
-    code: str
-    variables: tuple[str, ...]
-
-
-VARIABLES: "OrderedDict[str, InfiltrationVariable]" = OrderedDict(
-    [
-        (
-            "qinf",
-            InfiltrationVariable(
-                name="qinf",
-                config_key="qinffile",
-                default_filename="sfincs.qinf",
-                standard_name="infiltration rate",
-                unit="mm.hr-1",
-            ),
-        ),
-        (
-            "scs",
-            InfiltrationVariable(
-                name="scs",
-                config_key="scsfile",
-                default_filename="sfincs.scs",
-                standard_name="potential soil moisture retention",
-                unit="inch",
-            ),
-        ),
-        (
-            "smax",
-            InfiltrationVariable(
-                name="smax",
-                config_key="smaxfile",
-                default_filename="sfincs.smax",
-                standard_name="potential maximum soil moisture retention",
-                unit="m",
-            ),
-        ),
-        (
-            "seff",
-            InfiltrationVariable(
-                name="seff",
-                config_key="sefffile",
-                default_filename="sfincs.seff",
-                standard_name="effective potential maximum soil moisture retention",
-                unit="m",
-            ),
-        ),
-        (
-            "ks",
-            InfiltrationVariable(
-                name="ks",
-                config_key="ksfile",
-                default_filename="sfincs.ks",
-                standard_name="saturated hydraulic conductivity",
-                unit="mm.hr-1",
-            ),
-        ),
-        (
-            "psi",
-            InfiltrationVariable(
-                name="psi",
-                config_key="psifile",
-                default_filename="sfincs.psi",
-                standard_name="wetting front suction head",
-                unit="mm",
-            ),
-        ),
-        (
-            "sigma",
-            InfiltrationVariable(
-                name="sigma",
-                config_key="sigmafile",
-                default_filename="sfincs.sigma",
-                standard_name="soil moisture deficit",
-                unit="-",
-            ),
-        ),
-        (
-            "f0",
-            InfiltrationVariable(
-                name="f0",
-                config_key="f0file",
-                default_filename="sfincs.f0",
-                standard_name="initial infiltration capacity",
-                unit="mm.hr-1",
-            ),
-        ),
-        (
-            "fc",
-            InfiltrationVariable(
-                name="fc",
-                config_key="fcfile",
-                default_filename="sfincs.fc",
-                standard_name="asymptotic infiltration capacity",
-                unit="mm.hr-1",
-            ),
-        ),
-        (
-            "kd",
-            InfiltrationVariable(
-                name="kd",
-                config_key="kdfile",
-                default_filename="sfincs.kd",
-                standard_name="horton decay coefficient",
-                unit="hr-1",
-            ),
-        ),
-        (
-            "bucket_smax",
-            InfiltrationVariable(
-                name="bucket_smax",
-                config_key=None,
-                default_filename=None,
-                standard_name="bucket maximum storage",
-                unit="mm",
-            ),
-        ),
-        (
-            "bucket_k",
-            InfiltrationVariable(
-                name="bucket_k",
-                config_key=None,
-                default_filename=None,
-                standard_name="bucket drainage coefficient",
-                unit="hr-1",
-            ),
-        ),
-        (
-            "bucket_loss",
-            InfiltrationVariable(
-                name="bucket_loss",
-                config_key=None,
-                default_filename=None,
-                standard_name="bucket loss fraction",
-                unit="-",
-            ),
-        ),
-    ]
-)
-
-FLAVORS: dict[str, InfiltrationFlavor] = {
-    "con": InfiltrationFlavor(code="con", variables=tuple()),
-    "c2d": InfiltrationFlavor(code="c2d", variables=("qinf",)),
-    "cna": InfiltrationFlavor(code="cna", variables=("scs",)),
-    "cnb": InfiltrationFlavor(code="cnb", variables=("smax", "seff", "ks")),
-    "gai": InfiltrationFlavor(code="gai", variables=("psi", "sigma", "ks")),
-    "hor": InfiltrationFlavor(code="hor", variables=("f0", "fc", "kd")),
-    "bkt": InfiltrationFlavor(
-        code="bkt", variables=("bucket_smax", "bucket_k", "bucket_loss")
-    ),
-}
-
-BUCKET_VARS = FLAVORS["bkt"].variables
-ALL_VARS = tuple(VARIABLES)
-
-
-def get_attrs(name: str) -> dict[str, str]:
-    """Return metadata attrs for an infiltration variable."""
-    meta = VARIABLES[name]
-    return {"standard_name": meta.standard_name, "unit": meta.unit}
-
-
-def flavor_variables(flavor: str) -> tuple[str, ...]:
-    """Return required variable names for a flavor."""
-    return FLAVORS[flavor].variables
-
-
-def configured_flavor(config) -> str | None:
-    """Infer the configured infiltration flavor from model config."""
-    if config.get("bucketfile") not in (None, "none"):
-        return "bkt"
-    inffile = config.get("infiltrationfile")
-    if inffile not in (None, "none"):
-        return config.get("infiltrationtype")
-    if config.get("qinf") not in (None, 0.0):
-        return "con"
-    if config.get("qinffile") not in (None, "none"):
-        return "c2d"
-    if config.get("scsfile") not in (None, "none"):
-        return "cna"
-    if all(
-        config.get(key) not in (None, "none")
-        for key in ("smaxfile", "sefffile", "ksfile")
-    ):
-        return "cnb"
-    if all(
-        config.get(key) not in (None, "none")
-        for key in ("psifile", "sigmafile", "ksfile")
-    ):
-        return "gai"
-    if all(
-        config.get(key) not in (None, "none") for key in ("f0file", "fcfile", "kdfile")
-    ):
-        return "hor"
-    return None
-
-
-def clear_data(ds: xr.Dataset, keep: Iterable[str] = ()) -> xr.Dataset:
-    """Drop infiltration variables except those in ``keep``."""
-    keep = set(keep)
-    drop = [name for name in ALL_VARS if name in ds and name not in keep]
-    if drop:
-        ds = ds.drop_vars(drop)
-    return ds
-
-
-def reset_config(config) -> None:
-    """Remove all infiltration-related configuration except defaults."""
-    config.set("qinf", None)
-    config.set("infiltrationfile", None)
-    config.set("infiltrationtype", None)
-    config.set("bucketfile", None)
-    config.set("bucket_loss_frac", None)
-    for meta in VARIABLES.values():
-        if meta.config_key is not None:
-            config.set(meta.config_key, None)
-
-
-def configure(config, flavor: str, grid_type: str) -> None:
-    """Update model config for one infiltration flavor."""
-    reset_config(config)
-    if flavor == "con":
-        return
-    if flavor == "bkt":
-        config.set("bucketfile", DEFAULT_BUCKETFILE)
-        return
-    if grid_type == "regular":
-        for name in flavor_variables(flavor):
-            config.set(VARIABLES[name].config_key, VARIABLES[name].default_filename)
-    elif grid_type == "quadtree":
-        config.set("infiltrationfile", DEFAULT_INFILTRATIONFILE)
-        config.set("infiltrationtype", flavor)
-    else:
-        raise ValueError(f"Unsupported grid_type: {grid_type}")
-
-
-def regular_active_vector(data: xr.DataArray, mask: xr.DataArray) -> np.ndarray:
-    """Flatten active regular-grid cells in SFINCS order."""
-    values = np.asarray(data.values, dtype=np.float32)
-    mask_values = np.asarray(mask.values)
-    return values.transpose()[mask_values.transpose() > 0]
-
-
-def regular_vector_to_da(
-    values: np.ndarray,
-    mask: xr.DataArray,
-    like: xr.DataArray,
-    *,
-    fill_value: float = -9999.0,
-) -> xr.DataArray:
-    """Map active-cell vectors to a full regular-grid data array."""
-    data = np.full(mask.shape[::-1], fill_value, dtype=np.float32)
-    data.flat[np.where(mask.values.ravel(order="F"))[0]] = np.asarray(
-        values, dtype=np.float32
-    )
-    data = data.transpose()
-    da = xr.DataArray(
-        data=data,
-        coords=like.coords,
-        dims=like.dims,
-        name=like.name,
-        attrs={"_FillValue": fill_value},
-    )
-    try:
-        da.raster.set_crs(mask.raster.crs)
-        da.raster.set_nodata(fill_value)
-    except Exception:
-        pass
-    return da
-
-
-def sidecar_dataset(
-    data: Mapping[str, np.ndarray | xr.DataArray],
-    dim_size: int,
-) -> xr.Dataset:
-    """Create a minimal SFINCS netCDF sidecar dataset."""
-    coords = {"mesh2d_nFaces": np.arange(dim_size, dtype=np.int32)}
-    ds = xr.Dataset(coords=coords)
-    for name, values in data.items():
-        if hasattr(values, "values"):
-            values = values.values
-        ds[name] = xr.DataArray(
-            np.asarray(values, dtype=np.float32),
-            dims=("mesh2d_nFaces",),
-            attrs=get_attrs(name),
-        )
-    return ds
 
 
 MODIFIER_COLUMNS = ("surface_factor", "storage_factor", "drainage_factor")
@@ -396,9 +74,8 @@ def _modifier_layers(
     df = _ensure_modifier_dataframe(df_modifiers)
     ds = da_lulc.raster.reclassify(df).astype(np.float32)
 
-    values = np.asarray(da_lulc.values)
-    unmatched = np.isfinite(values) & ~np.isin(values, np.asarray(df.index))
-    n_unmatched = int(unmatched.sum())
+    valid = np.isfinite(da_lulc)
+    n_unmatched = int((valid & ~da_lulc.isin(df.index.values)).sum())
     if n_unmatched:
         logger.warning(
             f"{n_unmatched} cells hold land-use classes that are absent from the "
@@ -407,9 +84,7 @@ def _modifier_layers(
         )
 
     for column in MODIFIER_COLUMNS:
-        ds[column] = (
-            ds[column].fillna(default).where(np.isfinite(da_lulc)).astype(np.float32)
-        )
+        ds[column] = ds[column].fillna(default).where(valid).astype(np.float32)
     return ds
 
 
@@ -451,25 +126,25 @@ def cn_to_s(da_cn, da_mask=None, nodata=-9999, output_unit="inch"):
         da_s = da_s.where(da_mask, nodata)
     try:
         da_s.raster.set_nodata(nodata)
-    except Exception:
-        pass
+    except (AttributeError, ValueError):
+        logger.debug("Could not set nodata on curve-number retention", exc_info=True)
     return da_s
 
 
 def curve_number_from_landuse_hsg(
-    da_landuse: xr.DataArray,
+    da_lulc: xr.DataArray,
     da_hsg: xr.DataArray,
     df_map: pd.DataFrame,
 ) -> xr.DataArray:
     """Map already-read land use and HSG rasters to curve numbers."""
-    da_cn = xr.full_like(da_landuse, np.nan, dtype=np.float32).rename("cn")
+    da_cn = xr.full_like(da_lulc, np.nan, dtype=np.float32).rename("cn")
 
     # Interpolate soil type to landuse
-    da_hsg_to_lulc = da_hsg.raster.reproject_like(da_landuse, method="nearest").load()
+    da_hsg_to_lulc = da_hsg.raster.reproject_like(da_lulc, method="nearest")
 
     for landuse_value, row in df_map.iterrows():
         for hsg_value in df_map.columns:
-            mask = (da_landuse == landuse_value) & (da_hsg_to_lulc == int(hsg_value))
+            mask = (da_lulc == landuse_value) & (da_hsg_to_lulc == int(hsg_value))
             da_cn = da_cn.where(~mask, np.float32(row[hsg_value]))
     return da_cn.where(da_cn > 0.0)
 
@@ -493,7 +168,7 @@ def adjust_curve_number(
 
 
 def curve_number_with_recovery(
-    da_landuse: xr.DataArray,
+    da_lulc: xr.DataArray,
     da_hsg: xr.DataArray,
     da_ksat: xr.DataArray,
     df_map: pd.DataFrame,
@@ -520,19 +195,17 @@ def curve_number_with_recovery(
         If given, outputs are reprojected onto this grid using 'average'.
     """
     # Derive curve number from land use and HSG
-    da_cn = curve_number_from_landuse_hsg(da_landuse, da_hsg, df_map)
+    da_cn = curve_number_from_landuse_hsg(da_lulc, da_hsg, df_map)
     # Convert CN to maximum soil retention (S) model grid and interpolate
     da_cn = da_cn.where(da_cn > 0.0)
-    da_smax = cn_to_s(da_cn, output_unit="m", nodata=0.0).astype(np.float32)
+    # zero retention is a real value, so it must stay out of the nodata mask or
+    # area-weighted resampling would drop those cells and bias smax upward
+    da_smax = cn_to_s(da_cn, output_unit="m", nodata=np.nan).astype(np.float32)
     da_smax.name = "smax"
     # Reproject to mask if provided
     if da_mask is not None:
-        da_smax = (
-            da_smax.raster.reproject_like(da_mask, method="average").fillna(0.0).load()
-        )
-        da_ksat = (
-            da_ksat.raster.reproject_like(da_mask, method="average").fillna(0.0).load()
-        )
+        da_smax = da_smax.raster.reproject_like(da_mask, method="average").fillna(0.0)
+        da_ksat = da_ksat.raster.reproject_like(da_mask, method="average").fillna(0.0)
     # Convert Ksat to mm/hr and apply maximum cap if provided
     da_ks = ksat_to_mmhr(da_ksat, factor_ksat=factor_ksat).astype(np.float32)
     da_ks.name = "ks"
@@ -599,17 +272,17 @@ def constant_infiltration_from_ksat_lulc(
 
 
 def green_ampt_from_soil(
-    da_soil: xr.DataArray,
+    da_hsg: xr.DataArray,
     df_map: pd.DataFrame,
     *,
     da_ksat: xr.DataArray | None = None,
     factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
 ) -> xr.Dataset:
-    """Estimate Green-Ampt parameters from soil classes and optional Ksat.
+    """Estimate Green-Ampt parameters from HSG classes and optional Ksat.
 
     All inputs must be already-read xarray objects and a pandas DataFrame.
     """
-    ds = da_soil.raster.reclassify(df_map).astype(np.float32)
+    ds = da_hsg.raster.reclassify(df_map).astype(np.float32)
     if da_ksat is not None:
         ds["ks"] = ksat_to_mmhr(da_ksat, factor_ksat=factor_ksat)
     if "ks" not in ds:
@@ -622,7 +295,7 @@ def green_ampt_from_soil(
 
 
 def green_ampt_from_soil_landuse(
-    da_soil: xr.DataArray,
+    da_hsg: xr.DataArray,
     da_lulc: xr.DataArray,
     df_map: pd.DataFrame,
     df_modifiers: pd.DataFrame,
@@ -635,9 +308,9 @@ def green_ampt_from_soil_landuse(
 
     All inputs must be already-read xarray objects and pandas DataFrames.
     """
-    da_soil = normalize_hsg_codes(da_soil, mode=dual_hsg)
+    da_hsg = normalize_hsg_codes(da_hsg, mode=dual_hsg)
     ds = green_ampt_from_soil(
-        da_soil,
+        da_hsg,
         df_map,
         da_ksat=da_ksat,
         factor_ksat=factor_ksat,
@@ -651,17 +324,17 @@ def green_ampt_from_soil_landuse(
 
 
 def horton_from_soil(
-    da_soil: xr.DataArray,
+    da_hsg: xr.DataArray,
     df_map: pd.DataFrame,
     *,
     da_ksat: xr.DataArray | None = None,
     factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
 ) -> xr.Dataset:
-    """Estimate Horton parameters from soil classes and optional Ksat.
+    """Estimate Horton parameters from HSG classes and optional Ksat.
 
     All inputs must be already-read xarray objects and a pandas DataFrame.
     """
-    ds = da_soil.raster.reclassify(df_map).astype(np.float32)
+    ds = da_hsg.raster.reclassify(df_map).astype(np.float32)
     if da_ksat is not None:
         da_fc = ksat_to_mmhr(da_ksat, factor_ksat=factor_ksat)
         if "fc_scale" in ds:
@@ -679,7 +352,7 @@ def horton_from_soil(
 
 
 def horton_from_soil_landuse(
-    da_soil: xr.DataArray,
+    da_hsg: xr.DataArray,
     da_lulc: xr.DataArray,
     df_map: pd.DataFrame,
     df_modifiers: pd.DataFrame,
@@ -692,9 +365,9 @@ def horton_from_soil_landuse(
 
     All inputs must be already-read xarray objects and pandas DataFrames.
     """
-    da_soil = normalize_hsg_codes(da_soil, mode=dual_hsg)
+    da_hsg = normalize_hsg_codes(da_hsg, mode=dual_hsg)
     ds = horton_from_soil(
-        da_soil,
+        da_hsg,
         df_map,
         da_ksat=da_ksat,
         factor_ksat=factor_ksat,
@@ -713,18 +386,18 @@ def horton_from_soil_landuse(
 
 
 def bucket_from_soil(
-    da_soil: xr.DataArray,
+    da_hsg: xr.DataArray,
     df_map: pd.DataFrame,
     *,
     da_ksat: xr.DataArray | None = None,
     factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
     bucket_loss: float | None = None,
 ) -> xr.Dataset:
-    """Estimate bucket parameters from soil classes and optional Ksat.
+    """Estimate bucket parameters from HSG classes and optional Ksat.
 
     All inputs must be already-read xarray objects and a pandas DataFrame.
     """
-    ds = da_soil.raster.reclassify(df_map).astype(np.float32)
+    ds = da_hsg.raster.reclassify(df_map).astype(np.float32)
     if "bucket_smax" not in ds:
         if not {"storage_depth_mm", "effective_fraction"}.issubset(ds.data_vars):
             raise ValueError(
@@ -757,12 +430,12 @@ def bucket_from_soil(
             ).astype(np.float32)
     if "bucket_loss" not in ds:
         loss = 0.0 if bucket_loss is None else bucket_loss
-        ds["bucket_loss"] = xr.full_like(da_soil, np.float32(loss), dtype=np.float32)
+        ds["bucket_loss"] = xr.full_like(da_hsg, np.float32(loss), dtype=np.float32)
     return ds[["bucket_smax", "bucket_k", "bucket_loss"]]
 
 
 def bucket_from_soil_landuse(
-    da_soil: xr.DataArray,
+    da_hsg: xr.DataArray,
     da_lulc: xr.DataArray,
     df_map: pd.DataFrame,
     df_modifiers: pd.DataFrame,
@@ -776,9 +449,9 @@ def bucket_from_soil_landuse(
 
     All inputs must be already-read xarray objects and pandas DataFrames.
     """
-    da_soil = normalize_hsg_codes(da_soil, mode=dual_hsg)
+    da_hsg = normalize_hsg_codes(da_hsg, mode=dual_hsg)
     ds = bucket_from_soil(
-        da_soil,
+        da_hsg,
         df_map,
         da_ksat=da_ksat,
         factor_ksat=factor_ksat,
