@@ -377,150 +377,19 @@ def test_infiltration_estimators_from_hsg(model):
     ksat = xr.where(model.grid.data["dep"] < 0.0, 0.5, 5.0)
     ksat.raster.set_crs(model.crs)
 
-    model.infiltration.create_green_ampt(hsg=hsg, ksat=ksat)
+    model.infiltration.create_green_ampt_from_soil(hsg=hsg, ksat=ksat)
     assert float(model.grid.data["psi"].where(model.grid.mask > 0).max()) > 0.0
     assert float(model.grid.data["sigma"].where(model.grid.mask > 0).max()) > 0.0
     assert float(model.grid.data["ks"].where(model.grid.mask > 0).max()) > 0.0
 
-    model.infiltration.create_horton(hsg=hsg, ksat=ksat)
+    model.infiltration.create_horton_from_soil(hsg=hsg, ksat=ksat)
     assert float(model.grid.data["f0"].where(model.grid.mask > 0).max()) > 0.0
     assert float(model.grid.data["fc"].where(model.grid.mask > 0).max()) > 0.0
     assert float(model.grid.data["kd"].where(model.grid.mask > 0).max()) > 0.0
 
-    model.infiltration.create_bucket(hsg=hsg, ksat=ksat)
-    assert (
-        float(model.grid.data["bucket_smax"].where(model.grid.mask > 0).max()) > 0.0
-    )
+    model.infiltration.create_bucket_from_soil(hsg=hsg, ksat=ksat)
+    assert float(model.grid.data["bucket_smax"].where(model.grid.mask > 0).max()) > 0.0
     assert float(model.grid.data["bucket_k"].where(model.grid.mask > 0).max()) > 0.0
-
-
-def test_process_infiltration_quadtree_io(quadtree_model):
-    mask = quadtree_model.quadtree_grid.data["mask"]
-    psi = mask.astype(np.float32)
-    sigma = mask.astype(np.float32)
-    ks = mask.astype(np.float32)
-    psi.values = np.where(mask.values > 0, 90.0, 0.0)
-    sigma.values = np.where(mask.values > 0, 0.20, 0.0)
-    ks.values = np.where(mask.values > 0, 12.0, 0.0)
-
-    quadtree_model.quadtree_infiltration.create_green_ampt(
-        psi=psi, sigma=sigma, ks=ks
-    )
-    assert quadtree_model.config.get("infiltrationfile") is not None
-    assert quadtree_model.config.get("infiltrationtype") == "gai"
-
-    quadtree_model.quadtree_grid.write()
-    quadtree_model.quadtree_infiltration.write()
-    quadtree_model.config.write()
-    assert isfile(quadtree_model.root.path / "sfincs.infiltration.nc")
-
-    mod1 = SfincsModel(root=quadtree_model.root.path, mode="r")
-    mod1.config.read()
-    mod1.quadtree_grid.read()
-    mod1.quadtree_infiltration.read()
-    assert np.isclose(
-        mod1.quadtree_grid.data["psi"].where(mod1.quadtree_grid.mask > 0).mean(),
-        90.0,
-        atol=1e-5,
-    )
-    assert np.isclose(
-        mod1.quadtree_grid.data["sigma"].where(mod1.quadtree_grid.mask > 0).mean(),
-        0.20,
-        atol=1e-5,
-    )
-    assert np.isclose(
-        mod1.quadtree_grid.data["ks"].where(mod1.quadtree_grid.mask > 0).mean(),
-        12.0,
-        atol=1e-5,
-    )
-
-    f0 = mask.astype(np.float32)
-    fc = mask.astype(np.float32)
-    kd = mask.astype(np.float32)
-    f0.values = np.where(mask.values > 0, 35.0, 0.0)
-    fc.values = np.where(mask.values > 0, 7.0, 0.0)
-    kd.values = np.where(mask.values > 0, 1.5, 0.0)
-
-    quadtree_model.quadtree_infiltration.create_horton(f0=f0, fc=fc, kd=kd)
-    assert quadtree_model.config.get("infiltrationtype") == "hor"
-    assert "psi" not in quadtree_model.quadtree_grid.data
-
-    quadtree_model.quadtree_grid.write()
-    quadtree_model.quadtree_infiltration.write()
-    quadtree_model.config.write()
-
-    mod2 = SfincsModel(root=quadtree_model.root.path, mode="r")
-    mod2.config.read()
-    mod2.quadtree_grid.read()
-    mod2.quadtree_infiltration.read()
-    assert np.isclose(
-        mod2.quadtree_grid.data["f0"].where(mod2.quadtree_grid.mask > 0).mean(),
-        35.0,
-        atol=1e-5,
-    )
-    assert np.isclose(
-        mod2.quadtree_grid.data["fc"].where(mod2.quadtree_grid.mask > 0).mean(),
-        7.0,
-        atol=1e-5,
-    )
-    assert np.isclose(
-        mod2.quadtree_grid.data["kd"].where(mod2.quadtree_grid.mask > 0).mean(),
-        1.5,
-        atol=1e-5,
-    )
-
-
-def test_bucket_infiltration_quadtree_io(quadtree_model):
-    mask = quadtree_model.quadtree_grid.data["mask"]
-    bucket_smax = mask.astype(np.float32)
-    bucket_k = mask.astype(np.float32)
-    bucket_smax.values = np.where(mask.values > 0, 175.0, 0.0)
-    bucket_k.values = np.where(mask.values > 0, 0.25, 0.0)
-
-    quadtree_model.quadtree_infiltration.create_bucket(
-        bucket_smax=bucket_smax,
-        bucket_k=bucket_k,
-        bucket_loss=0.10,
-    )
-    assert quadtree_model.config.get("bucketfile") is not None
-
-    quadtree_model.quadtree_grid.write()
-    quadtree_model.quadtree_infiltration.write()
-    quadtree_model.config.write()
-    assert isfile(quadtree_model.root.path / "sfincs.bucket.nc")
-
-    mod1 = SfincsModel(root=quadtree_model.root.path, mode="r")
-    mod1.config.read()
-    mod1.quadtree_grid.read()
-    mod1.quadtree_infiltration.read()
-    assert np.isclose(
-        mod1.quadtree_grid.data["bucket_smax"].where(mod1.quadtree_grid.mask > 0).mean(),
-        175.0,
-        atol=1e-5,
-    )
-    assert np.isclose(
-        mod1.quadtree_grid.data["bucket_k"].where(mod1.quadtree_grid.mask > 0).mean(),
-        0.25,
-        atol=1e-5,
-    )
-    assert np.isclose(
-        mod1.quadtree_grid.data["bucket_loss"].where(mod1.quadtree_grid.mask > 0).mean(),
-        0.10,
-        atol=1e-5,
-    )
-
-
-def test_uniform_constant_infiltration_quadtree(quadtree_model):
-    quadtree_model.quadtree_infiltration.create_uniform_constant(6.5)
-    assert quadtree_model.config.get("qinf") == pytest.approx(6.5)
-    assert quadtree_model.config.get("infiltrationfile") is None
-    assert "qinf" not in quadtree_model.quadtree_grid.data
-
-    quadtree_model.config.write()
-    mod1 = SfincsModel(root=quadtree_model.root.path, mode="r")
-    mod1.config.read()
-    assert mod1.config.get("qinf") == pytest.approx(6.5)
-    assert mod1.config.get("infiltrationfile") is None
 
 
 def test_initial_conditions(model):

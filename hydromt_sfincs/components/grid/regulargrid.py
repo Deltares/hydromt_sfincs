@@ -26,7 +26,23 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 
-_MAPS = ["mask", "dep", "scs", "manning", "qinf", "smax", "seff", "ks", "vol", "zs"]
+_MAPS = [
+    "mask",
+    "dep",
+    "scs",
+    "manning",
+    "qinf",
+    "smax",
+    "seff",
+    "ks",
+    "psi",
+    "sigma",
+    "f0",
+    "fc",
+    "kd",
+    "vol",
+    "zs",
+]
 _MAP_EXCEPTIONS = {"zs": ("inifile", "sfincs.ini")}
 
 

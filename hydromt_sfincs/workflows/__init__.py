@@ -2,12 +2,10 @@
 
 from .bathymetry import *
 from .cog import *
-from .curvenumber import *
 from .discharge import *
 from .downscaling import *
 from .flwdir import *
 from .infiltration import *
-from .landuse import *
 from .map_overlay import *
 from .merge import *
 from .storage_volume import *
