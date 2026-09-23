@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -19,23 +21,62 @@ def _raster(values, name, dtype=np.float32):
 
 
 def _modifier_table():
+    """NLCD land-use classes mapped to infiltration modifier factors."""
     return pd.DataFrame(
         {
-            "surface_factor": [0.05, 0.70, 0.45, 0.20, 0.85, 1.15, 1.00, 0.90, 0.55],
-            "storage_factor": [0.20, 0.75, 0.60, 0.40, 0.80, 1.30, 1.00, 1.10, 0.70],
-            "drainage_factor": [1.00, 1.15, 1.25, 1.40, 1.05, 0.90, 1.00, 1.05, 0.80],
+            "surface_factor": [
+                0.05,
+                0.70,
+                0.45,
+                0.45,
+                0.20,
+                0.85,
+                1.15,
+                1.15,
+                1.15,
+                1.00,
+                1.00,
+                0.90,
+                0.90,
+                0.55,
+                0.55,
+            ],
+            "storage_factor": [
+                0.20,
+                0.75,
+                0.60,
+                0.60,
+                0.40,
+                0.80,
+                1.30,
+                1.30,
+                1.30,
+                1.00,
+                1.00,
+                1.10,
+                1.10,
+                0.70,
+                0.70,
+            ],
+            "drainage_factor": [
+                1.00,
+                1.15,
+                1.25,
+                1.25,
+                1.40,
+                1.05,
+                0.90,
+                0.90,
+                0.90,
+                1.00,
+                1.00,
+                1.05,
+                1.05,
+                0.80,
+                0.80,
+            ],
         },
-        index=[
-            "water",
-            "urban_low",
-            "urban_med",
-            "urban_high",
-            "barren",
-            "forest",
-            "shrub_grass",
-            "crops",
-            "wetlands",
-        ],
+        index=[11, 21, 22, 23, 24, 31, 41, 42, 43, 52, 71, 81, 82, 90, 95],
     )
 
 
@@ -150,6 +191,52 @@ def test_green_ampt_horton_bucket_landuse_modifiers():
         ds_bucket["bucket_loss"].values[np.isfinite(ds_bucket["bucket_loss"].values)],
         0.10,
     )
+
+
+def test_modifier_table_supports_non_nlcd_landcover():
+    da_hsg = _raster([[2, 2]], "hsg", dtype=np.int16)
+    da_ksat = _raster(np.full((1, 2), 1.0, dtype=np.float32), "ksat")
+    # ESA WorldCover classes: 10 = tree cover, 50 = built-up
+    da_lulc = _raster([[10, 50]], "lulc", dtype=np.int16)
+    modifiers = pd.DataFrame(
+        {
+            "surface_factor": [1.15, 0.20],
+            "storage_factor": [1.30, 0.40],
+            "drainage_factor": [0.90, 1.40],
+        },
+        index=[10, 50],
+    )
+    ga_map = pd.DataFrame({"psi": [90.0, 120.0], "sigma": [0.20, 0.25]}, index=[1, 2])
+
+    ds = workflows.green_ampt_from_soil_landuse(
+        da_hsg, da_lulc, ga_map, modifiers, da_ksat=da_ksat, dual_hsg="drained"
+    )
+    assert float(ds["sigma"].values[0, 0]) > float(ds["sigma"].values[0, 1])
+    assert float(ds["ks"].values[0, 0]) > float(ds["ks"].values[0, 1])
+
+
+def test_modifier_table_warns_on_unmatched_landcover(caplog):
+    da_hsg = _raster([[2, 2]], "hsg", dtype=np.int16)
+    da_ksat = _raster(np.full((1, 2), 1.0, dtype=np.float32), "ksat")
+    da_lulc = _raster([[10, 999]], "lulc", dtype=np.int16)
+    modifiers = pd.DataFrame(
+        {
+            "surface_factor": [1.15],
+            "storage_factor": [1.30],
+            "drainage_factor": [0.90],
+        },
+        index=[10],
+    )
+    ga_map = pd.DataFrame({"psi": [90.0, 120.0], "sigma": [0.20, 0.25]}, index=[1, 2])
+
+    with caplog.at_level(logging.WARNING):
+        ds = workflows.green_ampt_from_soil_landuse(
+            da_hsg, da_lulc, ga_map, modifiers, da_ksat=da_ksat, dual_hsg="drained"
+        )
+
+    assert "absent from the modifier table" in caplog.text
+    # the unmatched class keeps a neutral factor, so the base value is unchanged
+    assert np.isclose(float(ds["sigma"].values[0, 1]), 0.25)
 
 
 def test_bucket_loss_defaults_split_between_legacy_and_landuse(model):

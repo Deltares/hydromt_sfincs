@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Iterable, Mapping
@@ -9,6 +10,8 @@ from typing import Iterable, Mapping
 import numpy as np
 import pandas as pd
 import xarray as xr
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "ALL_VARS",
@@ -22,7 +25,6 @@ __all__ = [
     "adjust_curve_number",
     "bucket_from_soil_landuse",
     "bucket_from_soil",
-    "classify_nlcd_groups",
     "clear_data",
     "cn_to_s",
     "configure",
@@ -356,21 +358,7 @@ def sidecar_dataset(
     return ds
 
 
-NLCD_GROUPS = {
-    "water": (11,),
-    "urban_low": (21,),
-    "urban_med": (22, 23),
-    "urban_high": (24,),
-    "barren": (31,),
-    "forest": (41, 42, 43),
-    "shrub_grass": (52, 71),
-    "crops": (81, 82),
-    "wetlands": (90, 95),
-}
-
-NLCD_GROUP_CODES = {
-    group_name: index for index, group_name in enumerate(NLCD_GROUPS.keys(), start=1)
-}
+MODIFIER_COLUMNS = ("surface_factor", "storage_factor", "drainage_factor")
 
 DUAL_HSG_DRAINED_MAPPING = {
     1: 1,
@@ -384,38 +372,45 @@ DUAL_HSG_DRAINED_MAPPING = {
 }
 
 
-def _ensure_modifier_dataframe(df_map: pd.DataFrame) -> pd.DataFrame:
-    df = df_map
-    if "nlcd_group" in df.columns:
-        df = df.set_index("nlcd_group")
-    required = {"surface_factor", "storage_factor", "drainage_factor"}
-    missing = required.difference(df.columns)
+def _ensure_modifier_dataframe(df_modifiers: pd.DataFrame) -> pd.DataFrame:
+    df = df_modifiers
+    if "lulc" in df.columns:
+        df = df.set_index("lulc")
+    missing = set(MODIFIER_COLUMNS).difference(df.columns)
     if missing:
-        raise ValueError(f"Missing NLCD modifier columns: {sorted(missing)}")
-    return df
+        raise ValueError(f"Missing land-use modifier columns: {sorted(missing)}")
+    return df[list(MODIFIER_COLUMNS)]
 
 
-def _modifier_layer(
+def _modifier_layers(
     da_lulc: xr.DataArray,
     df_modifiers: pd.DataFrame,
-    column: str,
     *,
     default: float = 1.0,
-    da_groups: xr.DataArray | None = None,
-) -> xr.DataArray:
-    if da_groups is None:
-        da_groups = classify_nlcd_groups(da_lulc)
-    da_factor = xr.full_like(da_lulc, np.float32(default), dtype=np.float32).rename(
-        column
-    )
-    for group_name, group_code in NLCD_GROUP_CODES.items():
-        if group_name not in df_modifiers.index:
-            continue
-        da_factor = da_factor.where(
-            da_groups != group_code,
-            np.float32(df_modifiers.loc[group_name, column]),
+) -> xr.Dataset:
+    """Reclassify land-use classes into infiltration modifier factors.
+
+    ``df_modifiers`` is indexed by land-use class, so any land-cover product can
+    be used as long as a matching table is supplied.
+    """
+    df = _ensure_modifier_dataframe(df_modifiers)
+    ds = da_lulc.raster.reclassify(df).astype(np.float32)
+
+    values = np.asarray(da_lulc.values)
+    unmatched = np.isfinite(values) & ~np.isin(values, np.asarray(df.index))
+    n_unmatched = int(unmatched.sum())
+    if n_unmatched:
+        logger.warning(
+            f"{n_unmatched} cells hold land-use classes that are absent from the "
+            f"modifier table; a neutral factor of {default} is applied there. "
+            f"Check that the modifier table matches the land-use dataset."
         )
-    return da_factor.where(np.isfinite(da_lulc))
+
+    for column in MODIFIER_COLUMNS:
+        ds[column] = (
+            ds[column].fillna(default).where(np.isfinite(da_lulc)).astype(np.float32)
+        )
+    return ds
 
 
 def ksat_to_mmhr(
@@ -441,18 +436,6 @@ def normalize_hsg_codes(
     for source_value, target_value in DUAL_HSG_DRAINED_MAPPING.items():
         da_norm = da_norm.where(da_hsg != source_value, np.float32(target_value))
     return da_norm.where(np.isfinite(da_hsg))
-
-
-def classify_nlcd_groups(da_lulc: xr.DataArray) -> xr.DataArray:
-    """Classify NLCD land-use codes into infiltration modifier groups."""
-    da_groups = xr.full_like(da_lulc, 0, dtype=np.int16).rename("nlcd_group")
-    for group_name, nlcd_codes in NLCD_GROUPS.items():
-        group_code = NLCD_GROUP_CODES[group_name]
-        mask = da_lulc == nlcd_codes[0]
-        for nlcd_code in nlcd_codes[1:]:
-            mask = mask | (da_lulc == nlcd_code)
-        da_groups = da_groups.where(~mask, np.int16(group_code))
-    return da_groups.where(np.isfinite(da_lulc), 0)
 
 
 def cn_to_s(da_cn, da_mask=None, nodata=-9999, output_unit="inch"):
@@ -565,7 +548,7 @@ def constant_infiltration_from_ksat_lulc(
     All inputs must be already-read xarray objects and a pandas DataFrame.
     """
     df_modifiers = _ensure_modifier_dataframe(df_modifiers)
-    surface_factor = _modifier_layer(da_lulc, df_modifiers, "surface_factor")
+    surface_factor = _modifier_layers(da_lulc, df_modifiers)["surface_factor"]
 
     ks_values = np.asarray(da_ksat.values).astype(np.float32) * factor_ksat
     ks_values = np.where(np.isfinite(ks_values), np.maximum(ks_values, 0.01), np.nan)
@@ -640,20 +623,15 @@ def green_ampt_from_soil_landuse(
     All inputs must be already-read xarray objects and pandas DataFrames.
     """
     da_soil = normalize_hsg_codes(da_soil, mode=dual_hsg)
-    df_modifiers = _ensure_modifier_dataframe(df_modifiers)
     ds = green_ampt_from_soil(
         da_soil,
         df_map,
         da_ksat=da_ksat,
         factor_ksat=factor_ksat,
     )
-    da_groups = classify_nlcd_groups(da_lulc)
-    storage_factor = _modifier_layer(
-        da_lulc, df_modifiers, "storage_factor", da_groups=da_groups
-    )
-    surface_factor = _modifier_layer(
-        da_lulc, df_modifiers, "surface_factor", da_groups=da_groups
-    )
+    factors = _modifier_layers(da_lulc, df_modifiers)
+    storage_factor = factors["storage_factor"]
+    surface_factor = factors["surface_factor"]
     ds["sigma"] = (ds["sigma"] * storage_factor).astype(np.float32)
     ds["ks"] = (ds["ks"] * surface_factor).astype(np.float32)
     return ds[["psi", "sigma", "ks"]]
@@ -702,23 +680,16 @@ def horton_from_soil_landuse(
     All inputs must be already-read xarray objects and pandas DataFrames.
     """
     da_soil = normalize_hsg_codes(da_soil, mode=dual_hsg)
-    df_modifiers = _ensure_modifier_dataframe(df_modifiers)
     ds = horton_from_soil(
         da_soil,
         df_map,
         da_ksat=da_ksat,
         factor_ksat=factor_ksat,
     )
-    da_groups = classify_nlcd_groups(da_lulc)
-    surface_factor = _modifier_layer(
-        da_lulc, df_modifiers, "surface_factor", da_groups=da_groups
-    )
-    storage_factor = _modifier_layer(
-        da_lulc, df_modifiers, "storage_factor", da_groups=da_groups
-    )
-    drainage_factor = _modifier_layer(
-        da_lulc, df_modifiers, "drainage_factor", da_groups=da_groups
-    )
+    factors = _modifier_layers(da_lulc, df_modifiers)
+    surface_factor = factors["surface_factor"]
+    storage_factor = factors["storage_factor"]
+    drainage_factor = factors["drainage_factor"]
     f0_factor = xr.where(
         surface_factor >= storage_factor, surface_factor, storage_factor
     )
@@ -793,7 +764,6 @@ def bucket_from_soil_landuse(
     All inputs must be already-read xarray objects and pandas DataFrames.
     """
     da_soil = normalize_hsg_codes(da_soil, mode=dual_hsg)
-    df_modifiers = _ensure_modifier_dataframe(df_modifiers)
     ds = bucket_from_soil(
         da_soil,
         df_map,
@@ -801,13 +771,9 @@ def bucket_from_soil_landuse(
         factor_ksat=factor_ksat,
         bucket_loss=bucket_loss,
     )
-    da_groups = classify_nlcd_groups(da_lulc)
-    storage_factor = _modifier_layer(
-        da_lulc, df_modifiers, "storage_factor", da_groups=da_groups
-    )
-    drainage_factor = _modifier_layer(
-        da_lulc, df_modifiers, "drainage_factor", da_groups=da_groups
-    )
+    factors = _modifier_layers(da_lulc, df_modifiers)
+    storage_factor = factors["storage_factor"]
+    drainage_factor = factors["drainage_factor"]
     ds["bucket_smax"] = (ds["bucket_smax"] * storage_factor).astype(np.float32)
     ds["bucket_k"] = (ds["bucket_k"] * drainage_factor).astype(np.float32)
     loss_value = 0.10 if bucket_loss is None else bucket_loss
