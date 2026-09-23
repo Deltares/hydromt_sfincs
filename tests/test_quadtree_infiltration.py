@@ -20,9 +20,9 @@ def test_quadtree_infiltration(model, quadtree_model):
     # add to quadtree model
     quadtree_model.quadtree_infiltration.create_constant(qinf, reproj_method="nearest")
     assert quadtree_model.config.get("qinf") is None  # qinf removed from config
-    assert quadtree_model.config.get("infiltrationfile") is not None  # qinf file set
+    assert quadtree_model.config.get("infiltration_file") is not None  # qinf file set
     assert (
-        quadtree_model.config.get("infiltrationtype") == "c2d"
+        quadtree_model.config.get("infiltration_type") == "c2d"
     )  # infiltration type set to c2d
     assert "qinf" in quadtree_model.quadtree_grid.data
     assert np.isclose(
@@ -40,7 +40,7 @@ def test_quadtree_infiltration(model, quadtree_model):
     cn.raster.set_crs(model.crs)
     quadtree_model.quadtree_infiltration.create_cn(cn, reproj_method="nearest")
     assert (
-        quadtree_model.config.get("infiltrationtype") == "cna"
+        quadtree_model.config.get("infiltration_type") == "cna"
     )  # infiltration type set to cna
     assert "scs" in quadtree_model.quadtree_grid.data
     assert np.isclose(
@@ -71,7 +71,7 @@ def test_quadtree_infiltration(model, quadtree_model):
     assert "seff" in quadtree_model.quadtree_grid.data
     assert "ks" in quadtree_model.quadtree_grid.data
     assert (
-        quadtree_model.config.get("infiltrationtype") == "cnb"
+        quadtree_model.config.get("infiltration_type") == "cnb"
     )  # infiltration type set to cnb
 
     # Write model
@@ -112,7 +112,7 @@ def test_cn_from_landuse_hsg_quadtree(model, quadtree_model):
         reclass_table=reclass_table,
     )
 
-    assert quadtree_model.config.get("infiltrationtype") == "cna"
+    assert quadtree_model.config.get("infiltration_type") == "cna"
     assert "scs" in quadtree_model.quadtree_grid.data
     assert np.isclose(
         float(
@@ -140,14 +140,14 @@ def test_infiltration_estimators_from_hsg_quadtree(model, quadtree_model):
 
     # psi/sigma are reclassified from hsg_green_ampt.csv; ks is ksat * 3.6
     infil.create_green_ampt_from_soil(hsg=hsg, ksat=ksat)
-    assert quadtree_model.config.get("infiltrationtype") == "gai"
+    assert quadtree_model.config.get("infiltration_type") == "gai"
     assert _max("psi") == pytest.approx(316.3, rel=1e-3)  # HSG 4
     assert _max("sigma") == pytest.approx(0.35, rel=1e-3)  # HSG 1
     assert _max("ks") == pytest.approx(18.0, rel=1e-3)  # 5.0 * 3.6
 
     # fc_scale is 1.0 for every HSG so fc == ks; f0 = fc * f0_scale (4.0 for HSG 1)
     infil.create_horton_from_soil(hsg=hsg, ksat=ksat)
-    assert quadtree_model.config.get("infiltrationtype") == "hor"
+    assert quadtree_model.config.get("infiltration_type") == "hor"
     assert "psi" not in grid.data
     assert _max("fc") == pytest.approx(18.0, rel=1e-3)
     assert _max("f0") == pytest.approx(72.0, rel=1e-3)

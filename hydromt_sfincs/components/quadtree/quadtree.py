@@ -295,7 +295,7 @@ class SfincsQuadtreeGrid(MeshComponent):
                         flavor_variables,
                     )
 
-                    inftype = self.model.config.get("infiltrationtype")
+                    inftype = self.model.config.get("infiltration_type")
                     write_vars = list(flavor_variables(inftype))
                     remove_vars = [
                         v for v in ALL_VARS if v not in write_vars and v in ds.data_vars

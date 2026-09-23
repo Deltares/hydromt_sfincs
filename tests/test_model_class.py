@@ -402,8 +402,8 @@ def test_process_infiltration_quadtree_io(quadtree_model):
     ks.values = np.where(mask.values > 0, 12.0, 0.0)
 
     quadtree_model.quadtree_infiltration.create_green_ampt(psi=psi, sigma=sigma, ks=ks)
-    assert quadtree_model.config.get("infiltrationfile") is not None
-    assert quadtree_model.config.get("infiltrationtype") == "gai"
+    assert quadtree_model.config.get("infiltration_file") is not None
+    assert quadtree_model.config.get("infiltration_type") == "gai"
 
     quadtree_model.quadtree_grid.write()
     quadtree_model.quadtree_infiltration.write()
@@ -438,7 +438,7 @@ def test_process_infiltration_quadtree_io(quadtree_model):
     kd.values = np.where(mask.values > 0, 1.5, 0.0)
 
     quadtree_model.quadtree_infiltration.create_horton(f0=f0, fc=fc, kd=kd)
-    assert quadtree_model.config.get("infiltrationtype") == "hor"
+    assert quadtree_model.config.get("infiltration_type") == "hor"
     assert "psi" not in quadtree_model.quadtree_grid.data
 
     quadtree_model.quadtree_grid.write()
@@ -513,14 +513,14 @@ def test_bucket_infiltration_quadtree_io(quadtree_model):
 def test_uniform_constant_infiltration_quadtree(quadtree_model):
     quadtree_model.quadtree_infiltration.create_uniform_constant(6.5)
     assert quadtree_model.config.get("qinf") == pytest.approx(6.5)
-    assert quadtree_model.config.get("infiltrationfile") is None
+    assert quadtree_model.config.get("infiltration_file") is None
     assert "qinf" not in quadtree_model.quadtree_grid.data
 
     quadtree_model.config.write()
     mod1 = SfincsModel(root=quadtree_model.root.path, mode="r")
     mod1.config.read()
     assert mod1.config.get("qinf") == pytest.approx(6.5)
-    assert mod1.config.get("infiltrationfile") is None
+    assert mod1.config.get("infiltration_file") is None
 
 
 def test_initial_conditions(model):

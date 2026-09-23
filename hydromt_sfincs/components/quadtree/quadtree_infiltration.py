@@ -107,22 +107,22 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         if flavor == "bkt":
             bucketfile = self.model.config.get("bucketfile", abs_path=True)
             if bucketfile is None:
-                bucketfile = self.model.config.get("infiltrationfile", abs_path=True)
+                bucketfile = self.model.config.get("infiltration_file", abs_path=True)
             if bucketfile is None:
                 return
             layers = self._read_sidecar(bucketfile, BUCKET_VARS)
             self._set_layers(layers, flavor="bkt")
             if self.model.config.get("bucketfile") is not None:
                 self.model.config.set("bucketfile", Path(bucketfile).name)
-            elif self.model.config.get("infiltrationfile") is not None:
-                self.model.config.set("infiltrationfile", Path(bucketfile).name)
+            elif self.model.config.get("infiltration_file") is not None:
+                self.model.config.set("infiltration_file", Path(bucketfile).name)
             return
-        inffile = self.model.config.get("infiltrationfile", abs_path=True)
+        inffile = self.model.config.get("infiltration_file", abs_path=True)
         if inffile is None:
             return
         layers = self._read_sidecar(inffile, flavor_variables(flavor))
         self._set_layers(layers, flavor=flavor)
-        self.model.config.set("infiltrationfile", Path(inffile).name)
+        self.model.config.set("infiltration_file", Path(inffile).name)
 
     def write(self) -> None:
         """Write quadtree infiltration sidecars."""
@@ -136,7 +136,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             variables = BUCKET_VARS
         else:
             filename = self.model.config.get_set_file_variable(
-                "infiltrationfile", default=DEFAULT_INFILTRATIONFILE
+                "infiltration_file", default=DEFAULT_INFILTRATIONFILE
             )
             variables = flavor_variables(flavor)
         filename.parent.mkdir(parents=True, exist_ok=True)
