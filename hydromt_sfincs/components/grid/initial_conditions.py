@@ -103,9 +103,7 @@ class SfincsInitialConditions(ModelComponent):
 
         # get initial water level data
         da_zsini = self.data_catalog.get_rasterdataset(
-            zsini,
-            bbox=self.model.bbox,
-            buffer=10,
+            zsini, bbox=self.model.bbox, buffer=10, variables=["zs"]
         )
 
         # reproject initial water level data to model grid
@@ -212,6 +210,8 @@ class SfincsInitialConditions(ModelComponent):
                 fill_value=np.nan,
                 dtype="float32",
             )
+            # make sure the array has name "zs"
+            da_zsini.name = mname
         else:
             # start with existing ini layer
             da_zsini = self.data[mname]
@@ -222,7 +222,7 @@ class SfincsInitialConditions(ModelComponent):
             gdf_zsini_single = gpd.GeoDataFrame(
                 [row], columns=gdf_zsini.columns, crs=gdf_zsini.crs
             )
-            da_zsini0 = self.mask.raster.geometry_mask(gdf_zsini_single)
+            da_zsini0 = da_zsini.raster.geometry_mask(gdf_zsini_single)
             # where da_zsini0 is True, set values of da_zsini to zsini_single:
             da_zsini = xr.where(da_zsini0, zsini_single, da_zsini)
 

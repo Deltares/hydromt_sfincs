@@ -41,7 +41,7 @@ _MAPS = [
     "fc",
     "kd",
     "vol",
-    "ini",
+    "zs",
 ]
 _MAP_EXCEPTIONS = {"zs": ("inifile", "sfincs.ini")}
 
