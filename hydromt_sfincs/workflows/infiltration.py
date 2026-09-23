@@ -463,9 +463,13 @@ def curve_number_from_landuse_hsg(
 ) -> xr.DataArray:
     """Map already-read land use and HSG rasters to curve numbers."""
     da_cn = xr.full_like(da_landuse, np.nan, dtype=np.float32).rename("cn")
+
+    # Interpolate soil type to landuse
+    da_hsg_to_lulc = da_hsg.raster.reproject_like(da_landuse, method="nearest").load()
+
     for landuse_value, row in df_map.iterrows():
         for hsg_value in df_map.columns:
-            mask = (da_landuse == landuse_value) & (da_hsg == int(hsg_value))
+            mask = (da_landuse == landuse_value) & (da_hsg_to_lulc == int(hsg_value))
             da_cn = da_cn.where(~mask, np.float32(row[hsg_value]))
     return da_cn.where(da_cn > 0.0)
 
@@ -515,17 +519,26 @@ def curve_number_with_recovery(
     da_mask : xr.DataArray, optional
         If given, outputs are reprojected onto this grid using 'average'.
     """
+    # Derive curve number from land use and HSG
     da_cn = curve_number_from_landuse_hsg(da_landuse, da_hsg, df_map)
+    # Convert CN to maximum soil retention (S) model grid and interpolate
     da_cn = da_cn.where(da_cn > 0.0)
     da_smax = cn_to_s(da_cn, output_unit="m", nodata=0.0).astype(np.float32)
     da_smax.name = "smax"
-    if ksat_max is not None:
-        da_ksat = np.minimum(da_ksat, ksat_max)
+    # Reproject to mask if provided
+    if da_mask is not None:
+        da_smax = (
+            da_smax.raster.reproject_like(da_mask, method="average").fillna(0.0).load()
+        )
+        da_ksat = (
+            da_ksat.raster.reproject_like(da_mask, method="average").fillna(0.0).load()
+        )
+    # Convert Ksat to mm/hr and apply maximum cap if provided
     da_ks = ksat_to_mmhr(da_ksat, factor_ksat=factor_ksat).astype(np.float32)
     da_ks.name = "ks"
-    if da_mask is not None:
-        da_smax = da_smax.raster.reproject_like(da_mask, method="average").fillna(0.0)
-        da_ks = da_ks.raster.reproject_like(da_mask, method="average").fillna(0.0)
+    if ksat_max is not None:  # not higher than ksat_max (default=100)
+        da_ks = np.minimum(da_ks, ksat_max)
+    # Compute effective soil retention based on the maximum soil retention and the effective fraction
     da_seff = (da_smax * effective).astype(np.float32)
     da_seff.name = "seff"
     return xr.Dataset({"smax": da_smax, "seff": da_seff, "ks": da_ks})

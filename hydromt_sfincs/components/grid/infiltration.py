@@ -323,7 +323,6 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
             reclass_table,
             source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
         )
-        da_hsg = da_hsg.raster.reproject_like(da_lulc, method="nearest")
         da_cn = workflows.curve_number_from_landuse_hsg(da_lulc, da_hsg, df_map)
         da_cn = workflows.adjust_curve_number(
             da_cn,
@@ -380,11 +379,9 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         da_HSG = self.data_catalog.get_rasterdataset(
             hsg, bbox=self.model.bbox, buffer=10
         )
-        da_HSG = da_HSG.raster.reproject_like(da_landuse, method="nearest")
         da_Ksat = self.data_catalog.get_rasterdataset(
             ksat, bbox=self.model.bbox, buffer=10
         )
-        da_Ksat = da_Ksat.raster.reproject_like(da_landuse, method="average")
         df_map = self.data_catalog.get_dataframe(
             reclass_table,
             source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
@@ -652,8 +649,6 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
             da_ksat = self.data_catalog.get_rasterdataset(
                 ksat, bbox=self.model.bbox, buffer=10
             )
-            if isinstance(da_ksat, xr.Dataset):
-                da_ksat = next(iter(da_ksat.data_vars.values()))
             da_ksat = da_ksat.raster.reproject_like(da_soil, method="average")
 
         if lulc is not None:
