@@ -13,19 +13,128 @@ Write policy (controls which fields appear in sfincs.inp):
 * ``json_schema_extra={"condition": "<expr>"}`` — written only when the
   Python expression *<expr>* evaluates to ``True`` against the current
   model-field values **and** the value differs from the field default.
+* ``json_schema_extra={"min_version": "<X.Y.Z>"}`` — field was introduced in
+  this SFINCS kernel version; not written when ``sfincs_version`` is older.
+* ``json_schema_extra={"max_version": "<X.Y.Z>"}`` — field is deprecated as of
+  this kernel version; when ``sfincs_version`` is newer it is only kept if
+  explicitly present in the source file (never force-written via ``always``).
 """
 
-from datetime import datetime, timedelta
+import logging
+import warnings
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
-from pydantic import Field, field_validator
+from pydantic import ConfigDict, Field, PrivateAttr, field_validator, model_serializer
 from pydantic_settings import BaseSettings
+
+from hydromt_sfincs import MIN_SUPPORTED_SFINCS_VERSION
+
+logger = logging.getLogger(f"hydromt.{__name__}")
+NOW = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
+
+
+def _read_config(filename: str | Path) -> tuple[dict[str, str], dict[str, str]]:
+    """Read the raw key-value pairs from a SFINCS input file (sfincs.inp).
+
+    Only splits lines into raw string key-value pairs (stripping comments); all
+    type coercion and validation is done by :py:meth:`SfincsConfigVariables.read`
+    via pydantic.
+
+    Parameters
+    ----------
+    filename : str | Path
+        The path to the input file containing the SFINCS model settings.
+
+    Returns
+    -------
+    tuple[dict[str, str], dict[str, str]]
+        The raw model settings (as strings), and any inline trailing comment
+        (after ``#``) found per key.
+    """
+    filename = Path(filename)
+    if not filename.exists():
+        raise FileNotFoundError(
+            f"SFINCS input file '{filename.as_posix()}' does not exist."
+        )
+
+    with open(filename, "r") as fid:
+        lines = fid.readlines()
+
+    inp_dict = {}
+    comments = {}
+    for line in lines:
+        # Check if first character is #
+        if line.strip().startswith("#"):
+            # Full line comment
+            continue
+        # Find last character before #
+        comment_idx = line.find("#")
+        comment = ""
+        if comment_idx >= 0:
+            comment = line[comment_idx + 1 :].strip()
+            line = line[:comment_idx]
+        line = [x.strip() for x in line.split("=")]
+        if len(line) != 2:
+            continue
+        name, val = line
+        inp_dict[name] = val
+        if comment:
+            comments[name] = comment
+
+    return inp_dict, comments
+
+
+def _parse_version(version: str) -> tuple[int, ...]:
+    """Parse a simple 'X.Y.Z'-style version string into a comparable tuple."""
+    return tuple(int(part) for part in version.strip().split("."))
+
+
+def _version_status(
+    extra: dict,
+    user_sfincs_version: str | None,
+    min_supported_version: str = MIN_SUPPORTED_SFINCS_VERSION,
+) -> str:
+    """Classify a field as compatible, unsupported, deprecated, or unknown."""
+    min_version = extra.get("min_version")
+    max_version = extra.get("max_version")
+    if not min_version and not max_version:
+        return "ok"
+    if user_sfincs_version is None:
+        # Unversioned/legacy file: a field with a max_version is inherently a
+        # legacy/deprecated key regardless of version; a min_version-only field
+        # is of unknown validity since we can't confirm the target kernel supports it.
+        return "deprecated" if max_version is not None else "unknown"
+    try:
+        current = _parse_version(str(user_sfincs_version))
+        if min_version is not None and current < _parse_version(min_version):
+            return "too_old"
+        if max_version is not None and current > _parse_version(max_version):
+            return "deprecated"
+    except ValueError:
+        return "unknown"
+    return "ok"
+
+
+def _is_below_min_supported(
+    user_sfincs_version: str | None,
+    min_supported_version: str = MIN_SUPPORTED_SFINCS_VERSION,
+) -> bool:
+    """Return whether a configured SFINCS version is below the package minimum."""
+    if user_sfincs_version is None:
+        return False
+    try:
+        return _parse_version(str(user_sfincs_version)) < _parse_version(
+            min_supported_version
+        )
+    except ValueError:
+        return False
 
 
 class SfincsConfigVariables(BaseSettings):
     """SFINCS configuration variables with defaults matching sfincs_input.f90."""
 
-    class Config:
-        extra = "allow"
+    model_config = ConfigDict(extra="allow")
 
     # ================================================================
     # Grid
@@ -34,59 +143,59 @@ class SfincsConfigVariables(BaseSettings):
         None,
         ge=1,
         description="Number of grid cells in x-direction",
-        json_schema_extra={"always": True},
+        json_schema_extra={"condition": "qtrfile is None"},
     )
     nmax: int | None = Field(
         None,
         ge=1,
         description="Number of grid cells in y-direction",
-        json_schema_extra={"always": True},
+        json_schema_extra={"condition": "qtrfile is None"},
     )
     dx: float | None = Field(
         None,
         gt=0,
         description="Grid size in x-direction",
-        json_schema_extra={"always": True},
+        json_schema_extra={"condition": "qtrfile is None"},
     )
     dy: float | None = Field(
         None,
         gt=0,
         description="Grid size in y-direction",
-        json_schema_extra={"always": True},
+        json_schema_extra={"condition": "qtrfile is None"},
     )
     x0: float | None = Field(
         None,
         description="Origin of the grid in the x-direction",
-        json_schema_extra={"always": True},
+        json_schema_extra={"condition": "qtrfile is None"},
     )
     y0: float | None = Field(
         None,
         description="Origin of the grid in the y-direction",
-        json_schema_extra={"always": True},
+        json_schema_extra={"condition": "qtrfile is None"},
     )
     rotation: float = Field(
         0.0,
         gt=-360,
         lt=360,
         description="Rotation of the grid in degrees from the x-axis (east) in anti-clockwise direction",
+        json_schema_extra={"condition": "qtrfile is None"},
     )
 
     # ================================================================
     # Time (always written)
     # ================================================================
     tref: datetime = Field(
-        datetime.now().replace(hour=0, minute=0, second=0, microsecond=0),
+        NOW,
         description="Reference time for simulation",
         json_schema_extra={"always": True},
     )
     tstart: datetime = Field(
-        datetime.now().replace(hour=0, minute=0, second=0, microsecond=0),
+        NOW,
         description="Start time for the simulation",
         json_schema_extra={"always": True},
     )
     tstop: datetime = Field(
-        datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        + timedelta(days=1),
+        NOW + timedelta(days=1),
         description="Stop time for the simulation",
         json_schema_extra={"always": True},
     )
@@ -111,7 +220,12 @@ class SfincsConfigVariables(BaseSettings):
         3600.0,
         ge=0.0,
         description="Spatial map output interval (seconds)",
-        json_schema_extra={"always": True},
+        json_schema_extra={"always": True, "min_version": "2.3.0"},
+    )
+    dtout: float | None = Field(
+        None,
+        description="[DEPRECATED] legacy alias of dtmapout",
+        json_schema_extra={"max_version": "2.3.0", "new_name": "dtmapout"},
     )
     dtmaxout: float = Field(
         86400.0,
@@ -263,6 +377,12 @@ class SfincsConfigVariables(BaseSettings):
         3600.0,
         ge=0.0,
         description="Relaxation in uvmean (seconds)",
+    )
+    stopdepth: float | None = Field(
+        None,
+        ge=0.0,
+        description="[DEPRECATED] Minimum water depth for stopping the simulation (m)",
+        json_schema_extra={"max_version": "2.1.2"},
     )
 
     # ================================================================
@@ -584,6 +704,10 @@ class SfincsConfigVariables(BaseSettings):
     # ================================================================
     # Other settings
     # ================================================================
+    sfincs_version: str | None = Field(
+        None,
+        description="Target SFINCS kernel version; controls min_version/max_version field handling",
+    )
     global_: int = Field(
         0,
         ge=0,
@@ -600,6 +724,12 @@ class SfincsConfigVariables(BaseSettings):
     epsg: int | None = Field(
         None,
         description="EPSG code for spatial reference system",
+        json_schema_extra={"min_version": "2.3.0"},
+    )
+    crs: int | None = Field(
+        None,
+        description="[DEPRECATED] legacy alias of epsg",
+        json_schema_extra={"max_version": "2.0.0", "new_name": "epsg"},
     )
     utmzone: str | None = Field(
         None,
@@ -863,6 +993,279 @@ class SfincsConfigVariables(BaseSettings):
     )
 
     # ================================================================
+    # Read / write
+    # ================================================================
+    # Keys that were explicitly present in the source file (or set afterwards);
+    # these always round-trip on write(), even if they equal the field default.
+    _explicit_keys: set[str] = PrivateAttr(default_factory=set)
+    # Inline trailing comment (after '#') read per key from the source file, used
+    # by write(write_comments=True) in preference over the schema description.
+    _comments: dict[str, str] = PrivateAttr(default_factory=dict)
+
+    @classmethod
+    def read(
+        cls,
+        filename: str | Path,
+    ) -> "SfincsConfigVariables":
+        """Read a SFINCS input file (sfincs.inp) into a validated instance."""
+        filename = Path(filename)
+        inp_dict, comments = _read_config(filename=filename)
+
+        # Warn about keys not recognized by the schema; they are kept as
+        # pass-through attributes (Config.extra = "allow") and always rewritten.
+        model_fields = cls.model_fields
+        sfincs_version = inp_dict.get("sfincs_version")
+        if _is_below_min_supported(sfincs_version):
+            message = (
+                f"sfincs_version {sfincs_version} is below the minimum supported "
+                f"SFINCS version {MIN_SUPPORTED_SFINCS_VERSION}."
+            )
+            warnings.warn(message, UserWarning, stacklevel=2)
+            logger.warning(message)
+
+        for key, value in list(inp_dict.items()):
+            field_info = model_fields.get(key)
+            if field_info is None:
+                continue
+            extra = field_info.json_schema_extra or {}
+            status = _version_status(extra, sfincs_version)
+            if sfincs_version is None or status not in {"too_old", "deprecated"}:
+                continue
+
+            new_name = extra.get("new_name")
+            new_field = model_fields.get(new_name) if new_name is not None else None
+            new_extra = new_field.json_schema_extra or {} if new_field else {}
+            replacement_supported = (
+                new_field is not None
+                and _version_status(new_extra, sfincs_version) == "ok"
+            )
+            if replacement_supported and new_name not in inp_dict:
+                inp_dict[new_name] = value
+                if key in comments:
+                    comments[new_name] = comments[key]
+            inp_dict.pop(key)
+            comments.pop(key, None)
+            logger.warning(
+                f"'{key}' is not supported for sfincs_version {sfincs_version}; "
+                f"removed{f' or migrated to {new_name!r}' if new_name else ''}."
+            )
+
+        unknown_keys = sorted(set(inp_dict) - set(model_fields))
+        if unknown_keys:
+            logger.warning(
+                f"Unrecognized key(s) in {filename}: {unknown_keys}. "
+                "They will be kept and rewritten as-is."
+            )
+
+        # Warn about keys that are outside the range of the targeted sfincs_version
+        for key in inp_dict:
+            field_info = model_fields.get(key)
+            if field_info is None:
+                continue
+            extra = field_info.json_schema_extra or {}
+            status = _version_status(extra, sfincs_version)
+            if status == "deprecated":
+                message = f"'{key}' is deprecated for sfincs_version {sfincs_version}."
+                warnings.warn(message, DeprecationWarning, stacklevel=2)
+                logger.warning(message)
+            elif status == "too_old":
+                logger.warning(
+                    f"'{key}' is not yet supported for sfincs_version {sfincs_version}."
+                )
+
+        # Full pydantic validation (type coercion, field constraints, validators)
+        instance = cls.model_validate(inp_dict)
+        instance._explicit_keys = set(inp_dict.keys())
+        instance._comments = comments
+        return instance
+
+    def write(
+        self,
+        filename: str | Path,
+        write_description: bool = False,
+        write_comments: bool = False,
+        explicit_only: bool = False,
+    ) -> None:
+        """Write the configuration variables to a SFINCS input file (sfincs.inp).
+
+        Parameters:
+        -----------
+        filename (str | Path):
+            The file to write the configuration to.
+        write_description (bool):
+            If True, append the schema field description as a trailing comment.
+            Default is False.
+        write_comments (bool):
+            If True, append the original inline comment read from the source
+            file (if any) as a trailing comment, taking priority over
+            write_description for keys that have one. Default is False.
+        explicit_only (bool):
+            If True, write only fields explicitly read or set. Default is False.
+        """
+        filename = Path(filename)
+        filename.parent.mkdir(parents=True, exist_ok=True)
+
+        model_fields = type(self).model_fields
+        # model_dump() applies the write-only filtering/formatting via the
+        # _serialize_for_write model_serializer below.
+        data_dict = self.model_dump(context={"explicit_only": explicit_only})
+
+        with open(filename, "w") as fid:
+            for key, value in data_dict.items():
+                string = f"{key.ljust(20)} = {value}"
+
+                comment = self._comments.get(key) if write_comments else None
+                if not comment and write_description and key in model_fields:
+                    comment = model_fields[key].description
+                if comment:
+                    string = string.ljust(50) + f" # {comment}"
+
+                fid.write(string + "\n")
+
+    @model_serializer(mode="wrap")
+    def _serialize_for_write(self, handler, info) -> dict:
+        """Filter and format field values for writing to sfincs.inp.
+
+        Drops fields whose ``condition``/``min_version``/``max_version`` policy
+        excludes them, or that equal their default and were never explicitly
+        read/set; formats the remaining values (numbers, joined lists, dates) as
+        plain strings/numbers ready to write. Used exclusively by :py:meth:`write`;
+        use :py:meth:`to_dict` for the unfiltered, native-typed configuration.
+        """
+        data = handler(self)
+        model_fields = type(self).model_fields
+        sfincs_version = data.get("sfincs_version")
+
+        result = {}
+        for key, value in data.items():
+            if (
+                info.context
+                and info.context.get("explicit_only")
+                and key not in self._explicit_keys
+            ):
+                continue
+
+            # Never write None
+            if value is None:
+                continue
+
+            field_info = model_fields.get(key)
+            extra = (field_info.json_schema_extra or {}) if field_info else {}
+
+            # Evaluate condition when present
+            condition = extra.get("condition")
+            if condition is not None:
+                try:
+                    matches = eval(condition, {}, data)
+                except Exception as e:  # noqa
+                    raise ValueError(f"Condition eval failed for key '{key}': {e}")
+                if not matches:
+                    continue
+
+            # Skip fields not (yet) valid for the targeted sfincs_version
+            version_status = _version_status(extra, sfincs_version)
+            if version_status == "too_old":
+                continue
+
+            # Decide always vs skip-if-default
+            # A deprecated field is never force-written via "always"; it is only
+            # kept when it was explicitly read/set (round-trip fidelity). A field
+            # with an unconfirmed min_version (unversioned file) is treated the
+            # same way, since we can't confirm the target kernel supports it.
+            suppress_always = version_status == "deprecated" or (
+                version_status == "unknown" and "min_version" in extra
+            )
+            always = extra.get("always", False) and not suppress_always
+            explicitly_set = key in self._explicit_keys
+            if (
+                not always
+                and not explicitly_set
+                and field_info is not None
+                and value == field_info.default
+            ):
+                continue
+
+            # Format for the sfincs.inp text format; other values (numbers, plain
+            # strings) are already fine as-is and get stringified on write.
+            if isinstance(value, list):
+                value = " ".join(str(v) for v in value)
+            elif hasattr(value, "strftime"):
+                value = value.strftime("%Y%m%d %H%M%S")
+
+            result[key] = value
+
+        return result
+
+    def to_dict(self, explicit_only: bool = False) -> dict:
+        """Return the configuration as a plain dict of native Python values.
+
+        Unlike :py:meth:`model_dump`, this is not filtered or formatted for the
+        sfincs.inp file: every set field (including conditionally-irrelevant or
+        default-valued ones) is included with its native Python type (e.g.
+        ``datetime``, ``list[float]``), making it suitable for introspection.
+
+        Parameters
+        ----------
+        explicit_only (bool):
+            If True, return only fields explicitly read or set. Default is False.
+        """
+        data = {name: getattr(self, name) for name in type(self).model_fields}
+        data.update(self.model_extra or {})
+        if explicit_only:
+            data = {
+                key: value for key, value in data.items() if key in self._explicit_keys
+            }
+        return data
+
+    def set_value(
+        self, key: str, value, skip_validation: bool = False
+    ) -> "SfincsConfigVariables":
+        """Return a new, validated instance with a single attribute updated.
+
+        Parameters:
+        -----------
+        key (str):
+            The key to set the value for.
+        value (Any):
+            The value to set.
+        skip_validation (bool):
+            If True, skips pydantic validation of the new value.
+        """
+        return self.set_values({key: value}, skip_validation=skip_validation)
+
+    def set_values(
+        self, updates: dict, skip_validation: bool = False
+    ) -> "SfincsConfigVariables":
+        """Return a new, validated instance with multiple attributes updated.
+
+        Parameters:
+        -----------
+        updates (dict):
+            Mapping of key-value pairs to update.
+        skip_validation (bool):
+            If True, skips pydantic validation of the new values.
+        """
+        model_fields = type(self).model_fields
+        unknown_keys = [key for key in updates if key not in model_fields]
+        for key in unknown_keys:
+            logger.warning(
+                f"'{key}' is not a valid attribute of SfincsConfig. Adding it as a custom attribute."
+            )
+
+        if skip_validation:
+            instance = self.model_copy()
+            for key, value in updates.items():
+                setattr(instance, key, value)
+        else:
+            new_data = self.to_dict()
+            new_data.update(updates)
+            instance = type(self).model_validate(new_data)
+
+        instance._explicit_keys = self._explicit_keys | set(updates.keys())
+        instance._comments = dict(self._comments)
+        return instance
+
+    # ================================================================
     # Validators
     # ================================================================
     @field_validator("tref", "tstart", "tstop", mode="before")
@@ -875,6 +1278,13 @@ class SfincsConfigVariables(BaseSettings):
                 raise ValueError(
                     f"Invalid datetime format: {v}. Expected format: YYYYMMDD HHMMSS"
                 )
+        return v
+
+    @field_validator("cdwnd", "cdval", mode="before")
+    @classmethod
+    def parse_space_separated_floats(cls, v):
+        if isinstance(v, str):
+            return [float(x) for x in v.split()]
         return v
 
 

@@ -1,51 +1,113 @@
+import logging
 from datetime import datetime
 from pathlib import Path
-import logging
-import os
-from os.path import abspath, join
 
 import pytest
 from pydantic import ValidationError
 
 from hydromt_sfincs import SfincsModel
+from hydromt_sfincs.components.config.config_variables import (
+    SfincsConfigVariables,
+    _read_config,
+)
 
-TESTDATADIR = join(os.path.dirname(os.path.abspath(__file__)), "data")
-TESTMODELDIR = join(TESTDATADIR, "sfincs_test")
+TESTDATADIR = Path(__file__).resolve().parent / "data"
+TESTMODELDIR = TESTDATADIR / "sfincs_test"
 
 
-def test_config_get_set(model_init, caplog):
-    config = model_init.config
+def test_write_default_config(tmp_path):
+    data = SfincsConfigVariables()
+    inpfile = tmp_path / "sfincs.inp"
+    data.write(inpfile)
+    assert inpfile.is_file()
+    # check that the file contains expected keys
+    keys = {line.split()[0] for line in inpfile.read_text().splitlines()}
+    # all keys with always=True in the model fields should be present
+    expected_keys = {
+        k
+        for k in type(data).model_fields
+        if (type(data).model_fields[k].json_schema_extra or {}).get("always", False)
+    }
+    assert keys.issubset(expected_keys)
+
+
+def test_config_get_set(caplog):
+    data = SfincsConfigVariables()
 
     # check that a variable initiated as None is set correctly
-    assert config.get("mmax") == None
+    assert data.mmax is None
 
     # set a new value and get it
-    config.set("mmax", 20)
-    assert config.get("mmax") == 20
+    data = data.set_value("mmax", 20)
+    assert data.mmax == 20
 
     # check that another variable that has an preset variable is loaded correctly
-    assert config.get("advection") == 1
+    assert data.advection == 1
 
     # set value out of bounds
     with pytest.raises(ValidationError):
-        config.set("mmax", -1000)
+        data.set_value("mmax", -1000)
 
     # now set a string with txt
     with pytest.raises(ValidationError):
-        config.set("mmax", "text")
+        data.set_value("mmax", "text")
 
     # set a new values with type text
-    config.set("outputformat", "ascii")
-    assert config.get("outputformat") == "ascii"
+    data = data.set_value("outputformat", "ascii")
+    assert data.outputformat == "ascii"
 
     # set a non-existing key
     with caplog.at_level(logging.WARNING):
-        config.set("invalid_key", 100)
+        data.set_value("invalid_key", 100)
+
+
+def test_config_set_skip_validation():
+    data = SfincsConfigVariables()
+
+    data = data.set_value("mmax", -1000, skip_validation=True)
+
+    assert data.mmax == -1000
+
+
+def test_config_explicit_only(tmp_path):
+    data = SfincsConfigVariables().set_values(
+        {"theta": 1.0, "mmax": 10, "custom_key": "custom value"}
+    )
+
+    explicit_data = data.to_dict(explicit_only=True)
+    assert set(explicit_data) == {"theta", "mmax", "custom_key"}
+    assert explicit_data["theta"] == 1.0
+    assert explicit_data["mmax"] == 10
+
+    inpfile = tmp_path / "sfincs.inp"
+    data.write(inpfile, explicit_only=True)
+    keys = {line.split()[0] for line in inpfile.read_text().splitlines()}
+
+    assert keys == {"theta", "mmax", "custom_key"}
+
+
+@pytest.mark.parametrize(
+    ("updates", "expected_key"),
+    [
+        ({"mmax": 10, "qtrfile": "sfincs.quadtree"}, "qtrfile"),
+        ({"mmax": 10, "qtrfile": None}, "mmax"),
+        ({"dtwave": 900.0, "snapwave": 0}, "snapwave"),
+        ({"dtwave": 900.0, "snapwave": 1}, "dtwave"),
+    ],
+)
+def test_config_condition_controls_written_fields(tmp_path, updates, expected_key):
+    data = SfincsConfigVariables().set_values(updates)
+    inpfile = tmp_path / "sfincs.inp"
+
+    data.write(inpfile)
+    keys = {line.split()[0] for line in inpfile.read_text().splitlines()}
+
+    assert expected_key in keys
 
 
 def test_config_io(tmp_path):
-    # Start with model initialized with default values
-    model0 = SfincsModel(root=tmp_path, mode="w+")
+    # Start with default values
+    data0 = SfincsConfigVariables()
 
     # update the configuration with new values
     inpdict = {
@@ -59,24 +121,24 @@ def test_config_io(tmp_path):
         "epsg": 32633,
         "crsgeo": 0,
     }
-    model0.config.update(inpdict)
+    data0 = data0.set_values(inpdict)
 
     # check if the values are set correctly
     for key, value in inpdict.items():
-        assert model0.config.get(key) == value
+        assert getattr(data0, key) == value
 
     # now test the read/write
-    model0.config.write()
+    inpfile = tmp_path / "sfincs.inp"
+    data0.write(inpfile)
 
     # check if the file is written
-    assert os.path.isfile(os.path.join(tmp_path, "sfincs.inp"))
+    assert inpfile.is_file()
 
     # now read the configuration again
-    model1 = SfincsModel(root=tmp_path, mode="r")
-    model1.config.read()
+    data1 = SfincsConfigVariables.read(inpfile)
 
-    d0 = model0.config.data.model_dump()
-    d1 = model1.config.data.model_dump()
+    d0 = data0.to_dict()
+    d1 = data1.to_dict()
 
     diff = {
         k: (d0.get(k), d1.get(k))
@@ -87,38 +149,279 @@ def test_config_io(tmp_path):
     assert not diff, f"Differences:\n{diff}"
 
     # write config including descriptions
-    model1.config.write(filename="sfincs_with_description.inp", write_description=True)
+    inpfile_desc = tmp_path / "sfincs_with_description.inp"
+    data1.write(inpfile_desc, write_description=True)
 
-    # read ascii file tmp_path/sfincs.inp
-    with open(os.path.join(tmp_path, "sfincs.inp"), "r", encoding="ascii") as file:
-        # Read the contents of the file
-        contents = file.read()
-    with open(
-        os.path.join(tmp_path, "sfincs_with_description.inp"), "r", encoding="ascii"
-    ) as file:
-        # Read the contents of the file
-        contents1 = file.read()
+    contents = inpfile.read_text(encoding="ascii")
+    contents1 = inpfile_desc.read_text(encoding="ascii")
 
     # Files should differ because of descriptions
     assert contents != contents1
 
 
-def test_config_datetime(model_init):
-    config = model_init.config
+def test_config_read_write_roundtrip(tmp_path, caplog):
+    # legacy (unversioned) sfincs.inp with keys equal to schema defaults that are
+    # NOT flagged 'always' (fields flagged 'always' get force-written regardless of
+    # input and are omitted here) plus the deprecated 'dtout' key (see
+    # examples/missing_inp_values.py)
+    inp_str = """rotation             = 0
+epsg                 = 32617
+latitude             = 0.0
+crsgeo               = 0
+dtout                = 3600.0
+dtrstout             = 0.0
+theta                = 1.0
+dtmax                = 60.0
+manning              = 0.04
+manning_land         = 0.04
+manning_sea          = 0.02
+rgh_lev_land         = 0.0
+gapres               = 101200.0
+inputformat          = bin
+outputformat         = net
+"""
+    inpfile = tmp_path / "sfincs.inp"
+    inpfile.write_text(inp_str)
+
+    with pytest.warns(DeprecationWarning, match="dtout"):
+        data = SfincsConfigVariables.read(inpfile)
+
+    test_inpfile = tmp_path / "sfincs.inp.test"
+    data.write(test_inpfile)
+    test_inp_str = test_inpfile.read_text()
+
+    def _keys(text):
+        return [
+            line.split()[0]
+            for line in text.splitlines()
+            if line.strip() and not line.strip().startswith("#")
+        ]
+
+    original_keys = set(_keys(inp_str))
+    test_keys = set(_keys(test_inp_str))
+
+    # fields flagged 'always' (with a non-None default and no 'min_version') are
+    # force-written even though absent from this legacy file
+    model_fields = SfincsConfigVariables.model_fields
+    expected_extras = {
+        key
+        for key, field in model_fields.items()
+        if key not in original_keys
+        and (field.json_schema_extra or {}).get("always")
+        and field.default is not None
+        and "min_version" not in (field.json_schema_extra or {})
+    }
+
+    assert not original_keys - test_keys, "missing keys after round-trip"
+    assert (
+        test_keys - original_keys == expected_extras
+    ), "unexpected extra keys after round-trip"
+
+    # deprecated 'dtout' key is preserved literally, not renamed to 'dtmapout'
+    assert "dtout" in test_keys
+    assert "dtmapout" not in test_keys
+
+    # an unrecognized key in the source file should trigger a warning, but be kept
+    with open(inpfile, "a") as fid:
+        fid.write("some_unknown_key   = 1\n")
+    with (
+        caplog.at_level(logging.WARNING),
+        pytest.warns(DeprecationWarning, match="dtout"),
+    ):
+        data2 = SfincsConfigVariables.read(inpfile)
+    assert "some_unknown_key" in caplog.text
+
+    test_inpfile2 = tmp_path / "sfincs.inp.test2"
+    data2.write(test_inpfile2)
+    assert "some_unknown_key" in test_inpfile2.read_text()
+
+
+def test_config_read_migrates_changed_field_names_by_version(tmp_path):
+    inpfile = tmp_path / "sfincs.inp"
+    inpfile.write_text(
+        "sfincs_version       = 2.4.0\n"
+        "dtout                = 1800  # legacy map interval\n"
+        "crs                  = 32633\n"
+    )
+
+    data = SfincsConfigVariables.read(inpfile)
+    assert data.dtmapout == 1800
+    assert data.dtout is None
+    assert data.epsg == 32633
+    assert data.crs is None
+
+    output = tmp_path / "migrated.inp"
+    data.write(output, write_comments=True, explicit_only=True)
+    output_text = output.read_text()
+    assert "dtmapout" in output_text
+    assert "dtout" not in output_text
+    assert "# legacy map interval" in output_text
+    assert "epsg" in output_text
+    assert "crs" not in output_text
+
+
+def test_config_read_migration_prefers_new_name_by_version(tmp_path):
+    inpfile = tmp_path / "sfincs.inp"
+    inpfile.write_text(
+        "sfincs_version       = 2.4.0\n"
+        "dtout                = 1800  # legacy interval\n"
+        "dtmapout             = 3600  # current interval\n"
+        "crs                  = 32633\n"
+    )
+
+    data = SfincsConfigVariables.read(inpfile)
+
+    assert data.dtmapout == 3600
+    assert data.dtout is None
+    assert data.epsg == 32633
+    assert data.crs == None
+    output = tmp_path / "migrated.inp"
+    data.write(output, write_comments=True, explicit_only=True)
+    output_text = output.read_text()
+    assert "dtmapout             = 3600" in output_text
+    assert "# current interval" in output_text
+    assert "legacy interval" not in output_text
+    assert "epsg" in output_text
+
+
+def test_config_read_warns_and_removes_unsupported_fields(tmp_path):
+    inpfile = tmp_path / "sfincs.inp"
+    inpfile.write_text(
+        "sfincs_version       = 2.0.0\n"
+        "dtmapout             = 1800  # unsupported interval\n"
+        "epsg                 = 32633\n"
+        "custom_key           = keep\n"
+    )
+
+    with pytest.warns(UserWarning, match="below the minimum supported"):
+        data = SfincsConfigVariables.read(inpfile)
+
+    assert data.dtmapout == 3600
+    assert data.epsg is None
+    assert data.model_extra["custom_key"] == "keep"
+
+    output = tmp_path / "filtered.inp"
+    data.write(output, explicit_only=True)
+    output_text = output.read_text()
+    assert "dtmapout" not in output_text
+    assert "epsg" not in output_text
+    assert "custom_key" in output_text
+
+
+def test_config_read_migrates_unsupported_alias(tmp_path):
+    inpfile = tmp_path / "sfincs.inp"
+    inpfile.write_text(
+        "sfincs_version       = 2.4.0\n"
+        "dtout                = 1800  # legacy interval\n"
+    )
+
+    data = SfincsConfigVariables.read(inpfile)
+
+    assert data.dtout is None
+    assert data.dtmapout == 1800
+
+    output = tmp_path / "migrated.inp"
+    data.write(output, write_comments=True, explicit_only=True)
+    output_text = output.read_text()
+    assert "dtmapout             = 1800" in output_text
+    assert "dtout" not in output_text
+    assert "# legacy interval" in output_text
+
+
+def test_config_read_migration_prefers_supported_current_name(tmp_path):
+    inpfile = tmp_path / "sfincs.inp"
+    inpfile.write_text(
+        "sfincs_version       = 2.4.0\n"
+        "dtout                = 1800\n"
+        "dtmapout             = 3600  # current interval\n"
+    )
+
+    data = SfincsConfigVariables.read(inpfile)
+
+    assert data.dtout is None
+    assert data.dtmapout == 3600
+
+
+def test_read_config_raw(config_path: Path):
+    # _read_config() only parses raw strings; type coercion is done by
+    # SfincsConfigVariables.read() via pydantic
+    inp, comments = _read_config(filename=config_path)
+
+    assert inp["mmax"] == "84"
+    assert inp["nmax"] == "36"
+    assert "depfile" in inp
+    assert "inifile" not in inp
+    assert inp["zsini"] == "0.0"
+    assert isinstance(comments, dict)
+
+
+def test_read_config_raw_errors(tmp_path: Path):
+    p = tmp_path / "sfincs.inp"
+    with pytest.raises(
+        FileNotFoundError,
+        match=f"SFINCS input file '{p.as_posix()}' does not exist.",
+    ):
+        _read_config(filename=p)
+
+
+def test_config_read_write_preserves_inline_comments(tmp_path):
+    inpfile = tmp_path / "sfincs.inp"
+    inpfile.write_text(
+        "mmax                 = 84  # custom comment for mmax\n"
+        "nmax                 = 36\n"
+    )
+
+    data = SfincsConfigVariables.read(inpfile)
+
+    test_inpfile = tmp_path / "sfincs.inp.test"
+    data.write(test_inpfile, write_description=True, write_comments=True)
+    test_inp_str = test_inpfile.read_text()
+
+    # the original inline comment takes priority over the schema description
+    assert "# custom comment for mmax" in test_inp_str
+    assert "Number of grid cells in x-direction" not in test_inp_str
+    # a field without an inline comment falls back to the schema description
+    assert "Number of grid cells in y-direction" in test_inp_str
+
+    # write_comments=False ignores the inline comment, even if present
+    test_inpfile2 = tmp_path / "sfincs.inp.test2"
+    data.write(test_inpfile2, write_description=True, write_comments=False)
+    test_inp_str2 = test_inpfile2.read_text()
+    assert "# custom comment for mmax" not in test_inp_str2
+    assert "Number of grid cells in x-direction" in test_inp_str2
+
+    # write_description=False, write_comments=False: no trailing comments at all
+    test_inpfile3 = tmp_path / "sfincs.inp.test3"
+    data.write(test_inpfile3)
+    assert "#" not in test_inpfile3.read_text()
+
+
+def test_config_read_invalid_datetime(tmp_path):
+    # read_config() only parses raw strings; datetime validation happens in
+    # SfincsConfigVariables.read() via pydantic
+    inpfile = tmp_path / "sfincs.inp"
+    inpfile.write_text("tref = foo\n")
+
+    with pytest.raises(ValidationError):
+        SfincsConfigVariables.read(inpfile)
+
+
+def test_config_datetime():
+    data = SfincsConfigVariables()
 
     # assert tref corresponds to current year
     current_year = datetime.now().year
 
-    assert isinstance(config.get("tref"), datetime)
-    assert config.get("tref").year == current_year
+    assert isinstance(data.tref, datetime)
+    assert data.tref.year == current_year
 
     # now set a datestr instead of datetime
     datestr = "20100201 000000"  # YYYYMMDD HHMMSS
-    config.set("tref", datestr)
+    data = data.set_value("tref", datestr)
 
     # check if it is converted to datetime
-    assert isinstance(config.get("tref"), datetime)
-    assert config.get("tref").year == 2010
+    assert isinstance(data.tref, datetime)
+    assert data.tref.year == 2010
 
 
 def test_get_set_file_variable(model_config, tmp_dir):
@@ -275,16 +578,16 @@ def test_get_set_file_variable_write_uses_new_root_after_root_change(tmp_path):
 
 
 def test_config_manning_land_sea_io(tmp_path):
-    # Create a new model
-    model0 = SfincsModel(root=tmp_path, mode="w+")
+    # Start with default values
+    data0 = SfincsConfigVariables()
 
     # By default, land/sea roughness is not set
-    assert model0.config.get("manning_land") is None
-    assert model0.config.get("manning_sea") is None
-    assert model0.config.get("rgh_lev_land") is None
+    assert data0.manning_land is None
+    assert data0.manning_sea is None
+    assert data0.rgh_lev_land is None
 
     # Explicitly set land/sea roughness
-    model0.config.update(
+    data0 = data0.set_values(
         {
             "manning_land": 0.04,
             "manning_sea": 0.02,
@@ -292,12 +595,12 @@ def test_config_manning_land_sea_io(tmp_path):
         }
     )
 
-    model0.config.write()
+    inpfile = tmp_path / "sfincs.inp"
+    data0.write(inpfile)
 
     # Read the configuration back
-    model1 = SfincsModel(root=tmp_path, mode="r")
-    model1.config.read()
+    data1 = SfincsConfigVariables.read(inpfile)
 
-    assert model1.config.get("manning_land") == 0.04
-    assert model1.config.get("manning_sea") == 0.02
-    assert model1.config.get("rgh_lev_land") == 0.0
+    assert data1.manning_land == 0.04
+    assert data1.manning_sea == 0.02
+    assert data1.rgh_lev_land == 0.0

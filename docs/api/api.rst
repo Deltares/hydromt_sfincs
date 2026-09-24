@@ -252,7 +252,6 @@ Input/Output methods
 .. autosummary::
    :toctree: ../_generated/
 
-   readers.read_config
    readers.read_binary_map
    writers.write_binary_map
    readers.read_binary_map_index

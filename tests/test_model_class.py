@@ -60,8 +60,8 @@ def test_model_build(tmpdir, case):
     mod1.read()
 
     # compare config
-    d0 = mod0.config.data.model_dump()
-    d1 = mod1.config.data.model_dump()
+    d0 = mod0.config.data.to_dict()
+    d1 = mod1.config.data.to_dict()
 
     def equal(a, b, tol=1e-6):
         if isinstance(a, float) and isinstance(b, float):
