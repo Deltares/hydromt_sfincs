@@ -55,24 +55,15 @@ class SfincsConfig(ModelComponent):
             self._filename = self.model.root.path.resolve() / "sfincs.inp"
         return Path(self._filename)
 
-    def read(self, update_changed_field_names: bool = False) -> None:
+    def read(self) -> None:
         """Read a text file with the sfincs configuration from the root folder and populate
         the SfincsConfigVariables. This function also determines the grid type and updates
         the grid properties of the SfincsModel (e.g. crs and extent).
-
-        Parameters:
-        -----------
-        update_changed_field_names (bool):
-            If True, migrate legacy configuration keys to their current names.
-            Default is False.
         """
 
         self.root._assert_read_mode()
 
-        self._data = SfincsConfigVariables.read(
-            self.filename,
-            update_changed_field_names=update_changed_field_names,
-        )
+        self._data = SfincsConfigVariables.read(self.filename)
 
         # Update the grid properties from the configuration
         # This will either drop the quadtree component or the regular component?

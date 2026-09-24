@@ -15,6 +15,22 @@ TESTDATADIR = Path(__file__).resolve().parent / "data"
 TESTMODELDIR = TESTDATADIR / "sfincs_test"
 
 
+def test_write_default_config(tmp_path):
+    data = SfincsConfigVariables()
+    inpfile = tmp_path / "sfincs.inp"
+    data.write(inpfile)
+    assert inpfile.is_file()
+    # check that the file contains expected keys
+    keys = {line.split()[0] for line in inpfile.read_text().splitlines()}
+    # all keys with always=True in the model fields should be present
+    expected_keys = {
+        k
+        for k in type(data).model_fields
+        if (type(data).model_fields[k].json_schema_extra or {}).get("always", False)
+    }
+    assert keys.issubset(expected_keys)
+
+
 def test_config_get_set(caplog):
     data = SfincsConfigVariables()
 
@@ -68,6 +84,25 @@ def test_config_explicit_only(tmp_path):
     keys = {line.split()[0] for line in inpfile.read_text().splitlines()}
 
     assert keys == {"theta", "mmax", "custom_key"}
+
+
+@pytest.mark.parametrize(
+    ("updates", "expected_key"),
+    [
+        ({"mmax": 10, "qtrfile": "sfincs.quadtree"}, "qtrfile"),
+        ({"mmax": 10, "qtrfile": None}, "mmax"),
+        ({"dtwave": 900.0, "snapwave": 0}, "snapwave"),
+        ({"dtwave": 900.0, "snapwave": 1}, "dtwave"),
+    ],
+)
+def test_config_condition_controls_written_fields(tmp_path, updates, expected_key):
+    data = SfincsConfigVariables().set_values(updates)
+    inpfile = tmp_path / "sfincs.inp"
+
+    data.write(inpfile)
+    keys = {line.split()[0] for line in inpfile.read_text().splitlines()}
+
+    assert expected_key in keys
 
 
 def test_config_io(tmp_path):
@@ -189,8 +224,9 @@ outputformat         = net
     # an unrecognized key in the source file should trigger a warning, but be kept
     with open(inpfile, "a") as fid:
         fid.write("some_unknown_key   = 1\n")
-    with caplog.at_level(logging.WARNING), pytest.warns(
-        DeprecationWarning, match="dtout"
+    with (
+        caplog.at_level(logging.WARNING),
+        pytest.warns(DeprecationWarning, match="dtout"),
     ):
         data2 = SfincsConfigVariables.read(inpfile)
     assert "some_unknown_key" in caplog.text
@@ -200,20 +236,15 @@ outputformat         = net
     assert "some_unknown_key" in test_inpfile2.read_text()
 
 
-def test_config_read_update_changed_field_names(tmp_path):
+def test_config_read_migrates_changed_field_names_by_version(tmp_path):
     inpfile = tmp_path / "sfincs.inp"
     inpfile.write_text(
+        "sfincs_version       = 2.4.0\n"
         "dtout                = 1800  # legacy map interval\n"
         "crs                  = 32633\n"
     )
 
     data = SfincsConfigVariables.read(inpfile)
-    assert data.dtout == 1800
-    assert data.dtmapout == 3600
-    assert data.crs == 32633
-    assert data.epsg is None
-
-    data = SfincsConfigVariables.read(inpfile, update_changed_field_names=True)
     assert data.dtmapout == 1800
     assert data.dtout is None
     assert data.epsg == 32633
@@ -229,23 +260,86 @@ def test_config_read_update_changed_field_names(tmp_path):
     assert "crs" not in output_text
 
 
-def test_config_read_update_changed_field_names_prefers_new_name(tmp_path):
+def test_config_read_migration_prefers_new_name_by_version(tmp_path):
     inpfile = tmp_path / "sfincs.inp"
     inpfile.write_text(
+        "sfincs_version       = 2.4.0\n"
         "dtout                = 1800  # legacy interval\n"
         "dtmapout             = 3600  # current interval\n"
+        "crs                  = 32633\n"
     )
 
-    data = SfincsConfigVariables.read(inpfile, update_changed_field_names=True)
+    data = SfincsConfigVariables.read(inpfile)
 
     assert data.dtmapout == 3600
     assert data.dtout is None
+    assert data.epsg == 32633
+    assert data.crs == None
     output = tmp_path / "migrated.inp"
     data.write(output, write_comments=True, explicit_only=True)
     output_text = output.read_text()
     assert "dtmapout             = 3600" in output_text
     assert "# current interval" in output_text
     assert "legacy interval" not in output_text
+    assert "epsg" in output_text
+
+
+def test_config_read_warns_and_removes_unsupported_fields(tmp_path):
+    inpfile = tmp_path / "sfincs.inp"
+    inpfile.write_text(
+        "sfincs_version       = 2.0.0\n"
+        "dtmapout             = 1800  # unsupported interval\n"
+        "epsg                 = 32633\n"
+        "custom_key           = keep\n"
+    )
+
+    with pytest.warns(UserWarning, match="below the minimum supported"):
+        data = SfincsConfigVariables.read(inpfile)
+
+    assert data.dtmapout == 3600
+    assert data.epsg is None
+    assert data.model_extra["custom_key"] == "keep"
+
+    output = tmp_path / "filtered.inp"
+    data.write(output, explicit_only=True)
+    output_text = output.read_text()
+    assert "dtmapout" not in output_text
+    assert "epsg" not in output_text
+    assert "custom_key" in output_text
+
+
+def test_config_read_migrates_unsupported_alias(tmp_path):
+    inpfile = tmp_path / "sfincs.inp"
+    inpfile.write_text(
+        "sfincs_version       = 2.4.0\n"
+        "dtout                = 1800  # legacy interval\n"
+    )
+
+    data = SfincsConfigVariables.read(inpfile)
+
+    assert data.dtout is None
+    assert data.dtmapout == 1800
+
+    output = tmp_path / "migrated.inp"
+    data.write(output, write_comments=True, explicit_only=True)
+    output_text = output.read_text()
+    assert "dtmapout             = 1800" in output_text
+    assert "dtout" not in output_text
+    assert "# legacy interval" in output_text
+
+
+def test_config_read_migration_prefers_supported_current_name(tmp_path):
+    inpfile = tmp_path / "sfincs.inp"
+    inpfile.write_text(
+        "sfincs_version       = 2.4.0\n"
+        "dtout                = 1800\n"
+        "dtmapout             = 3600  # current interval\n"
+    )
+
+    data = SfincsConfigVariables.read(inpfile)
+
+    assert data.dtout is None
+    assert data.dtmapout == 3600
 
 
 def test_read_config_raw(config_path: Path):

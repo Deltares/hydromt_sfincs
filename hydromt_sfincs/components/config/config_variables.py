@@ -28,6 +28,8 @@ from pathlib import Path
 from pydantic import ConfigDict, Field, PrivateAttr, field_validator, model_serializer
 from pydantic_settings import BaseSettings
 
+from hydromt_sfincs import MIN_SUPPORTED_SFINCS_VERSION
+
 logger = logging.getLogger(f"hydromt.{__name__}")
 NOW = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
 
@@ -88,26 +90,45 @@ def _parse_version(version: str) -> tuple[int, ...]:
     return tuple(int(part) for part in version.strip().split("."))
 
 
-def _version_status(extra: dict, sfincs_version: str | None) -> str:
-    """Classify a field as 'ok', 'too_new', 'deprecated' or 'unknown' given sfincs_version."""
+def _version_status(
+    extra: dict,
+    user_sfincs_version: str | None,
+    min_supported_version: str = MIN_SUPPORTED_SFINCS_VERSION,
+) -> str:
+    """Classify a field as compatible, unsupported, deprecated, or unknown."""
     min_version = extra.get("min_version")
     max_version = extra.get("max_version")
     if not min_version and not max_version:
         return "ok"
-    if sfincs_version is None:
+    if user_sfincs_version is None:
         # Unversioned/legacy file: a field with a max_version is inherently a
         # legacy/deprecated key regardless of version; a min_version-only field
         # is of unknown validity since we can't confirm the target kernel supports it.
         return "deprecated" if max_version is not None else "unknown"
     try:
-        current = _parse_version(str(sfincs_version))
+        current = _parse_version(str(user_sfincs_version))
         if min_version is not None and current < _parse_version(min_version):
-            return "too_new"
+            return "too_old"
         if max_version is not None and current > _parse_version(max_version):
             return "deprecated"
     except ValueError:
         return "unknown"
     return "ok"
+
+
+def _is_below_min_supported(
+    user_sfincs_version: str | None,
+    min_supported_version: str = MIN_SUPPORTED_SFINCS_VERSION,
+) -> bool:
+    """Return whether a configured SFINCS version is below the package minimum."""
+    if user_sfincs_version is None:
+        return False
+    try:
+        return _parse_version(str(user_sfincs_version)) < _parse_version(
+            min_supported_version
+        )
+    except ValueError:
+        return False
 
 
 class SfincsConfigVariables(BaseSettings):
@@ -122,41 +143,42 @@ class SfincsConfigVariables(BaseSettings):
         None,
         ge=1,
         description="Number of grid cells in x-direction",
-        json_schema_extra={"always": True},
+        json_schema_extra={"condition": "qtrfile is None"},
     )
     nmax: int | None = Field(
         None,
         ge=1,
         description="Number of grid cells in y-direction",
-        json_schema_extra={"always": True},
+        json_schema_extra={"condition": "qtrfile is None"},
     )
     dx: float | None = Field(
         None,
         gt=0,
         description="Grid size in x-direction",
-        json_schema_extra={"always": True},
+        json_schema_extra={"condition": "qtrfile is None"},
     )
     dy: float | None = Field(
         None,
         gt=0,
         description="Grid size in y-direction",
-        json_schema_extra={"always": True},
+        json_schema_extra={"condition": "qtrfile is None"},
     )
     x0: float | None = Field(
         None,
         description="Origin of the grid in the x-direction",
-        json_schema_extra={"always": True},
+        json_schema_extra={"condition": "qtrfile is None"},
     )
     y0: float | None = Field(
         None,
         description="Origin of the grid in the y-direction",
-        json_schema_extra={"always": True},
+        json_schema_extra={"condition": "qtrfile is None"},
     )
     rotation: float = Field(
         0.0,
         gt=-360,
         lt=360,
         description="Rotation of the grid in degrees from the x-axis (east) in anti-clockwise direction",
+        json_schema_extra={"condition": "qtrfile is None"},
     )
 
     # ================================================================
@@ -701,7 +723,7 @@ class SfincsConfigVariables(BaseSettings):
     crs: int | None = Field(
         None,
         description="[DEPRECATED] legacy alias of epsg",
-        json_schema_extra={"max_version": "2.3.0", "new_name": "epsg"},
+        json_schema_extra={"max_version": "2.0.0", "new_name": "epsg"},
     )
     utmzone: str | None = Field(
         None,
@@ -907,7 +929,11 @@ class SfincsConfigVariables(BaseSettings):
         0, ge=0, le=1, description="Write mean water depth output (1: yes, 0: no)"
     )
     storemeteo: int = Field(
-        0, ge=0, le=1, description="Write meteo output (1: yes, 0: no)"
+        0,
+        ge=0,
+        le=1,
+        description="Write meteo output (1: yes, 0: no)",
+        json_schema_extra={"always": True},
     )
     storemaxwind: int = Field(
         0, ge=0, le=1, description="Write max wind speed output (1: yes, 0: no)"
@@ -969,32 +995,50 @@ class SfincsConfigVariables(BaseSettings):
     def read(
         cls,
         filename: str | Path,
-        update_changed_field_names: bool = False,
     ) -> "SfincsConfigVariables":
         """Read a SFINCS input file (sfincs.inp) into a validated instance."""
         filename = Path(filename)
         inp_dict, comments = _read_config(filename=filename)
 
-        if update_changed_field_names:
-            for key, value in list(inp_dict.items()):
-                field_info = cls.model_fields.get(key)
-                new_name = (
-                    (field_info.json_schema_extra or {}).get("new_name")
-                    if field_info
-                    else None
-                )
-                if new_name is None:
-                    continue
-                if new_name not in inp_dict:
-                    inp_dict[new_name] = value
-                    if key in comments:
-                        comments[new_name] = comments[key]
-                inp_dict.pop(key)
-                comments.pop(key, None)
-
         # Warn about keys not recognized by the schema; they are kept as
         # pass-through attributes (Config.extra = "allow") and always rewritten.
         model_fields = cls.model_fields
+        sfincs_version = inp_dict.get("sfincs_version")
+        if _is_below_min_supported(sfincs_version):
+            message = (
+                f"sfincs_version {sfincs_version} is below the minimum supported "
+                f"SFINCS version {MIN_SUPPORTED_SFINCS_VERSION}."
+            )
+            warnings.warn(message, UserWarning, stacklevel=2)
+            logger.warning(message)
+
+        for key, value in list(inp_dict.items()):
+            field_info = model_fields.get(key)
+            if field_info is None:
+                continue
+            extra = field_info.json_schema_extra or {}
+            status = _version_status(extra, sfincs_version)
+            if sfincs_version is None or status not in {"too_old", "deprecated"}:
+                continue
+
+            new_name = extra.get("new_name")
+            new_field = model_fields.get(new_name) if new_name is not None else None
+            new_extra = new_field.json_schema_extra or {} if new_field else {}
+            replacement_supported = (
+                new_field is not None
+                and _version_status(new_extra, sfincs_version) == "ok"
+            )
+            if replacement_supported and new_name not in inp_dict:
+                inp_dict[new_name] = value
+                if key in comments:
+                    comments[new_name] = comments[key]
+            inp_dict.pop(key)
+            comments.pop(key, None)
+            logger.warning(
+                f"'{key}' is not supported for sfincs_version {sfincs_version}; "
+                f"removed{f' or migrated to {new_name!r}' if new_name else ''}."
+            )
+
         unknown_keys = sorted(set(inp_dict) - set(model_fields))
         if unknown_keys:
             logger.warning(
@@ -1003,7 +1047,6 @@ class SfincsConfigVariables(BaseSettings):
             )
 
         # Warn about keys that are outside the range of the targeted sfincs_version
-        sfincs_version = inp_dict.get("sfincs_version")
         for key in inp_dict:
             field_info = model_fields.get(key)
             if field_info is None:
@@ -1014,7 +1057,7 @@ class SfincsConfigVariables(BaseSettings):
                 message = f"'{key}' is deprecated for sfincs_version {sfincs_version}."
                 warnings.warn(message, DeprecationWarning, stacklevel=2)
                 logger.warning(message)
-            elif status == "too_new":
+            elif status == "too_old":
                 logger.warning(
                     f"'{key}' is not yet supported for sfincs_version {sfincs_version}."
                 )
@@ -1100,15 +1143,17 @@ class SfincsConfigVariables(BaseSettings):
 
             # Evaluate condition when present
             condition = extra.get("condition")
-            try:
-                if condition is not None and not eval(condition, {}, data):
+            if condition is not None:
+                try:
+                    matches = eval(condition, {}, data)
+                except Exception as e:  # noqa
+                    raise ValueError(f"Condition eval failed for key '{key}': {e}")
+                if not matches:
                     continue
-            except Exception:
-                pass  # condition evaluation failed — write anyway
 
             # Skip fields not (yet) valid for the targeted sfincs_version
             version_status = _version_status(extra, sfincs_version)
-            if version_status == "too_new":
+            if version_status == "too_old":
                 continue
 
             # Decide always vs skip-if-default
@@ -1121,12 +1166,13 @@ class SfincsConfigVariables(BaseSettings):
             )
             always = extra.get("always", False) and not suppress_always
             explicitly_set = key in self._explicit_keys
-            if not always and not explicitly_set and field_info is not None:
-                try:
-                    if value == field_info.default:
-                        continue
-                except Exception:
-                    pass  # exotic default type — write anyway
+            if (
+                not always
+                and not explicitly_set
+                and field_info is not None
+                and value == field_info.default
+            ):
+                continue
 
             # Format for the sfincs.inp text format; other values (numbers, plain
             # strings) are already fine as-is and get stringified on write.
