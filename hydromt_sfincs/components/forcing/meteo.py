@@ -218,7 +218,6 @@ class SfincsMeteo(ModelComponent):
             and ignored if data is a Dataset
         """
         self._initialize()
-        assert self._data is not None
 
         name_required = isinstance(data, np.ndarray) or (
             isinstance(data, xr.DataArray) and data.name is None
@@ -230,7 +229,7 @@ class SfincsMeteo(ModelComponent):
                 data.name = name
             data = data.to_dataset()
         elif not isinstance(data, xr.Dataset):
-            raise ValueError(f"cannot set data of type {type(data).__name__}")
+            raise TypeError(f"cannot set data of type {type(data).__name__}")
 
         # Check if the time coordinates of the data match the model
         model_start, model_end = self.model.get_model_time()
@@ -244,6 +243,10 @@ class SfincsMeteo(ModelComponent):
                 f"from {time_start} to {time_end}."
             )
 
+        # make sure the new data data time index is used
+        if "time" in self._data:
+            self._data = self._data.reindex(time=data.indexes["time"])
+
         # TODO: don't we always want to reset the data when setting new data?
         # that would mean that you can never have 1D and 2D data at the same time
         if len(self._data) == 0:  # empty grid
@@ -251,7 +254,7 @@ class SfincsMeteo(ModelComponent):
         else:
             for dvar in data.data_vars:
                 if dvar in self._data and self.root.is_reading_mode():
-                    logger.warning(f"Replacing grid map: {dvar}")
+                    logger.warning(f"Replacing meteo data: {dvar}")
                 self._data[dvar] = data[dvar]
 
     def clear(self):
