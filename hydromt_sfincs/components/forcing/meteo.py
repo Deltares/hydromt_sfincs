@@ -47,7 +47,6 @@ class SfincsMeteo(ModelComponent):
         if self._data is None:
             self._initialize()
 
-        assert self._data is not None
         return self._data
 
     def _initialize(self, skip_read=False) -> None:
@@ -66,11 +65,14 @@ class SfincsMeteo(ModelComponent):
         # check that read mode is on
         self.root._assert_read_mode()
 
-        assert variable in [
+        if variable not in [
             "precip",
             "wind",
             "press",
-        ], f"Variable {variable} not supported. Supported variables are 'precip', 'wind', 'press'."
+        ]:
+            raise ValueError(
+                f"Variable {variable} not supported. Supported variables are 'precip', 'wind', 'press'."
+            )
 
         filtered_dict = {key: value for key, value in _METEO.items() if variable in key}
 
@@ -137,11 +139,14 @@ class SfincsMeteo(ModelComponent):
         # check that write mode is on
         self.root._assert_write_mode()
 
-        assert variable in [
+        if variable not in [
             "precip",
             "wind",
             "press",
-        ], f"Variable {variable} not supported. Supported variables are 'precip', 'wind', 'press'."
+        ]:
+            raise ValueError(
+                f"Variable {variable} not supported. Supported variables are 'precip', 'wind', 'press'."
+            )
         filtered_dict = {key: value for key, value in _METEO.items() if variable in key}
 
         for name in filtered_dict:
@@ -217,8 +222,6 @@ class SfincsMeteo(ModelComponent):
             Name of new map layer, this is used to overwrite the name of a DataArray
             and ignored if data is a Dataset
         """
-        self._initialize()
-
         name_required = isinstance(data, np.ndarray) or (
             isinstance(data, xr.DataArray) and data.name is None
         )
@@ -243,19 +246,10 @@ class SfincsMeteo(ModelComponent):
                 f"from {time_start} to {time_end}."
             )
 
-        # make sure the new data data time index is used
-        if "time" in self._data:
-            self._data = self._data.reindex(time=data.indexes["time"])
-
-        # TODO: don't we always want to reset the data when setting new data?
-        # that would mean that you can never have 1D and 2D data at the same time
-        if len(self._data) == 0:  # empty grid
-            self._data = data
-        else:
-            for dvar in data.data_vars:
-                if dvar in self._data and self.root.is_reading_mode():
-                    logger.warning(f"Replacing meteo data: {dvar}")
-                self._data[dvar] = data[dvar]
+        if len(self.data) > 0:
+            existng_vars = list(self._data.data_vars)
+            logger.warning("Replacing existing data: {}".format(existng_vars))
+        self._data = data
 
     def clear(self):
         """Clear the data attribute."""

@@ -55,7 +55,6 @@ class SfincsBoundaryBase(ModelComponent):
         """
         if self._data is None:
             self._initialize()
-        assert self._data is not None
         return self._data
 
     def _initialize(self, skip_read: bool = False) -> None:
@@ -266,7 +265,12 @@ class SfincsBoundaryBase(ModelComponent):
             combined.loc[dict(index=ds.indexes["index"])] = ds[varname]
 
             # Fill missing values along time dimension
-            combined = combined.interpolate_na(dim="time").bfill("time").fillna(0)
+            combined = combined.interpolate_na(dim="time")
+            if combined.isnull().any():
+                logger.warning(
+                    "Missing values found after interpolation timeseries, filling with backward fill and zeros."
+                )
+                combined = combined.bfill("time").fillna(0)
 
         # Replace variable in dataset and ensure time coordinate ordering
         self._data = self.data.reindex(time=combined.time)
