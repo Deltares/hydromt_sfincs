@@ -378,6 +378,12 @@ class SfincsConfigVariables(BaseSettings):
         ge=0.0,
         description="Relaxation in uvmean (seconds)",
     )
+    stopdepth: float | None = Field(
+        None,
+        ge=0.0,
+        description="[DEPRECATED] Minimum water depth for stopping the simulation (m)",
+        json_schema_extra={"max_version": "2.1.2"},
+    )
 
     # ================================================================
     # Roughness
@@ -911,13 +917,18 @@ class SfincsConfigVariables(BaseSettings):
         0, ge=0, le=1, description="Write max flux output (1: yes, 0: no)"
     )
     storevel: int = Field(
-        0, ge=0, le=1, description="Write instantaneous velocity output (1: yes, 0: no)"
+        0,
+        ge=0,
+        le=1,
+        description="Write instantaneous velocity output (1: yes, 0: no)",
+        json_schema_extra={"always": True},
     )
     storecumprcp: int = Field(
         0,
         ge=0,
         le=1,
         description="Write cumulative precipitation output (1: yes, 0: no)",
+        json_schema_extra={"always": True},
     )
     storetwet: int = Field(
         0, ge=0, le=1, description="Write time-wet output (1: yes, 0: no)"
