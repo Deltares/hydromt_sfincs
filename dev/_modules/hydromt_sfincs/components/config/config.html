@@ -26,8 +26,8 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
-<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+  <link href="../../../../_static/styles/theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/autodoc_pydantic.css" />
@@ -35,10 +35,10 @@
     <link rel="stylesheet" type="text/css" href="../../../../_static/theme-deltares.css?v=a3fd7a5a" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="../../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="../../../../_static/scripts/fontawesome.js?digest=cb8930eaaf36d9849b67"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
-<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
 
     <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
@@ -47,7 +47,7 @@
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/hydromt_sfincs/components/config/config';</script>
     <script>
-        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_version = '0.21.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
         DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0-rc';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
@@ -434,7 +434,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt</span><span class="w"> </span><span class="kn">import</span> <span class="n">hydromt_step</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelComponent</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.readers</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_config</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.components.config.config_variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsConfigVariables</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
@@ -448,10 +447,10 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">SfincsConfig</span><span class="p">(</span><span class="n">ModelComponent</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">""" " Class to read and write SFINCS configuration files (sfincs.inp).</span>
 
-<span class="sd">    This class provides methods for reading and writing SFINCS configuration files,</span>
-<span class="sd">    updating configuration variables, and managing file paths for model input files.</span>
-<span class="sd">    It uses a Pydantic model ([`SfincsConfigVariables`](hydromt_sfincs.components.config.config.SfincsConfigVariables))</span>
-<span class="sd">    for validation and serialization of configuration variables.</span>
+<span class="sd">    This class is the interface between the model and its</span>
+<span class="sd">    ([`SfincsConfigVariables`](hydromt_sfincs.components.config.config.SfincsConfigVariables))</span>
+<span class="sd">    data attribute, which performs the actual reading, writing and validation of</span>
+<span class="sd">    configuration variables. It manages file paths and the model's grid/root state.</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
@@ -494,16 +493,12 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Read a text file with the sfincs configuration from the root folder and populate</span>
 <span class="sd">        the SfincsConfigVariables. This function also determines the grid type and updates</span>
-<span class="sd">        the grid properties of the SfincsModel (e.g. crs and extent)."""</span>
+<span class="sd">        the grid properties of the SfincsModel (e.g. crs and extent).</span>
+<span class="sd">        """</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_read_mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_read_mode</span><span class="p">()</span>
 
-        <span class="c1"># Read the config file</span>
-        <span class="n">inp_dict</span> <span class="o">=</span> <span class="n">read_config</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
-
-        <span class="c1"># FIXME: when reading an existing config, you don't want to start with all possible variables?</span>
-        <span class="c1"># Convert dictionary to SfincsConfig instance</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="n">inp_dict</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">SfincsConfigVariables</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
 
         <span class="c1"># Update the grid properties from the configuration</span>
         <span class="c1"># This will either drop the quadtree component or the regular component?</span>
@@ -513,7 +508,11 @@
 <div class="viewcode-block" id="SfincsConfig.write">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.config.SfincsConfig.write.html#hydromt_sfincs.components.config.SfincsConfig.write">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"sfincs.inp"</span><span class="p">,</span> <span class="n">write_description</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"sfincs.inp"</span><span class="p">,</span>
+        <span class="n">write_description</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">write_comments</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">explicit_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Write the SfincsConfigVariables to a text file in the root folder of the model.</span>
 
@@ -522,78 +521,26 @@
 <span class="sd">        filename (str):</span>
 <span class="sd">            The name of the file to write the configuration to. Default is "sfincs.inp".</span>
 <span class="sd">        write_description (bool):</span>
-<span class="sd">            If True, include variable descriptions in the output file.  Default is False.</span>
+<span class="sd">            If True, append the schema field description as a trailing comment.</span>
+<span class="sd">            Default is False.</span>
+<span class="sd">        write_comments (bool):</span>
+<span class="sd">            If True, append the original inline comment read from the source</span>
+<span class="sd">            file (if any) as a trailing comment, taking priority over</span>
+<span class="sd">            write_description for keys that have one. Default is False.</span>
+<span class="sd">        explicit_only (bool):</span>
+<span class="sd">            If True, write only fields explicitly read or set. Default is False.</span>
 <span class="sd">        """</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_write_mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_write_mode</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">isabs</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span> <span class="o">/</span> <span class="n">filename</span>
 
-        <span class="c1"># Create parent directories if they do not exist</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-        <span class="c1"># exclude_unset: Whether to exclude fields that have not been explicitly set.</span>
-        <span class="c1"># exclude_defaults: Whether to exclude fields that are set to their default value.</span>
-        <span class="c1"># exclude_none: Whether to exclude fields that have a value of `None`.</span>
-        <span class="c1"># include: A set of fields to include in the output.</span>
-        <span class="c1"># exclude: A set of fields to exclude from the output.</span>
-
-        <span class="n">model_fields</span> <span class="o">=</span> <span class="n">SfincsConfigVariables</span><span class="o">.</span><span class="n">model_fields</span>
-        <span class="n">data_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
-
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="c1"># Never write None</span>
-                <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">continue</span>
-
-                <span class="n">field_info</span> <span class="o">=</span> <span class="n">model_fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-                <span class="n">extra</span> <span class="o">=</span> <span class="p">(</span><span class="n">field_info</span><span class="o">.</span><span class="n">json_schema_extra</span> <span class="ow">or</span> <span class="p">{})</span> <span class="k">if</span> <span class="n">field_info</span> <span class="k">else</span> <span class="p">{}</span>
-
-                <span class="c1"># Evaluate condition when present</span>
-                <span class="n">condition</span> <span class="o">=</span> <span class="n">extra</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"condition"</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">condition</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">try</span><span class="p">:</span>
-                        <span class="k">if</span> <span class="ow">not</span> <span class="nb">eval</span><span class="p">(</span><span class="n">condition</span><span class="p">,</span> <span class="p">{},</span> <span class="n">data_dict</span><span class="p">):</span>  <span class="c1"># noqa: S307</span>
-                            <span class="k">continue</span>
-                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                        <span class="k">pass</span>  <span class="c1"># condition evaluation failed — write anyway</span>
-
-                <span class="c1"># Decide always vs skip-if-default</span>
-                <span class="n">always</span> <span class="o">=</span> <span class="n">extra</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"always"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">always</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">field_info</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                        <span class="k">try</span><span class="p">:</span>
-                            <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="n">field_info</span><span class="o">.</span><span class="n">default</span><span class="p">:</span>
-                                <span class="k">continue</span>
-                        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                            <span class="k">pass</span>  <span class="c1"># exotic default type — write anyway</span>
-
-                <span class="c1"># Serialise and write</span>
-                <span class="c1"># Preserve float type if the field is declared as float</span>
-                <span class="k">if</span> <span class="n">field_info</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">field_info</span><span class="o">.</span><span class="n">annotation</span> <span class="ow">is</span> <span class="nb">float</span><span class="p">:</span>
-                    <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="k">else</span> <span class="n">value</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">value</span> <span class="o">=</span> <span class="n">convert_to_number</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
-                    <span class="n">string</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
-                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-                    <span class="n">valstr</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">])</span>
-                    <span class="n">string</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">valstr</span><span class="si">}</span><span class="s2">"</span>
-                <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">"strftime"</span><span class="p">):</span>
-                    <span class="n">dstr</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y%m</span><span class="si">%d</span><span class="s2"> %H%M%S"</span><span class="p">)</span>
-                    <span class="n">string</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">dstr</span><span class="si">}</span><span class="s2">"</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">string</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
-
-                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">model_fields</span><span class="p">:</span>
-                    <span class="n">description</span> <span class="o">=</span> <span class="n">model_fields</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">description</span>
-                    <span class="k">if</span> <span class="n">description</span> <span class="ow">and</span> <span class="n">write_description</span><span class="p">:</span>
-                        <span class="n">string</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">" # </span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">"</span>
-
-                <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">string</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span>
+            <span class="n">write_description</span><span class="o">=</span><span class="n">write_description</span><span class="p">,</span>
+            <span class="n">write_comments</span><span class="o">=</span><span class="n">write_comments</span><span class="p">,</span>
+            <span class="n">explicit_only</span><span class="o">=</span><span class="n">explicit_only</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SfincsConfig.get">
@@ -611,7 +558,7 @@
 <span class="sd">            If True and the value is a string or Path, return the absolute path.</span>
 <span class="sd">        """</span>
 
-        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">fallback</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">fallback</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">fallback</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">fallback</span>
@@ -647,22 +594,7 @@
 <span class="sd">            If True, skips validation of the new value. Default is False, meaning pydantic validation will be performed.</span>
 <span class="sd">            This checks amongst others for correct data types and valid ranges.</span>
 <span class="sd">        """</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-            <span class="c1"># Give warning for now instead of error, since you might want to set custom variables that are not in the config model?</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">' is not a valid attribute of SfincsConfig. Adding it as a custom attribute."</span>
-            <span class="p">)</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-            <span class="k">return</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">skip_validation</span><span class="p">:</span>
-            <span class="c1"># Merge full data to run full validation, including mode="before" for datetimes</span>
-            <span class="n">new_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
-            <span class="n">new_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">new_data</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">skip_validation</span><span class="o">=</span><span class="n">skip_validation</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SfincsConfig.update">
@@ -696,13 +628,7 @@
 
         <span class="k">if</span> <span class="n">updates</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Updating </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">updates</span><span class="p">)</span><span class="si">}</span><span class="s2"> attributes in model config."</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">skip_validation</span><span class="p">:</span>
-                <span class="c1"># Bulk update without validation</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">model_update</span><span class="p">(</span><span class="n">updates</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">new_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
-                <span class="n">new_data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">updates</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">new_data</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">set_values</span><span class="p">(</span><span class="n">updates</span><span class="p">,</span> <span class="n">skip_validation</span><span class="o">=</span><span class="n">skip_validation</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SfincsConfig.update_grid_from_config">
@@ -806,17 +732,6 @@
             <span class="k">return</span> <span class="n">value_path</span></div>
 </div>
 
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">convert_to_number</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Convert a value to a number if possible, otherwise return the original value."""</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="n">num</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">num</span><span class="p">)</span> <span class="k">if</span> <span class="n">num</span><span class="o">.</span><span class="n">is_integer</span><span class="p">()</span> <span class="k">else</span> <span class="n">num</span>
-    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">value</span>
 </pre></div>
 
                 </article>
@@ -872,8 +787,8 @@
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
-<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -907,7 +822,7 @@
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.21.0.
 </p></div>
       
     </div>

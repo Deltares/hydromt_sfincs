@@ -27,8 +27,8 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/autodoc_pydantic.css" />
@@ -36,10 +36,10 @@
     <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css?v=a3fd7a5a" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="../_static/scripts/fontawesome.js?digest=cb8930eaaf36d9849b67"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
 
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
@@ -48,7 +48,7 @@
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.workflows.downscaling.downscale_floodmap';</script>
     <script>
-        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_version = '0.21.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
         DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0-rc';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
@@ -531,7 +531,6 @@
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscale_floodmap_webmercator.html">hydromt_sfincs.workflows.downscale_floodmap_webmercator</a></li>
 </ul>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.readers.read_config.html">hydromt_sfincs.readers.read_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.readers.read_binary_map.html">hydromt_sfincs.readers.read_binary_map</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.writers.write_binary_map.html">hydromt_sfincs.writers.write_binary_map</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.readers.read_binary_map_index.html">hydromt_sfincs.readers.read_binary_map_index</a></li>
@@ -651,25 +650,25 @@ level is returned (no DEM subtraction, no <code class="docutils literal notransl
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>zsmax</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">xr.DataArray</span></code> or <code class="xref py py-class docutils literal notranslate"><span class="pre">xu.UgridDataArray</span></code>) – Maximum water level (m).  When multiple timesteps are present the
 maximum over all timesteps is used.</p></li>
-<li><p><strong>dep</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, or <code class="xref py py-class docutils literal notranslate"><span class="pre">xr.DataArray</span></code>) – High-resolution DEM (m) of the model region.</p></li>
+<li><p><strong>dep</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code>, <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, or <code class="xref py py-class docutils literal notranslate"><span class="pre">xr.DataArray</span></code>) – High-resolution DEM (m) of the model region.</p></li>
 <li><p><strong>reproj_method</strong> (<code class="docutils literal notranslate"><span class="pre">{&quot;nearest&quot;,</span> <span class="pre">&quot;bilinear&quot;}</span></code>, <em>optional</em>) – WSE interpolation onto the DEM grid, by default <code class="docutils literal notranslate"><span class="pre">&quot;nearest&quot;</span></code>.  On a
 regular grid <code class="docutils literal notranslate"><span class="pre">&quot;bilinear&quot;</span></code> uses the reproject engine; on a quadtree it
 uses a scattered interpolator over the cell centres.</p></li>
-<li><p><strong>subtract_dem</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Subtract the DEM to return flood depth (<code class="docutils literal notranslate"><span class="pre">True</span></code>, default) or return
+<li><p><strong>subtract_dem</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Subtract the DEM to return flood depth (<code class="docutils literal notranslate"><span class="pre">True</span></code>, default) or return
 the raw interpolated water level (<code class="docutils literal notranslate"><span class="pre">False</span></code>).</p></li>
-<li><p><strong>indices</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, or <code class="xref py py-class docutils literal notranslate"><span class="pre">xr.DataArray</span></code>, <em>optional</em>) – Pre-computed cell-index raster (exact containment; used for
+<li><p><strong>indices</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code>, <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, or <code class="xref py py-class docutils literal notranslate"><span class="pre">xr.DataArray</span></code>, <em>optional</em>) – Pre-computed cell-index raster (exact containment; used for
 <code class="docutils literal notranslate"><span class="pre">reproj_method=&quot;nearest&quot;</span></code> and to mask pixels outside the domain).</p></li>
-<li><p><strong>hmin</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – Minimum water depth (m) to be considered flooded, by default 0.05.
+<li><p><strong>hmin</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – Minimum water depth (m) to be considered flooded, by default 0.05.
 Ignored when <code class="docutils literal notranslate"><span class="pre">subtract_dem</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
 <li><p><strong>gdf_mask</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">gpd.GeoDataFrame</span></code>, <em>optional</em>) – Polygons to mask the output (area outside is set to NaN).</p></li>
-<li><p><strong>floodmap_fn</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <em>optional</em>) – Output flood-depth GeoTIFF.  Required (for file input) when
+<li><p><strong>floodmap_fn</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code> or <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <em>optional</em>) – Output flood-depth GeoTIFF.  Required (for file input) when
 <code class="docutils literal notranslate"><span class="pre">subtract_dem</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
-<li><p><strong>zsmap_fn</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <em>optional</em>) – Output water-level GeoTIFF.  Required (for file input) when
+<li><p><strong>zsmap_fn</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code> or <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <em>optional</em>) – Output water-level GeoTIFF.  Required (for file input) when
 <code class="docutils literal notranslate"><span class="pre">subtract_dem</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
-<li><p><strong>zoom_level</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>, <em>optional</em>) – Overview level of the raster dataset (regular-grid nearest only).</p></li>
-<li><p><strong>nrmax</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <em>optional</em>) – Block size in pixels, by default 2000.</p></li>
+<li><p><strong>zoom_level</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> or <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>, <em>optional</em>) – Overview level of the raster dataset (regular-grid nearest only).</p></li>
+<li><p><strong>nrmax</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <em>optional</em>) – Block size in pixels, by default 2000.</p></li>
 <li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">logging.Logger</span></code></a>, <em>optional</em>) – Logger instance.</p></li>
-<li><p><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>, <em>optional</em>) – Extra keyword arguments forwarded to <code class="docutils literal notranslate"><span class="pre">RasterDataArray.to_raster</span></code>
+<li><p><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>, <em>optional</em>) – Extra keyword arguments forwarded to <code class="docutils literal notranslate"><span class="pre">RasterDataArray.to_raster</span></code>
 (only for the in-memory path).</p></li>
 </ul>
 </dd>
@@ -772,8 +771,8 @@ from that file; the in-memory path returns the array directly.</p>
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -807,7 +806,7 @@ from that file; the in-memory path returns the array directly.</p>
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.21.0.
 </p></div>
       
     </div>

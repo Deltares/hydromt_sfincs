@@ -26,8 +26,8 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
-<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+  <link href="../../../../_static/styles/theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/autodoc_pydantic.css" />
@@ -35,10 +35,10 @@
     <link rel="stylesheet" type="text/css" href="../../../../_static/theme-deltares.css?v=a3fd7a5a" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="../../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="../../../../_static/scripts/fontawesome.js?digest=cb8930eaaf36d9849b67"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
-<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
 
     <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
@@ -47,7 +47,7 @@
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/hydromt_sfincs/components/config/config_variables';</script>
     <script>
-        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_version = '0.21.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
         DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0-rc';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
@@ -441,12 +441,122 @@
 <span class="sd">* ``json_schema_extra={"condition": "&lt;expr&gt;"}`` — written only when the</span>
 <span class="sd">  Python expression *&lt;expr&gt;* evaluates to ``True`` against the current</span>
 <span class="sd">  model-field values **and** the value differs from the field default.</span>
+<span class="sd">* ``json_schema_extra={"min_version": "&lt;X.Y.Z&gt;"}`` — field was introduced in</span>
+<span class="sd">  this SFINCS kernel version; not written when ``sfincs_version`` is older.</span>
+<span class="sd">* ``json_schema_extra={"max_version": "&lt;X.Y.Z&gt;"}`` — field is deprecated as of</span>
+<span class="sd">  this kernel version; when ``sfincs_version`` is newer it is only kept if</span>
+<span class="sd">  explicitly present in the source file (never force-written via ``always``).</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">field_validator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">PrivateAttr</span><span class="p">,</span> <span class="n">field_validator</span><span class="p">,</span> <span class="n">model_serializer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseSettings</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">MIN_SUPPORTED_SFINCS_VERSION</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">NOW</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">second</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">microsecond</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tzinfo</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_config</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Read the raw key-value pairs from a SFINCS input file (sfincs.inp).</span>
+
+<span class="sd">    Only splits lines into raw string key-value pairs (stripping comments); all</span>
+<span class="sd">    type coercion and validation is done by :py:meth:`SfincsConfigVariables.read`</span>
+<span class="sd">    via pydantic.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filename : str | Path</span>
+<span class="sd">        The path to the input file containing the SFINCS model settings.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple[dict[str, str], dict[str, str]]</span>
+<span class="sd">        The raw model settings (as strings), and any inline trailing comment</span>
+<span class="sd">        (after ``#``) found per key.</span>
+<span class="sd">    """</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">filename</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"SFINCS input file '</span><span class="si">{</span><span class="n">filename</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span><span class="si">}</span><span class="s2">' does not exist."</span>
+        <span class="p">)</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">fid</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+
+    <span class="n">inp_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">comments</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="c1"># Check if first character is #</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"#"</span><span class="p">):</span>
+            <span class="c1"># Full line comment</span>
+            <span class="k">continue</span>
+        <span class="c1"># Find last character before #</span>
+        <span class="n">comment_idx</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">"#"</span><span class="p">)</span>
+        <span class="n">comment</span> <span class="o">=</span> <span class="s2">""</span>
+        <span class="k">if</span> <span class="n">comment_idx</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">comment</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="n">comment_idx</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="p">[:</span><span class="n">comment_idx</span><span class="p">]</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"="</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="o">=</span> <span class="n">line</span>
+        <span class="n">inp_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">if</span> <span class="n">comment</span><span class="p">:</span>
+            <span class="n">comments</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">comment</span>
+
+    <span class="k">return</span> <span class="n">inp_dict</span><span class="p">,</span> <span class="n">comments</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_version</span><span class="p">(</span><span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Parse a simple 'X.Y.Z'-style version string into a comparable tuple."""</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">part</span><span class="p">)</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">version</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_version_status</span><span class="p">(</span>
+    <span class="n">extra</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="n">user_sfincs_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">min_supported_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">MIN_SUPPORTED_SFINCS_VERSION</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Classify a field as compatible, unsupported, deprecated, or unknown."""</span>
+    <span class="n">min_version</span> <span class="o">=</span> <span class="n">extra</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"min_version"</span><span class="p">)</span>
+    <span class="n">max_version</span> <span class="o">=</span> <span class="n">extra</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"max_version"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">min_version</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">max_version</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"ok"</span>
+    <span class="k">if</span> <span class="n">user_sfincs_version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Unversioned/legacy file: a field with a max_version is inherently a</span>
+        <span class="c1"># legacy/deprecated key regardless of version; a min_version-only field</span>
+        <span class="c1"># is of unknown validity since we can't confirm the target kernel supports it.</span>
+        <span class="k">return</span> <span class="s2">"deprecated"</span> <span class="k">if</span> <span class="n">max_version</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">"unknown"</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="n">_parse_version</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">user_sfincs_version</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">min_version</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">current</span> <span class="o">&lt;</span> <span class="n">_parse_version</span><span class="p">(</span><span class="n">min_version</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s2">"too_old"</span>
+        <span class="k">if</span> <span class="n">max_version</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">current</span> <span class="o">&gt;</span> <span class="n">_parse_version</span><span class="p">(</span><span class="n">max_version</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s2">"deprecated"</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"unknown"</span>
+    <span class="k">return</span> <span class="s2">"ok"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_below_min_supported</span><span class="p">(</span>
+    <span class="n">user_sfincs_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">min_supported_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">MIN_SUPPORTED_SFINCS_VERSION</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return whether a configured SFINCS version is below the package minimum."""</span>
+    <span class="k">if</span> <span class="n">user_sfincs_version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_parse_version</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">user_sfincs_version</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">_parse_version</span><span class="p">(</span>
+            <span class="n">min_supported_version</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
 
 
 <div class="viewcode-block" id="SfincsConfigVariables">
@@ -454,11 +564,7 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">SfincsConfigVariables</span><span class="p">(</span><span class="n">BaseSettings</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""SFINCS configuration variables with defaults matching sfincs_input.f90."""</span>
 
-<div class="viewcode-block" id="SfincsConfigVariables.Config">
-<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.config.SfincsConfigVariables.html#hydromt_sfincs.components.config.SfincsConfigVariables.Config">[docs]</a>
-    <span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
-        <span class="n">extra</span> <span class="o">=</span> <span class="s2">"allow"</span></div>
-
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"allow"</span><span class="p">)</span>
 
     <span class="c1"># ================================================================</span>
     <span class="c1"># Grid</span>
@@ -467,59 +573,59 @@
         <span class="kc">None</span><span class="p">,</span>
         <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"Number of grid cells in x-direction"</span><span class="p">,</span>
-        <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"always"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+        <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"condition"</span><span class="p">:</span> <span class="s2">"qtrfile is None"</span><span class="p">},</span>
     <span class="p">)</span>
     <span class="n">nmax</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">None</span><span class="p">,</span>
         <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"Number of grid cells in y-direction"</span><span class="p">,</span>
-        <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"always"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+        <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"condition"</span><span class="p">:</span> <span class="s2">"qtrfile is None"</span><span class="p">},</span>
     <span class="p">)</span>
     <span class="n">dx</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">None</span><span class="p">,</span>
         <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"Grid size in x-direction"</span><span class="p">,</span>
-        <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"always"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+        <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"condition"</span><span class="p">:</span> <span class="s2">"qtrfile is None"</span><span class="p">},</span>
     <span class="p">)</span>
     <span class="n">dy</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">None</span><span class="p">,</span>
         <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"Grid size in y-direction"</span><span class="p">,</span>
-        <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"always"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+        <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"condition"</span><span class="p">:</span> <span class="s2">"qtrfile is None"</span><span class="p">},</span>
     <span class="p">)</span>
     <span class="n">x0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"Origin of the grid in the x-direction"</span><span class="p">,</span>
-        <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"always"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+        <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"condition"</span><span class="p">:</span> <span class="s2">"qtrfile is None"</span><span class="p">},</span>
     <span class="p">)</span>
     <span class="n">y0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"Origin of the grid in the y-direction"</span><span class="p">,</span>
-        <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"always"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+        <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"condition"</span><span class="p">:</span> <span class="s2">"qtrfile is None"</span><span class="p">},</span>
     <span class="p">)</span>
     <span class="n">rotation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="mf">0.0</span><span class="p">,</span>
         <span class="n">gt</span><span class="o">=-</span><span class="mi">360</span><span class="p">,</span>
         <span class="n">lt</span><span class="o">=</span><span class="mi">360</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"Rotation of the grid in degrees from the x-axis (east) in anti-clockwise direction"</span><span class="p">,</span>
+        <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"condition"</span><span class="p">:</span> <span class="s2">"qtrfile is None"</span><span class="p">},</span>
     <span class="p">)</span>
 
     <span class="c1"># ================================================================</span>
     <span class="c1"># Time (always written)</span>
     <span class="c1"># ================================================================</span>
     <span class="n">tref</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">second</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">microsecond</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+        <span class="n">NOW</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"Reference time for simulation"</span><span class="p">,</span>
         <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"always"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
     <span class="p">)</span>
     <span class="n">tstart</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">second</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">microsecond</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+        <span class="n">NOW</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"Start time for the simulation"</span><span class="p">,</span>
         <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"always"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
     <span class="p">)</span>
     <span class="n">tstop</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">second</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">microsecond</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+        <span class="n">NOW</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"Stop time for the simulation"</span><span class="p">,</span>
         <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"always"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
     <span class="p">)</span>
@@ -544,7 +650,12 @@
         <span class="mf">3600.0</span><span class="p">,</span>
         <span class="n">ge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"Spatial map output interval (seconds)"</span><span class="p">,</span>
-        <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"always"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+        <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"always"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"min_version"</span><span class="p">:</span> <span class="s2">"2.3.0"</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">dtout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"[DEPRECATED] legacy alias of dtmapout"</span><span class="p">,</span>
+        <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"max_version"</span><span class="p">:</span> <span class="s2">"2.3.0"</span><span class="p">,</span> <span class="s2">"new_name"</span><span class="p">:</span> <span class="s2">"dtmapout"</span><span class="p">},</span>
     <span class="p">)</span>
     <span class="n">dtmaxout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="mf">86400.0</span><span class="p">,</span>
@@ -696,6 +807,12 @@
         <span class="mf">3600.0</span><span class="p">,</span>
         <span class="n">ge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"Relaxation in uvmean (seconds)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">stopdepth</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"[DEPRECATED] Minimum water depth for stopping the simulation (m)"</span><span class="p">,</span>
+        <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"max_version"</span><span class="p">:</span> <span class="s2">"2.1.2"</span><span class="p">},</span>
     <span class="p">)</span>
 
     <span class="c1"># ================================================================</span>
@@ -1017,6 +1134,10 @@
     <span class="c1"># ================================================================</span>
     <span class="c1"># Other settings</span>
     <span class="c1"># ================================================================</span>
+    <span class="n">sfincs_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Target SFINCS kernel version; controls min_version/max_version field handling"</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">global_</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="mi">0</span><span class="p">,</span>
         <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
@@ -1033,6 +1154,12 @@
     <span class="n">epsg</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"EPSG code for spatial reference system"</span><span class="p">,</span>
+        <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"min_version"</span><span class="p">:</span> <span class="s2">"2.3.0"</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">crs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"[DEPRECATED] legacy alias of epsg"</span><span class="p">,</span>
+        <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"max_version"</span><span class="p">:</span> <span class="s2">"2.0.0"</span><span class="p">,</span> <span class="s2">"new_name"</span><span class="p">:</span> <span class="s2">"epsg"</span><span class="p">},</span>
     <span class="p">)</span>
     <span class="n">utmzone</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">None</span><span class="p">,</span>
@@ -1296,6 +1423,294 @@
     <span class="p">)</span>
 
     <span class="c1"># ================================================================</span>
+    <span class="c1"># Read / write</span>
+    <span class="c1"># ================================================================</span>
+    <span class="c1"># Keys that were explicitly present in the source file (or set afterwards);</span>
+    <span class="c1"># these always round-trip on write(), even if they equal the field default.</span>
+    <span class="n">_explicit_keys</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">set</span><span class="p">)</span>
+    <span class="c1"># Inline trailing comment (after '#') read per key from the source file, used</span>
+    <span class="c1"># by write(write_comments=True) in preference over the schema description.</span>
+    <span class="n">_comments</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SfincsConfigVariables.read">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.config.SfincsConfigVariables.html#hydromt_sfincs.components.config.SfincsConfigVariables.read">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"SfincsConfigVariables"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Read a SFINCS input file (sfincs.inp) into a validated instance."""</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">inp_dict</span><span class="p">,</span> <span class="n">comments</span> <span class="o">=</span> <span class="n">_read_config</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">)</span>
+
+        <span class="c1"># Warn about keys not recognized by the schema; they are kept as</span>
+        <span class="c1"># pass-through attributes (Config.extra = "allow") and always rewritten.</span>
+        <span class="n">model_fields</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">model_fields</span>
+        <span class="n">sfincs_version</span> <span class="o">=</span> <span class="n">inp_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sfincs_version"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">_is_below_min_supported</span><span class="p">(</span><span class="n">sfincs_version</span><span class="p">):</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"sfincs_version </span><span class="si">{</span><span class="n">sfincs_version</span><span class="si">}</span><span class="s2"> is below the minimum supported "</span>
+                <span class="sa">f</span><span class="s2">"SFINCS version </span><span class="si">{</span><span class="n">MIN_SUPPORTED_SFINCS_VERSION</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="ne">UserWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">inp_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="n">field_info</span> <span class="o">=</span> <span class="n">model_fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">field_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">extra</span> <span class="o">=</span> <span class="n">field_info</span><span class="o">.</span><span class="n">json_schema_extra</span> <span class="ow">or</span> <span class="p">{}</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="n">_version_status</span><span class="p">(</span><span class="n">extra</span><span class="p">,</span> <span class="n">sfincs_version</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">sfincs_version</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"too_old"</span><span class="p">,</span> <span class="s2">"deprecated"</span><span class="p">}:</span>
+                <span class="k">continue</span>
+
+            <span class="n">new_name</span> <span class="o">=</span> <span class="n">extra</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"new_name"</span><span class="p">)</span>
+            <span class="n">new_field</span> <span class="o">=</span> <span class="n">model_fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">new_name</span><span class="p">)</span> <span class="k">if</span> <span class="n">new_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">new_extra</span> <span class="o">=</span> <span class="n">new_field</span><span class="o">.</span><span class="n">json_schema_extra</span> <span class="ow">or</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">new_field</span> <span class="k">else</span> <span class="p">{}</span>
+            <span class="n">replacement_supported</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">new_field</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="n">_version_status</span><span class="p">(</span><span class="n">new_extra</span><span class="p">,</span> <span class="n">sfincs_version</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"ok"</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">replacement_supported</span> <span class="ow">and</span> <span class="n">new_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">inp_dict</span><span class="p">:</span>
+                <span class="n">inp_dict</span><span class="p">[</span><span class="n">new_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">comments</span><span class="p">:</span>
+                    <span class="n">comments</span><span class="p">[</span><span class="n">new_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">comments</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="n">inp_dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">comments</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">' is not supported for sfincs_version </span><span class="si">{</span><span class="n">sfincs_version</span><span class="si">}</span><span class="s2">; "</span>
+                <span class="sa">f</span><span class="s2">"removed</span><span class="si">{</span><span class="sa">f</span><span class="s1">' or migrated to </span><span class="si">{</span><span class="n">new_name</span><span class="si">!r}</span><span class="s1">'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">new_name</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
+
+        <span class="n">unknown_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">inp_dict</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">model_fields</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">unknown_keys</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Unrecognized key(s) in </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">unknown_keys</span><span class="si">}</span><span class="s2">. "</span>
+                <span class="s2">"They will be kept and rewritten as-is."</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Warn about keys that are outside the range of the targeted sfincs_version</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">inp_dict</span><span class="p">:</span>
+            <span class="n">field_info</span> <span class="o">=</span> <span class="n">model_fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">field_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">extra</span> <span class="o">=</span> <span class="n">field_info</span><span class="o">.</span><span class="n">json_schema_extra</span> <span class="ow">or</span> <span class="p">{}</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="n">_version_status</span><span class="p">(</span><span class="n">extra</span><span class="p">,</span> <span class="n">sfincs_version</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">"deprecated"</span><span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">' is deprecated for sfincs_version </span><span class="si">{</span><span class="n">sfincs_version</span><span class="si">}</span><span class="s2">."</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">"too_old"</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">' is not yet supported for sfincs_version </span><span class="si">{</span><span class="n">sfincs_version</span><span class="si">}</span><span class="s2">."</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Full pydantic validation (type coercion, field constraints, validators)</span>
+        <span class="n">instance</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">inp_dict</span><span class="p">)</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">_explicit_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">inp_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">_comments</span> <span class="o">=</span> <span class="n">comments</span>
+        <span class="k">return</span> <span class="n">instance</span></div>
+
+
+<div class="viewcode-block" id="SfincsConfigVariables.write">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.config.SfincsConfigVariables.html#hydromt_sfincs.components.config.SfincsConfigVariables.write">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+        <span class="n">write_description</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">write_comments</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">explicit_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Write the configuration variables to a SFINCS input file (sfincs.inp).</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">        -----------</span>
+<span class="sd">        filename (str | Path):</span>
+<span class="sd">            The file to write the configuration to.</span>
+<span class="sd">        write_description (bool):</span>
+<span class="sd">            If True, append the schema field description as a trailing comment.</span>
+<span class="sd">            Default is False.</span>
+<span class="sd">        write_comments (bool):</span>
+<span class="sd">            If True, append the original inline comment read from the source</span>
+<span class="sd">            file (if any) as a trailing comment, taking priority over</span>
+<span class="sd">            write_description for keys that have one. Default is False.</span>
+<span class="sd">        explicit_only (bool):</span>
+<span class="sd">            If True, write only fields explicitly read or set. Default is False.</span>
+<span class="sd">        """</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">filename</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">model_fields</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">model_fields</span>
+        <span class="c1"># model_dump() applies the write-only filtering/formatting via the</span>
+        <span class="c1"># _serialize_for_write model_serializer below.</span>
+        <span class="n">data_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">"explicit_only"</span><span class="p">:</span> <span class="n">explicit_only</span><span class="p">})</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">string</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+
+                <span class="n">comment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comments</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="k">if</span> <span class="n">write_comments</span> <span class="k">else</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">comment</span> <span class="ow">and</span> <span class="n">write_description</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">model_fields</span><span class="p">:</span>
+                    <span class="n">comment</span> <span class="o">=</span> <span class="n">model_fields</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">description</span>
+                <span class="k">if</span> <span class="n">comment</span><span class="p">:</span>
+                    <span class="n">string</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">" # </span><span class="si">{</span><span class="n">comment</span><span class="si">}</span><span class="s2">"</span>
+
+                <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">string</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span></div>
+
+
+    <span class="nd">@model_serializer</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"wrap"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_for_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handler</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Filter and format field values for writing to sfincs.inp.</span>
+
+<span class="sd">        Drops fields whose ``condition``/``min_version``/``max_version`` policy</span>
+<span class="sd">        excludes them, or that equal their default and were never explicitly</span>
+<span class="sd">        read/set; formats the remaining values (numbers, joined lists, dates) as</span>
+<span class="sd">        plain strings/numbers ready to write. Used exclusively by :py:meth:`write`;</span>
+<span class="sd">        use :py:meth:`to_dict` for the unfiltered, native-typed configuration.</span>
+<span class="sd">        """</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">handler</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">model_fields</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">model_fields</span>
+        <span class="n">sfincs_version</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sfincs_version"</span><span class="p">)</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">info</span><span class="o">.</span><span class="n">context</span>
+                <span class="ow">and</span> <span class="n">info</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"explicit_only"</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_explicit_keys</span>
+            <span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Never write None</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">field_info</span> <span class="o">=</span> <span class="n">model_fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">extra</span> <span class="o">=</span> <span class="p">(</span><span class="n">field_info</span><span class="o">.</span><span class="n">json_schema_extra</span> <span class="ow">or</span> <span class="p">{})</span> <span class="k">if</span> <span class="n">field_info</span> <span class="k">else</span> <span class="p">{}</span>
+
+            <span class="c1"># Evaluate condition when present</span>
+            <span class="n">condition</span> <span class="o">=</span> <span class="n">extra</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"condition"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">condition</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">matches</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">condition</span><span class="p">,</span> <span class="p">{},</span> <span class="n">data</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Condition eval failed for key '</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">': </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">matches</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+            <span class="c1"># Skip fields not (yet) valid for the targeted sfincs_version</span>
+            <span class="n">version_status</span> <span class="o">=</span> <span class="n">_version_status</span><span class="p">(</span><span class="n">extra</span><span class="p">,</span> <span class="n">sfincs_version</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">version_status</span> <span class="o">==</span> <span class="s2">"too_old"</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Decide always vs skip-if-default</span>
+            <span class="c1"># A deprecated field is never force-written via "always"; it is only</span>
+            <span class="c1"># kept when it was explicitly read/set (round-trip fidelity). A field</span>
+            <span class="c1"># with an unconfirmed min_version (unversioned file) is treated the</span>
+            <span class="c1"># same way, since we can't confirm the target kernel supports it.</span>
+            <span class="n">suppress_always</span> <span class="o">=</span> <span class="n">version_status</span> <span class="o">==</span> <span class="s2">"deprecated"</span> <span class="ow">or</span> <span class="p">(</span>
+                <span class="n">version_status</span> <span class="o">==</span> <span class="s2">"unknown"</span> <span class="ow">and</span> <span class="s2">"min_version"</span> <span class="ow">in</span> <span class="n">extra</span>
+            <span class="p">)</span>
+            <span class="n">always</span> <span class="o">=</span> <span class="n">extra</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"always"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">suppress_always</span>
+            <span class="n">explicitly_set</span> <span class="o">=</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_explicit_keys</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="ow">not</span> <span class="n">always</span>
+                <span class="ow">and</span> <span class="ow">not</span> <span class="n">explicitly_set</span>
+                <span class="ow">and</span> <span class="n">field_info</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="n">value</span> <span class="o">==</span> <span class="n">field_info</span><span class="o">.</span><span class="n">default</span>
+            <span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Format for the sfincs.inp text format; other values (numbers, plain</span>
+            <span class="c1"># strings) are already fine as-is and get stringified on write.</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">"strftime"</span><span class="p">):</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y%m</span><span class="si">%d</span><span class="s2"> %H%M%S"</span><span class="p">)</span>
+
+            <span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+<div class="viewcode-block" id="SfincsConfigVariables.to_dict">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.config.SfincsConfigVariables.html#hydromt_sfincs.components.config.SfincsConfigVariables.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">explicit_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the configuration as a plain dict of native Python values.</span>
+
+<span class="sd">        Unlike :py:meth:`model_dump`, this is not filtered or formatted for the</span>
+<span class="sd">        sfincs.inp file: every set field (including conditionally-irrelevant or</span>
+<span class="sd">        default-valued ones) is included with its native Python type (e.g.</span>
+<span class="sd">        ``datetime``, ``list[float]``), making it suitable for introspection.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        explicit_only (bool):</span>
+<span class="sd">            If True, return only fields explicitly read or set. Default is False.</span>
+<span class="sd">        """</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">model_fields</span><span class="p">}</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_extra</span> <span class="ow">or</span> <span class="p">{})</span>
+        <span class="k">if</span> <span class="n">explicit_only</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">key</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_explicit_keys</span>
+            <span class="p">}</span>
+        <span class="k">return</span> <span class="n">data</span></div>
+
+
+<div class="viewcode-block" id="SfincsConfigVariables.set_value">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.config.SfincsConfigVariables.html#hydromt_sfincs.components.config.SfincsConfigVariables.set_value">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_value</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">skip_validation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"SfincsConfigVariables"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a new, validated instance with a single attribute updated.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">        -----------</span>
+<span class="sd">        key (str):</span>
+<span class="sd">            The key to set the value for.</span>
+<span class="sd">        value (Any):</span>
+<span class="sd">            The value to set.</span>
+<span class="sd">        skip_validation (bool):</span>
+<span class="sd">            If True, skips pydantic validation of the new value.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_values</span><span class="p">({</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span><span class="p">},</span> <span class="n">skip_validation</span><span class="o">=</span><span class="n">skip_validation</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SfincsConfigVariables.set_values">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.config.SfincsConfigVariables.html#hydromt_sfincs.components.config.SfincsConfigVariables.set_values">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">updates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">skip_validation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"SfincsConfigVariables"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a new, validated instance with multiple attributes updated.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">        -----------</span>
+<span class="sd">        updates (dict):</span>
+<span class="sd">            Mapping of key-value pairs to update.</span>
+<span class="sd">        skip_validation (bool):</span>
+<span class="sd">            If True, skips pydantic validation of the new values.</span>
+<span class="sd">        """</span>
+        <span class="n">model_fields</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">model_fields</span>
+        <span class="n">unknown_keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">updates</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">model_fields</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">unknown_keys</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">' is not a valid attribute of SfincsConfig. Adding it as a custom attribute."</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">skip_validation</span><span class="p">:</span>
+            <span class="n">instance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">updates</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">new_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+            <span class="n">new_data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">updates</span><span class="p">)</span>
+            <span class="n">instance</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">new_data</span><span class="p">)</span>
+
+        <span class="n">instance</span><span class="o">.</span><span class="n">_explicit_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_explicit_keys</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">updates</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">_comments</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_comments</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">instance</span></div>
+
+
+    <span class="c1"># ================================================================</span>
     <span class="c1"># Validators</span>
     <span class="c1"># ================================================================</span>
 <div class="viewcode-block" id="SfincsConfigVariables.parse_custom_datetime">
@@ -1310,6 +1725,16 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"Invalid datetime format: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">. Expected format: YYYYMMDD HHMMSS"</span>
                 <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span></div>
+
+
+<div class="viewcode-block" id="SfincsConfigVariables.parse_space_separated_floats">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.config.SfincsConfigVariables.html#hydromt_sfincs.components.config.SfincsConfigVariables.parse_space_separated_floats">[docs]</a>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"cdwnd"</span><span class="p">,</span> <span class="s2">"cdval"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parse_space_separated_floats</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">split</span><span class="p">()]</span>
         <span class="k">return</span> <span class="n">v</span></div>
 </div>
 
@@ -1371,8 +1796,8 @@
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
-<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1406,7 +1831,7 @@
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.21.0.
 </p></div>
       
     </div>
