@@ -1,7 +1,10 @@
-from datetime import datetime
-from os.path import abspath, dirname, join, isfile
 import logging
+from datetime import datetime
+from os.path import abspath, dirname, isfile, join
+
+import pandas as pd
 import pytest
+import xarray as xr
 
 from hydromt_sfincs.sfincs import SfincsModel
 
@@ -42,6 +45,24 @@ def test_create_uniform_precip(model_config):
     model_config.precipitation.create_uniform(timeseries=timeseries)
 
     assert "precip" in model_config.precipitation.data
+
+
+def test_set_precip_reindexes_existing_data_to_new_time_index(model_config):
+    old_times = pd.date_range("2010-02-05", periods=2, freq="D")
+    new_times = pd.date_range("2020-02-05", periods=2, freq="D")
+
+    model_config.precipitation.set(
+        xr.DataArray([1.0, 2.0], coords={"time": old_times}, dims="time"),
+        name="precip",
+    )
+    model_config.precipitation.set(
+        xr.DataArray([3.0, 4.0], coords={"time": new_times}, dims="time"),
+        name="precip",
+    )
+
+    data = model_config.precipitation.data
+    assert data.indexes["time"].equals(new_times)
+    assert data["precip"].values.tolist() == [3.0, 4.0]
 
 
 def test_create_meteo_latlon(tmp_dir):
