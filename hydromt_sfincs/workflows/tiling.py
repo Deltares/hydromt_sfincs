@@ -6,7 +6,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from itertools import product
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional, Union, TYPE_CHECKING
 
 import geopandas as gpd
 import numpy as np
@@ -15,16 +15,19 @@ from affine import Affine
 from PIL import Image
 from pyproj import Transformer
 
+if TYPE_CHECKING:
+    from hydromt_sfincs import SfincsModel
+
 from .merge import merge_multi_dataarrays
 
 __all__ = [
-    "create_topobathy_tiles",
-    "downscale_floodmap_webmercator",
-    "make_index_tiles",
     "write_html",
+    "downscale_floodmap_webmercator",
+    "create_index_tiles",
+    "create_topobathy_tiles",
 ]
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 def write_html(
@@ -295,57 +298,67 @@ def downscale_floodmap_webmercator(
                     elevation2png(hmax, floodmap_fn)
 
 
-def make_index_tiles(
-    quadtree_grid,
-    root: Union[str, Path],
+def create_index_tiles(
+    model: "SfincsModel",
+    root: Union[str, Path] = None,
     region: Optional[gpd.GeoDataFrame] = None,
     zoom_range: Union[int, List[int]] = [0, 13],
     fmt: str = "png",
     write_html_viewer: bool = True,
     max_workers: Optional[int] = None,
-    logger: logging.Logger = logger,
 ) -> None:
-    """Create webmercator index tiles for an SFINCS quadtree grid.
+    """Create webmercator index tiles for an SFINCS grid.
 
     Index tiles map each pixel of a webmercator XYZ tile to the index of
-    the corresponding SFINCS quadtree cell (``-999`` where there is no
-    match). Tiles are written to ``<root>/indices/<zoom>/<x>/<y>.<ext>``.
+    the corresponding SFINCS cell (``-999`` where there is no match).
+
+    Tiles are written to:
+    ``<root>/indices/<zoom>/<x>/<y>.<ext>``
 
     Parameters
     ----------
-    quadtree_grid : SfincsQuadtreeGrid
-        Grid component providing ``get_indices_at_points``, ``exterior``,
-        and ``model.crs``.
+    model : SfincsModel
+        SFINCS model containing the grid component.
     root : Union[str, Path]
-        Parent directory; tiles land in ``<root>/indices``.
+        Parent directory where index tiles are stored. Defaults to the model root path.
     region : gpd.GeoDataFrame, optional
-        Area for which tiles are generated. Defaults to
-        ``quadtree_grid.exterior``.
+        Region for which tiles are generated. Defaults to the grid region.
     zoom_range : Union[int, List[int]], optional
-        Range of zoom levels, by default ``[0, 13]``. A single int is
-        treated as ``[0, zoom_range]``.
+        Range of zoom levels. A single integer is interpreted as
+        ``[0, zoom_range]``.
     fmt : str, optional
-        Output format: ``"png"`` (default) or ``"bin"`` (raw int32).
+        Output format: ``"png"`` or ``"bin"``.
     write_html_viewer : bool, optional
-        If True (default) and ``fmt == "png"``, write a Leaflet
-        ``index.html`` alongside the tiles.
+        Write a Leaflet viewer when using PNG output.
     max_workers : int, optional
-        Number of worker threads used to render tiles concurrently.
-        Defaults to ``os.cpu_count()``. Pass ``1`` to disable parallelism.
+        Number of worker threads.
     """
+
+    grid = model.grid_component
+
     if region is None:
-        region = quadtree_grid.exterior
+        region = grid.region
+
+    if root is None:
+        root = os.path.join(model.root.path, "tiling")
 
     index_path = os.path.join(root, "indices")
     npix = 256
+
     extension = "dat" if fmt == "bin" else fmt
 
     if isinstance(zoom_range, int):
         zoom_range = [0, zoom_range]
 
-    # Webmercator bounds of the region
+    # Region bounds in WebMercator
     minx, miny, maxx, maxy = region.total_bounds
-    transformer = Transformer.from_crs(region.crs.to_epsg(), 3857)
+
+    transformer = Transformer.from_crs(
+        region.crs,
+        3857,
+        always_xy=True,
+    )
+
     if region.crs.is_geographic:
         minx, miny = map(
             max, zip(transformer.transform(miny, minx), [-20037508.34] * 2)
@@ -358,48 +371,77 @@ def make_index_tiles(
         maxx, maxy = map(min, zip(transformer.transform(maxx, maxy), [20037508.34] * 2))
 
     transformer_inv = Transformer.from_crs(
-        3857, quadtree_grid.model.crs, always_xy=True
+        3857,
+        grid.crs,
+        always_xy=True,
     )
 
     # Eagerly touch the lazy ifirst cache to avoid a race in worker threads.
-    _ = quadtree_grid.get_indices_at_points(np.array([[0.0]]), np.array([[0.0]]))
+    _ = grid.get_indices_at_points(np.array([[0.0]]), np.array([[0.0]]))
 
-    def _process_tile(izoom: int, transform: Affine, col: int, row: int) -> None:
+    def _process_tile(args):
+        izoom, transform, col, row = args
+
         zoom_path = os.path.join(index_path, str(izoom))
-        file_name = os.path.join(zoom_path, str(col), f"{row}.{extension}")
 
-        x = np.arange(0, npix) + 0.5
-        y = np.arange(0, npix) + 0.5
+        file_name = os.path.join(
+            zoom_path,
+            str(col),
+            f"{row}.{extension}",
+        )
+
+        # Pixel centers
+        x = np.arange(npix) + 0.5
+        y = np.arange(npix) + 0.5
+
         x3857, y3857 = transform * (x, y)
         x3857, y3857 = np.meshgrid(x3857, y3857)
 
-        x_model, y_model = transformer_inv.transform(x3857, y3857)
-        ind = quadtree_grid.get_indices_at_points(x_model, y_model)
+        # Convert to model CRS
+        xx, yy = transformer_inv.transform(
+            x3857,
+            y3857,
+        )
 
-        if np.any(ind >= 0):
-            os.makedirs(os.path.join(zoom_path, str(col)), exist_ok=True)
+        # Lookup SFINCS cell indices
+        indices = grid.get_indices_at_points(xx, yy)
+
+        indices = np.asarray(indices)
+        indices[indices < 0] = -999
+
+        # Skip empty tiles
+        if np.any(indices >= 0):
+            os.makedirs(
+                os.path.join(zoom_path, str(col)),
+                exist_ok=True,
+            )
+
             if fmt == "bin":
                 with open(file_name, "wb") as fid:
-                    fid.write(ind.astype(np.int32))
+                    fid.write(indices.astype(np.int32))
+
             elif fmt == "png":
-                ind = ind.copy()
-                ind[ind == -999] = 0
-                int2png(ind, file_name)
+                indices_png = indices.copy()
+                indices_png[indices_png == -999] = 0
+                int2png(indices_png, file_name)
 
     max_workers = max_workers or os.cpu_count() or 1
+
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = []
+
         for izoom in range(zoom_range[0], zoom_range[1] + 1):
             logger.debug(f"Processing zoom level {izoom}")
             for transform, col, row in tile_window(izoom, minx, miny, maxx, maxy):
                 futures.append(
-                    executor.submit(_process_tile, izoom, transform, col, row)
+                    executor.submit(_process_tile, (izoom, transform, col, row)),
                 )
         for future in futures:
             future.result()
 
     if write_html_viewer and fmt == "png":
         os.makedirs(index_path, exist_ok=True)
+
         write_html(
             os.path.join(index_path, "index.html"),
             title="Index tiles",
@@ -408,41 +450,17 @@ def make_index_tiles(
         )
 
 
-def _resolve_elevation_list_from_catalog(
-    data_catalog, res: Optional[float] = None, bbox=None
-) -> List[dict]:
-    """Build an elevation_list by resolving every source in a data catalog.
-
-    Used as a fallback when no explicit ``elevation_list`` is supplied to
-    the tiling workflows. Assumes all sources in ``data_catalog`` are
-    raster elevation datasets (true in DelftDashboard, where the model's
-    catalog is populated only with topobathy sources).
-    """
-    resolved: List[dict] = []
-    for name in list(data_catalog.sources):
-        try:
-            zoom = (res, "meter") if res is not None else None
-            da = data_catalog.get_rasterdataset(name, bbox=bbox, buffer=10, zoom=zoom)
-            da.name = "elevation"
-        except Exception:
-            logger.warning(f"No data in domain for {name}, skipped.")
-            continue
-        resolved.append({"da": da})
-    return resolved
-
-
 def create_topobathy_tiles(
     root: Union[str, Path],
     region: gpd.GeoDataFrame,
     elevation_list: Optional[List[dict]] = None,
     data_catalog=None,
-    index_path: Union[str, Path] = None,
+    index_path: Optional[Union[str, Path]] = None,
     zoom_range: Union[int, List[int]] = [0, 13],
     z_range: List[int] = [-20000.0, 20000.0],
-    fmt: str = "bin",
+    fmt: str = "png",
     write_html_viewer: bool = True,
     max_workers: Optional[int] = None,
-    logger: logging.Logger = logger,
 ) -> None:
     """Create webmercator topobathy tiles for a given region.
 
@@ -467,7 +485,7 @@ def create_topobathy_tiles(
     z_range : List[int], optional
         Range of valid elevations, by default [-20000.0, 20000.0]
     fmt : str, optional
-        The desired output format of the topobathy tiles, by default "bin". Also "png" and "tif" are supported.
+        The desired output format of the topobathy tiles, by default "png". Also "bin" and "tif" are supported.
     write_html_viewer : bool, optional
         If True (default), also write an ``index.html`` Leaflet viewer
         alongside the tiles so they can be previewed in a browser.
@@ -589,6 +607,33 @@ def create_topobathy_tiles(
             legend_title="Topobathy",
             max_native_zoom=zoom_range[1],
         )
+
+
+## Internal helper functions
+def _resolve_elevation_list_from_catalog(
+    data_catalog, res: Optional[float] = None, bbox=None
+) -> List[dict]:
+    """Build an elevation_list by resolving every source in a data catalog.
+
+    Used as a fallback when no explicit ``elevation_list`` is supplied to
+    the tiling workflows. Assumes all sources in ``data_catalog`` are
+    raster elevation datasets (true in DelftDashboard, where the model's
+    catalog is populated only with topobathy sources).
+    """
+    resolved: List[dict] = []
+    for name in list(data_catalog.sources):
+        try:
+            zoom = (res, "meter") if res is not None else None
+            da = data_catalog.get_rasterdataset(name, bbox=bbox, buffer=10, zoom=zoom)
+            da.name = "elevation"
+        except Exception:
+            logger.warning(f"No data in domain for {name}, skipped.")
+            continue
+        resolved.append({"da": da})
+    return resolved
+
+
+## Helper functions for tile math
 
 
 def deg2num(lat_deg, lon_deg, zoom):
