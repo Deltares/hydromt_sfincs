@@ -96,7 +96,7 @@ def merge_multi_dataarrays(
             method = "bilinear"
         else:
             method = "average"
-    else:
+    elif method is None:
         method = "bilinear"
 
     if da_like is not None:  # reproject first raster to destination grid

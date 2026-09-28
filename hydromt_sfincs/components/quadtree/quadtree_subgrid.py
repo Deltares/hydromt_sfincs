@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, List
 
 import xarray as xr
 
+from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
 from .subgrid_quadtree_builder import build_subgrid_table_quadtree
@@ -103,6 +104,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
         # Write XArray dataset to netcdf file
         self.data.to_netcdf(abs_file_path)
 
+    @hydromt_step
     def create(
         self,
         elevation_list,
@@ -121,7 +123,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
         zmax=999999.0,
         write_dep_tif=True,
         write_man_tif=False,
-        weight_option="min",
+        weight_option="mean_all",
         buffer_cells=0,
         interp_method: str = "linear",
         quiet=False,
@@ -144,7 +146,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             huthresh (float, optional): Huthresh. Defaults to 0.01.
             zmin (float, optional): Minimum elevation. Defaults to -999999.0.
             zmax (float, optional): Maximum elevation. Defaults to 999999.0.
-            weight_option (str, optional): Weight option. Defaults to "min".
+            weight_option (str, optional): Weight option ("mean_all", "mean" or "min"). Defaults to "mean_all".
             buffer_cells (int, optional): Number of buffer cells. Defaults to 0.
             interp_method (str, optional): Interpolation method for buffer cells. Defaults to "linear".
             quiet (bool, optional): Quiet mode. Defaults to False.

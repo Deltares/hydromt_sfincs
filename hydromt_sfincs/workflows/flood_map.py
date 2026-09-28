@@ -122,6 +122,7 @@ class FloodMap:
         self.zs = None
         self.volume = None
         self.method = "level"
+        self._layout = None
         self.subgrid = None
         self.xc = None
         self.yc = None
@@ -227,15 +228,47 @@ class FloodMap:
         self.ds = xr.Dataset()
         self.ds["water_depth"] = rioxarray.open_rasterio(tiffile, masked=True).squeeze()
 
+    def set_cell_layout(self, n: np.ndarray, m: np.ndarray) -> None:
+        """Set the row/column position of every cell, for 2-D map output.
+
+        SFINCS writes 2-D ``(n, m)`` map output for regular grids and for
+        single-level quadtrees, while the index raster refers to cells by
+        their position in the grid file. With the layout set, 2-D arrays
+        passed to :meth:`set_water_level` and :meth:`set_volume` are mapped
+        to cell order as ``array[n - 1, m - 1]``.
+
+        Parameters
+        ----------
+        n, m : np.ndarray
+            1-based row and column index per cell, as stored in the quadtree
+            grid file (``n`` and ``m`` variables).
+        """
+        self._layout = (np.asarray(n, dtype=np.int64) - 1, np.asarray(m, dtype=np.int64) - 1)
+
+    def _to_cells(self, arr):
+        """Return ``arr`` in cell order; 2-D input needs the cell layout."""
+        if arr is None or isinstance(arr, float):
+            return arr
+        arr = np.asarray(arr)
+        if arr.ndim == 2:
+            if getattr(self, "_layout", None) is None:
+                raise ValueError(
+                    "2-D map output needs set_cell_layout(n, m) to map it to cells."
+                )
+            n, m = self._layout
+            return arr[n, m]
+        return arr.ravel()
+
     def set_water_level(self, zs: float | np.ndarray) -> None:
         """Set the water level data used for flood depth computation.
 
         Parameters
         ----------
         zs : float | np.ndarray
-            A scalar or 1-D array of water levels indexed by cell index.
+            A scalar, a 1-D array of water levels indexed by cell index, or a
+            2-D ``(n, m)`` array (needs :meth:`set_cell_layout`).
         """
-        self.zs = zs
+        self.zs = self._to_cells(zs)
 
     def set_volume(self, volume: np.ndarray | None) -> None:
         """Set the subgrid cell volumes.
@@ -256,6 +289,7 @@ class FloodMap:
             typically ``zvolmax`` or ``subgrid_volume`` from the SFINCS map
             file. NaN marks dry cells.
         """
+        volume = self._to_cells(volume)
         self.volume = None if volume is None else np.asarray(volume, dtype=np.float64)
 
     def set_method(self, method: str) -> None:

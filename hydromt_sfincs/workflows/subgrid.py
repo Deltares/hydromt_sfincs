@@ -97,7 +97,7 @@ def subgrid_q_table(
     option: int = 2,
     z_zmin_a: float = -99999.0,
     z_zmin_b: float = -99999.0,
-    weight_option: str = "min",
+    weight_option: str = "mean_all",
     roughness_type: str = "manning",
 ):
     """
@@ -111,7 +111,15 @@ def subgrid_q_table(
     option : int, option to use "old" or "new" method for computing conveyance depth at u/v points
     z_zmin_a : float, elevation of lowest pixel in neighboring cell A [m]
     z_zmin_b : float, elevation of lowest pixel in neighboring cell B [m]
-    weight_option : str, weight of q between sides A and B ("min" or "mean")
+    weight_option : str, weight of q between sides A and B ("mean_all", "mean" or "min")
+        "mean_all" : plain mean of q and h over all pixels of both sides (default; this is what the
+                     original MATLAB OET tables of the subgrid paper effectively used)
+        "mean"     : blend of min and mean of both sides, weighted by the wet fractions of the two sides
+        "min"      : minimum of q_a and q_b (and corresponding h)
+        In all cases the conveyance depth is capped at the head over the face bed (the lowest pixel of
+        the shallower half): a face never conveys more than a weir with that head. The cap is always
+        satisfied for "min"; for "mean" and "mean_all" it removes the bottom-bin depth jump at barely
+        submerged faces (wetting fronts, levee crests).
     roughness_type : str, "manning" or "chezy"
 
     Returns
@@ -125,6 +133,9 @@ def subgrid_q_table(
     ffit : float, fitting coefficient [-]
     zz   : np.ndarray (nlevels) elevation of vertical levels [m]
     """
+    if weight_option != "mean_all" and weight_option != "mean" and weight_option != "min":
+        raise ValueError("weight_option must be 'mean_all', 'mean' or 'min'")
+
     # Initialize output arrays
     havg = np.zeros(nlevels)
     nrep = np.zeros(nlevels)
@@ -237,7 +248,12 @@ def subgrid_q_table(
                 pwet_a = 1.0
                 pwet_b = 1.0
 
-            if weight_option == "mean":
+            if weight_option == "mean_all":
+                # Plain mean over all pixels of both sides
+                q = q_all
+                hmean = h_all
+
+            elif weight_option == "mean":
                 # Weight increases linearly from 0 to 1 from bottom to top bin use percentage wet in sides A and B
                 w = 2 * np.minimum(pwet_a, pwet_b) / max(pwet_a + pwet_b, 1.0e-9)
                 q = (1.0 - w) * q_min + w * q_all  # Weighted average of q_min and q_all
@@ -255,6 +271,13 @@ def subgrid_q_table(
 
             pwet[ibin] = 0.5 * (pwet_a + pwet_b)  # Combined pwet_a and pwet_b
 
+        # A face cannot convey more than the head over its own bed (weir behaviour):
+        # cap the conveyance depth and use Manning at that head with the mean roughness
+        h_cap = zbin - max(zmin_a, zmin_b)
+        if hmean > h_cap:
+            hmean = h_cap
+            q = h_cap ** (5.0 / 3.0) / np.mean(manning)
+
         havg[ibin] = hmean  # conveyance depth
         nrep[ibin] = hmean ** (5.0 / 3.0) / q  # Representative n for qmean and hmean
 
@@ -268,7 +291,7 @@ def subgrid_q_table(
     # mean water depth in cell as computed in SFINCS (assuming linear relation between water level and water depth above zmax)
     hfit = havg_top + zmax - zmin
     # Compute q and navg
-    if weight_option == "mean":
+    if weight_option == "mean" or weight_option == "mean_all":
         # Use entire uv point
         h = np.maximum(zfit - elevation, 0.0)  # water depth in each pixel
         q = np.mean(h ** (5.0 / 3.0) / manning)  # combined unit discharge for cell

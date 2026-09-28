@@ -42,7 +42,7 @@ def build_subgrid_table_quadtree(
     huthresh: float = 0.01,
     zmin: float = -999999.0,
     zmax: float = 999999.0,
-    weight_option: str = "min",
+    weight_option: str = "mean_all",
     roughness_type: str = "manning",
     buffer_cells: int = 0,
     interp_method: str = "linear",
@@ -107,7 +107,7 @@ class SubgridTableQuadtree:
         huthresh: float = 0.01,
         zmin: float = -999999.0,
         zmax: float = 999999.0,
-        weight_option: str = "min",
+        weight_option: str = "mean_all",
         roughness_type: str = "manning",
         buffer_cells: int = 0,
         interp_method: str = "linear",
@@ -819,7 +819,7 @@ class SubgridTableQuadtree:
                         refi,  # refinement factor
                         nr_levels,  # number of levels
                         huthresh,  # huthresh
-                        weight_option,  # weight option ("min" or "mean")
+                        weight_option,  # weight option ("mean_all", "mean" or "min")
                         roughness_type,
                     )
 
