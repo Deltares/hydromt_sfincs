@@ -55,7 +55,6 @@ class SfincsBoundaryBase(ModelComponent):
         """
         if self._data is None:
             self._initialize()
-        assert self._data is not None
         return self._data
 
     def _initialize(self, skip_read: bool = False) -> None:
@@ -248,8 +247,10 @@ class SfincsBoundaryBase(ModelComponent):
         if isinstance(data, pd.DataFrame):
             da = self._validate_and_prepare_df(data)
             ds = da.to_dataset(name=varname)
-        else:
+        elif isinstance(data, xr.Dataset):
             ds = data
+        else:
+            raise TypeError(f"cannot set timeseries data of type {type(data).__name__}")
 
         if len(ds.indexes["index"]) == self.nr_points:
             # full replacement
@@ -264,7 +265,12 @@ class SfincsBoundaryBase(ModelComponent):
             combined.loc[dict(index=ds.indexes["index"])] = ds[varname]
 
             # Fill missing values along time dimension
-            combined = combined.interpolate_na(dim="time").bfill("time").fillna(0)
+            combined = combined.interpolate_na(dim="time")
+            if combined.isnull().any():
+                logger.warning(
+                    "Missing values found after interpolation timeseries, filling with backward fill and zeros."
+                )
+                combined = combined.bfill("time").fillna(0)
 
         # Replace variable in dataset and ensure time coordinate ordering
         self._data = self.data.reindex(time=combined.time)
@@ -342,7 +348,7 @@ class SfincsBoundaryBase(ModelComponent):
                 raise ValueError("gdf must be provided if no data exists yet")
 
         if not isinstance(gdf, gpd.GeoDataFrame):
-            raise ValueError("gdf must be a GeoDataFrame")
+            raise TypeError("gdf must be a GeoDataFrame")
         if not pd.api.types.is_integer_dtype(gdf.index) and gdf.index.is_unique:
             raise ValueError("gdf index must be unique integers")
         if not gdf.geometry.type.isin(["Point"]).all():
@@ -360,7 +366,7 @@ class SfincsBoundaryBase(ModelComponent):
         if df is None:
             return
         if not isinstance(df, pd.DataFrame):
-            raise ValueError("df must be a DataFrame")
+            raise TypeError("df must be a DataFrame")
         if not pd.api.types.is_integer_dtype(df.columns) and df.columns.is_unique:
             raise ValueError("df column names must be unique integers")
 

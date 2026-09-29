@@ -1,7 +1,9 @@
-import pytest
-import numpy as np
-from pathlib import Path
 from os.path import isfile, join
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import pytest
 
 from hydromt_sfincs import SfincsModel
 
@@ -189,6 +191,20 @@ def test_create_timeseries(model_config):
         assert point_data.values.max() == 1
         # but length has changed accordingly
         assert len(point_data.time) == 49
+
+
+def test_set_timeseries_updates_water_level_time_index(model_config):
+    model_config.water_level.read()
+    old_times = model_config.water_level.data.indexes["time"]
+    new_times = pd.date_range("2010-02-05 12:00", periods=2, freq="12h")
+    update = pd.DataFrame({0: [1.0, 2.0]}, index=new_times)
+
+    model_config.water_level.set_timeseries(update, varname="bzs")
+
+    data = model_config.water_level.data["bzs"]
+    assert data.indexes["time"].equals(old_times.union(new_times))
+    assert data.sel(index=0, time=new_times).values.tolist() == [1.0, 2.0]
+    assert not data.sel(index=0).isnull().any()
 
 
 def test_create_timeseries_from_astro(model_config):
