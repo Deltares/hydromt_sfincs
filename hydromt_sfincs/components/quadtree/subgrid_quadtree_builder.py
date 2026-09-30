@@ -5,6 +5,7 @@ Created on Mon Mar 03 2025
 
 @author: ormondt
 """
+
 import time
 import logging
 import os
@@ -119,6 +120,11 @@ class SubgridTableQuadtree:
         logger: logging.Logger = None,
     ):
         version = "1.0"
+
+        if weight_option not in ("min", "mean", "all"):
+            raise ValueError(
+                f"weight_option must be 'min', 'mean' or 'all', got '{weight_option}'"
+            )
 
         # check if nr_subgrid_pixels is a multiple of 2
         # this is needed for symmetry around the uv points

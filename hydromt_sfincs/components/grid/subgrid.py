@@ -628,7 +628,13 @@ class SfincsSubgridTable(ModelComponent):
             1: "old" weighting method, compliant with SFINCS < v2.1.1, taking the avarage of the adjacent cells
             2: "improved" weighting method, recommended for SFINCS >= v2.1.1, that takes into account the wet fractions of the adjacent cells
         weight_option : str, optional
-            Weighting factor of the adjacent cells for the flux q at u/v points, by default "min"
+            Weighting of the two halves (adjacent cells) of the u/v control volume in the
+            conveyance at u/v points, by default "min":
+            "min": conveyance of the half with the smallest flux q;
+            "mean": blend from "min" to the whole u/v box, weighted by the wet fractions
+            of both halves (q_table_option 2 only);
+            "all": average over the whole u/v box at every level, without distinguishing
+            the halves; overrides q_table_option.
         manning_land, manning_sea : float, optional
             Constant manning roughness values for land and sea, by default 0.04 and 0.02 s.m-1/3
             Note that these values are only used when no Manning's n datasets are provided,
@@ -674,6 +680,11 @@ class SfincsSubgridTable(ModelComponent):
                 "Keyword nbins is deprecated and will be removed in future versions. Please use nr_levels instead."
             )
             nr_levels = nbins
+
+        if weight_option not in ("min", "mean", "all"):
+            raise ValueError(
+                f"weight_option must be 'min', 'mean' or 'all', got '{weight_option}'"
+            )
 
         if q_table_option == 1 and max_gradient > 20.0:
             raise ValueError(
