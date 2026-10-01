@@ -62,6 +62,8 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
         interp_method: str = "linear",
         zmin: float = -1.0e9,
         zmax: float = 1.0e9,
+        extrapolate: bool = True,
+        max_search_distance: float = 100.0,
     ):
         """Interpolate topobathy (z) data to the model grid.
 
@@ -79,6 +81,18 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
             Number of cells between datasets to ensure smooth transition of bed levels, by default 0
         interp_method : str, optional
             Interpolation method used to fill the buffer cells, by default "linear"
+        extrapolate : bool, optional
+            Cells that are still missing after merging the datasets are filled
+            by inverse-distance interpolation (see ``max_search_distance``).
+            With ``True`` (default) the remaining cells beyond that search
+            distance are also filled by nearest-neighbour extrapolation, so
+            every cell gets a value. With ``False`` cells without nearby data
+            are left NaN, so the mask step can keep them inactive.
+        max_search_distance : float, optional
+            Search distance (in cells) of the inverse-distance gap fill, by
+            default 100 (the rasterio default). Set to 0 to disable the gap
+            fill; together with ``extrapolate=False`` no missing cell is
+            filled at all.
         """
 
         nlev = self.data.attrs["nr_levels"]
@@ -111,10 +125,17 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
             # check if no nan data is present in the bed levels
             nmissing = int(np.sum(np.isnan(da_dep.values)))
             if nmissing > 0:
-                logger.warning(f"Interpolate elevation at {nmissing} cells")
-                da_dep = da_dep.raster.interpolate_na(
-                    method="rio_idw", extrapolate=True
-                )
+                if extrapolate or max_search_distance > 0:
+                    logger.warning(f"Interpolate elevation at {nmissing} cells")
+                    da_dep = da_dep.raster.interpolate_na(
+                        method="rio_idw",
+                        extrapolate=extrapolate,
+                        max_search_distance=max_search_distance,
+                    )
+                else:
+                    logger.warning(
+                        f"No elevation data at {nmissing} cells; left as NaN"
+                    )
             return da_dep
 
         self.compute_quadtree(

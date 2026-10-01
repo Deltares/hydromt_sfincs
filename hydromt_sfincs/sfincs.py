@@ -382,14 +382,26 @@ class SfincsModel(Model):
                 pass
         return script_path
 
-    def clear_spatial_components(self):
-        """Clear all spatial components."""
-        # TODO if we want this, all components should have a clear method
-        return
-        # Do something like this
-        for name, comp in self.components.items():
-            if hasattr(comp, "clear"):
-                comp.clear()
+    def clear_spatial_attributes(self) -> None:
+        """Reset all spatial model components to their empty defaults.
+
+        Re-instantiates every component except ``config``, so all grids,
+        masks, geometries and forcing are dropped while the model settings
+        are kept. Used e.g. when the coordinate system is changed and
+        existing spatial data becomes invalid. Mirrors
+        ``HurrywaveModel.clear_spatial_attributes``.
+        """
+        for name, cls in self._ALL_COMPONENTS.items():
+            if name == "config":
+                continue
+            self.components[name] = cls(self)
+        # Re-derive the grid type and (for regular grids) the grid properties
+        # such as the CRS from the config, as is done when a model is created.
+        self.config.update_grid_from_config()
+
+    def clear_spatial_components(self) -> None:
+        """Alias of :meth:`clear_spatial_attributes` (kept for compatibility)."""
+        self.clear_spatial_attributes()
 
     ## Plotting
     def plot_forcing(self, fn_out=None, forcings="all", **kwargs):
