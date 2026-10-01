@@ -144,10 +144,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             huthresh (float, optional): Huthresh. Defaults to 0.01.
             zmin (float, optional): Minimum elevation. Defaults to -999999.0.
             zmax (float, optional): Maximum elevation. Defaults to 999999.0.
-            weight_option (str, optional): Weighting of the two halves of the u/v control volume
-                in the u/v conveyance: "min" (half with the smallest flux), "mean" (blend from
-                "min" to the whole box by wet fraction) or "all" (whole-box average at every
-                level). Defaults to "min".
+            weight_option (str, optional): Weighting of the two halves of the u/v control volume. Defaults to min
             buffer_cells (int, optional): Number of buffer cells. Defaults to 0.
             interp_method (str, optional): Interpolation method for buffer cells. Defaults to "linear".
             quiet (bool, optional): Quiet mode. Defaults to False.

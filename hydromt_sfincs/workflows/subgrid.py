@@ -112,10 +112,6 @@ def subgrid_q_table(
     z_zmin_a : float, elevation of lowest pixel in neighboring cell A [m]
     z_zmin_b : float, elevation of lowest pixel in neighboring cell B [m]
     weight_option : str, weight of q between sides A and B ("min", "mean" or "all").
-        "min" takes the side with the smallest conveyance, "mean" blends from that
-        minimum to the whole u/v box using the wet fractions of both sides (option 2 only),
-        and "all" averages over the whole u/v box at every level, without distinguishing
-        sides A and B (overrides option).
     roughness_type : str, "manning" or "chezy"
 
     Returns
