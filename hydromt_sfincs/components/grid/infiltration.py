@@ -18,6 +18,7 @@ from hydromt_sfincs.components.infiltration_common import (
     clear_data,
     configure,
     configured_flavor,
+    fill_nan_in_mask,
     flavor_variables,
     get_attrs,
     regular_active_vector,
@@ -55,16 +56,13 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         self.clear()
         for name, da in layers.items():
             da = da.astype(np.float32)
-            if np.logical_and(np.isnan(da), self.mask > 0).any():
-                logger.warning("NaN values found in %s data; filled with 0", name)
-                da = da.fillna(0.0)
-            fill_value = VARIABLES[name].fill_value
-            da = da.where(self.mask > 0, fill_value)
+            da = da.copy(data=fill_nan_in_mask(da.values, self.mask.values, name))
+            da = da.where(self.mask > 0)
             da.name = name
             da.attrs.update(get_attrs(name))
             try:
                 da.raster.set_crs(self.model.crs)
-                da.raster.set_nodata(fill_value)
+                da.raster.set_nodata(np.nan)
             except Exception:
                 pass
             self.model.grid.set(da)
@@ -84,7 +82,6 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
                     ds[name].values,
                     self.mask,
                     self.mask.rename(name),
-                    fill_value=VARIABLES[name].fill_value,
                 )
         return layers
 
@@ -247,12 +244,6 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         # reproject infiltration data to model grid
         da_qinf = da_qinf.raster.mask_nodata()  # set nodata to nan
         da_qinf = da_qinf.raster.reproject_like(self.mask, method=reproj_method)
-
-        # check on nan values
-        if np.logical_and(np.isnan(da_qinf), self.mask >= 1).any():
-            logger.warning("NaN values found in infiltration data; filled with 0")
-            da_qinf = da_qinf.fillna(0)
-        da_qinf.raster.set_nodata(-9999.0)
 
         # set grid
         self._set_layers({"qinf": da_qinf}, flavor="c2d")
@@ -423,9 +414,9 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
 
         # Define outputs
         layers = {
-            "smax": xr.full_like(self.mask, -9999.0, dtype=np.float32),
-            "seff": xr.full_like(self.mask, -9999.0, dtype=np.float32),
-            "ks": xr.full_like(self.mask, -9999.0, dtype=np.float32),
+            "smax": xr.full_like(self.mask, np.nan, dtype=np.float32),
+            "seff": xr.full_like(self.mask, np.nan, dtype=np.float32),
+            "ks": xr.full_like(self.mask, np.nan, dtype=np.float32),
         }
 
         # Compute resolution land use (we are assuming that is the finest)

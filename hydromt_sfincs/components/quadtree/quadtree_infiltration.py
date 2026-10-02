@@ -19,6 +19,7 @@ from hydromt_sfincs.components.infiltration_common import (
     clear_data,
     configure,
     configured_flavor,
+    fill_nan_in_mask,
     flavor_variables,
     get_attrs,
     reset_config,
@@ -63,7 +64,10 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                 if isinstance(layer, (xr.DataArray, xu.UgridDataArray))
                 else layer
             )
-            da = xr.DataArray(values, dims=[self.data.grid.face_dimension])
+            da = xr.DataArray(
+                fill_nan_in_mask(values, self.mask.values, name),
+                dims=[self.data.grid.face_dimension],
+            )
             uda = xu.UgridDataArray(da, self.data.grid)
             uda = uda.astype(np.float32)
             uda.name = name
@@ -283,11 +287,6 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             nrmax=nrmax,
         )
 
-        # check on nan values
-        if np.logical_and(np.isnan(qinf), self.mask >= 1).any():
-            logger.warning("NaN values found in infiltration data; filled with 0")
-            qinf = np.where(np.isnan(qinf), 0, qinf)
-
         # set grid
         self._set_layers({"qinf": qinf}, flavor="c2d")
 
@@ -350,13 +349,6 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             scs,
             nrmax=nrmax,
         )
-
-        # check on nan values
-        if np.logical_and(np.isnan(scs), self.mask >= 1).any():
-            logger.warning(
-                "NaN values found in curve-number data; filled with 100 (impermeable)"
-            )
-            scs = np.where(np.isnan(scs), 100, scs)
 
         self._set_layers({"scs": scs}, flavor="cna")
 

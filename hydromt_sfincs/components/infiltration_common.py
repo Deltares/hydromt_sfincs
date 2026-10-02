@@ -50,20 +50,31 @@ class InfiltrationVariable:
     default_filename: str | None
     standard_name: str
     unit: str
-    fill_value: float = -9999.0
+    fill_value: float = 0.0
+    """Real value written where an active cell has no input data."""
 
 
 VARIABLES: dict[str, InfiltrationVariable] = {
-    name: InfiltrationVariable(name, config_key, filename, standard_name, unit)
-    for name, config_key, filename, standard_name, unit in [
-        ("qinf", "qinffile", "sfincs.qinf", "infiltration rate", "mm.hr-1"),
-        ("scs", "scsfile", "sfincs.scs", "potential soil moisture retention", "inch"),
+    name: InfiltrationVariable(
+        name, config_key, filename, standard_name, unit, fill_value=fill_value
+    )
+    for name, config_key, filename, standard_name, unit, fill_value in [
+        ("qinf", "qinffile", "sfincs.qinf", "infiltration rate", "mm.hr-1", 0.0),
+        (
+            "scs",
+            "scsfile",
+            "sfincs.scs",
+            "potential soil moisture retention",
+            "inch",
+            0.0,  # S = 0 means all rainfall runs off
+        ),
         (
             "smax",
             "smaxfile",
             "sfincs.smax",
             "potential maximum soil moisture retention",
             "m",
+            0.0,
         ),
         (
             "seff",
@@ -71,16 +82,39 @@ VARIABLES: dict[str, InfiltrationVariable] = {
             "sfincs.seff",
             "effective potential maximum soil moisture retention",
             "m",
+            0.0,
         ),
-        ("ks", "ksfile", "sfincs.ks", "saturated hydraulic conductivity", "mm.hr-1"),
-        ("psi", "psifile", "sfincs.psi", "wetting front suction head", "mm"),
-        ("sigma", "sigmafile", "sfincs.sigma", "soil moisture deficit", "-"),
-        ("f0", "f0file", "sfincs.f0", "initial infiltration capacity", "mm.hr-1"),
-        ("fc", "fcfile", "sfincs.fc", "asymptotic infiltration capacity", "mm.hr-1"),
-        ("kd", "kdfile", "sfincs.kd", "horton decay coefficient", "hr-1"),
-        ("bucket_smax", None, None, "bucket maximum storage", "mm"),
-        ("bucket_k", None, None, "bucket drainage coefficient", "hr-1"),
-        ("bucket_loss", None, None, "bucket loss fraction", "-"),
+        (
+            "ks",
+            "ksfile",
+            "sfincs.ks",
+            "saturated hydraulic conductivity",
+            "mm.hr-1",
+            0.0,  # governs Green-Ampt and CN-recovery; 0 is impermeable
+        ),
+        ("psi", "psifile", "sfincs.psi", "wetting front suction head", "mm", 0.0),
+        ("sigma", "sigmafile", "sfincs.sigma", "soil moisture deficit", "-", 0.0),
+        (
+            "f0",
+            "f0file",
+            "sfincs.f0",
+            "initial infiltration capacity",
+            "mm.hr-1",
+            0.0,
+        ),
+        (
+            "fc",
+            "fcfile",
+            "sfincs.fc",
+            "asymptotic infiltration capacity",
+            "mm.hr-1",
+            0.0,
+        ),
+        # TODO kd=0 means no decay, so f stays at f0;
+        ("kd", "kdfile", "sfincs.kd", "horton decay coefficient", "hr-1", 0.0),
+        ("bucket_smax", None, None, "bucket maximum storage", "mm", 0.0),
+        ("bucket_k", None, None, "bucket drainage coefficient", "hr-1", 0.0),
+        ("bucket_loss", None, None, "bucket loss fraction", "-", 0.0),
     ]
 }
 
@@ -180,6 +214,26 @@ def configure(config: "SfincsConfig", flavor: str, grid_type: str) -> None:
         raise ValueError(f"Unsupported grid_type: {grid_type}")
 
 
+def fill_nan_in_mask(
+    values: np.ndarray,
+    mask: np.ndarray,
+    name: str,
+) -> np.ndarray:
+    """Fill NaNs inside the active mask and warn how many cells were affected."""
+    fill = VARIABLES[name].fill_value
+    values = np.asarray(values, dtype=np.float32)
+    missing = np.isnan(values) & (np.asarray(mask) > 0)
+    n_missing = int(missing.sum())
+    if n_missing:
+        logger.warning(
+            f"{n_missing} active cells have no '{name}' data after resampling; "
+            f"filled with {fill}. Check that the input data covers the full "
+            f"model domain."
+        )
+        values = np.where(missing, np.float32(fill), values)
+    return values
+
+
 def regular_active_vector(data: xr.DataArray, mask: xr.DataArray) -> np.ndarray:
     """Flatten active regular-grid cells in SFINCS order."""
     values = np.asarray(data.values, dtype=np.float32)
@@ -192,10 +246,10 @@ def regular_vector_to_da(
     mask: xr.DataArray,
     like: xr.DataArray,
     *,
-    fill_value: float = -9999.0,
+    nodata_value: float = np.nan,
 ) -> xr.DataArray:
     """Map active-cell vectors to a full regular-grid data array."""
-    data = np.full(mask.shape[::-1], fill_value, dtype=np.float32)
+    data = np.full(mask.shape[::-1], nodata_value, dtype=np.float32)
     data.flat[np.where(mask.values.ravel(order="F"))[0]] = np.asarray(
         values, dtype=np.float32
     )
@@ -205,11 +259,11 @@ def regular_vector_to_da(
         coords=like.coords,
         dims=like.dims,
         name=like.name,
-        attrs={"_FillValue": fill_value},
+        attrs={"_FillValue": nodata_value},
     )
     try:
         da.raster.set_crs(mask.raster.crs)
-        da.raster.set_nodata(fill_value)
+        da.raster.set_nodata(nodata_value)
     except (AttributeError, ValueError):
         logger.debug(f"Could not set crs/nodata on {like.name}", exc_info=True)
     return da
