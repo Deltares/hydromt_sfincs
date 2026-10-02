@@ -261,9 +261,20 @@ class SfincsModel(Model):
 
     ## I/O
 
+    def _ordered_component_names(self) -> List[str]:
+        """Component names with the active grid first.
+
+        Other components depend on the grid for the mask, and on the regular
+        grid also for the cell index file, so it must be read/written first.
+        """
+        names = list(self.components)
+        grid_name = "grid" if self.grid_type == "regular" else "quadtree_grid"
+        if grid_name in names:
+            names.insert(0, names.pop(names.index(grid_name)))
+        return names
+
     def read(self) -> None:
         """Read SfincsModel from disk.
-
         This methods determines the grid type from the configuration file (sfincs.inp),
         and reads all relevant components that are described in the config accordingly.
 
@@ -273,7 +284,10 @@ class SfincsModel(Model):
         # always read config first
         self.config.read()
 
-        for name, comp in self.components.items():
+        # the grid carries the mask and cell index the other components need,
+        # so it is read before them regardless of component order
+        for name in self._ordered_component_names():
+            comp = self.components[name]
             if name == "config":
                 continue  # skip config
             elif self.grid_type == "regular" and name in self._QUADTREE_GRID_NAMES:
@@ -311,7 +325,9 @@ class SfincsModel(Model):
         grid_type = self.grid_type
 
         # TODO make sure that all components are in the config (in their individual write functions?)
-        for name, comp in self.components.items():
+        # the grid writes the cell index file the other components write against
+        for name in self._ordered_component_names():
+            comp = self.components[name]
             if name == "config":
                 continue
             elif grid_type == "regular" and name in self._QUADTREE_GRID_NAMES:
