@@ -46,7 +46,15 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 class SfincsQuadtreeGrid(MeshComponent):
-    """Quadtree grid component attached to an :class:`SfincsModel`."""
+    """Quadtree grid component attached to an :class:`SfincsModel`.
+
+    All layers live in the ``data`` attribute as a ``xugrid.UgridDataset``, but a
+    component may claim the layers it is responsible for through a
+    ``grid_variables`` attribute. ``write()`` keeps those out of ``sfincs.nc``
+    unless called with ``write_components=True``; the component writes them to
+    its own UGRID netcdf through :py:meth:`write_layers`. Anything not claimed
+    stays in the main file.
+    """
 
     def __init__(
         self,
@@ -211,20 +219,25 @@ class SfincsQuadtreeGrid(MeshComponent):
         ds.grid.set_crs(self.model.crs)
         self.set(ds)
 
-    def read(self, filename: Union[str, Path] = None):
+    def read(
+        self,
+        filename: Union[str, Path] = None,
+        read_components: bool = False,
+    ):
         """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object.
 
-        Only the layers owned by this component are read; component-owned layers
-        are read through the component itself, which pulls this grid in first.
+        Only the layers in the main file are read. Layers owned by a component
+        are read through that component, which pulls this grid in first if it is
+        not loaded yet.
 
         Parameters
         ----------
         file_name : str or Path, optional
             Path to the netcdf file to read, by default "sfincs.nc".
+        read_components : bool, optional
+            Also call ``read()`` on the components owning layers here, by
+            default False.
         """
-        # TODO add a `read_components: bool = False` option that, after reading
-        # the main file, also triggers read() on every component owning layers
-        # here.
 
         # check if in read mode and initialize grid
         self.root._assert_read_mode()
@@ -269,19 +282,32 @@ class SfincsQuadtreeGrid(MeshComponent):
         # Make sure epsg is stored in the config as well
         self.model.config.set("epsg", self.model.crs.to_epsg())
 
-    def write(self, filename: Union[str, Path] = "sfincs.nc"):
+        if read_components:
+            # _data is set above, so the components will not recurse back here
+            for name in self.model._QUADTREE_GRID_NAMES:
+                component = self.model.components.get(name)
+                if component is not None and getattr(component, "grid_variables", None):
+                    component.read()
+
+    def write(
+        self,
+        filename: Union[str, Path] = "sfincs.nc",
+        write_components: bool = False,
+    ):
         """Writes a quadtree SFINCS netcdf file.
 
-        Only the layers owned by this component are written; component-owned
-        layers are written through the component itself.
+        Layers claimed by a component through its ``grid_variables`` attribute are
+        kept out of this file unless ``write_components`` is True; the component
+        writes them to its own UGRID netcdf instead.
 
         Parameters
         ----------
         filename : str or Path, optional
             Path to the netcdf file to write, by default "sfincs.nc".
+        write_components : bool, optional
+            Also write the layers owned by other components, by calling their
+            ``write()``, by default False.
         """
-        # TODO add a `write_components: bool = False` option that also triggers
-        # write() on every component owning layers here.
         # TODO add an option to keep everything in the qtrfile instead of
         # splitting. That needs config support first, since several file keys
         # would then have to resolve to the same file.
@@ -311,6 +337,12 @@ class SfincsQuadtreeGrid(MeshComponent):
 
         ds.to_netcdf(abs_file_path)
         ds.close()
+
+        if write_components:
+            for name in self.model._QUADTREE_GRID_NAMES:
+                component = self.model.components.get(name)
+                if component is not None and getattr(component, "grid_variables", None):
+                    component.write()
 
     @hydromt_step
     def create(

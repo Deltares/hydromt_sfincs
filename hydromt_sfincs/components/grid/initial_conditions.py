@@ -51,14 +51,19 @@ class SfincsInitialConditions(ModelComponent):
         """Get an empty mask with the same shape as the model grid."""
         return self.model.grid.mask
 
-    def read(self):
-        # TODO discuss what we want to return/read here, pass is not so informative ..
-        # The ini file is read when all grid files are read in regulargrid.py
-        pass
+    grid_variables = ("zs",)
 
-    def write(self):
-        # The ini file is written when all grid files are written in regulargrid.py
-        pass
+    def read(self) -> None:
+        """Read the initial water level map from its own binary file."""
+        # the grid holds the mask and cell index this map is written against;
+        # check _data directly, since the data property already triggers a read
+        if self.model.grid._data is None:
+            self.model.grid.read()
+        self.model.grid.read_layers(list(self.grid_variables))
+
+    def write(self) -> None:
+        """Write the initial water level map to its own binary file."""
+        self.model.grid.write_layers(list(self.grid_variables))
 
     # Original HydroMT-SFINCS setup_ functions:
     # was not yet implemented

@@ -11,6 +11,7 @@ from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
 from hydromt_sfincs import DATADIR, workflows
+from hydromt_sfincs.utils import fill_nan_in_mask
 from hydromt_sfincs.components.infiltration_common import (
     ALL_VARS,
     BUCKET_VARS,
@@ -20,7 +21,6 @@ from hydromt_sfincs.components.infiltration_common import (
     clear_data,
     configure,
     configured_flavor,
-    fill_nan_in_mask,
     flavor_variables,
     get_attrs,
     reset_config,
@@ -67,7 +67,9 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                 else layer
             )
             da = xr.DataArray(
-                fill_nan_in_mask(values, self.mask.values, name),
+                fill_nan_in_mask(
+                    values, self.mask.values, name, VARIABLES[name].fill_value
+                ),
                 dims=[self.data.grid.face_dimension],
             )
             uda = xu.UgridDataArray(da, self.data.grid)

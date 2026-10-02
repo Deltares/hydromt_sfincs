@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
@@ -10,21 +10,20 @@ from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
 from hydromt_sfincs import DATADIR, workflows
+from hydromt_sfincs.utils import fill_nan_in_mask
 from hydromt_sfincs.components.grid.regulargrid_mixin import SfincsRegularGridMixin
 from hydromt_sfincs.components.infiltration_common import (
+    ALL_VARS,
     BUCKET_VARS,
     DEFAULT_BUCKETFILE,
+    DEFAULT_INFILTRATIONFILE,
     VARIABLES,
     clear_data,
     configure,
     configured_flavor,
-    fill_nan_in_mask,
     flavor_variables,
     get_attrs,
-    regular_active_vector,
-    regular_vector_to_da,
     reset_config,
-    sidecar_dataset,
 )
 
 if TYPE_CHECKING:
@@ -56,7 +55,11 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         self.clear()
         for name, da in layers.items():
             da = da.astype(np.float32)
-            da = da.copy(data=fill_nan_in_mask(da.values, self.mask.values, name))
+            da = da.copy(
+                data=fill_nan_in_mask(
+                    da.values, self.mask.values, name, VARIABLES[name].fill_value
+                )
+            )
             da = da.where(self.mask > 0)
             da.name = name
             da.attrs.update(get_attrs(name))
@@ -68,64 +71,78 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
             self.model.grid.set(da)
         configure(self.model.config, flavor=flavor, grid_type="regular")
 
-    def _read_sidecar(
-        self, filename: Path, variables: Iterable[str]
-    ) -> dict[str, xr.DataArray]:
-        if not filename.exists():
-            raise FileNotFoundError(filename)
-        with xr.open_dataset(filename) as ds:
-            layers = {}
-            for name in variables:
-                if name not in ds:
-                    raise ValueError(f"Missing variable '{name}' in {filename}.")
-                layers[name] = regular_vector_to_da(
-                    ds[name].values,
-                    self.mask,
-                    self.mask.rename(name),
-                )
-        return layers
+    grid_variables = ALL_VARS
+
+    def _configure_netcdf(self, flavor: str, filename=None) -> Path:
+        """Point the config at a single infiltration netcdf instead of binary maps."""
+        reset_config(self.model.config)
+        self.model.config.set("infiltration_type", flavor)
+
+        return self.model.config.get_set_file_variable(
+            "infiltration_file", value=filename, default=DEFAULT_INFILTRATIONFILE
+        )
 
     def read(self) -> None:
-        """Read infiltration data not handled by the grid component."""
+        """Read the infiltration layers from their own files."""
+        # the grid holds the mask and cell index these layers are written against;
+        # check _data directly, since the data property already triggers a read
+        if self.model.grid._data is None:
+            self.model.grid.read()
         flavor = configured_flavor(self.model.config)
         if flavor is None or flavor == "con":
             return
         if flavor == "bkt":
+            # bucket variables have no per-variable config key, so they share a netcdf
             bucketfile = self.model.config.get("bucketfile", abs_path=True)
             if bucketfile is None:
                 bucketfile = self.model.config.get("infiltration_file", abs_path=True)
-            if bucketfile is None:
+            if bucketfile is None or not bucketfile.is_file():
                 return
-            layers = self._read_sidecar(bucketfile, BUCKET_VARS)
-            self._set_layers(layers, flavor="bkt")
-            if self.model.config.get("bucketfile") is not None:
-                self.model.config.set("bucketfile", Path(bucketfile).name)
-            elif self.model.config.get("infiltration_file") is not None:
-                self.model.config.set("infiltration_file", Path(bucketfile).name)
+            self._set_layers(
+                self.model.grid.read_sidecar(bucketfile, list(BUCKET_VARS)),
+                flavor="bkt",
+            )
             return
-        inffile = self.model.config.get("infiltration_file", abs_path=True)
-        if inffile is None:
+        # a single netcdf takes precedence over per-variable binary maps
+        filename = self.model.config.get("infiltration_file", abs_path=True)
+        if filename is not None and filename.is_file():
+            self._set_layers(
+                self.model.grid.read_sidecar(filename, list(flavor_variables(flavor))),
+                flavor=flavor,
+            )
+            self._configure_netcdf(flavor, filename=Path(filename).name)
             return
-        layers = self._read_sidecar(inffile, flavor_variables(flavor))
-        self._set_layers(layers, flavor=flavor)
-        self.model.config.set("infiltration_file", Path(inffile).name)
+        self.model.grid.read_layers(list(flavor_variables(flavor)))
+        configure(self.model.config, flavor=flavor, grid_type="regular")
 
-    def write(self) -> None:
-        """Write regular-grid infiltration sidecars not handled by the grid."""
-        if not all(name in self.data for name in BUCKET_VARS):
+    def write(self, netcdf: bool = False) -> None:
+        """Write the infiltration layers to their own files.
+
+        Parameters
+        ----------
+        netcdf : bool, optional
+            Write all layers of the flavor to a single netcdf (``infiltration_file``)
+            instead of one binary map per variable, by default False. The bucket
+            flavor always uses a netcdf. Confirm the SFINCS kernel reads
+            ``infiltration_file`` for regular grids before enabling this.
+        """
+        flavor = configured_flavor(self.model.config)
+        if flavor is None or flavor == "con":
             return
-        bucketfile = self.model.config.get_set_file_variable(
-            "bucketfile", default=DEFAULT_BUCKETFILE
-        )
-        bucketfile.parent.mkdir(parents=True, exist_ok=True)
-        ds = sidecar_dataset(
-            {
-                name: regular_active_vector(self.data[name], self.mask)
-                for name in BUCKET_VARS
-            },
-            int((self.mask > 0).sum()),
-        )
-        ds.to_netcdf(bucketfile)
+        if flavor == "bkt":
+            if not all(name in self.data for name in BUCKET_VARS):
+                return
+            bucketfile = self.model.config.get_set_file_variable(
+                "bucketfile", default=DEFAULT_BUCKETFILE
+            )
+            bucketfile.parent.mkdir(parents=True, exist_ok=True)
+            self.model.grid.write_sidecar(bucketfile, list(BUCKET_VARS))
+            return
+        if netcdf:
+            filename = self._configure_netcdf(flavor)
+            self.model.grid.write_sidecar(filename, list(flavor_variables(flavor)))
+            return
+        self.model.grid.write_layers(list(flavor_variables(flavor)))
 
     @hydromt_step
     def create_uniform_constant(self, qinf: float) -> None:

@@ -65,6 +65,20 @@ class SfincsStorageVolume(ModelComponent):
         # The mask values are written when the quadtree grid is written
         pass
 
+    grid_variables = ("vol",)
+
+    def read(self) -> None:
+        """Read the storage volume map from its own binary file."""
+        # the grid holds the mask and cell index this map is written against;
+        # check _data directly, since the data property already triggers a read
+        if self.model.grid._data is None:
+            self.model.grid.read()
+        self.model.grid.read_layers(list(self.grid_variables))
+
+    def write(self) -> None:
+        """Write the storage volume map to its own binary file."""
+        self.model.grid.write_layers(list(self.grid_variables))
+
     @hydromt_step
     def create(
         self,

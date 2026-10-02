@@ -31,10 +31,7 @@ __all__ = [
     "configured_flavor",
     "flavor_variables",
     "get_attrs",
-    "regular_active_vector",
-    "regular_vector_to_da",
     "reset_config",
-    "sidecar_dataset",
 ]
 
 DEFAULT_INFILTRATIONFILE = "sfincs.infiltration.nc"
@@ -212,76 +209,3 @@ def configure(config: "SfincsConfig", flavor: str, grid_type: str) -> None:
         config.set("infiltration_type", flavor)
     else:
         raise ValueError(f"Unsupported grid_type: {grid_type}")
-
-
-def fill_nan_in_mask(
-    values: np.ndarray,
-    mask: np.ndarray,
-    name: str,
-) -> np.ndarray:
-    """Fill NaNs inside the active mask and warn how many cells were affected."""
-    fill = VARIABLES[name].fill_value
-    values = np.asarray(values, dtype=np.float32)
-    missing = np.isnan(values) & (np.asarray(mask) > 0)
-    n_missing = int(missing.sum())
-    if n_missing:
-        logger.warning(
-            f"{n_missing} active cells have no '{name}' data after resampling; "
-            f"filled with {fill}. Check that the input data covers the full "
-            f"model domain."
-        )
-        values = np.where(missing, np.float32(fill), values)
-    return values
-
-
-def regular_active_vector(data: xr.DataArray, mask: xr.DataArray) -> np.ndarray:
-    """Flatten active regular-grid cells in SFINCS order."""
-    values = np.asarray(data.values, dtype=np.float32)
-    mask_values = np.asarray(mask.values)
-    return values.transpose()[mask_values.transpose() > 0]
-
-
-def regular_vector_to_da(
-    values: np.ndarray,
-    mask: xr.DataArray,
-    like: xr.DataArray,
-    *,
-    nodata_value: float = np.nan,
-) -> xr.DataArray:
-    """Map active-cell vectors to a full regular-grid data array."""
-    data = np.full(mask.shape[::-1], nodata_value, dtype=np.float32)
-    data.flat[np.where(mask.values.ravel(order="F"))[0]] = np.asarray(
-        values, dtype=np.float32
-    )
-    data = data.transpose()
-    da = xr.DataArray(
-        data=data,
-        coords=like.coords,
-        dims=like.dims,
-        name=like.name,
-        attrs={"_FillValue": nodata_value},
-    )
-    try:
-        da.raster.set_crs(mask.raster.crs)
-        da.raster.set_nodata(nodata_value)
-    except (AttributeError, ValueError):
-        logger.debug(f"Could not set crs/nodata on {like.name}", exc_info=True)
-    return da
-
-
-def sidecar_dataset(
-    data: Mapping[str, np.ndarray | xr.DataArray],
-    dim_size: int,
-) -> xr.Dataset:
-    """Create a minimal SFINCS netCDF sidecar dataset."""
-    coords = {"mesh2d_nFaces": np.arange(dim_size, dtype=np.int32)}
-    ds = xr.Dataset(coords=coords)
-    for name, values in data.items():
-        if hasattr(values, "values"):
-            values = values.values
-        ds[name] = xr.DataArray(
-            np.asarray(values, dtype=np.float32),
-            dims=("mesh2d_nFaces",),
-            attrs=get_attrs(name),
-        )
-    return ds

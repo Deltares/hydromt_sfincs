@@ -198,12 +198,14 @@ def test_infiltration(model):
 
     # Write model
     model.grid.write()
+    model.infiltration.write()
     model.config.write()
 
     # read and check if identical
     mod1 = SfincsModel(root=model.root.path, mode="r")
     mod1.config.read()
     mod1.grid.read()
+    mod1.infiltration.read()
 
     # assure the sum of smax is close to earlier calculated value
     assert np.isclose(
@@ -308,6 +310,7 @@ def test_process_infiltration_regular_io(model):
     assert "sigma" not in model.grid.data
 
     model.grid.write()
+    model.infiltration.write()
     model.config.write()
 
     mod2 = SfincsModel(root=model.root.path, mode="r")
@@ -404,12 +407,14 @@ def test_initial_conditions(model):
 
     # Write model
     model.grid.write()
+    model.initial_conditions.write()
     model.config.write()
 
     # read and check if identical
     mod1 = SfincsModel(root=model.root.path, mode="r")
     mod1.config.read()
     mod1.grid.read()
+    mod1.initial_conditions.read()
 
     # assure the sum of ini is close to earlier calculated value
     assert np.isclose(
@@ -436,12 +441,14 @@ def test_initial_conditions_from_polygon(model):
 
     # Write model
     model.grid.write()
+    model.initial_conditions.write()
     model.config.write()
 
     # read and check if identical
     mod1 = SfincsModel(root=model.root.path, mode="r")
     mod1.config.read()
     mod1.grid.read()
+    mod1.initial_conditions.read()
 
     # assure the sum of ini is close to earlier calculated value
     assert np.isclose(
@@ -690,23 +697,15 @@ def test_storage_volume(tmp_dir, case):
 
     # again get right component
     grid1 = get_grid(mod1)
-    if case == "test1":
-        grid1.read(data_vars=["vol"])
-    else:
-        # quadtree layers are owned by their component, which pulls in the grid
-        mod1.quadtree_storage_volume.read()
+    storage1 = get_storage_component(mod1)
+    storage1.read()
 
     # now compare the storage volumes
-    if case == "test1":
-        assert np.isclose(
-            mod1.grid.data["vol"].raster.mask_nodata().sum().values
-            - mod.grid.data["vol"].sum().values,
-            0,
-        )
-    elif case == "test2":
-        assert np.isclose(
-            (mod1.quadtree_grid.data["vol"] - mod.quadtree_grid.data["vol"]).sum(), 0
-        )
+    assert np.isclose(
+        grid1.data["vol"].raster.mask_nodata().sum().values
+        - grid.data["vol"].sum().values,
+        0,
+    )
 
     # now redo the tests with a rotated grid for the regular grid only
     if case == "test1":
