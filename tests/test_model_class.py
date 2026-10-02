@@ -690,7 +690,11 @@ def test_storage_volume(tmp_dir, case):
 
     # again get right component
     grid1 = get_grid(mod1)
-    grid1.read(data_vars=["vol"])
+    if case == "test1":
+        grid1.read(data_vars=["vol"])
+    else:
+        # quadtree layers are owned by their component, which pulls in the grid
+        mod1.quadtree_storage_volume.read()
 
     # now compare the storage volumes
     if case == "test1":

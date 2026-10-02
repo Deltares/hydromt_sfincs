@@ -37,13 +37,26 @@ class SfincsQuadtreeRoughness(SfincsQuadtreeMixin, ModelComponent):
         """Get the mask from the quadtree grid."""
         return self.model.quadtree_mask.data["mask"]
 
+    grid_variables = ("manning",)
+
     def read(self):
-        # The mask elevation are read when the quadtree grid is read
-        pass
+        """Read the manning roughness layer from its own file."""
+        # the grid defines the mesh this layer lives on, so load it first
+        if self.model.quadtree_grid._data is None:
+            self.model.quadtree_grid.read()
+        filename = self.model.config.get("manningfile", abs_path=True)
+        if filename is None or not filename.is_file():
+            return
+        self.model.quadtree_grid.read_layers(filename)
 
     def write(self):
-        # The mask elevation are written when the quadtree grid is written
-        pass
+        """Write the manning roughness layer to its own file."""
+        if "manning" not in self.model.quadtree_grid.data:
+            return
+        filename = self.model.config.get_set_file_variable(
+            "manningfile", default="manning.nc"
+        )
+        self.model.quadtree_grid.write_layers(["manning"], filename)
 
     @hydromt_step
     def create(

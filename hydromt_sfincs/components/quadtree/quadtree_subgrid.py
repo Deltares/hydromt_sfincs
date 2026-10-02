@@ -101,6 +101,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
         )
 
         # Write XArray dataset to netcdf file
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
         self.data.to_netcdf(abs_file_path)
 
     def create(

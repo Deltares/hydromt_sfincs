@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
@@ -12,6 +12,7 @@ from hydromt.model.components import ModelComponent
 
 from hydromt_sfincs import DATADIR, workflows
 from hydromt_sfincs.components.infiltration_common import (
+    ALL_VARS,
     BUCKET_VARS,
     DEFAULT_BUCKETFILE,
     DEFAULT_INFILTRATIONFILE,
@@ -23,7 +24,6 @@ from hydromt_sfincs.components.infiltration_common import (
     flavor_variables,
     get_attrs,
     reset_config,
-    sidecar_dataset,
 )
 from hydromt_sfincs.components.quadtree import SfincsQuadtreeMixin
 
@@ -52,6 +52,8 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
     def mask(self) -> xu.UgridDataArray:
         return self.model.quadtree_grid.mask
 
+    grid_variables = ALL_VARS
+
     def _set_layers(
         self,
         layers: dict[str, Union[np.ndarray, xr.DataArray, xu.UgridDataArray]],
@@ -76,60 +78,28 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
 
         configure(self.model.config, flavor=flavor, grid_type="quadtree")
 
-    def get_vars_by_infiltration_type(
-        self, infiltration_type: str
-    ) -> tuple[list[str], list[str]]:
-        """Return infiltration variables to write and stale variables to remove."""
-        write_vars = list(flavor_variables(infiltration_type))
-        data_vars = self.data if isinstance(self.data, dict) else self.data.data_vars
-        remove_vars = [
-            name for name in VARIABLES if name not in write_vars and name in data_vars
-        ]
-        return write_vars, remove_vars
-
-    def _read_sidecar(
-        self, filename: Path, variables: Iterable[str]
-    ) -> dict[str, xr.DataArray]:
-        if not filename.exists():
-            raise FileNotFoundError(filename)
-        with xr.open_dataset(filename) as ds:
-            layers = {}
-            for name in variables:
-                if name not in ds:
-                    raise ValueError(f"Missing variable '{name}' in {filename}.")
-                da = self.mask.copy(deep=True)
-                da.values = ds[name].values.astype(np.float32)
-                da.name = name
-                layers[name] = da
-        return layers
-
     def read(self) -> None:
-        """Read quadtree infiltration sidecars."""
+        """Read the infiltration layers from their own file."""
+        # TODO discuss whether we want to clear infiltration data first
+        # the grid defines the mesh these layers live on, so load it first
+        if self.model.quadtree_grid._data is None:
+            self.model.quadtree_grid.read()
         flavor = configured_flavor(self.model.config)
         if flavor is None or flavor == "con":
             return
-        if flavor == "bkt":
-            bucketfile = self.model.config.get("bucketfile", abs_path=True)
-            if bucketfile is None:
-                bucketfile = self.model.config.get("infiltration_file", abs_path=True)
-            if bucketfile is None:
-                return
-            layers = self._read_sidecar(bucketfile, BUCKET_VARS)
-            self._set_layers(layers, flavor="bkt")
-            if self.model.config.get("bucketfile") is not None:
-                self.model.config.set("bucketfile", Path(bucketfile).name)
-            elif self.model.config.get("infiltration_file") is not None:
-                self.model.config.set("infiltration_file", Path(bucketfile).name)
+        key = "bucketfile" if flavor == "bkt" else "infiltration_file"
+        filename = self.model.config.get(key, abs_path=True)
+        if filename is None and flavor == "bkt":
+            # older models stored the bucket layers under the infiltration key
+            key = "infiltration_file"
+            filename = self.model.config.get(key, abs_path=True)
+        if filename is None or not filename.is_file():
             return
-        inffile = self.model.config.get("infiltration_file", abs_path=True)
-        if inffile is None:
-            return
-        layers = self._read_sidecar(inffile, flavor_variables(flavor))
-        self._set_layers(layers, flavor=flavor)
-        self.model.config.set("infiltration_file", Path(inffile).name)
+        self.model.quadtree_grid.read_layers(filename)
+        configure(self.model.config, flavor=flavor, grid_type="quadtree")
 
     def write(self) -> None:
-        """Write quadtree infiltration sidecars."""
+        """Write the infiltration layers to their own file."""
         flavor = configured_flavor(self.model.config)
         if flavor is None or flavor == "con":
             return
@@ -137,21 +107,11 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             filename = self.model.config.get_set_file_variable(
                 "bucketfile", default=DEFAULT_BUCKETFILE
             )
-            variables = BUCKET_VARS
         else:
             filename = self.model.config.get_set_file_variable(
                 "infiltration_file", default=DEFAULT_INFILTRATIONFILE
             )
-            variables = flavor_variables(flavor)
-        filename.parent.mkdir(parents=True, exist_ok=True)
-        ds = sidecar_dataset(
-            {
-                name: np.asarray(self.data[name].values, dtype=np.float32)
-                for name in variables
-            },
-            len(self.mask.values),
-        )
-        ds.to_netcdf(filename)
+        self.model.quadtree_grid.write_layers(flavor_variables(flavor), filename)
 
     @hydromt_step
     def create_uniform_constant(self, qinf: float) -> None:

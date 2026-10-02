@@ -293,23 +293,3 @@ def test_infiltration_estimators_from_hsg_quadtree(model, quadtree_model):
     assert _max("bucket_smax") == pytest.approx(87.5, rel=1e-3)
     assert _max("bucket_k") == pytest.approx(18.0 / 87.5, rel=1e-3)
     assert _max("bucket_loss") == pytest.approx(0.0, abs=1e-6)
-
-
-def test_get_vars_by_infiltration_type(quadtree_model):
-    infil = quadtree_model.quadtree_infiltration
-
-    fake_data = {
-        "qinf": None,
-        "scs": None,
-        "smax": None,
-        "seff": None,
-        "ks": None,
-    }
-
-    # patch internal storage
-    quadtree_model.quadtree_grid._data = fake_data
-
-    write_vars, remove_vars = infil.get_vars_by_infiltration_type("cnb")
-
-    assert set(write_vars) == {"smax", "seff", "ks"}
-    assert set(remove_vars) == {"qinf", "scs"}

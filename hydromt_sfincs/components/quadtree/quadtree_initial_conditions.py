@@ -41,14 +41,24 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
         """Get an empty mask with the same shape as the model grid."""
         return self.model.quadtree_grid.mask
 
+    grid_variables = ("zs",)
+
     def read(self):
-        # TODO discuss what we want to return/read here, pass is not so informative ..
-        # The mask values are read when the quadtree grid is read
-        pass
+        """Read the initial water level layer from its own file."""
+        # the grid defines the mesh this layer lives on, so load it first
+        if self.model.quadtree_grid._data is None:
+            self.model.quadtree_grid.read()
+        filename = self.model.config.get("inifile", abs_path=True)
+        if filename is None or not filename.is_file():
+            return
+        self.model.quadtree_grid.read_layers(filename)
 
     def write(self):
-        # The mask values are written when the quadtree grid is written
-        pass
+        """Write the initial water level layer to its own file."""
+        if "zs" not in self.model.quadtree_grid.data:
+            return
+        filename = self.model.config.get_set_file_variable("inifile", default="zs.nc")
+        self.model.quadtree_grid.write_layers(["zs"], filename)
 
     # %% core HydroMT-SFINCS functions:
     # read

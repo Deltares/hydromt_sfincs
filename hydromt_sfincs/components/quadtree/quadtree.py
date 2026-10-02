@@ -8,7 +8,6 @@ utilities used by DelftDashboard such as map overlays and grid snapping.
 
 import logging
 import os
-from os.path import isfile
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Union
 
@@ -42,12 +41,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 
-_QT_MAPS = {
-    "manning": None,
-    "vol": None,
-    "zs": "inifile",
-    "infiltration": "infiltration_file",
-}
+# components declare the variables they own via a `grid_variables` property;
+# anything not claimed stays in the main quadtree file
 
 
 class SfincsQuadtreeGrid(MeshComponent):
@@ -164,18 +159,72 @@ class SfincsQuadtreeGrid(MeshComponent):
             da_mask = self.empty_mask
         return da_mask
 
-    def read(self, filename: Union[str, Path] = None, data_vars: List[dict] = None):
+    def _add_cf_metadata(self, ds: xr.Dataset) -> xr.Dataset:
+        """Add the CF/UGRID metadata that MDAL needs to read the file in QGIS."""
+        ds.attrs["Conventions"] = "CF-1.8 UGRID-1.0 Deltares-0.10"
+
+        # xugrid writes 'mesh2d_crs' with pyproj metadata; epsg/epsg_code let
+        # MDAL auto-detect the coordinate system
+        epsg = self.crs.to_epsg()
+        if "mesh2d_crs" in ds:
+            ds["mesh2d_crs"].attrs["epsg"] = epsg
+            ds["mesh2d_crs"].attrs["epsg_code"] = f"EPSG:{epsg}"
+
+        # MDAL rejects the entire mesh when it meets int8/uint8 on the face
+        # dimension; the SFINCS kernel reads these via nf90_get_var into
+        # integer*1 arrays, and NetCDF converts int32 back transparently
+        for var in list(ds.data_vars):
+            if ds[var].dtype in (np.int8, np.uint8):
+                ds[var] = ds[var].astype(np.int32)
+
+        # xugrid's to_dataset() omits units on node coordinates
+        geo = self.crs.is_geographic
+        coord_units = {
+            "mesh2d_node_x": "degrees_east" if geo else "m",
+            "mesh2d_node_y": "degrees_north" if geo else "m",
+        }
+        crs_var_name = "mesh2d_crs" if "mesh2d_crs" in ds else "crs"
+        for coord, units in coord_units.items():
+            if coord in ds:
+                ds[coord].attrs.setdefault("units", units)
+                ds[coord].attrs["grid_mapping"] = crs_var_name
+        return ds
+
+    def write_layers(self, variables: List[str], filename: Union[str, Path]) -> None:
+        """Write face variables to a standalone UGRID netcdf file."""
+        # TODO add a `ugrid: bool = True` option. Full UGRID keeps every node
+        # coordinate so the file opens standalone in QGIS, but that is a lot of
+        # overhead per layer. Experienced users may prefer a lean file holding
+        # only the face values.
+        filename = Path(filename)
+        filename.parent.mkdir(parents=True, exist_ok=True)
+        # node coordinates are included so the file carries its own geometry
+        ds = self.data[
+            list(variables) + ["mesh2d_node_x", "mesh2d_node_y"]
+        ].ugrid.to_dataset()
+        ds = self._add_cf_metadata(ds)
+        ds.to_netcdf(filename)
+
+    def read_layers(self, filename: Union[str, Path]) -> None:
+        """Read face variables from a standalone UGRID netcdf file into `data`."""
+        ds = xu.load_dataset(filename)
+        ds.grid.set_crs(self.model.crs)
+        self.set(ds)
+
+    def read(self, filename: Union[str, Path] = None):
         """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object.
+
+        Only the layers owned by this component are read; component-owned layers
+        are read through the component itself, which pulls this grid in first.
 
         Parameters
         ----------
         file_name : str or Path, optional
             Path to the netcdf file to read, by default "sfincs.nc".
-        data_vars : List[dict], optional
-            List of dictionaries with variable names and file names to read additional variables,
-            by default None. Each dictionary should have keys "variable" and "file_name", e.g.:
-            data_vars = [{"variable":"vol", "file_name":"storage_volume.nc"}]
         """
+        # TODO add a `read_components: bool = False` option that, after reading
+        # the main file, also triggers read() on every component owning layers
+        # here.
 
         # check if in read mode and initialize grid
         self.root._assert_read_mode()
@@ -220,108 +269,35 @@ class SfincsQuadtreeGrid(MeshComponent):
         # Make sure epsg is stored in the config as well
         self.model.config.set("epsg", self.model.crs.to_epsg())
 
-        # check which seperate data variables should be read
-        if data_vars is None:
-            data_vars = _QT_MAPS
-        elif isinstance(data_vars, str):
-            data_vars = list(data_vars)
-        variables = []
-        for var in data_vars:
-            fn_var = self.model.config.get(
-                f"{var}file", fallback=f"{var}.nc", abs_path=True
-            )
-            if isfile(fn_var):
-                variables.append({"variable": var, "file_name": fn_var})
-
-        if len(variables) > 0:
-            for var in variables:
-                try:
-                    ds = xu.load_dataset(var["file_name"])
-                    ds.close()
-                    ds.grid.set_crs(self.model.crs)
-                    self.set(ds)
-                except Exception as e:
-                    logger.error(f"Error reading variable {var['variable']}: {e}")
-                    continue
-
-    def write(
-        self, filename: Union[str, Path] = "sfincs.nc", data_vars: List[dict] = None
-    ):
+    def write(self, filename: Union[str, Path] = "sfincs.nc"):
         """Writes a quadtree SFINCS netcdf file.
+
+        Only the layers owned by this component are written; component-owned
+        layers are written through the component itself.
 
         Parameters
         ----------
         filename : str or Path, optional
             Path to the netcdf file to write, by default "sfincs.nc".
-        data_vars : List[dict], optional
-            List of dictionaries with variable names and file names to write additional variables,
-            by default None. Each dictionary should have keys "variable" and "file_name", e.g.:
-            data_vars = [{"variable":"vol", "file_name":"storage_volume.nc"}]
         """
-
-        # TODO do we want to cut inactive cells here? Or already when creating the mask?
+        # TODO add a `write_components: bool = False` option that also triggers
+        # write() on every component owning layers here.
+        # TODO add an option to keep everything in the qtrfile instead of
+        # splitting. That needs config support first, since several file keys
+        # would then have to resolve to the same file.
 
         attrs = self.data.attrs
         ds = self.data.ugrid.to_dataset()
-        # xugrid writes a 'mesh2d_crs' variable with full CF metadata from
-        # pyproj. Add epsg/epsg_code so MDAL can auto-detect the CRS in QGIS.
-        epsg = self.crs.to_epsg()
-        if "mesh2d_crs" in ds:
-            ds["mesh2d_crs"].attrs["epsg"] = epsg
-            ds["mesh2d_crs"].attrs["epsg_code"] = f"EPSG:{epsg}"
-
-        # certain variables are stored as individual netcdfs because they might change between scnearios;
-        # in Python we keep everything in the same object so they are splitted here
-        # check which data variables should be written separately
-        if data_vars is None:
-            data_vars = _QT_MAPS
-        elif isinstance(data_vars, str):
-            data_vars = list(data_vars)
-        variables = []
-        for var in data_vars:
-            # infiltration uses a non-standard config key ("infiltration_file");
-            # other variables follow the default "{var}file" pattern.
-            key = _QT_MAPS.get(var) or f"{var}file"
-            abs_file_path = self.model.config.get(key, abs_path=True)
-            if abs_file_path is not None:
-                abs_file_path.parent.mkdir(parents=True, exist_ok=True)
-                variables.append({"variable": var, "file_name": abs_file_path})
-
-        if len(variables) > 0:
-            for var in variables:
-                if var["variable"] == "infiltration":
-                    from hydromt_sfincs.components.infiltration_common import (
-                        ALL_VARS,
-                        flavor_variables,
-                    )
-
-                    inftype = self.model.config.get("infiltration_type")
-                    write_vars = list(flavor_variables(inftype))
-                    remove_vars = [
-                        v for v in ALL_VARS if v not in write_vars and v in ds.data_vars
-                    ]
-                    if remove_vars:
-                        logger.info(
-                            f"Removing unused infiltration variables not matching type '{inftype}': {remove_vars}"
-                        )
-                    ds = ds.drop_vars(remove_vars, errors="ignore")
-                else:
-                    write_vars = [var["variable"]]
-                try:
-                    # get the single variable and convert to dataset
-                    # NOTE this allows to read as a standalone file with spatial metadata
-                    ds_var = self.data[
-                        write_vars + ["mesh2d_node_x", "mesh2d_node_y"]
-                    ].ugrid.to_dataset()
-                    ds_var.to_netcdf(var["file_name"])
-                    # drop the variable from ds
-                    ds = ds.drop_vars(write_vars)
-                except Exception as e:
-                    logger.error(f"Error writing variables {write_vars}: {e}")
-                    continue
 
         # RENAME TO FORTRAN CONVENTION
         ds = ds.rename({"dep": "z"}) if "dep" in ds else ds
+
+        # certain variables are stored as individual netcdfs because they might
+        # change between scenarios; those are written by their own component
+        owned = set()
+        for component in self.model.components.values():
+            owned.update(getattr(component, "grid_variables", ()) or ())
+        ds = ds.drop_vars([v for v in owned if v in ds.data_vars], errors="ignore")
 
         # Get absolute file name and set it in config if bndfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
@@ -329,35 +305,9 @@ class SfincsQuadtreeGrid(MeshComponent):
         )
         abs_file_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Make sure epsg is stored in the config as well
-        self.model.config.set("epsg", self.model.crs.to_epsg())
-
         # And write the file
-        attrs["Conventions"] = "CF-1.8 UGRID-1.0 Deltares-0.10"
         ds.attrs = attrs
-
-        # Cast all int8/uint8 variables to int32 — MDAL rejects the entire mesh
-        # when it encounters these small integer types on the face dimension.
-        # The SFINCS Fortran kernel reads them into integer*1 arrays via
-        # nf90_get_var; NetCDF auto-conversion handles int32→int8 transparently.
-        _small_int = (np.int8, np.uint8)
-        for var in list(ds.data_vars):
-            if ds[var].dtype in _small_int:
-                ds[var] = ds[var].astype(np.int32)
-
-        # xugrid's to_dataset() omits units on node coordinates; add them so
-        # MDAL can interpret the coordinate system correctly in QGIS.
-        geo = self.model.crs.is_geographic
-        coord_units = {
-            "mesh2d_node_x": "degrees_east" if geo else "m",
-            "mesh2d_node_y": "degrees_north" if geo else "m",
-        }
-        crs_var_name = "mesh2d_crs" if "mesh2d_crs" in ds else "crs"
-        for coord, units in coord_units.items():
-            if coord in ds:
-                if "units" not in ds[coord].attrs:
-                    ds[coord].attrs["units"] = units
-                ds[coord].attrs["grid_mapping"] = crs_var_name
+        ds = self._add_cf_metadata(ds)
 
         ds.to_netcdf(abs_file_path)
         ds.close()
