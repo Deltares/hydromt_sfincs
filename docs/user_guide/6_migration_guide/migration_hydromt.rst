@@ -156,6 +156,26 @@ Read and write operations are now handled at the **component level**.
     # Write updated grid to disk
     model.grid.write()
 
+.. note::
+    ``model.grid.write()`` and ``model.quadtree_grid.write()`` only write the
+    layers they own themselves. Layers belonging to a component - ``manning``,
+    ``vol``, ``zs`` and the infiltration layers - are written by that component:
+
+    .. code-block:: python
+
+        # either write each component explicitly
+        model.grid.write()
+        model.roughness.write()
+        model.infiltration.write()
+
+        # or let the grid trigger them
+        model.grid.write(write_components=True)
+
+    Use ``model.write()`` to write everything in one call, since it loops over
+    all components. The same applies when reading a single component: it pulls
+    in the grid itself, so ``model.infiltration.read()`` works without a
+    preceding ``model.grid.read()``.
+
 These changes provide a clearer and more modular interface, making it easier to manipulate model components independently.
 
 

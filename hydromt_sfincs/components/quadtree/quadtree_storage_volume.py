@@ -40,14 +40,24 @@ class SfincsQuadtreeStorageVolume(ModelComponent):
         """Get an empty mask with the same shape as the model grid."""
         return self.model.quadtree_grid.mask
 
+    grid_variables = ("vol",)
+
     def read(self):
-        # TODO discuss what we want to return/read here, pass is not so informative ..
-        # The mask values are read when the quadtree grid is read
-        pass
+        """Read the storage volume layer from its own file."""
+        # the grid defines the mesh this layer lives on, so load it first
+        if self.model.quadtree_grid._data is None:
+            self.model.quadtree_grid.read()
+        filename = self.model.config.get("volfile", abs_path=True)
+        if filename is None or not filename.is_file():
+            return
+        self.model.quadtree_grid.read_layers(filename)
 
     def write(self):
-        # The mask values are written when the quadtree grid is written
-        pass
+        """Write the storage volume layer to its own file."""
+        if "vol" not in self.model.quadtree_grid.data:
+            return
+        filename = self.model.config.get_set_file_variable("volfile", default="vol.nc")
+        self.model.quadtree_grid.write_layers(["vol"], filename)
 
     def create(
         self,

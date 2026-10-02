@@ -17,7 +17,7 @@ import xarray as xr
 from hydromt.gis.vector import GeoDataset
 from hydromt.writers import write_xy
 
-from hydromt_sfincs.utils import parse_datetime
+from hydromt_sfincs.utils import active_cells_vector, parse_datetime
 
 __all__ = [
     "write_ascii_map",
@@ -118,7 +118,7 @@ def write_binary_map(
     dtype: str, np.dtype, optional
         Data type, by default "f4". For sfincs.msk file use dtype="u1".
     """
-    data_out = np.asarray(data.transpose()[msk.transpose() > 0], dtype=dtype)
+    data_out = np.asarray(active_cells_vector(data, msk), dtype=dtype)
     data_out.tofile(fn)
 
 

@@ -329,6 +329,16 @@ def test_create_from_grid(quadtree_model_config):
     assert not mod.snapwave_boundary_conditions.data.equals(da_org)
 
 
+def test_quadtree_snapwave_mask_create_active_model_kwarg(quadtree_model_config):
+    mod = quadtree_model_config
+
+    mod.quadtree_snapwave_mask.create_active(model="snapwave", copy_sfincsmask=True)
+    assert "snapwave_mask" in mod.quadtree_grid.data
+
+    with pytest.raises(ValueError):
+        mod.quadtree_snapwave_mask.create_active(model="sfincs")
+
+
 def test_delete_clear(quadtree_model_config):
     """Test deleting a wave point from the model."""
     # assign the quadtree_model_config to a local variable for easier access

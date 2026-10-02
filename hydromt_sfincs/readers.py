@@ -14,7 +14,7 @@ import xarray as xr
 from hydromt.readers import open_vector
 from pyproj.crs import CRS
 
-from hydromt_sfincs.utils import parse_datetime
+from hydromt_sfincs.utils import parse_datetime, vector_to_active_cells
 
 __all__ = [
     "read_ascii_map",
@@ -176,11 +176,7 @@ def read_binary_map(
         1D array of flat index of binary maps.
     """
     assert ind.max() <= np.multiply(*shape)
-    nrow, ncol = shape
-    data = np.full((ncol, nrow), mv, dtype=dtype)
-    data.flat[ind] = np.fromfile(fn, dtype=dtype)
-    data = data.transpose()
-    return data
+    return vector_to_active_cells(np.fromfile(fn, dtype=dtype), ind, shape, mv, dtype)
 
 
 def read_binary_map_index(fn_ind: Union[str, Path]) -> np.ndarray:

@@ -73,6 +73,22 @@ class SfincsRoughness(ModelComponent):
         pass
 
     # Roughness
+    grid_variables = ("manning",)
+
+    def read(self) -> None:
+        """Read the manning roughness map from its own binary file."""
+        # the grid holds the mask and cell index this map is written against;
+        # check _data directly, since the data property already triggers a read
+        if self.model.grid._data is None:
+            self.model.grid.read()
+        self.model.grid.read_layers(list(self.grid_variables))
+
+    def write(self) -> None:
+        """Write the manning roughness map to its own binary file."""
+        # check if the grid_variables are in self.data
+        if all(var in self.data.data_vars for var in self.grid_variables):
+            self.model.grid.write_layers(list(self.grid_variables))
+
     @hydromt_step
     def create(
         self,
@@ -125,11 +141,15 @@ class SfincsRoughness(ModelComponent):
             da_man0 = xr.full_like(self.mask, manning_land, dtype=np.float32)
 
         if len(roughness_list) > 0 and fromdep:
-            logger.warning("nan values in manning roughness array")
+            nmissing = int(np.sum(np.isnan(da_man.values) & (self.mask.values > 0)))
+            logger.warning(
+                f"{nmissing} active cells have no manning roughness data; filled "
+                f"with the land/sea default."
+            )
             da_man = da_man.where(~np.isnan(da_man), da_man0)
         elif fromdep:
             da_man = da_man0
-        da_man.raster.set_nodata(-9999.0)
+        da_man.raster.set_nodata(np.nan)
 
         # set grid
         mname = "manning"
