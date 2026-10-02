@@ -93,7 +93,10 @@ def ksat_to_mmhr(
     factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
 ) -> xr.DataArray:
     """Convert saturated hydraulic conductivity to mm/hr."""
-    da_ks = da_ksat.astype(np.float32) * factor_ksat
+    # negative Ksat is physically impossible, so it marks undeclared nodata such
+    # as a raw -9999 that was never converted to NaN
+    da_ksat = da_ksat.astype(np.float32).where(da_ksat >= 0.0)
+    da_ks = da_ksat * factor_ksat
     return da_ks.fillna(0.0)
 
 
