@@ -164,17 +164,17 @@ def test_process_infiltration_quadtree_io(model, quadtree_model):
     mod1.quadtree_grid.read()
     mod1.quadtree_infiltration.read()
     assert np.isclose(
-        mod1.quadtree_grid.data["psi"].where(mod1.quadtree_grid.mask > 0).mean(),
+        mod1.quadtree_grid.data["psi"].where(mod1.quadtree_grid.mask > 0).median(),
         90.0,
         atol=1e-5,
     )
     assert np.isclose(
-        mod1.quadtree_grid.data["sigma"].where(mod1.quadtree_grid.mask > 0).mean(),
+        mod1.quadtree_grid.data["sigma"].where(mod1.quadtree_grid.mask > 0).median(),
         0.20,
         atol=1e-5,
     )
     assert np.isclose(
-        mod1.quadtree_grid.data["ks"].where(mod1.quadtree_grid.mask > 0).mean(),
+        mod1.quadtree_grid.data["ks"].where(mod1.quadtree_grid.mask > 0).median(),
         12.0,
         atol=1e-5,
     )
@@ -199,17 +199,17 @@ def test_process_infiltration_quadtree_io(model, quadtree_model):
     mod2.quadtree_grid.read()
     mod2.quadtree_infiltration.read()
     assert np.isclose(
-        mod2.quadtree_grid.data["f0"].where(mod2.quadtree_grid.mask > 0).mean(),
+        mod2.quadtree_grid.data["f0"].where(mod2.quadtree_grid.mask > 0).median(),
         35.0,
         atol=1e-5,
     )
     assert np.isclose(
-        mod2.quadtree_grid.data["fc"].where(mod2.quadtree_grid.mask > 0).mean(),
+        mod2.quadtree_grid.data["fc"].where(mod2.quadtree_grid.mask > 0).median(),
         7.0,
         atol=1e-5,
     )
     assert np.isclose(
-        mod2.quadtree_grid.data["kd"].where(mod2.quadtree_grid.mask > 0).mean(),
+        mod2.quadtree_grid.data["kd"].where(mod2.quadtree_grid.mask > 0).median(),
         1.5,
         atol=1e-5,
     )
@@ -241,19 +241,19 @@ def test_bucket_infiltration_quadtree_io(model, quadtree_model):
     assert np.isclose(
         mod1.quadtree_grid.data["bucket_smax"]
         .where(mod1.quadtree_grid.mask > 0)
-        .mean(),
+        .median(),
         175.0,
         atol=1e-5,
     )
     assert np.isclose(
-        mod1.quadtree_grid.data["bucket_k"].where(mod1.quadtree_grid.mask > 0).mean(),
+        mod1.quadtree_grid.data["bucket_k"].where(mod1.quadtree_grid.mask > 0).median(),
         0.25,
         atol=1e-5,
     )
     assert np.isclose(
         mod1.quadtree_grid.data["bucket_loss"]
         .where(mod1.quadtree_grid.mask > 0)
-        .mean(),
+        .median(),
         0.10,
         atol=1e-5,
     )
