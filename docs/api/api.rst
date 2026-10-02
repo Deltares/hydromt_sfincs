@@ -226,7 +226,6 @@ SFINCS workflows
    workflows.river_centerline_from_hydrography
    workflows.landuse
    workflows.cn_to_s
-   workflows.create_topobathy_tiles
 
 Flood map downscaling
 ---------------------
@@ -238,8 +237,11 @@ Flood map downscaling
    workflows.downscaling.adjust_zsmax_dilation
    workflows.downscaling.adjust_zsmax_energyhead
    workflows.downscaling.remove_disconnected_flooding
-   workflows.downscaling.make_index_cog
-   workflows.downscale_floodmap_webmercator
+   workflows.tiling.downscale_floodmap_webmercator
+   workflows.tiling.create_index_tiles
+   workflows.tiling.create_topobathy_tiles
+   workflows.cog.create_index_cog
+   workflows.cog.create_topobathy_cog
 
 .. _methods:
 

@@ -7,19 +7,15 @@ import copy
 from datetime import datetime
 import logging
 import warnings
-from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
 from affine import Affine
 import geopandas as gpd
 import numpy as np
-import rasterio
 import xarray as xr
 import xugrid as xu
 from xugrid.core.wrap import UgridDataArray
 from pyproj.crs.crs import CRS
-from rasterio.enums import Resampling
-from rasterio.rio.overview import get_maximum_overview_level
 from shapely.geometry import LineString, Polygon
 
 
@@ -33,7 +29,6 @@ __all__ = [
     "linestring2gdf",
     "polygon2gdf",
     "rotated_grid",
-    "build_overviews",
     "find_uv_indices",
     "make_regular_grid",
     "make_regular_grid_transform",
@@ -472,63 +467,6 @@ def rotated_grid(
         nmax = int(np.ceil(axis2 / res))
 
     return x0, y0, mmax, nmax, rot
-
-
-def build_overviews(
-    fn: Union[str, Path],
-    resample_method: str = "average",
-    overviews: Union[list, str] = "auto",
-    logger=logger,
-):
-    """Build overviews for GeoTIFF file.
-
-    Overviews are reduced resolution versions of your dataset that can speed up
-    rendering when you don’t need full resolution. By precomputing the upsampled
-    pixels, rendering can be significantly faster when zoomed out.
-
-    Parameters
-    ----------
-    fn : str, Path
-        Path to GeoTIFF file.
-    method: str
-        Resampling method, by default "average". Other option is "nearest".
-    overviews: list of int, optional
-        List of overview levels, by default "auto". When set to "auto" the
-        overview levels are determined based on the size of the dataset.
-    """
-
-    # Endswith is not a method of Path so convert to str
-    if isinstance(fn, Path):
-        fn = str(fn)
-
-    # check if fn is a geotiff file
-    extensions = [".tif", ".tiff"]
-    assert any(
-        fn.endswith(ext) for ext in extensions
-    ), f"File {fn} is not a GeoTIFF file."
-
-    # open rasterio dataset
-    with rasterio.open(fn, "r+") as src:
-        # determine overviews when not provided
-        if overviews == "auto":
-            bs = src.profile.get("blockxsize", 256)
-            max_level = get_maximum_overview_level(src.width, src.height, bs)
-            overviews = [2**j for j in range(1, max_level + 1)]
-        if not isinstance(overviews, list):
-            raise ValueError("overviews should be a list of integers or 'auto'.")
-
-        resampling = getattr(Resampling, resample_method, None)
-        if resampling is None:
-            raise ValueError(f"Resampling method unknown: {resample_method}")
-
-        no = len(overviews)
-        logger.info(f"Building {no} overviews with {resample_method}")
-
-        # create new overviews, resampling with average method
-        src.build_overviews(overviews, resampling)
-
-        # update dataset tags
-        src.update_tags(ns="rio_overview", resampling=resample_method)
 
 
 def find_uv_indices(mask: xr.DataArray):

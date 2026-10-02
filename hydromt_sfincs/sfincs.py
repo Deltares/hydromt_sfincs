@@ -224,6 +224,11 @@ class SfincsModel(Model):
         return self._grid_type
 
     @property
+    def grid_component(self):
+        """Returns the grid component of the model."""
+        return self.quadtree_grid if self.grid_type == "quadtree" else self.grid
+
+    @property
     def crs(self) -> CRS | None:
         """Returns the model crs"""
         if self.grid_type == "regular":
