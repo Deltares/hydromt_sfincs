@@ -225,7 +225,7 @@ class SfincsGrid(GridComponent):
                     logger.warning(f"{name}file not found at {fn}")
                 continue
             dtype = dtypes.get(name, "f4")
-            mv = mvs.get(name, -9999.0)
+            mv = mvs.get(name, np.nan)
             da = self.read_map(fn, ind, dtype, mv, name=name)
             da_lst.append(da)
         ds = xr.merge(da_lst)
@@ -487,7 +487,7 @@ class SfincsGrid(GridComponent):
         map_fn: Union[str, Path],
         ind: np.ndarray,
         dtype: Union[str, np.dtype] = "f4",
-        mv: float = -9999.0,
+        mv: float = np.nan,
         name: str = None,
     ) -> xr.DataArray:
         """Read one of the grid variables of the SFINCS model map from a binary file."""

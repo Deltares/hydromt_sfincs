@@ -111,11 +111,11 @@ class SfincsInitialConditions(ModelComponent):
         da_zsini = da_zsini.raster.reproject_like(self.mask, method=reproj_method)
 
         # check on nan values
-        if np.logical_and(np.isnan(da_zsini), self.mask >= 1).any():
+        nmissing = int(np.sum(np.isnan(da_zsini.values) & (self.mask.values > 0)))
+        if nmissing > 0:
             logger.warning(
-                "NaN values found in initial water level data; filled with fill_value {}".format(
-                    fill_value
-                )
+                f"{nmissing} active cells have no initial water level data; filled "
+                f"with {fill_value}."
             )
             da_zsini = da_zsini.fillna(fill_value)
         da_zsini.raster.set_nodata(np.nan)
@@ -227,11 +227,11 @@ class SfincsInitialConditions(ModelComponent):
             da_zsini = xr.where(da_zsini0, zsini_single, da_zsini)
 
         # check on nan values
-        if np.logical_and(np.isnan(da_zsini), self.mask >= 1).any():
+        nmissing = int(np.sum(np.isnan(da_zsini.values) & (self.mask.values > 0)))
+        if nmissing > 0:
             logger.warning(
-                "NaN values found in initial water level data; filled with fill_value {}".format(
-                    fill_value
-                )
+                f"{nmissing} active cells have no initial water level data; filled "
+                f"with {fill_value}."
             )
             da_zsini = da_zsini.fillna(fill_value)
         da_zsini.raster.set_nodata(np.nan)

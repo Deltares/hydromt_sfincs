@@ -125,11 +125,15 @@ class SfincsRoughness(ModelComponent):
             da_man0 = xr.full_like(self.mask, manning_land, dtype=np.float32)
 
         if len(roughness_list) > 0 and fromdep:
-            logger.warning("nan values in manning roughness array")
+            nmissing = int(np.sum(np.isnan(da_man.values) & (self.mask.values > 0)))
+            logger.warning(
+                f"{nmissing} active cells have no manning roughness data; filled "
+                f"with the land/sea default."
+            )
             da_man = da_man.where(~np.isnan(da_man), da_man0)
         elif fromdep:
             da_man = da_man0
-        da_man.raster.set_nodata(-9999.0)
+        da_man.raster.set_nodata(np.nan)
 
         # set grid
         mname = "manning"

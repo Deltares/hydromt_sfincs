@@ -104,12 +104,14 @@ class SfincsElevation(ModelComponent):
         )
 
         # check if no nan data is present in the bed levels
+        # NOTE counted over the full array; the mask does not exist yet at this point
         nmissing = int(np.sum(np.isnan(da_dep.values)))
         if nmissing > 0 and interpolate_na:
             logger.warning(f"Interpolate elevation at {nmissing} cells")
             da_dep = da_dep.raster.interpolate_na(method="rio_idw", extrapolate=True)
         elif nmissing > 0:
             logger.info(f"Elevation has {nmissing} missing cells; leaving them as NaN")
+        da_dep.raster.set_nodata(np.nan)
 
         # set the dep layer in the model data
         mname = "dep"
