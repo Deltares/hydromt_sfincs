@@ -48,7 +48,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
                 self.read(filename=abs_file_path)
 
     def read(self, filename: str | Path = None):
-        """Read SFINCS subgrid table (*.nc) file for Quadree grid
+        """Read SFINCS subgrid table (``*.nc``) file for Quadree grid
 
         Args:
             filename (str | Path, optional): File name to read. Defaults to None.
@@ -82,7 +82,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
         self._data = xr.load_dataset(abs_file_path)
 
     def write(self, filename: str | Path = None):
-        """Write SFINCS subgrid table (*.sbg) file for Quadree grid
+        """Write SFINCS subgrid table (``*.sbg``) file for Quadree grid
 
         Args:
             filename (str | Path, optional): File name to write. Defaults to None.

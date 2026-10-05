@@ -80,7 +80,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             self.set(geodataset=ds, merge=False, drop_duplicates=False)
 
     def read_boundary_points(self, filename: str | Path = None):
-        """Read SnapWave boundary condition points snapwave_bndfile (*.bnd) file"""
+        """Read SnapWave boundary condition points snapwave_bndfile (``*.bnd``) file"""
 
         # Check that read mode is on
         self.root._assert_read_mode()
@@ -242,7 +242,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             self.model.config.set("snapwave_bdsfile", None)
 
     def write_boundary_points(self, filename: str | Path = None):
-        """Write SnapWave boundary condition points (*.bnd) file"""
+        """Write SnapWave boundary condition points (``*.bnd``) file"""
 
         # Check that write mode is on
         self.root._assert_write_mode()
