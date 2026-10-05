@@ -1,5 +1,6 @@
 from datetime import datetime
 import gc
+import logging
 from os.path import join, dirname, abspath
 import numpy as np
 import os
@@ -101,6 +102,65 @@ def test_quadtree_layer_file_is_ugrid(quadtree_model):
         assert "mesh2d_node_x" in ds.variables
         assert "mesh2d_node_y" in ds.variables
         assert ds["mesh2d_crs"].attrs["epsg_code"].startswith("EPSG:")
+
+
+def test_quadtree_write_skips_layer_that_was_never_created(quadtree_model, caplog):
+    # a layer that was never created must not leave a reference behind, since
+    # SFINCS would then look for a file this model never writes
+    assert "vol" not in quadtree_model.quadtree_grid.data
+    assert quadtree_model.config.get("volfile") is None
+
+    caplog.clear()
+    with caplog.at_level(logging.WARNING):
+        quadtree_model.quadtree_storage_volume.write()
+
+    assert quadtree_model.config.get("volfile") is None
+    assert "will be missing" not in caplog.text
+    assert not (quadtree_model.root.path / "vol.nc").is_file()
+
+
+def test_quadtree_write_warns_when_layer_missing_in_new_root(
+    quadtree_model, tmp_dir, caplog
+):
+    # a model on disk whose manning lives in its own file
+    mask = quadtree_model.quadtree_grid.data["mask"]
+    manning = mask.astype(np.float32)
+    manning.values = np.full(mask.values.shape, 0.03, dtype=np.float32)
+    quadtree_model.quadtree_grid.set(manning, name="manning")
+    quadtree_model.quadtree_grid.write()
+    quadtree_model.quadtree_roughness.write()
+    quadtree_model.config.write()
+
+    root_a = quadtree_model.root.path
+    assert (root_a / "manning.nc").is_file()
+
+    # read only the grid, so manning is never loaded
+    mod = SfincsModel(root=root_a, mode="r+")
+    mod.config.read()
+    mod.quadtree_grid.read()
+    assert "manning" not in mod.quadtree_grid.data
+
+    # same root: the file is already correct on disk, so skipping is fine
+    caplog.clear()
+    with caplog.at_level(logging.WARNING):
+        mod.quadtree_roughness.write()
+    assert "will be missing" not in caplog.text
+    assert (root_a / "manning.nc").is_file()
+
+    # new root: the layer is neither loaded nor present, so it is lost
+    root_b = tmp_dir / "moved"
+    mod.root.set(root_b, mode="w+")
+    caplog.clear()
+    with caplog.at_level(logging.WARNING):
+        mod.quadtree_roughness.write()
+    assert "will be missing" in caplog.text
+    assert not (root_b / "manning.nc").is_file()
+
+    # the config still points at a file that is not there: a dangling
+    # reference that SFINCS would fail on, which is what the warning is for
+    mod.config.write()
+    assert mod.config.get("manningfile") == "manning.nc"
+    assert "manningfile" in (root_b / "sfincs.inp").read_text()
 
 
 def test_quadtree_initial_conditions_io(quadtree_model):

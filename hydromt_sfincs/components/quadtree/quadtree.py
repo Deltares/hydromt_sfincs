@@ -198,13 +198,39 @@ class SfincsQuadtreeGrid(MeshComponent):
                 ds[coord].attrs["grid_mapping"] = crs_var_name
         return ds
 
-    def write_layers(self, variables: List[str], filename: Union[str, Path]) -> None:
-        """Write face variables to a standalone UGRID netcdf file."""
+    def write_layers(
+        self,
+        variables: List[str],
+        config_key: str,
+        default: str,
+    ) -> None:
+        """Write face variables to a standalone UGRID netcdf file.
+
+        The config key is only set once there is data to write, so a layer that
+        was never created does not leave a dangling reference behind.
+        """
         # TODO add a `ugrid: bool = True` option. Full UGRID keeps every node
         # coordinate so the file opens standalone in QGIS, but that is a lot of
         # overhead per layer. Experienced users may prefer a lean file holding
         # only the face values.
-        filename = Path(filename)
+        missing = [v for v in variables if v not in self.data]
+        if missing:
+            fn = self.model.config.get(config_key, abs_path=True)
+            if fn is None:
+                return  # never configured, so nothing can go missing
+            if Path(fn).is_file():
+                # already on disk at the write root, so there is nothing to do
+                logger.debug(f"{missing} not loaded; leaving {Path(fn).name} as is.")
+            else:
+                logger.warning(
+                    f"'{config_key}' is set to {Path(fn).name} but {missing} are not "
+                    f"loaded and the file is not present here, so it will be missing "
+                    f"from this model. Read the component first, or use model.read()."
+                )
+            return
+        filename = Path(
+            self.model.config.get_set_file_variable(config_key, default=default)
+        )
         filename.parent.mkdir(parents=True, exist_ok=True)
         # node coordinates are included so the file carries its own geometry
         ds = self.data[

@@ -58,14 +58,12 @@ class SfincsInitialConditions(ModelComponent):
         # the grid holds the mask and cell index this map is written against;
         # check _data directly, since the data property already triggers a read
         if self.model.grid._data is None:
-            self.model.grid.read()
+            self.model.grid.read(read_components=False)
         self.model.grid.read_layers(list(self.grid_variables))
 
     def write(self) -> None:
         """Write the initial water level map to its own binary file."""
-        # check if the grid_variables are in self.data
-        if all(var in self.data.data_vars for var in self.grid_variables):
-            self.model.grid.write_layers(list(self.grid_variables))
+        self.model.grid.write_layers(list(self.grid_variables))
 
     # Original HydroMT-SFINCS setup_ functions:
     # was not yet implemented

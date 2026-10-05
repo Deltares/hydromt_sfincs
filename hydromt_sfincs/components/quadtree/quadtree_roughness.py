@@ -43,7 +43,7 @@ class SfincsQuadtreeRoughness(SfincsQuadtreeMixin, ModelComponent):
         """Read the manning roughness layer from its own file."""
         # the grid defines the mesh this layer lives on, so load it first
         if self.model.quadtree_grid._data is None:
-            self.model.quadtree_grid.read()
+            self.model.quadtree_grid.read(read_components=False)
         filename = self.model.config.get("manningfile", abs_path=True)
         if filename is None or not filename.is_file():
             return
@@ -51,12 +51,7 @@ class SfincsQuadtreeRoughness(SfincsQuadtreeMixin, ModelComponent):
 
     def write(self):
         """Write the manning roughness layer to its own file."""
-        if "manning" not in self.model.quadtree_grid.data:
-            return
-        filename = self.model.config.get_set_file_variable(
-            "manningfile", default="manning.nc"
-        )
-        self.model.quadtree_grid.write_layers(["manning"], filename)
+        self.model.quadtree_grid.write_layers(["manning"], "manningfile", "manning.nc")
 
     @hydromt_step
     def create(

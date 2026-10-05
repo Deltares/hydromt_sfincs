@@ -87,7 +87,7 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         # the grid holds the mask and cell index these layers are written against;
         # check _data directly, since the data property already triggers a read
         if self.model.grid._data is None:
-            self.model.grid.read()
+            self.model.grid.read(read_components=False)
         flavor = configured_flavor(self.model.config)
         if flavor is None or flavor == "con":
             return
@@ -130,17 +130,19 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         if flavor is None or flavor == "con":
             return
         if flavor == "bkt":
-            if not all(name in self.data for name in BUCKET_VARS):
-                return
-            bucketfile = self.model.config.get_set_file_variable(
-                "bucketfile", default=DEFAULT_BUCKETFILE
+            self.model.grid.write_sidecar(
+                list(BUCKET_VARS), "bucketfile", DEFAULT_BUCKETFILE
             )
-            bucketfile.parent.mkdir(parents=True, exist_ok=True)
-            self.model.grid.write_sidecar(bucketfile, list(BUCKET_VARS))
             return
         if netcdf:
-            filename = self._configure_netcdf(flavor)
-            self.model.grid.write_sidecar(filename, list(flavor_variables(flavor)))
+            # reset_config would wipe the key again, so configure before writing
+            if all(name in self.data for name in flavor_variables(flavor)):
+                self._configure_netcdf(flavor)
+            self.model.grid.write_sidecar(
+                list(flavor_variables(flavor)),
+                "infiltration_file",
+                DEFAULT_INFILTRATIONFILE,
+            )
             return
         self.model.grid.write_layers(list(flavor_variables(flavor)))
 

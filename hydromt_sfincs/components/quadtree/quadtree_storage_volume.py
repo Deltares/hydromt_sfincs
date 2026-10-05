@@ -46,7 +46,7 @@ class SfincsQuadtreeStorageVolume(ModelComponent):
         """Read the storage volume layer from its own file."""
         # the grid defines the mesh this layer lives on, so load it first
         if self.model.quadtree_grid._data is None:
-            self.model.quadtree_grid.read()
+            self.model.quadtree_grid.read(read_components=False)
         filename = self.model.config.get("volfile", abs_path=True)
         if filename is None or not filename.is_file():
             return
@@ -54,10 +54,7 @@ class SfincsQuadtreeStorageVolume(ModelComponent):
 
     def write(self):
         """Write the storage volume layer to its own file."""
-        if "vol" not in self.model.quadtree_grid.data:
-            return
-        filename = self.model.config.get_set_file_variable("volfile", default="vol.nc")
-        self.model.quadtree_grid.write_layers(["vol"], filename)
+        self.model.quadtree_grid.write_layers(["vol"], "volfile", "vol.nc")
 
     def create(
         self,

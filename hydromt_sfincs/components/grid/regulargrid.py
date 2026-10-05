@@ -516,9 +516,22 @@ class SfincsGrid(GridComponent):
         binary map is indexed against it.
         """
         self.root._assert_write_mode
-        missing = [v for v in variables if v not in self.data]
-        if missing:
-            logger.warning(f"Not in grid data, skipping: {missing}")
+        for name in variables:
+            if name in self.data:
+                continue
+            config_key, _ = _MAP_EXCEPTIONS.get(name, (f"{name}file", None))
+            fn = self.model.config.get(config_key, abs_path=True)
+            if fn is None:
+                continue  # never configured, so nothing can go missing
+            if isfile(fn):
+                # already on disk at the write root, so there is nothing to do
+                logger.debug(f"'{name}' not loaded; leaving {Path(fn).name} as is.")
+            else:
+                logger.warning(
+                    f"'{config_key}' is set to {Path(fn).name} but '{name}' is not "
+                    f"loaded and the file is not present here, so it will be missing "
+                    f"from this model. Read the component first, or use model.read()."
+                )
         variables = [v for v in variables if v in self.data]
         if not variables:
             return
@@ -579,13 +592,35 @@ class SfincsGrid(GridComponent):
                 continue
             self.set(self.read_map(fn, ind, "f4", np.nan, name=name))
 
-    def write_sidecar(self, filename: Union[str, Path], variables: List[str]) -> None:
+    def write_sidecar(
+        self, variables: List[str], config_key: str, default: str
+    ) -> None:
         """Write active-cell vectors of `variables` to a SFINCS netcdf sidecar.
 
         Used for variable groups that share one file instead of having a binary
-        map and config key each.
+        map and config key each. Because the key covers the whole group it is
+        only set once every variable is present, so a group that was never
+        created does not leave a dangling reference behind.
         """
-        filename = Path(filename)
+        self.root._assert_write_mode
+        missing = [v for v in variables if v not in self.data]
+        if missing:
+            fn = self.model.config.get(config_key, abs_path=True)
+            if fn is None:
+                return  # never configured, so nothing can go missing
+            if Path(fn).is_file():
+                # already on disk at the write root, so there is nothing to do
+                logger.debug(f"{missing} not loaded; leaving {Path(fn).name} as is.")
+            else:
+                logger.warning(
+                    f"'{config_key}' is set to {Path(fn).name} but {missing} are not "
+                    f"loaded and the file is not present here, so it will be missing "
+                    f"from this model. Read the component first, or use model.read()."
+                )
+            return
+        filename = Path(
+            self.model.config.get_set_file_variable(config_key, default=default)
+        )
         filename.parent.mkdir(parents=True, exist_ok=True)
         mask = np.asarray(self.mask.values)
         coords = {"mesh2d_nFaces": np.arange(int((mask > 0).sum()), dtype=np.int32)}

@@ -47,7 +47,7 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
         """Read the initial water level layer from its own file."""
         # the grid defines the mesh this layer lives on, so load it first
         if self.model.quadtree_grid._data is None:
-            self.model.quadtree_grid.read()
+            self.model.quadtree_grid.read(read_components=False)
         filename = self.model.config.get("inifile", abs_path=True)
         if filename is None or not filename.is_file():
             return
@@ -55,10 +55,7 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
 
     def write(self):
         """Write the initial water level layer to its own file."""
-        if "zs" not in self.model.quadtree_grid.data:
-            return
-        filename = self.model.config.get_set_file_variable("inifile", default="zs.nc")
-        self.model.quadtree_grid.write_layers(["zs"], filename)
+        self.model.quadtree_grid.write_layers(["zs"], "inifile", "zs.nc")
 
     # %% core HydroMT-SFINCS functions:
     # read

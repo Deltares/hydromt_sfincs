@@ -85,7 +85,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         # TODO discuss whether we want to clear infiltration data first
         # the grid defines the mesh these layers live on, so load it first
         if self.model.quadtree_grid._data is None:
-            self.model.quadtree_grid.read()
+            self.model.quadtree_grid.read(read_components=False)
         flavor = configured_flavor(self.model.config)
         if flavor is None or flavor == "con":
             return
@@ -106,14 +106,12 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         if flavor is None or flavor == "con":
             return
         if flavor == "bkt":
-            filename = self.model.config.get_set_file_variable(
-                "bucketfile", default=DEFAULT_BUCKETFILE
-            )
+            config_key, default = "bucketfile", DEFAULT_BUCKETFILE
         else:
-            filename = self.model.config.get_set_file_variable(
-                "infiltration_file", default=DEFAULT_INFILTRATIONFILE
-            )
-        self.model.quadtree_grid.write_layers(flavor_variables(flavor), filename)
+            config_key, default = "infiltration_file", DEFAULT_INFILTRATIONFILE
+        self.model.quadtree_grid.write_layers(
+            flavor_variables(flavor), config_key, default
+        )
 
     @hydromt_step
     def create_uniform_constant(self, qinf: float) -> None:
