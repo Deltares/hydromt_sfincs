@@ -386,9 +386,11 @@ def test_bucket_loss_defaults_with_and_without_landuse(model):
     ds = workflows.bucket_from_soil(da_hsg=hsg, df_map=df_map, da_ksat=ksat)
     assert np.isclose(float(ds["bucket_loss"].where(model.grid.mask > 0).mean()), 0.0)
 
-    lulc_modifiers = Path(DATADIR) / "infiltration" / "nlcd_infiltration_modifiers.csv"
+    modifier_table_path = (
+        Path(DATADIR) / "infiltration" / "nlcd_infiltration_modifiers.csv"
+    )
     df_lulc_modifiers = model.data_catalog.get_dataframe(
-        lulc_modifiers,
+        modifier_table_path,
         source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
     )
 

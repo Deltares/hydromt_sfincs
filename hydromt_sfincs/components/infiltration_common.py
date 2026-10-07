@@ -138,6 +138,14 @@ def flavor_variables(flavor: str) -> tuple[str, ...]:
     return FLAVORS[flavor]
 
 
+def _require_lulc_modifiers(lulc, lulc_modifier_table) -> None:
+    if lulc is not None and lulc_modifier_table is None:
+        raise ValueError(
+            "Provide lulc_modifier_table when lulc is used; the table must match "
+            "the land-cover dataset's class codes."
+        )
+
+
 def configured_flavor(config: "SfincsConfig", grid_type: str) -> str | None:
     """Infer the configured infiltration flavor from model config."""
     if grid_type not in ("regular", "quadtree"):

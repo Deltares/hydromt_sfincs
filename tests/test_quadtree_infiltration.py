@@ -291,3 +291,12 @@ def test_infiltration_estimators_from_hsg_quadtree(model, quadtree_model):
     assert _max("bucket_smax") == pytest.approx(87.5, rel=1e-3)
     assert _max("bucket_k") == pytest.approx(18.0 / 87.5, rel=1e-3)
     assert _max("bucket_loss") == pytest.approx(0.0, abs=1e-6)
+
+
+@pytest.mark.parametrize(
+    "method_name", ["create_green_ampt", "create_horton", "create_bucket"]
+)
+def test_quadtree_lulc_requires_modifier_table(quadtree_model, method_name):
+    method = getattr(quadtree_model.quadtree_infiltration, method_name)
+    with pytest.raises(ValueError, match="Provide lulc_modifier_table"):
+        method(hsg="unused", lulc="unused")

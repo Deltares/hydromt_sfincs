@@ -354,6 +354,13 @@ def test_infiltration_estimators_from_hsg(model):
     assert float(model.grid.data["kd"].where(model.grid.mask > 0).max()) > 0.0
 
 
+@pytest.mark.parametrize("method_name", ["create_green_ampt", "create_horton"])
+def test_regular_lulc_requires_modifier_table(model, method_name):
+    method = getattr(model.infiltration, method_name)
+    with pytest.raises(ValueError, match="Provide lulc_modifier_table"):
+        method(hsg="unused", lulc="unused")
+
+
 def test_initial_conditions(model):
     # set spatially varying initial waterlevel
     ini = xr.where(model.grid.data["dep"] < -0.5, np.nan, 0.5)

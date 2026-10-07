@@ -23,6 +23,7 @@ from hydromt_sfincs.components.infiltration_common import (
     flavor_variables,
     get_attrs,
     reset_config,
+    _require_lulc_modifiers,
 )
 from hydromt_sfincs.components.quadtree import SfincsQuadtreeMixin
 
@@ -169,17 +170,17 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         #     da_lulc = self.data_catalog.get_rasterdataset(
         #         lulc, bbox=self.model.bbox, buffer=10
         #     )
-        #     if lulc_modifiers is None:
-        #         lulc_modifiers = (
+        #     if lulc_modifier_table is None:
+        #         lulc_modifier_table = (
         #             Path(DATADIR)
         #             / "infiltration"
         #             / "nlcd_infiltration_modifiers.csv"
         #         )
-        #     if isinstance(lulc_modifiers, pd.DataFrame):
-        #         df_modifiers = lulc_modifiers.copy()
+        #     if isinstance(lulc_modifier_table, pd.DataFrame):
+        #         df_modifiers = lulc_modifier_table.copy()
         #     else:
         #         df_modifiers = self.data_catalog.get_dataframe(
-        #             lulc_modifiers,
+        #             lulc_modifier_table,
         #             source_kwargs={
         #                 "driver": {"name": "pandas", "options": {"index_col": 0}}
         #             },
@@ -438,7 +439,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         ksat: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
         lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
         reclass_table: Union[str, Path, pd.DataFrame, None] = None,
-        lulc_modifiers: Union[str, Path, pd.DataFrame, None] = None,
+        lulc_modifier_table: Union[str, Path, pd.DataFrame, None] = None,
         dual_hsg: Union[str, None] = "drained",
         factor_ksat: float = 3.6,
         reproj_method: str = "average",
@@ -461,12 +462,12 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             derives ``ks`` values from the reclassification table.
         lulc : str, Path, or RasterDataset, optional
             Land-use map used to apply infiltration modifiers. Its classes must
-            match the index of ``lulc_modifiers``.
+            match the index of ``lulc_modifier_table``.
         reclass_table : str, Path, or DataFrame, optional
             Table mapping HSG classes to Green-Ampt parameters.
-        lulc_modifiers : str, Path, or DataFrame, optional
-            Table with land-use modifier factors, indexed by land-use class. By
-            default the bundled NLCD table is used.
+        lulc_modifier_table : str, Path, or DataFrame, optional
+            Required with ``lulc``. Table of modifier factors keyed by the
+            land-cover class codes in the supplied dataset.
         dual_hsg : {None, 'native', 'drained'}, optional
             How to handle dual HSG classes, by default 'drained'.
         factor_ksat : float, optional
@@ -475,6 +476,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             Resampling method for reprojecting final parameter maps to quadtree
             blocks. By default 'average'.
         """
+        _require_lulc_modifiers(lulc, lulc_modifier_table)
         if reclass_table is None:
             reclass_table = Path(DATADIR) / "infiltration" / "hsg_green_ampt.csv"
 
@@ -493,16 +495,12 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             da_ksat = da_ksat.raster.reproject_like(da_hsg, method="average")
 
         if lulc is not None:
-            if lulc_modifiers is None:
-                lulc_modifiers = (
-                    Path(DATADIR) / "infiltration" / "nlcd_infiltration_modifiers.csv"
-                )
             da_lulc = self.data_catalog.get_rasterdataset(
                 lulc, bbox=self.model.bbox, buffer=10, variables=["lulc"]
             )
             da_lulc = da_lulc.raster.reproject_like(da_hsg, method="nearest")
             df_modifiers = self.data_catalog.get_dataframe(
-                lulc_modifiers,
+                lulc_modifier_table,
                 source_kwargs={
                     "driver": {"name": "pandas", "options": {"index_col": 0}}
                 },
@@ -595,7 +593,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         ksat: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
         lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
         reclass_table: Union[str, Path, pd.DataFrame, None] = None,
-        lulc_modifiers: Union[str, Path, pd.DataFrame, None] = None,
+        lulc_modifier_table: Union[str, Path, pd.DataFrame, None] = None,
         dual_hsg: Union[str, None] = "drained",
         factor_ksat: float = 3.6,
         reproj_method: str = "average",
@@ -618,12 +616,12 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             derives ``fc`` values from the reclassification table.
         lulc : str, Path, or RasterDataset, optional
             Land-use map used to apply infiltration modifiers. Its classes must
-            match the index of ``lulc_modifiers``.
+            match the index of ``lulc_modifier_table``.
         reclass_table : str, Path, or DataFrame, optional
             Table mapping HSG classes to Horton parameters.
-        lulc_modifiers : str, Path, or DataFrame, optional
-            Table with land-use modifier factors, indexed by land-use class. By
-            default the bundled NLCD table is used.
+        lulc_modifier_table : str, Path, or DataFrame, optional
+            Required with ``lulc``. Table of modifier factors keyed by the
+            land-cover class codes in the supplied dataset.
         dual_hsg : {None, 'native', 'drained'}, optional
             How to handle dual HSG classes, by default 'drained'.
         factor_ksat : float, optional
@@ -632,6 +630,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             Resampling method for reprojecting final parameter maps to quadtree
             blocks. By default 'average'.
         """
+        _require_lulc_modifiers(lulc, lulc_modifier_table)
         if reclass_table is None:
             reclass_table = Path(DATADIR) / "infiltration" / "hsg_horton.csv"
 
@@ -650,16 +649,12 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             da_ksat = da_ksat.raster.reproject_like(da_hsg, method="average")
 
         if lulc is not None:
-            if lulc_modifiers is None:
-                lulc_modifiers = (
-                    Path(DATADIR) / "infiltration" / "nlcd_infiltration_modifiers.csv"
-                )
             da_lulc = self.data_catalog.get_rasterdataset(
                 lulc, bbox=self.model.bbox, buffer=10, variables=["lulc"]
             )
             da_lulc = da_lulc.raster.reproject_like(da_hsg, method="nearest")
             df_modifiers = self.data_catalog.get_dataframe(
-                lulc_modifiers,
+                lulc_modifier_table,
                 source_kwargs={
                     "driver": {"name": "pandas", "options": {"index_col": 0}}
                 },
@@ -754,7 +749,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         ksat: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
         lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
         reclass_table: Union[str, Path, pd.DataFrame, None] = None,
-        lulc_modifiers: Union[str, Path, pd.DataFrame, None] = None,
+        lulc_modifier_table: Union[str, Path, pd.DataFrame, None] = None,
         dual_hsg: Union[str, None] = "drained",
         factor_ksat: float = 3.6,
         bucket_loss: Union[float, None] = None,
@@ -778,12 +773,12 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             ``bucket_k`` values.
         lulc : str, Path, or RasterDataset, optional
             Land-use map used to apply infiltration modifiers. Its classes must
-            match the index of ``lulc_modifiers``.
+            match the index of ``lulc_modifier_table``.
         reclass_table : str, Path, or DataFrame, optional
             Table mapping HSG classes to bucket parameters.
-        lulc_modifiers : str, Path, or DataFrame, optional
-            Table with land-use modifier factors, indexed by land-use class. By
-            default the bundled NLCD table is used.
+        lulc_modifier_table : str, Path, or DataFrame, optional
+            Required with ``lulc``. Table of modifier factors keyed by the
+            land-cover class codes in the supplied dataset.
         dual_hsg : {None, 'native', 'drained'}, optional
             How to handle dual HSG classes, by default 'drained'.
         factor_ksat : float, optional
@@ -795,6 +790,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             Resampling method for reprojecting final parameter maps to quadtree
             blocks. By default 'average'.
         """
+        _require_lulc_modifiers(lulc, lulc_modifier_table)
         if reclass_table is None:
             reclass_table = Path(DATADIR) / "infiltration" / "hsg_bucket.csv"
 
@@ -813,16 +809,12 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             da_ksat = da_ksat.raster.reproject_like(da_hsg, method="average")
 
         if lulc is not None:
-            if lulc_modifiers is None:
-                lulc_modifiers = (
-                    Path(DATADIR) / "infiltration" / "nlcd_infiltration_modifiers.csv"
-                )
             da_lulc = self.data_catalog.get_rasterdataset(
                 lulc, bbox=self.model.bbox, buffer=10, variables=["lulc"]
             )
             da_lulc = da_lulc.raster.reproject_like(da_hsg, method="nearest")
             df_modifiers = self.data_catalog.get_dataframe(
-                lulc_modifiers,
+                lulc_modifier_table,
                 source_kwargs={
                     "driver": {"name": "pandas", "options": {"index_col": 0}}
                 },
