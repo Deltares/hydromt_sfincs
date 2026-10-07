@@ -21,6 +21,7 @@ Write policy (controls which fields appear in sfincs.inp):
 """
 
 import logging
+import math
 import warnings
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -252,6 +253,12 @@ class SfincsConfigVariables(BaseSettings):
         1800.0,
         description="Interval of updating wind forcing (seconds)",
         json_schema_extra={"always": True},
+    )
+    dtoutfixed: int = Field(
+        1,
+        ge=0,
+        le=1,
+        description="Write output at exact output intervals (1: yes) or let them drift with the time step (0: no)",
     )
 
     # ================================================================
@@ -500,38 +507,133 @@ class SfincsConfigVariables(BaseSettings):
     # ================================================================
     # Wavemaker
     # ================================================================
-    nfreqsig: int = Field(
+    wavemaker_nfreqs_ig: int = Field(
         100,
         ge=1,
         le=500,
         description="Wave maker number of frequency bins IG spectrum (-)",
+        json_schema_extra={"min_version": "2.5.0"},
+    )
+    nfreqsig: int = Field(
+        100,
+        ge=1,
+        le=500,
+        description="[DEPRECATED] legacy alias of wavemaker_nfreqs_ig; Wave maker number of frequency bins IG spectrum (-)",
+        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_nfreqs_ig"},
+    )
+    wavemaker_freqmin_ig: float = Field(
+        0.0,
+        ge=0.0,
+        description="Minimum frequency wave maker IG spectrum (Hz)",
+        json_schema_extra={"min_version": "2.5.0"},
     )
     freqminig: float = Field(
         0.0,
         ge=0.0,
-        description="Minimum frequency wave maker IG spectrum (Hz)",
+        description="[DEPRECATED] legacy alias of wavemaker_freqmin_ig; Minimum frequency wave maker IG spectrum (Hz)",
+        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_freqmin_ig"},
+    )
+    wavemaker_freqmax_ig: float = Field(
+        0.1,
+        ge=0.0,
+        description="Maximum frequency wave maker IG spectrum (Hz)",
+        json_schema_extra={"min_version": "2.5.0"},
     )
     freqmaxig: float = Field(
         0.1,
         ge=0.0,
-        description="Maximum frequency wave maker IG spectrum (Hz)",
+        description="[DEPRECATED] legacy alias of wavemaker_freqmax_ig; Maximum frequency wave maker IG spectrum (Hz)",
+        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_freqmax_ig"},
+    )
+    wavemaker_filter_time: float = Field(
+        600.0,
+        ge=0.0,
+        description="Filtering duration for wave maker mean water level (s)",
+        json_schema_extra={"min_version": "2.5.0"},
     )
     wmtfilter: float = Field(
         600.0,
         ge=0.0,
-        description="Filtering duration for wave maker mean water level (s)",
+        description="[DEPRECATED] legacy alias of wavemaker_filter_time; Filtering duration for wave maker mean water level (s)",
+        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_filter_time"},
+    )
+    wavemaker_filter_fred: float = Field(
+        0.99,
+        description="Filtering variable in wave maker (-)",
+        json_schema_extra={"min_version": "2.5.0"},
     )
     wmfred: float = Field(
         0.99,
-        description="Filtering variable in wave maker (-)",
+        description="[DEPRECATED] legacy alias of wavemaker_filter_fred; Filtering variable in wave maker (-)",
+        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_filter_fred"},
+    )
+    wavemaker_signal: str = Field(
+        "spectrum",
+        description="Wavemaker signal type ('spectrum' or 'mon')",
+        json_schema_extra={"min_version": "2.5.0"},
     )
     wmsignal: str = Field(
         "spectrum",
-        description="Wavemaker signal type ('spectrum' or 'mon')",
+        description="[DEPRECATED] legacy alias of wavemaker_signal; Wavemaker signal type ('spectrum' or 'mon')",
+        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_signal"},
+    )
+    wavemaker_hmin: float = Field(
+        0.1,
+        description="Wavemaker minimum water depth (m)",
+        json_schema_extra={"min_version": "2.5.0"},
     )
     wmhmin: float = Field(
         0.1,
-        description="Wavemaker minimum water depth (m)",
+        description="[DEPRECATED] legacy alias of wavemaker_hmin; Wavemaker minimum water depth (m)",
+        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_hmin"},
+    )
+    wavemaker_nfreqs_inc: int = Field(
+        100,
+        description="Wave maker number of frequency bins incident wave spectrum (-)",
+    )
+    wavemaker_freqmin_inc: float = Field(
+        0.04,
+        description="Minimum frequency wave maker incident wave spectrum (Hz)",
+    )
+    wavemaker_freqmax_inc: float = Field(
+        1.0,
+        description="Maximum frequency wave maker incident wave spectrum (Hz)",
+    )
+    wavemaker_tinc2ig: float = Field(
+        -1.0,
+        description="Wave maker ratio of IG to incident wave period; <= 0 uses Herbers (-)",
+    )
+    wavemaker_surfslope: float = Field(
+        -1.0,
+        description="Wave maker surf zone slope for empirical IG wave period; <= 0 is not used (-)",
+    )
+    wavemaker_hm0_ig_factor: float = Field(
+        1.0,
+        description="Wave maker IG wave height scale factor (-)",
+    )
+    wavemaker_hm0_inc_factor: float = Field(
+        1.0,
+        description="Wave maker incident wave height scale factor (-)",
+    )
+    wavemaker_gammax: float = Field(
+        1.0,
+        description="Wave maker maximum ratio of wave height over water depth (-)",
+    )
+    wavemaker_tpmin: float = Field(
+        1.0,
+        description="Wave maker minimum peak wave period (s)",
+    )
+    wavemaker_hig: int = Field(
+        1,
+        ge=0,
+        le=1,
+        description="Wave maker include IG waves when forced by SnapWave (1: on, 0: off)",
+    )
+    wavemaker_hinc: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="Wave maker include incident waves when forced by SnapWave (1: on, 0: off)",
     )
 
     # ================================================================
@@ -636,6 +738,200 @@ class SfincsConfigVariables(BaseSettings):
         description="SnapWave minimum water depth (m)",
         json_schema_extra={"condition": "snapwave == 1"},
     )
+    snapwave_vegetation: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="SnapWave vegetation dissipation (1: on, 0: off)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_waveforces_ratio: float = Field(
+        1.0,
+        description="Multiplication factor on SnapWave wave forces (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    radstr: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="Radiation stress forcing from SnapWave (1: on, 0: off)",
+    )
+    snapwave_gamma: float = Field(
+        0.7,
+        description="SnapWave wave breaking parameter (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_gammax: float = Field(
+        999.0,
+        description="SnapWave maximum ratio of wave height over water depth (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_alpha: float = Field(
+        1.0,
+        description="SnapWave wave dissipation coefficient (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_fw: float = Field(
+        0.01,
+        description="SnapWave bottom friction factor incident waves (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_fwig: float = Field(
+        0.015,
+        description="SnapWave bottom friction factor IG waves (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_fw_ratio: float = Field(
+        1.0,
+        description="SnapWave ratio of land to sea friction factor incident waves (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_fwig_ratio: float = Field(
+        1.0,
+        description="SnapWave ratio of land to sea friction factor IG waves (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_dt: float = Field(
+        36000.0,
+        description="SnapWave internal time step, large value means stationary (seconds)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_tol: float = Field(
+        1000.0,
+        description="SnapWave tolerance (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_niter: int = Field(
+        10,
+        description="SnapWave maximum number of iterations (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_baldock_ratio: float = Field(
+        0.2,
+        description="SnapWave Baldock ratio incident waves (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_baldock_exponent: int = Field(
+        2,
+        description="SnapWave exponent of Baldock dissipation enhancement factor; 0 is unused (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_Tpini: float = Field(
+        1.0,
+        description="SnapWave initial peak wave period (s)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_mwind: int = Field(
+        2,
+        description="SnapWave wind growth option (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_sigmin: float = Field(
+        2 * math.pi / 25.0,
+        description="SnapWave minimum radial frequency (rad/s)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_sigmax: float = Field(
+        2 * math.pi,
+        description="SnapWave maximum radial frequency (rad/s)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_jadcgdx: int = Field(
+        1,
+        ge=0,
+        le=1,
+        description="SnapWave include dcg/dx term (1: on, 0: off)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_c_dispT: float = Field(
+        1.0,
+        description="SnapWave wave period dispersion coefficient (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_sector: float = Field(
+        180.0,
+        description="SnapWave directional sector (degrees)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_relax_factor_DoverA: float = Field(
+        0.25,
+        description="SnapWave underrelaxation factor for DoverA; 1.0 disables (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_relax_factor_DoverE: float = Field(
+        0.25,
+        description="SnapWave underrelaxation factor for DoverE; 1.0 disables (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_alpha_ig: float = Field(
+        1.0,
+        description="SnapWave wave dissipation coefficient IG waves (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_gammaig: float = Field(
+        0.7,
+        description="SnapWave wave breaking parameter IG waves (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_gamma_fac_br: float = Field(
+        0.45,
+        description="SnapWave factor on gamma to determine the incident wave breaking point (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_shinc2ig: float = Field(
+        1.0,
+        description="SnapWave ratio of IG source term subtracted from incident wave energy (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_alphaigfac: float = Field(
+        1.0,
+        description="SnapWave multiplication factor for IG shoaling source term (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_baldock_ratio_ig: float = Field(
+        0.2,
+        description="SnapWave Baldock ratio IG waves (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_ig_opt: int = Field(
+        1,
+        description="SnapWave IG wave option (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_iterative_srcig: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="SnapWave compute IG source term in iterative loop (1: on, 0: off)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_use_herbers: int = Field(
+        1,
+        ge=0,
+        le=1,
+        description="SnapWave compute IG boundary conditions with Herbers (1: on, 0: off)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_tpig_opt: int = Field(
+        1,
+        description="SnapWave IG wave period option for Herbers (1: Tm01, 2: Tpsmooth, 3: Tp, 4: Tm-1,0)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_jonswapgamma: float = Field(
+        3.3,
+        description="SnapWave JONSWAP gamma of offshore spectrum for Herbers (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_eeinc2ig: float = Field(
+        0.01,
+        description="SnapWave ratio of IG to incident wave energy, used if snapwave_use_herbers = 0 (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_Tinc2ig: float = Field(
+        7.0,
+        description="SnapWave ratio of IG to incident wave period, used if snapwave_use_herbers = 0 (-)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
     wave_enhanced_roughness: int = Field(
         0,
         ge=0,
@@ -682,6 +978,16 @@ class SfincsConfigVariables(BaseSettings):
     )
 
     # ================================================================
+    # Vegetation
+    # ================================================================
+    vegetation: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="Enable vegetation drag (1: on, 0: off)",
+    )
+
+    # ================================================================
     # Bathtub
     # ================================================================
     bathtub: int = Field(
@@ -708,12 +1014,20 @@ class SfincsConfigVariables(BaseSettings):
         None,
         description="Target SFINCS kernel version; controls min_version/max_version field handling",
     )
+    global_model: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="Global spherical model that wraps over the edge (1: on, 0: off)",
+        json_schema_extra={"min_version": "2.5.0"},
+    )
     global_: int = Field(
         0,
         ge=0,
         le=1,
         alias="global",
-        description="Global spherical model that wraps over the edge (1: on, 0: off)",
+        description="[DEPRECATED] legacy alias of global_model; Global spherical model that wraps over the edge (1: on, 0: off)",
+        json_schema_extra={"max_version": "2.4.1", "new_name": "global_model"},
     )
     crsgeo: int = Field(
         0,
@@ -800,6 +1114,16 @@ class SfincsConfigVariables(BaseSettings):
     manningfile: str | None = Field(None, description="Manning's n file")
     drnfile: str | None = Field(None, description="Drainage structure file")
     volfile: str | None = Field(None, description="Storage volume file")
+    cstfile: str | None = Field(None, description="Coastline polyline file")
+    dkbfile: str | None = Field(None, description="Dike breaches file")
+    urbfile: str | None = Field(None, description="Urban drainage zones file")
+    drainagefile: str | None = Field(
+        None, description="Netcdf drainage rate file (variable drainage_rate, mm/hr)"
+    )
+    vegfile: str | None = Field(None, description="Vegetation characteristics file")
+    vegtype: str | None = Field(
+        None, description="Vegetation type lookup table file (toml)"
+    )
 
     # ================================================================
     # Forcing files
@@ -809,10 +1133,46 @@ class SfincsConfigVariables(BaseSettings):
     bcafile: str | None = Field(None, description="Tidal boundary component file")
     bzifile: str | None = Field(None, description="Individual wave water level file")
     bdrfile: str | None = Field(None, description="Downstream river boundary file")
-    wfpfile: str | None = Field(None, description="Wavemaker location points file")
-    whifile: str | None = Field(None, description="Wavemaker IG wave height file")
-    wtifile: str | None = Field(None, description="Wavemaker IG wave period file")
-    wstfile: str | None = Field(None, description="Wavemaker setup file")
+    wavemaker_wfpfile: str | None = Field(
+        None,
+        description="Wavemaker location points file",
+        json_schema_extra={"min_version": "2.5.0"},
+    )
+    wfpfile: str | None = Field(
+        None,
+        description="[DEPRECATED] legacy alias of wavemaker_wfpfile; Wavemaker location points file",
+        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_wfpfile"},
+    )
+    wavemaker_whifile: str | None = Field(
+        None,
+        description="Wavemaker IG wave height file",
+        json_schema_extra={"min_version": "2.5.0"},
+    )
+    whifile: str | None = Field(
+        None,
+        description="[DEPRECATED] legacy alias of wavemaker_whifile; Wavemaker IG wave height file",
+        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_whifile"},
+    )
+    wavemaker_wtifile: str | None = Field(
+        None,
+        description="Wavemaker IG wave period file",
+        json_schema_extra={"min_version": "2.5.0"},
+    )
+    wtifile: str | None = Field(
+        None,
+        description="[DEPRECATED] legacy alias of wavemaker_wtifile; Wavemaker IG wave period file",
+        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_wtifile"},
+    )
+    wavemaker_wstfile: str | None = Field(
+        None,
+        description="Wavemaker setup file",
+        json_schema_extra={"min_version": "2.5.0"},
+    )
+    wstfile: str | None = Field(
+        None,
+        description="[DEPRECATED] legacy alias of wavemaker_wstfile; Wavemaker setup file",
+        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_wstfile"},
+    )
     srcfile: str | None = Field(None, description="Discharge input points file")
     disfile: str | None = Field(None, description="Discharge input time-series file")
     spwfile: str | None = Field(None, description="Spiderweb tropical cyclone file")
@@ -828,7 +1188,19 @@ class SfincsConfigVariables(BaseSettings):
     ampfile: str | None = Field(None, description="Atmospheric pressure file")
     amprfile: str | None = Field(None, description="Precipitation file")
     z0lfile: str | None = Field(None, description="Wind reduction over land file")
-    wvmfile: str | None = Field(None, description="Wave maker input points file")
+    wavemaker_wvmfile: str | None = Field(
+        None,
+        description="Wave maker input points file",
+        json_schema_extra={"min_version": "2.5.0"},
+    )
+    wvmfile: str | None = Field(
+        None,
+        description="[DEPRECATED] legacy alias of wavemaker_wvmfile; Wave maker input points file",
+        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_wvmfile"},
+    )
+    wavemaker_timeseries_wvmfile: str | None = Field(
+        None, description="Wave maker input points file, forced by IG time series"
+    )
     qinffile: str | None = Field(None, description="Infiltration file")
     infiltration_file: str | None = Field(
         None, description="Infiltration file (alternative)"
@@ -899,6 +1271,36 @@ class SfincsConfigVariables(BaseSettings):
     netsnapwavefile: str | None = Field(
         None, description="Netcdf SnapWave boundary file"
     )
+    snapwave_jonswapfile: str | None = Field(
+        None,
+        description="SnapWave JONSWAP boundary conditions file",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_encfile: str | None = Field(
+        None,
+        description="SnapWave enclosure file",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_upwfile: str | None = Field(
+        None,
+        description="SnapWave upwind neighbours file",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_mskfile: str | None = Field(
+        None,
+        description="SnapWave mask file",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_depfile: str | None = Field(
+        None,
+        description="SnapWave depth file",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    snapwave_ncfile: str | None = Field(
+        None,
+        description="SnapWave netcdf grid file",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
 
     # ================================================================
     # Output observation files
@@ -956,7 +1358,11 @@ class SfincsConfigVariables(BaseSettings):
         0, ge=0, le=1, description="Write wave direction output (1: yes, 0: no)"
     )
     storeqdrain: int = Field(
-        1, ge=0, le=1, description="Write drainage discharge output (1: yes, 0: no)"
+        1,
+        ge=0,
+        le=1,
+        description="[DEPRECATED] Write drainage discharge output (1: yes, 0: no)",
+        json_schema_extra={"max_version": "2.4.1"},
     )
     storezvolume: int = Field(
         0, ge=0, le=1, description="Write storage volume output (1: yes, 0: no)"
@@ -970,11 +1376,65 @@ class SfincsConfigVariables(BaseSettings):
     store_dynamic_bed_level: int = Field(
         0, ge=0, le=1, description="Write dynamic bed level output (1: yes, 0: no)"
     )
+    storetzsmax: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="Write time of maximum water level output (1: yes, 0: no)",
+    )
+    storezvolmax: int = Field(
+        1,
+        ge=0,
+        le=1,
+        description="Write maximum subgrid cell volume output, subgrid only (1: yes, 0: no)",
+    )
+    store_river_discharge: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="Write river point discharge output (1: yes, 0: no)",
+    )
+    store_urban_drainage_discharge: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="Write urban drainage discharge output (1: yes, 0: no)",
+    )
+    store_cumulative_urban_drainage: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="Write cumulative urban drainage output (1: yes, 0: no)",
+    )
+    storesnapwavegrid: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="Write SnapWave grid output (1: yes, 0: no)",
+        json_schema_extra={"condition": "snapwave == 1"},
+    )
+    writeruntime: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="Write runtimes.txt at the end of the simulation (1: yes, 0: no)",
+    )
+    output_on_quadtree_mesh: int = Field(
+        0,
+        ge=0,
+        le=1,
+        description="Write quadtree without refinement on quadtree mesh (1: yes) or regular grid (0: no)",
+        json_schema_extra={"min_version": "2.5.0"},
+    )
     regular_output_on_mesh: int = Field(
         1,
         ge=0,
         le=1,
-        description="Write quadtree without refinement on quadtree mesh (1: yes) or regular grid (0: no)",
+        description="[DEPRECATED] legacy alias of output_on_quadtree_mesh; Write quadtree without refinement on quadtree mesh (1: yes) or regular grid (0: no)",
+        json_schema_extra={
+            "max_version": "2.4.1",
+            "new_name": "output_on_quadtree_mesh",
+        },
     )
     twet_threshold: float = Field(
         0.01, ge=0.0, description="Time-wet minimum depth threshold (m)"
@@ -1013,7 +1473,11 @@ class SfincsConfigVariables(BaseSettings):
 
         # Warn about keys not recognized by the schema; they are kept as
         # pass-through attributes (Config.extra = "allow") and always rewritten.
-        model_fields = cls.model_fields
+        # The file uses the alias for fields whose keyword is not a valid
+        # attribute name (e.g. 'global').
+        model_fields = {
+            (field.alias or name): field for name, field in cls.model_fields.items()
+        }
         sfincs_version = inp_dict.get("sfincs_version")
         if _is_below_min_supported(sfincs_version):
             message = (
@@ -1138,19 +1602,22 @@ class SfincsConfigVariables(BaseSettings):
 
         result = {}
         for key, value in data.items():
+            field_info = model_fields.get(key)
+            extra = (field_info.json_schema_extra or {}) if field_info else {}
+            # sfincs.inp uses the alias (e.g. 'global' for the field 'global_')
+            file_key = (field_info.alias or key) if field_info else key
+            explicitly_set = bool({key, file_key} & self._explicit_keys)
+
             if (
                 info.context
                 and info.context.get("explicit_only")
-                and key not in self._explicit_keys
+                and not explicitly_set
             ):
                 continue
 
             # Never write None
             if value is None:
                 continue
-
-            field_info = model_fields.get(key)
-            extra = (field_info.json_schema_extra or {}) if field_info else {}
 
             # Evaluate condition when present
             condition = extra.get("condition")
@@ -1176,7 +1643,6 @@ class SfincsConfigVariables(BaseSettings):
                 version_status == "unknown" and "min_version" in extra
             )
             always = extra.get("always", False) and not suppress_always
-            explicitly_set = key in self._explicit_keys
             if (
                 not always
                 and not explicitly_set
@@ -1192,7 +1658,7 @@ class SfincsConfigVariables(BaseSettings):
             elif hasattr(value, "strftime"):
                 value = value.strftime("%Y%m%d %H%M%S")
 
-            result[key] = value
+            result[file_key] = value
 
         return result
 

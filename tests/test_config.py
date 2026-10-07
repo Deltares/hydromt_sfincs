@@ -105,6 +105,40 @@ def test_config_condition_controls_written_fields(tmp_path, updates, expected_ke
     assert expected_key in keys
 
 
+def test_config_reads_kernel_keywords_without_warning(tmp_path, caplog):
+    inpfile = tmp_path / "sfincs.inp"
+    values = {
+        "drainagefile": "sfincs.drainage.nc",
+        "urbfile": "sfincs.urb",
+        "dkbfile": "sfincs.dkb",
+        "cstfile": "sfincs.cst",
+        "vegetation": "1",
+        "vegfile": "sfincs.veg.nc",
+        "storetzsmax": "1",
+        "storezvolmax": "0",
+        "store_river_discharge": "1",
+        "dtoutfixed": "0",
+        "wavemaker_nfreqs_inc": "50",
+        "snapwave": "1",
+        "snapwave_gamma": "0.8",
+        "snapwave_Tinc2ig": "6.0",
+    }
+    inpfile.write_text("".join(f"{k} = {v}\n" for k, v in values.items()))
+
+    with caplog.at_level(logging.WARNING):
+        data = SfincsConfigVariables.read(inpfile)
+
+    assert "Unrecognized" not in caplog.text
+    assert data.drainagefile == "sfincs.drainage.nc"
+    assert data.storezvolmax == 0
+    assert data.snapwave_gamma == 0.8
+
+    outfile = tmp_path / "out" / "sfincs.inp"
+    data.write(outfile)
+    keys = {line.split()[0] for line in outfile.read_text().splitlines()}
+    assert set(values) <= keys
+
+
 def test_config_io(tmp_path):
     # Start with default values
     data0 = SfincsConfigVariables()
@@ -258,6 +292,59 @@ def test_config_read_migrates_changed_field_names_by_version(tmp_path):
     assert "# legacy map interval" in output_text
     assert "epsg" in output_text
     assert "crs" not in output_text
+
+
+@pytest.mark.parametrize(
+    ("sfincs_version", "expected_keys"),
+    [
+        (
+            "2.5.0",
+            {
+                "wavemaker_wvmfile",
+                "wavemaker_hmin",
+                "global_model",
+                "output_on_quadtree_mesh",
+            },
+        ),
+        (
+            "2.4.1",
+            {"wvmfile", "wmhmin", "global", "regular_output_on_mesh", "storeqdrain"},
+        ),
+    ],
+)
+def test_config_read_migrates_renamed_keywords(tmp_path, sfincs_version, expected_keys):
+    inpfile = tmp_path / "sfincs.inp"
+    inpfile.write_text(
+        f"sfincs_version       = {sfincs_version}\n"
+        "wvmfile              = sfincs.wvm\n"
+        "wmhmin               = 0.2\n"
+        "global               = 1\n"
+        "regular_output_on_mesh = 1\n"
+        "storeqdrain          = 1\n"
+    )
+
+    data = SfincsConfigVariables.read(inpfile)
+    output = tmp_path / "migrated.inp"
+    data.write(output, explicit_only=True)
+    keys = {line.split()[0] for line in output.read_text().splitlines()}
+
+    assert keys == expected_keys | {"sfincs_version"}
+
+
+def test_config_global_alias_roundtrip(tmp_path, caplog):
+    inpfile = tmp_path / "sfincs.inp"
+    inpfile.write_text("global = 1\n")
+
+    with caplog.at_level(logging.WARNING):
+        data = SfincsConfigVariables.read(inpfile)
+    assert "Unrecognized" not in caplog.text
+    assert data.global_ == 1
+
+    output = tmp_path / "out.inp"
+    data.write(output)
+    keys = {line.split()[0] for line in output.read_text().splitlines()}
+    assert "global" in keys
+    assert "global_" not in keys
 
 
 def test_config_read_migration_prefers_new_name_by_version(tmp_path):
