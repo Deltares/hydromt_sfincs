@@ -245,7 +245,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         grid = self.data.grid
         try:
             sidecar_grid = ds.grid
-            # TODO: Test attaching sidecar layers with their own grid via set()
+            # TODO: Test attaching layers directly via MeshComponent.set()
             # for current and supported legacy files. Remove this check only if
             # that works and a different face ordering is still rejected.
             self._validate_layer_grid(sidecar_grid, grid)
