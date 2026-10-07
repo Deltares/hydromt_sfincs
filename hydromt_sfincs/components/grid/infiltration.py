@@ -470,43 +470,6 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
     @hydromt_step
     def create_green_ampt(
         self,
-        psi: Union[str, Path, xr.DataArray, xr.Dataset],
-        sigma: Union[str, Path, xr.DataArray, xr.Dataset],
-        ks: Union[str, Path, xr.DataArray, xr.Dataset],
-        reproj_method: str = "average",
-    ) -> None:
-        """Create Green-Ampt infiltration from final parameter maps.
-
-        Adds model layers:
-
-        * **psi** map: wetting front suction head [mm]
-        * **sigma** map: soil moisture deficit [-]
-        * **ks** map: saturated hydraulic conductivity [mm/hr]
-
-        Parameters
-        ----------
-        psi, sigma, ks : str, Path, or RasterDataset
-            Raster data with final Green-Ampt parameters. Dataset inputs must
-            contain variables named ``psi``, ``sigma``, and ``ks`` respectively.
-        reproj_method : str, optional
-            Resampling method for reprojecting the parameter maps to the model grid.
-        """
-        layers = {}
-        for name, source in {"psi": psi, "sigma": sigma, "ks": ks}.items():
-            da = self.data_catalog.get_rasterdataset(
-                source, bbox=self.model.bbox, buffer=10
-            )
-            if isinstance(da, xr.Dataset):
-                if name not in da.data_vars:
-                    raise ValueError(f"Could not find variable {name} in {source}")
-                da = da[name]
-            da = da.raster.mask_nodata()
-            layers[name] = da.raster.reproject_like(self.mask, method=reproj_method)
-        self._set_layers(layers, flavor="gai")
-
-    @hydromt_step
-    def create_green_ampt_from_soil(
-        self,
         hsg: Union[str, Path, xr.DataArray, xr.Dataset],
         ksat: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
         lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
@@ -613,44 +576,43 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         self._set_layers(layers, flavor="gai")
 
     @hydromt_step
-    def create_horton(
+    def create_green_ampt_from_maps(
         self,
-        f0: Union[str, Path, xr.DataArray, xr.Dataset],
-        fc: Union[str, Path, xr.DataArray, xr.Dataset],
-        kd: Union[str, Path, xr.DataArray, xr.Dataset],
+        psi: Union[str, Path, xr.DataArray, xr.Dataset],
+        sigma: Union[str, Path, xr.DataArray, xr.Dataset],
+        ks: Union[str, Path, xr.DataArray, xr.Dataset],
         reproj_method: str = "average",
     ) -> None:
-        """Create Horton infiltration from final parameter maps.
+        """Create Green-Ampt infiltration from final parameter maps.
 
         Adds model layers:
 
-        * **f0** map: initial infiltration capacity [mm/hr]
-        * **fc** map: asymptotic infiltration capacity [mm/hr]
-        * **kd** map: Horton decay coefficient [hr-1]
+        * **psi** map: wetting front suction head [mm]
+        * **sigma** map: soil moisture deficit [-]
+        * **ks** map: saturated hydraulic conductivity [mm/hr]
 
         Parameters
         ----------
-        f0, fc, kd : str, Path, or RasterDataset
-            Raster data with final Horton parameters. Dataset inputs must contain
-            variables named ``f0``, ``fc``, and ``kd`` respectively.
+        psi, sigma, ks : str, Path, xr.DataArray, or xr.Dataset
+            Raster data with final Green-Ampt parameters. Dataset inputs must
+            contain variables named ``psi``, ``sigma``, and ``ks`` respectively.
         reproj_method : str, optional
             Resampling method for reprojecting the parameter maps to the model grid.
         """
         layers = {}
-        for name, source in {"f0": f0, "fc": fc, "kd": kd}.items():
+        for name, source in {"psi": psi, "sigma": sigma, "ks": ks}.items():
             da = self.data_catalog.get_rasterdataset(
-                source, bbox=self.model.bbox, buffer=10
+                source,
+                bbox=self.model.bbox,
+                buffer=10,
+                variables=[name],
             )
-            if isinstance(da, xr.Dataset):
-                if name not in da.data_vars:
-                    raise ValueError(f"Could not find variable {name} in {source}")
-                da = da[name]
             da = da.raster.mask_nodata()
             layers[name] = da.raster.reproject_like(self.mask, method=reproj_method)
-        self._set_layers(layers, flavor="hor")
+        self._set_layers(layers, flavor="gai")
 
     @hydromt_step
-    def create_horton_from_soil(
+    def create_horton(
         self,
         hsg: Union[str, Path, xr.DataArray, xr.Dataset],
         ksat: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
@@ -758,178 +720,40 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         self._set_layers(layers, flavor="hor")
 
     @hydromt_step
-    def create_bucket(
+    def create_horton_from_maps(
         self,
-        bucket_smax: Union[str, Path, xr.DataArray, xr.Dataset],
-        bucket_k: Union[str, Path, xr.DataArray, xr.Dataset],
-        bucket_loss: Union[float, str, Path, xr.DataArray, xr.Dataset, None] = None,
+        f0: Union[str, Path, xr.DataArray, xr.Dataset],
+        fc: Union[str, Path, xr.DataArray, xr.Dataset],
+        kd: Union[str, Path, xr.DataArray, xr.Dataset],
         reproj_method: str = "average",
     ) -> None:
-        """Create bucket infiltration from final parameter maps.
+        """Create Horton infiltration from final parameter maps.
 
         Adds model layers:
 
-        * **bucket_smax** map: bucket maximum storage [mm]
-        * **bucket_k** map: bucket drainage coefficient [hr-1]
-        * **bucket_loss** map: bucket loss fraction [-]
+        * **f0** map: initial infiltration capacity [mm/hr]
+        * **fc** map: asymptotic infiltration capacity [mm/hr]
+        * **kd** map: Horton decay coefficient [hr-1]
 
         Parameters
         ----------
-        bucket_smax, bucket_k : str, Path, or RasterDataset
-            Raster data with final bucket parameters. Dataset inputs must contain
-            variables named ``bucket_smax`` and ``bucket_k`` respectively.
-        bucket_loss : float, str, Path, or RasterDataset, optional
-            Uniform loss fraction or raster data with a ``bucket_loss`` variable.
-            Defaults to 0.0.
+        f0, fc, kd : str, Path, xr.DataArray, or xr.Dataset
+            Raster data with final Horton parameters. Dataset inputs must contain
+            variables named ``f0``, ``fc``, and ``kd`` respectively.
         reproj_method : str, optional
             Resampling method for reprojecting the parameter maps to the model grid.
         """
         layers = {}
-        for name, source in {
-            "bucket_smax": bucket_smax,
-            "bucket_k": bucket_k,
-        }.items():
+        for name, source in {"f0": f0, "fc": fc, "kd": kd}.items():
             da = self.data_catalog.get_rasterdataset(
-                source, bbox=self.model.bbox, buffer=10
+                source,
+                bbox=self.model.bbox,
+                buffer=10,
+                variables=[name],
             )
-            if isinstance(da, xr.Dataset):
-                if name not in da.data_vars:
-                    raise ValueError(f"Could not find variable {name} in {source}")
-                da = da[name]
             da = da.raster.mask_nodata()
             layers[name] = da.raster.reproject_like(self.mask, method=reproj_method)
-
-        loss_value = 0.0 if bucket_loss is None else bucket_loss
-        if bucket_loss is None or np.isscalar(bucket_loss):
-            da_loss = xr.full_like(self.mask, np.float32(loss_value), dtype=np.float32)
-            da_loss.name = "bucket_loss"
-        else:
-            da_loss = self.data_catalog.get_rasterdataset(
-                bucket_loss, bbox=self.model.bbox, buffer=10
-            )
-            if isinstance(da_loss, xr.Dataset):
-                if "bucket_loss" not in da_loss.data_vars:
-                    raise ValueError(
-                        f"Could not find variable bucket_loss in {bucket_loss}"
-                    )
-                da_loss = da_loss["bucket_loss"]
-            da_loss = da_loss.raster.mask_nodata()
-            da_loss = da_loss.raster.reproject_like(self.mask, method=reproj_method)
-        layers["bucket_loss"] = da_loss
-        self._set_layers(layers, flavor="bkt")
-
-    @hydromt_step
-    def create_bucket_from_soil(
-        self,
-        hsg: Union[str, Path, xr.DataArray, xr.Dataset],
-        ksat: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
-        lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
-        reclass_table: Union[str, Path, pd.DataFrame, None] = None,
-        lulc_modifiers: Union[str, Path, pd.DataFrame, None] = None,
-        dual_hsg: str = "drained",
-        factor_ksat: float = 3.6,
-        bucket_loss: Union[float, None] = None,
-        reproj_method: str = "average",
-    ) -> None:
-        """Estimate bucket infiltration from HSG and optional landuse.
-
-        Adds model layers:
-
-        * **bucket_smax** map: bucket maximum storage [mm]
-        * **bucket_k** map: bucket drainage coefficient [hr-1]
-        * **bucket_loss** map: bucket loss fraction [-]
-
-        Parameters
-        ----------
-        hsg : str, Path, or RasterDataset
-            Hydrologic soil group map. By default, values are reclassified with
-            the bundled ``hsg_bucket.csv`` table.
-        ksat : str, Path, or RasterDataset, optional
-            Saturated hydraulic conductivity map. If provided, it helps derive
-            ``bucket_k`` values.
-        lulc : str, Path, or RasterDataset, optional
-            Land-use map used to apply infiltration modifiers. Its classes must
-            match the index of ``lulc_modifiers``.
-        reclass_table : str, Path, or DataFrame, optional
-            Table mapping HSG classes to bucket parameters.
-        lulc_modifiers : str, Path, or DataFrame, optional
-            Table with land-use modifier factors, indexed by land-use class. By
-            default the bundled NLCD table is used.
-        dual_hsg : {None, 'native', 'drained'}, optional
-            How to handle dual HSG classes, by default 'drained'.
-        factor_ksat : float, optional
-            Factor used to convert Ksat units to mm/hr, by default 3.6.
-        bucket_loss : float, optional
-            Uniform bucket loss fraction. Defaults to 0.0 without land use and
-            0.10 with land-use modifiers.
-        reproj_method : str, optional
-            Resampling method for reprojecting final parameter maps to the model grid.
-            By default 'average'.
-        """
-        if reclass_table is None:
-            reclass_table = Path(DATADIR) / "infiltration" / "hsg_bucket.csv"
-
-        da_soil = self.data_catalog.get_rasterdataset(
-            hsg,
-            bbox=self.model.bbox,
-            buffer=10,
-        )
-        df_map = self.data_catalog.get_dataframe(
-            reclass_table,
-            source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
-        )
-
-        da_ksat = None
-        if ksat is not None:
-            da_ksat = self.data_catalog.get_rasterdataset(
-                ksat, bbox=self.model.bbox, buffer=10
-            )
-            da_ksat = da_ksat.raster.reproject_like(da_soil, method="average")
-
-        if lulc is not None:
-            if lulc_modifiers is None:
-                lulc_modifiers = (
-                    Path(DATADIR) / "infiltration" / "nlcd_infiltration_modifiers.csv"
-                )
-            da_lulc = self.data_catalog.get_rasterdataset(
-                lulc, bbox=self.model.bbox, buffer=10, variables=["lulc"]
-            )
-            da_lulc = da_lulc.raster.reproject_like(da_soil, method="nearest")
-            df_modifiers = self.data_catalog.get_dataframe(
-                lulc_modifiers,
-                source_kwargs={
-                    "driver": {"name": "pandas", "options": {"index_col": 0}}
-                },
-            )
-            loss_value = 0.10 if bucket_loss is None else bucket_loss
-            ds = workflows.bucket_from_soil_landuse(
-                da_soil,
-                da_lulc,
-                df_map,
-                df_modifiers,
-                da_ksat=da_ksat,
-                factor_ksat=factor_ksat,
-                dual_hsg=dual_hsg,
-                bucket_loss=loss_value,
-            )
-        else:
-            ds = workflows.bucket_from_soil(
-                da_soil,
-                df_map,
-                da_ksat=da_ksat,
-                factor_ksat=factor_ksat,
-                bucket_loss=bucket_loss if np.isscalar(bucket_loss) else None,
-            )
-
-        layers = {}
-        for name in BUCKET_VARS:
-            da = ds[name]
-            try:
-                da = da.raster.mask_nodata()
-            except Exception:
-                pass
-            layers[name] = da.raster.reproject_like(self.mask, method=reproj_method)
-        self._set_layers(layers, flavor="bkt")
+        self._set_layers(layers, flavor="hor")
 
     def clear(self) -> None:
         """Clear all infiltration layers from the model."""

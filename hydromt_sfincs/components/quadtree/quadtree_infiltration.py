@@ -445,56 +445,6 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
     @hydromt_step
     def create_green_ampt(
         self,
-        psi: Union[str, Path, xr.DataArray, xr.Dataset],
-        sigma: Union[str, Path, xr.DataArray, xr.Dataset],
-        ks: Union[str, Path, xr.DataArray, xr.Dataset],
-        reproj_method: str = "average",
-    ) -> None:
-        """Create Green-Ampt infiltration from final parameter maps.
-
-        Adds model layers:
-
-        * **psi** map: wetting front suction head [mm]
-        * **sigma** map: soil moisture deficit [-]
-        * **ks** map: saturated hydraulic conductivity [mm/hr]
-
-        Parameters
-        ----------
-        psi, sigma, ks : str, Path, or RasterDataset
-            Data with final Green-Ampt parameters. Dataset inputs must contain
-            variables named ``psi``, ``sigma``, and ``ks`` respectively.
-        reproj_method : str, optional
-            Resampling method for reprojecting raster inputs to quadtree blocks.
-        """
-        names = ("psi", "sigma", "ks")
-        layers = {}
-        raster_sources = {}
-        for name, source in zip(names, (psi, sigma, ks)):
-            da = self.data_catalog.get_rasterdataset(
-                source, bbox=self.model.bbox, buffer=10, variables=[name]
-            )
-            raster_sources[name] = da.raster.mask_nodata()
-
-        if raster_sources:
-            outputs = {
-                name: np.full(self.data.grid.n_face, np.nan) for name in raster_sources
-            }
-
-            def compute_block(da_like, ilev=None):
-                return tuple(
-                    raster_sources[name].raster.reproject_like(
-                        da_like, method=reproj_method
-                    )
-                    for name in outputs
-                )
-
-            self.compute_quadtree(compute_block, outputs)
-            layers.update(outputs)
-        self._set_layers(layers, flavor="gai")
-
-    @hydromt_step
-    def create_green_ampt_from_soil(
-        self,
         hsg: Union[str, Path, xr.DataArray, xr.Dataset],
         ksat: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
         lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
@@ -600,38 +550,35 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         self._set_layers(outputs, flavor="gai")
 
     @hydromt_step
-    def create_horton(
+    def create_green_ampt_from_maps(
         self,
-        f0: Union[str, Path, xr.DataArray, xr.Dataset],
-        fc: Union[str, Path, xr.DataArray, xr.Dataset],
-        kd: Union[str, Path, xr.DataArray, xr.Dataset],
+        psi: Union[str, Path, xr.DataArray, xr.Dataset],
+        sigma: Union[str, Path, xr.DataArray, xr.Dataset],
+        ks: Union[str, Path, xr.DataArray, xr.Dataset],
         reproj_method: str = "average",
     ) -> None:
-        """Create Horton infiltration from final parameter maps.
+        """Create Green-Ampt infiltration from final parameter maps.
 
         Adds model layers:
 
-        * **f0** map: initial infiltration capacity [mm/hr]
-        * **fc** map: asymptotic infiltration capacity [mm/hr]
-        * **kd** map: Horton decay coefficient [hr-1]
+        * **psi** map: wetting front suction head [mm]
+        * **sigma** map: soil moisture deficit [-]
+        * **ks** map: saturated hydraulic conductivity [mm/hr]
 
         Parameters
         ----------
-        f0, fc, kd : str, Path, RasterDataset, or UgridDataArray
-            Data with final Horton parameters. Dataset inputs must contain
-            variables named ``f0``, ``fc``, and ``kd`` respectively.
+        psi, sigma, ks : str, Path, or RasterDataset
+            Data with final Green-Ampt parameters. Dataset inputs must contain
+            variables named ``psi``, ``sigma``, and ``ks`` respectively.
         reproj_method : str, optional
             Resampling method for reprojecting raster inputs to quadtree blocks.
         """
-        names = ("f0", "fc", "kd")
+        names = ("psi", "sigma", "ks")
         layers = {}
         raster_sources = {}
-        for name, source in zip(names, (f0, fc, kd)):
+        for name, source in zip(names, (psi, sigma, ks)):
             da = self.data_catalog.get_rasterdataset(
-                source,
-                bbox=self.model.bbox,
-                buffer=10,
-                variables=[name],
+                source, bbox=self.model.bbox, buffer=10, variables=[name]
             )
             raster_sources[name] = da.raster.mask_nodata()
 
@@ -650,10 +597,10 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
 
             self.compute_quadtree(compute_block, outputs)
             layers.update(outputs)
-        self._set_layers(layers, flavor="hor")
+        self._set_layers(layers, flavor="gai")
 
     @hydromt_step
-    def create_horton_from_soil(
+    def create_horton(
         self,
         hsg: Union[str, Path, xr.DataArray, xr.Dataset],
         ksat: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
@@ -759,36 +706,33 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         self._set_layers(outputs, flavor="hor")
 
     @hydromt_step
-    def create_bucket(
+    def create_horton_from_maps(
         self,
-        bucket_smax: Union[str, Path, xr.DataArray, xr.Dataset],
-        bucket_k: Union[str, Path, xr.DataArray, xr.Dataset],
-        bucket_loss: Union[float, str, Path, xr.DataArray, xr.Dataset, None] = None,
+        f0: Union[str, Path, xr.DataArray, xr.Dataset],
+        fc: Union[str, Path, xr.DataArray, xr.Dataset],
+        kd: Union[str, Path, xr.DataArray, xr.Dataset],
         reproj_method: str = "average",
     ) -> None:
-        """Create bucket infiltration from final parameter maps.
+        """Create Horton infiltration from final parameter maps.
 
         Adds model layers:
 
-        * **bucket_smax** map: bucket maximum storage [mm]
-        * **bucket_k** map: bucket drainage coefficient [hr-1]
-        * **bucket_loss** map: bucket loss fraction [-]
+        * **f0** map: initial infiltration capacity [mm/hr]
+        * **fc** map: asymptotic infiltration capacity [mm/hr]
+        * **kd** map: Horton decay coefficient [hr-1]
 
         Parameters
         ----------
-        bucket_smax, bucket_k : str, Path, RasterDataset
-            Data with final bucket parameters. Dataset inputs must contain
-            variables named ``bucket_smax`` and ``bucket_k`` respectively.
-        bucket_loss : float, str, Path, RasterDataset, optional
-            Uniform loss fraction or map with final bucket loss fractions.
-            Defaults to 0.0.
+        f0, fc, kd : str, Path, RasterDataset, or UgridDataArray
+            Data with final Horton parameters. Dataset inputs must contain
+            variables named ``f0``, ``fc``, and ``kd`` respectively.
         reproj_method : str, optional
             Resampling method for reprojecting raster inputs to quadtree blocks.
         """
-        names = ("bucket_smax", "bucket_k")
+        names = ("f0", "fc", "kd")
         layers = {}
         raster_sources = {}
-        for name, source in zip(names, (bucket_smax, bucket_k)):
+        for name, source in zip(names, (f0, fc, kd)):
             da = self.data_catalog.get_rasterdataset(
                 source,
                 bbox=self.model.bbox,
@@ -796,17 +740,6 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                 variables=[name],
             )
             raster_sources[name] = da.raster.mask_nodata()
-
-        if bucket_loss is None or np.isscalar(bucket_loss):
-            layers["bucket_loss"] = np.full(
-                self.data.grid.n_face,
-                np.float32(0.0 if bucket_loss is None else bucket_loss),
-            )
-        else:
-            da_loss = self.data_catalog.get_rasterdataset(
-                bucket_loss, bbox=self.model.bbox, buffer=10, variables=["bucket_loss"]
-            )
-            raster_sources["bucket_loss"] = da_loss.raster.mask_nodata()
 
         if raster_sources:
             outputs = {
@@ -823,10 +756,10 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
 
             self.compute_quadtree(compute_block, outputs)
             layers.update(outputs)
-        self._set_layers(layers, flavor="bkt")
+        self._set_layers(layers, flavor="hor")
 
     @hydromt_step
-    def create_bucket_from_soil(
+    def create_bucket(
         self,
         hsg: Union[str, Path, xr.DataArray, xr.Dataset],
         ksat: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
@@ -934,6 +867,73 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
 
         self.compute_quadtree(compute_block, outputs)
         self._set_layers(outputs, flavor="bkt")
+
+    @hydromt_step
+    def create_bucket_from_maps(
+        self,
+        bucket_smax: Union[str, Path, xr.DataArray, xr.Dataset],
+        bucket_k: Union[str, Path, xr.DataArray, xr.Dataset],
+        bucket_loss: Union[float, str, Path, xr.DataArray, xr.Dataset, None] = None,
+        reproj_method: str = "average",
+    ) -> None:
+        """Create bucket infiltration from final parameter maps.
+
+        Adds model layers:
+
+        * **bucket_smax** map: bucket maximum storage [mm]
+        * **bucket_k** map: bucket drainage coefficient [hr-1]
+        * **bucket_loss** map: bucket loss fraction [-]
+
+        Parameters
+        ----------
+        bucket_smax, bucket_k : str, Path, RasterDataset
+            Data with final bucket parameters. Dataset inputs must contain
+            variables named ``bucket_smax`` and ``bucket_k`` respectively.
+        bucket_loss : float, str, Path, RasterDataset, optional
+            Uniform loss fraction or map with final bucket loss fractions.
+            Defaults to 0.0.
+        reproj_method : str, optional
+            Resampling method for reprojecting raster inputs to quadtree blocks.
+        """
+        names = ("bucket_smax", "bucket_k")
+        layers = {}
+        raster_sources = {}
+        for name, source in zip(names, (bucket_smax, bucket_k)):
+            da = self.data_catalog.get_rasterdataset(
+                source,
+                bbox=self.model.bbox,
+                buffer=10,
+                variables=[name],
+            )
+            raster_sources[name] = da.raster.mask_nodata()
+
+        if bucket_loss is None or np.isscalar(bucket_loss):
+            layers["bucket_loss"] = np.full(
+                self.data.grid.n_face,
+                np.float32(0.0 if bucket_loss is None else bucket_loss),
+            )
+        else:
+            da_loss = self.data_catalog.get_rasterdataset(
+                bucket_loss, bbox=self.model.bbox, buffer=10, variables=["bucket_loss"]
+            )
+            raster_sources["bucket_loss"] = da_loss.raster.mask_nodata()
+
+        if raster_sources:
+            outputs = {
+                name: np.full(self.data.grid.n_face, np.nan) for name in raster_sources
+            }
+
+            def compute_block(da_like, ilev=None):
+                return tuple(
+                    raster_sources[name].raster.reproject_like(
+                        da_like, method=reproj_method
+                    )
+                    for name in outputs
+                )
+
+            self.compute_quadtree(compute_block, outputs)
+            layers.update(outputs)
+        self._set_layers(layers, flavor="bkt")
 
     def clear(self) -> None:
         """Clear all infiltration layers from the model."""
