@@ -104,6 +104,60 @@ def test_quadtree_layer_file_is_ugrid(quadtree_model):
         assert ds["mesh2d_crs"].attrs["epsg_code"].startswith("EPSG:")
 
 
+@pytest.mark.parametrize(
+    "values",
+    [{"qinf": 0.25}, {"qinf": 0.25, "ks": 0.05, "smax": 10.0}],
+    ids=["one-layer", "three-layers"],
+)
+def test_quadtree_layer_read_matches_main_grid(quadtree_model, values):
+    grid = quadtree_model.quadtree_grid
+    face_dimension = grid.data.grid.face_dimension
+    layers = {
+        name: xr.DataArray(
+            np.full(grid.data.grid.n_face, value, dtype=np.float32),
+            dims=[face_dimension],
+            name=name,
+        )
+        for name, value in values.items()
+    }
+    grid.set(xu.UgridDataset(xr.Dataset(layers), grid.data.grid))
+    grid.write_layers(list(values), "inffile", "sfincs.infiltration.nc")
+    sidecar = quadtree_model.config.get("inffile", abs_path=True)
+
+    mod = SfincsModel(root=join(TESTDATADIR, "sfincs_test_quadtree"), mode="r")
+    mod.config.read()
+    mod.quadtree_grid.read()
+    mod.quadtree_grid.read_layers(sidecar)
+
+    for name, value in values.items():
+        assert np.allclose(mod.quadtree_grid.data[name].values, value)
+
+
+def test_quadtree_layer_read_rejects_different_grid(quadtree_model, tmp_path):
+    grid = quadtree_model.quadtree_grid
+    face_dimension = grid.data.grid.face_dimension
+    qinf = xr.DataArray(
+        np.full(grid.data.grid.n_face, 0.25, dtype=np.float32),
+        dims=[face_dimension],
+        name="qinf",
+    )
+    grid.set(xu.UgridDataset(xr.Dataset({"qinf": qinf}), grid.data.grid))
+    grid.write_layers(["qinf"], "inffile", "sfincs.infiltration.nc")
+    sidecar = quadtree_model.config.get("inffile", abs_path=True)
+
+    with xr.open_dataset(sidecar) as source:
+        mismatched = source.load()
+    mismatched["mesh2d_node_x"].values[0] += 1.0
+    mismatched_file = tmp_path / "mismatched_infiltration.nc"
+    mismatched.to_netcdf(mismatched_file)
+
+    mod = SfincsModel(root=join(TESTDATADIR, "sfincs_test_quadtree"), mode="r")
+    mod.config.read()
+    mod.quadtree_grid.read()
+    with pytest.raises(ValueError, match="topology does not match"):
+        mod.quadtree_grid.read_layers(mismatched_file)
+
+
 def test_quadtree_write_skips_layer_that_was_never_created(quadtree_model, caplog):
     # a layer that was never created must not leave a reference behind, since
     # SFINCS would then look for a file this model never writes
