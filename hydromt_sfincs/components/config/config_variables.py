@@ -840,6 +840,24 @@ class SfincsConfigVariables(BaseSettings):
         None,
         description="SFINCS infiltration flavor used with inffile (con, c2d, cna, cnb, gai, hor, or bkt)",
     )
+    infiltration_file: str | None = Field(
+        None,
+        description="[DEPRECATED] Name of the quadtree NetCDF infiltration input file",
+        json_schema_extra={
+            "min_version": "2.3.2",
+            "max_version": "2.4.1",
+            "new_name": "inffile",
+        },
+    )
+    infiltration_type: str | None = Field(
+        None,
+        description="[DEPRECATED] SFINCS infiltration flavor used with infiltration_file (con, c2d, cna, cnb, gai, hor, or bkt)",
+        json_schema_extra={
+            "min_version": "2.3.2",
+            "max_version": "2.4.1",
+            "new_name": "inftype",
+        },
+    )
     # ================================================================
     # Legacy Infiltraiton / Curve Number / Green-Ampt / Horton files
     # ================================================================
