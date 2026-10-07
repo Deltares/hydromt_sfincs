@@ -829,32 +829,24 @@ class SfincsConfigVariables(BaseSettings):
     amprfile: str | None = Field(None, description="Precipitation file")
     z0lfile: str | None = Field(None, description="Wind reduction over land file")
     wvmfile: str | None = Field(None, description="Wave maker input points file")
-    infiltration_file: str | None = Field(
+    # ================================================================
+    # Infiltration files
+    # ================================================================
+    inffile: str | None = Field(
         None,
-        description="Name of the Netcdf infiltration input file for SFINCS infiltration flavors",
+        description="Name of the quadtree NetCDF infiltration input file",
     )
-    infiltration_type: str | None = Field(
+    inftype: str | None = Field(
         None,
-        description="SFINCS infiltration flavor used with infiltration_file (c2d, cna, cnb, gai, hor, or bkt)",
+        description="SFINCS infiltration flavor used with inffile (con, c2d, cna, cnb, gai, hor, or bkt)",
     )
-    bucketfile: str | None = Field(
-        None,
-        description="Name of the bucket-model Netcdf input file",
-    )
-    bucket_loss_frac: float | None = Field(
-        None,
-        ge=0.0,
-        le=1.0,
-        description="Uniform bucket loss fraction used when no bucket_loss field is provided (-)",
-    )
+    # ================================================================
+    # Legacy Infiltraiton / Curve Number / Green-Ampt / Horton files
+    # ================================================================
     qinffile: str | None = Field(
         None,
         description="Name of the spatially-varying, constant in time infiltration file",
     )
-
-    # ================================================================
-    # Curve Number / Green-Ampt / Horton files
-    # ================================================================
     scsfile: str | None = Field(None, description="Curve Number max soil moisture file")
     smaxfile: str | None = Field(None, description="Curve Number max storage file")
     sefffile: str | None = Field(None, description="Curve Number initial storage file")

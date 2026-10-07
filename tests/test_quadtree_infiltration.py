@@ -21,10 +21,8 @@ def test_quadtree_infiltration(model, quadtree_model):
     # add to quadtree model
     quadtree_model.quadtree_infiltration.create_constant(qinf, reproj_method="nearest")
     assert quadtree_model.config.get("qinf") is None  # qinf removed from config
-    assert quadtree_model.config.get("infiltration_file") is not None  # qinf file set
-    assert (
-        quadtree_model.config.get("infiltration_type") == "c2d"
-    )  # infiltration type set to c2d
+    assert quadtree_model.config.get("inffile") is not None  # qinf file set
+    assert quadtree_model.config.get("inftype") == "c2d"  # infiltration type set to c2d
     assert "qinf" in quadtree_model.quadtree_grid.data
     assert np.isclose(
         float(
@@ -40,9 +38,7 @@ def test_quadtree_infiltration(model, quadtree_model):
     cn.raster.set_nodata(-1)
     cn.raster.set_crs(model.crs)
     quadtree_model.quadtree_infiltration.create_cn(cn, reproj_method="nearest")
-    assert (
-        quadtree_model.config.get("infiltration_type") == "cna"
-    )  # infiltration type set to cna
+    assert quadtree_model.config.get("inftype") == "cna"  # infiltration type set to cna
     assert "scs" in quadtree_model.quadtree_grid.data
     assert np.isclose(
         float(
@@ -71,9 +67,7 @@ def test_quadtree_infiltration(model, quadtree_model):
     assert "smax" in quadtree_model.quadtree_grid.data
     assert "seff" in quadtree_model.quadtree_grid.data
     assert "ks" in quadtree_model.quadtree_grid.data
-    assert (
-        quadtree_model.config.get("infiltration_type") == "cnb"
-    )  # infiltration type set to cnb
+    assert quadtree_model.config.get("inftype") == "cnb"  # infiltration type set to cnb
 
     # Write model
     quadtree_model.quadtree_grid.write()
@@ -104,14 +98,14 @@ def test_quadtree_infiltration(model, quadtree_model):
 def test_uniform_constant_infiltration_quadtree(quadtree_model):
     quadtree_model.quadtree_infiltration.create_uniform_constant(6.5)
     assert quadtree_model.config.get("qinf") == pytest.approx(6.5)
-    assert quadtree_model.config.get("infiltration_file") is None
+    assert quadtree_model.config.get("inffile") is None
     assert "qinf" not in quadtree_model.quadtree_grid.data
 
     quadtree_model.config.write()
     mod1 = SfincsModel(root=quadtree_model.root.path, mode="r")
     mod1.config.read()
     assert mod1.config.get("qinf") == pytest.approx(6.5)
-    assert mod1.config.get("infiltration_file") is None
+    assert mod1.config.get("inffile") is None
 
 
 def test_cn_from_landuse_hsg_quadtree(model, quadtree_model):
@@ -128,7 +122,7 @@ def test_cn_from_landuse_hsg_quadtree(model, quadtree_model):
         reclass_table=reclass_table,
     )
 
-    assert quadtree_model.config.get("infiltration_type") == "cna"
+    assert quadtree_model.config.get("inftype") == "cna"
     assert "scs" in quadtree_model.quadtree_grid.data
     assert np.isclose(
         float(
@@ -150,9 +144,11 @@ def test_process_infiltration_quadtree_io(model, quadtree_model):
     sigma.values = np.where(mask.values > 0, 0.20, 0.0)
     ks.values = np.where(mask.values > 0, 12.0, 0.0)
 
-    quadtree_model.quadtree_infiltration.create_green_ampt(psi=psi, sigma=sigma, ks=ks)
-    assert quadtree_model.config.get("infiltration_file") is not None
-    assert quadtree_model.config.get("infiltration_type") == "gai"
+    quadtree_model.quadtree_infiltration.create_green_ampt_from_maps(
+        psi=psi, sigma=sigma, ks=ks
+    )
+    assert quadtree_model.config.get("inffile") is not None
+    assert quadtree_model.config.get("inftype") == "gai"
 
     quadtree_model.quadtree_grid.write()
     quadtree_model.quadtree_infiltration.write()
@@ -186,8 +182,8 @@ def test_process_infiltration_quadtree_io(model, quadtree_model):
     fc.values = np.where(mask.values > 0, 7.0, 0.0)
     kd.values = np.where(mask.values > 0, 1.5, 0.0)
 
-    quadtree_model.quadtree_infiltration.create_horton(f0=f0, fc=fc, kd=kd)
-    assert quadtree_model.config.get("infiltration_type") == "hor"
+    quadtree_model.quadtree_infiltration.create_horton_from_maps(f0=f0, fc=fc, kd=kd)
+    assert quadtree_model.config.get("inftype") == "hor"
     assert "psi" not in quadtree_model.quadtree_grid.data
 
     quadtree_model.quadtree_grid.write()
@@ -222,17 +218,18 @@ def test_bucket_infiltration_quadtree_io(model, quadtree_model):
     bucket_smax.values = np.where(mask.values > 0, 175.0, 0.0)
     bucket_k.values = np.where(mask.values > 0, 0.25, 0.0)
 
-    quadtree_model.quadtree_infiltration.create_bucket(
+    quadtree_model.quadtree_infiltration.create_bucket_from_maps(
         bucket_smax=bucket_smax,
         bucket_k=bucket_k,
         bucket_loss=0.10,
     )
-    assert quadtree_model.config.get("bucketfile") is not None
+    assert quadtree_model.config.get("inffile") is not None
+    assert quadtree_model.config.get("inftype") == "bkt"
 
     quadtree_model.quadtree_grid.write()
     quadtree_model.quadtree_infiltration.write()
     quadtree_model.config.write()
-    assert isfile(quadtree_model.root.path / "sfincs.bucket.nc")
+    assert isfile(quadtree_model.root.path / "sfincs.infiltration.nc")
 
     mod1 = SfincsModel(root=quadtree_model.root.path, mode="r")
     mod1.config.read()
@@ -273,23 +270,24 @@ def test_infiltration_estimators_from_hsg_quadtree(model, quadtree_model):
         return float(grid.data[name].where(grid.mask > 0).max())
 
     # psi/sigma are reclassified from hsg_green_ampt.csv; ks is ksat * 3.6
-    infil.create_green_ampt_from_soil(hsg=hsg, ksat=ksat)
-    assert quadtree_model.config.get("infiltration_type") == "gai"
+    infil.create_green_ampt(hsg=hsg, ksat=ksat)
+    assert quadtree_model.config.get("inftype") == "gai"
     assert _max("psi") == pytest.approx(316.3, rel=1e-3)  # HSG 4
     assert _max("sigma") == pytest.approx(0.35, rel=1e-3)  # HSG 1
     assert _max("ks") == pytest.approx(18.0, rel=1e-3)  # 5.0 * 3.6
 
     # fc_scale is 1.0 for every HSG so fc == ks; f0 = fc * f0_scale (4.0 for HSG 1)
-    infil.create_horton_from_soil(hsg=hsg, ksat=ksat)
-    assert quadtree_model.config.get("infiltration_type") == "hor"
+    infil.create_horton(hsg=hsg, ksat=ksat)
+    assert quadtree_model.config.get("inftype") == "hor"
     assert "psi" not in grid.data
     assert _max("fc") == pytest.approx(18.0, rel=1e-3)
     assert _max("f0") == pytest.approx(72.0, rel=1e-3)
     assert _max("kd") == pytest.approx(4.14, rel=1e-3)  # HSG 1
 
     # bucket_smax = storage_depth_mm * effective_fraction, 250 * 0.35 for HSG 1
-    infil.create_bucket_from_soil(hsg=hsg, ksat=ksat)
-    assert quadtree_model.config.get("bucketfile") is not None
+    infil.create_bucket(hsg=hsg, ksat=ksat)
+    assert quadtree_model.config.get("inffile") is not None
+    assert quadtree_model.config.get("inftype") == "bkt"
     assert _max("bucket_smax") == pytest.approx(87.5, rel=1e-3)
     assert _max("bucket_k") == pytest.approx(18.0 / 87.5, rel=1e-3)
     assert _max("bucket_loss") == pytest.approx(0.0, abs=1e-6)

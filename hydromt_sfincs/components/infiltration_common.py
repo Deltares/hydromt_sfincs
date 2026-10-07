@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "ALL_VARS",
     "BUCKET_VARS",
-    "DEFAULT_BUCKETFILE",
     "DEFAULT_INFILTRATIONFILE",
     "FLAVORS",
     "InfiltrationVariable",
@@ -35,7 +34,6 @@ __all__ = [
 ]
 
 DEFAULT_INFILTRATIONFILE = "sfincs.infiltration.nc"
-DEFAULT_BUCKETFILE = "sfincs.bucket.nc"
 
 
 @dataclass(frozen=True)
@@ -140,12 +138,14 @@ def flavor_variables(flavor: str) -> tuple[str, ...]:
     return FLAVORS[flavor]
 
 
-def configured_flavor(config: "SfincsConfig") -> str | None:
+def configured_flavor(config: "SfincsConfig", grid_type: str) -> str | None:
     """Infer the configured infiltration flavor from model config."""
-    if config.get("bucketfile") not in (None, "none"):
-        return "bkt"
-    if config.get("infiltration_file") not in (None, "none"):
-        return config.get("infiltration_type")
+    if grid_type not in ("regular", "quadtree"):
+        raise ValueError(f"Unsupported grid_type: {grid_type}")
+    if grid_type == "quadtree" and config.get("inffile") not in (None, "none"):
+        return config.get("inftype")
+    if grid_type == "quadtree":
+        return "con" if config.get("qinf") not in (None, 0.0) else None
 
     file_flavors = {
         "c2d": ("qinffile",),
@@ -157,7 +157,8 @@ def configured_flavor(config: "SfincsConfig") -> str | None:
     matches = [
         flavor
         for flavor, keys in file_flavors.items()
-        if all(config.get(key) not in (None, "none") for key in keys)
+        if flavor != "bkt"
+        and all(config.get(key) not in (None, "none") for key in keys)
     ]
     if len(matches) > 1:
         logger.warning(
@@ -184,10 +185,8 @@ def clear_data(ds: xr.Dataset, keep: Iterable[str] = ()) -> xr.Dataset:
 def reset_config(config: "SfincsConfig") -> None:
     """Remove all infiltration-related configuration except defaults."""
     config.set("qinf", None)
-    config.set("infiltration_file", None)
-    config.set("infiltration_type", None)
-    config.set("bucketfile", None)
-    config.set("bucket_loss_frac", None)
+    config.set("inffile", None)
+    config.set("inftype", None)
     for meta in VARIABLES.values():
         if meta.config_key is not None:
             config.set(meta.config_key, None)
@@ -195,17 +194,19 @@ def reset_config(config: "SfincsConfig") -> None:
 
 def configure(config: "SfincsConfig", flavor: str, grid_type: str) -> None:
     """Update model config for one infiltration flavor."""
+    if grid_type not in ("regular", "quadtree"):
+        raise ValueError(f"Unsupported grid_type: {grid_type}")
+    if grid_type == "regular" and flavor == "bkt":
+        raise ValueError("Bucket infiltration is only supported on quadtree grids")
     reset_config(config)
     if flavor == "con":
         return
-    if flavor == "bkt":
-        config.set("bucketfile", DEFAULT_BUCKETFILE)
-        return
     if grid_type == "regular":
         for name in flavor_variables(flavor):
-            config.set(VARIABLES[name].config_key, VARIABLES[name].default_filename)
+            meta = VARIABLES[name]
+            if meta.config_key is None or meta.default_filename is None:
+                raise ValueError(f"No regular-grid binary file is defined for {name}")
+            config.set(meta.config_key, meta.default_filename)
     elif grid_type == "quadtree":
-        config.set("infiltration_file", DEFAULT_INFILTRATIONFILE)
-        config.set("infiltration_type", flavor)
-    else:
-        raise ValueError(f"Unsupported grid_type: {grid_type}")
+        config.set("inffile", DEFAULT_INFILTRATIONFILE)
+        config.set("inftype", flavor)

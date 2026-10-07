@@ -4,8 +4,9 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from pathlib import Path
 
-from hydromt_sfincs import workflows
+from hydromt_sfincs import workflows, DATADIR
 
 
 def _raster(values, name, dtype=np.float32):
@@ -368,7 +369,7 @@ def test_modifier_table_warns_on_unmatched_landcover(caplog):
     assert np.isclose(float(ds["sigma"].values[0, 1]), 0.25)
 
 
-def test_bucket_loss_defaults_split_between_legacy_and_landuse(model):
+def test_bucket_loss_defaults_with_and_without_landuse(model):
     hsg = xr.where(model.grid.data["dep"] < -0.5, 4, 1)
     hsg.raster.set_crs(model.crs)
     ksat = xr.where(model.grid.data["dep"] < 0.0, 0.5, 5.0)
@@ -376,16 +377,28 @@ def test_bucket_loss_defaults_split_between_legacy_and_landuse(model):
     lulc = xr.where(model.grid.data["dep"] < -0.5, 24, 41)
     lulc.raster.set_crs(model.crs)
 
-    model.infiltration.create_bucket_from_soil(hsg=hsg, ksat=ksat)
-    assert np.isclose(
-        model.grid.data["bucket_loss"].where(model.grid.mask > 0).mean(),
-        0.0,
-        atol=1e-6,
+    reclass_table = Path(DATADIR) / "infiltration" / "hsg_bucket.csv"
+    df_map = model.data_catalog.get_dataframe(
+        reclass_table,
+        source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
     )
 
-    model.infiltration.create_bucket_from_soil(hsg=hsg, ksat=ksat, lulc=lulc)
+    ds = workflows.bucket_from_soil(da_hsg=hsg, df_map=df_map, da_ksat=ksat)
+    assert np.isclose(float(ds["bucket_loss"].where(model.grid.mask > 0).mean()), 0.0)
+
+    lulc_modifiers = Path(DATADIR) / "infiltration" / "nlcd_infiltration_modifiers.csv"
+    df_lulc_modifiers = model.data_catalog.get_dataframe(
+        lulc_modifiers,
+        source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
+    )
+
+    ds = workflows.bucket_from_soil_landuse(
+        da_hsg=hsg,
+        df_map=df_map,
+        da_ksat=ksat,
+        da_lulc=lulc,
+        df_modifiers=df_lulc_modifiers,
+    )
     assert np.isclose(
-        model.grid.data["bucket_loss"].where(model.grid.mask > 0).mean(),
-        0.10,
-        atol=1e-5,
+        float(ds["bucket_loss"].where(model.grid.mask > 0).mean()), 0.10, atol=1e-5
     )

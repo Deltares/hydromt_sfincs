@@ -262,84 +262,10 @@ def test_cn_from_landuse_hsg_regular(model):
     )
 
 
-def test_process_infiltration_regular_netcdf_io(model):
-    active = model.grid.mask > 0
-    psi = xr.where(active, 120.0, -9999.0)
-    sigma = xr.where(active, 0.25, -9999.0)
-    ks = xr.where(active, 10.0, -9999.0)
-    for da in (psi, sigma, ks):
-        da.raster.set_crs(model.crs)
-        da.raster.set_nodata(-9999.0)
-    model.infiltration.create_green_ampt(psi=psi, sigma=sigma, ks=ks)
-
-    model.grid.write()
-    model.infiltration.write(netcdf=True)
-    model.config.write()
-
-    # the whole flavor shares one key instead of one binary map per variable
-    assert model.config.get("infiltration_file") is not None
-    assert model.config.get("psifile") is None
-
-    mod1 = SfincsModel(root=model.root.path, mode="r")
-    mod1.config.read()
-    mod1.grid.read()
-    mod1.infiltration.read()
-    for name, expected in (("psi", 120.0), ("sigma", 0.25), ("ks", 10.0)):
-        assert np.isclose(
-            mod1.grid.data[name].where(mod1.grid.mask > 0).mean(), expected
-        )
-
-
-def test_infiltration_netcdf_warns_when_missing_in_new_root(model, caplog):
-    active = model.grid.mask > 0
-    psi = xr.where(active, 120.0, -9999.0)
-    sigma = xr.where(active, 0.25, -9999.0)
-    ks = xr.where(active, 10.0, -9999.0)
-    for da in (psi, sigma, ks):
-        da.raster.set_crs(model.crs)
-        da.raster.set_nodata(-9999.0)
-    model.infiltration.create_green_ampt(psi=psi, sigma=sigma, ks=ks)
-    model.grid.write()
-    model.infiltration.write(netcdf=True)
-    model.config.write()
-
-    root_a = model.root.path
-    mod = SfincsModel(root=root_a, mode="r+")
-    mod.config.read()
-    mod.grid.read()
-    assert "psi" not in mod.grid.data
-
-    # same root: the file is already correct on disk
-    caplog.clear()
-    with caplog.at_level(logging.WARNING):
-        mod.infiltration.write(netcdf=True)
-    assert "will be missing" not in caplog.text
-
-    # new root: the group is neither loaded nor present, so it is lost and the
-    # config would point at a file this model never writes
-    root_b = root_a / "moved"
-    mod.root.set(root_b, mode="w+")
-    caplog.clear()
-    with caplog.at_level(logging.WARNING):
-        mod.infiltration.write(netcdf=True)
-    assert "will be missing" in caplog.text
-
-
-def test_infiltration_write_skips_group_never_created(model, caplog):
-    # the bucket group shares one key, so writing it unloaded must not set one
-    assert model.config.get("bucketfile") is None
-
-    caplog.clear()
-    with caplog.at_level(logging.WARNING):
-        model.grid.write_sidecar(
-            ["bucket_smax", "bucket_k", "bucket_loss"], "bucketfile", "sfincs.bucket.nc"
-        )
-
-    assert model.config.get("bucketfile") is None
-    assert "will be missing" not in caplog.text
-
-
 def test_process_infiltration_regular_io(model):
+    assert not {"bucket_smax", "bucket_k", "bucket_loss"}.intersection(
+        model.infiltration.grid_variables
+    )
     active = model.grid.mask > 0
     psi = xr.where(active, 120.0, -9999.0)
     sigma = xr.where(active, 0.25, -9999.0)
@@ -348,11 +274,13 @@ def test_process_infiltration_regular_io(model):
         da.raster.set_crs(model.crs)
         da.raster.set_nodata(-9999.0)
 
-    model.infiltration.create_green_ampt(psi=psi, sigma=sigma, ks=ks)
+    model.infiltration.create_green_ampt_from_maps(psi=psi, sigma=sigma, ks=ks)
     assert set(["psi", "sigma", "ks"]).issubset(model.grid.data.data_vars)
     assert model.config.get("psifile") is not None
     assert model.config.get("sigmafile") is not None
     assert model.config.get("ksfile") is not None
+    assert model.config.get("inffile") is None
+    assert model.config.get("inftype") is None
 
     model.grid.write()
     model.infiltration.write()
@@ -382,7 +310,7 @@ def test_process_infiltration_regular_io(model):
         da.raster.set_crs(model.crs)
         da.raster.set_nodata(-9999.0)
 
-    model.infiltration.create_horton(f0=f0, fc=fc, kd=kd)
+    model.infiltration.create_horton_from_maps(f0=f0, fc=fc, kd=kd)
     assert set(["f0", "fc", "kd"]).issubset(model.grid.data.data_vars)
     assert "psi" not in model.grid.data
     assert "sigma" not in model.grid.data
@@ -409,68 +337,21 @@ def test_process_infiltration_regular_io(model):
     )
 
 
-def test_bucket_infiltration_regular_io(model):
-    active = model.grid.mask > 0
-    bucket_smax = xr.where(active, 150.0, -9999.0)
-    bucket_k = xr.where(active, 0.2, -9999.0)
-    for da in (bucket_smax, bucket_k):
-        da.raster.set_crs(model.crs)
-        da.raster.set_nodata(-9999.0)
-
-    model.infiltration.create_bucket(
-        bucket_smax=bucket_smax,
-        bucket_k=bucket_k,
-        bucket_loss=0.15,
-    )
-    assert set(["bucket_smax", "bucket_k", "bucket_loss"]).issubset(
-        model.grid.data.data_vars
-    )
-    assert model.config.get("bucketfile") is not None
-
-    model.grid.write()
-    model.infiltration.write()
-    model.config.write()
-    assert isfile(model.root.path / "sfincs.bucket.nc")
-
-    mod1 = SfincsModel(root=model.root.path, mode="r")
-    mod1.config.read()
-    mod1.grid.read()
-    mod1.infiltration.read()
-    assert np.isclose(
-        mod1.grid.data["bucket_smax"].where(mod1.grid.mask > 0).mean(),
-        150.0,
-    )
-    assert np.isclose(
-        mod1.grid.data["bucket_k"].where(mod1.grid.mask > 0).mean(),
-        0.2,
-        atol=1e-5,
-    )
-    assert np.isclose(
-        mod1.grid.data["bucket_loss"].where(mod1.grid.mask > 0).mean(),
-        0.15,
-        atol=1e-5,
-    )
-
-
 def test_infiltration_estimators_from_hsg(model):
     hsg = xr.where(model.grid.data["dep"] < -0.5, 4, 1)
     hsg.raster.set_crs(model.crs)
     ksat = xr.where(model.grid.data["dep"] < 0.0, 0.5, 5.0)
     ksat.raster.set_crs(model.crs)
 
-    model.infiltration.create_green_ampt_from_soil(hsg=hsg, ksat=ksat)
+    model.infiltration.create_green_ampt(hsg=hsg, ksat=ksat)
     assert float(model.grid.data["psi"].where(model.grid.mask > 0).max()) > 0.0
     assert float(model.grid.data["sigma"].where(model.grid.mask > 0).max()) > 0.0
     assert float(model.grid.data["ks"].where(model.grid.mask > 0).max()) > 0.0
 
-    model.infiltration.create_horton_from_soil(hsg=hsg, ksat=ksat)
+    model.infiltration.create_horton(hsg=hsg, ksat=ksat)
     assert float(model.grid.data["f0"].where(model.grid.mask > 0).max()) > 0.0
     assert float(model.grid.data["fc"].where(model.grid.mask > 0).max()) > 0.0
     assert float(model.grid.data["kd"].where(model.grid.mask > 0).max()) > 0.0
-
-    model.infiltration.create_bucket_from_soil(hsg=hsg, ksat=ksat)
-    assert float(model.grid.data["bucket_smax"].where(model.grid.mask > 0).max()) > 0.0
-    assert float(model.grid.data["bucket_k"].where(model.grid.mask > 0).max()) > 0.0
 
 
 def test_initial_conditions(model):

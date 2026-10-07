@@ -63,8 +63,8 @@ class SfincsGrid(GridComponent):
     A component may claim the layers it is responsible for through a
     ``grid_variables`` attribute. ``write()`` skips those layers unless called
     with ``write_components=True``; the component writes them itself through
-    :py:meth:`write_layers` or :py:meth:`write_sidecar`. ``read()`` stays
-    permissive and loads whatever exists on disk.
+    :py:meth:`write_layers`. ``read()`` stays permissive and loads whatever
+    exists on disk.
 
     This grid always owns the cell index file (``sfincs.ind``), the mask and the
     elevation, since every other binary map is indexed against them.
@@ -591,71 +591,6 @@ class SfincsGrid(GridComponent):
                 logger.warning(f"{config_key} not found at {fn}")
                 continue
             self.set(self.read_map(fn, ind, "f4", np.nan, name=name))
-
-    def write_sidecar(
-        self, variables: List[str], config_key: str, default: str
-    ) -> None:
-        """Write active-cell vectors of `variables` to a SFINCS netcdf sidecar.
-
-        Used for variable groups that share one file instead of having a binary
-        map and config key each. Because the key covers the whole group it is
-        only set once every variable is present, so a group that was never
-        created does not leave a dangling reference behind.
-        """
-        self.root._assert_write_mode
-        missing = [v for v in variables if v not in self.data]
-        if missing:
-            fn = self.model.config.get(config_key, abs_path=True)
-            if fn is None:
-                return  # never configured, so nothing can go missing
-            if Path(fn).is_file():
-                # already on disk at the write root, so there is nothing to do
-                logger.debug(f"{missing} not loaded; leaving {Path(fn).name} as is.")
-            else:
-                logger.warning(
-                    f"'{config_key}' is set to {Path(fn).name} but {missing} are not "
-                    f"loaded and the file is not present here, so it will be missing "
-                    f"from this model. Read the component first, or use model.read()."
-                )
-            return
-        filename = Path(
-            self.model.config.get_set_file_variable(config_key, default=default)
-        )
-        filename.parent.mkdir(parents=True, exist_ok=True)
-        mask = np.asarray(self.mask.values)
-        coords = {"mesh2d_nFaces": np.arange(int((mask > 0).sum()), dtype=np.int32)}
-        ds = xr.Dataset(coords=coords)
-        for name in variables:
-            ds[name] = xr.DataArray(
-                np.asarray(
-                    active_cells_vector(self.data[name].values, mask), dtype=np.float32
-                ),
-                dims=("mesh2d_nFaces",),
-                attrs=dict(self.data[name].attrs),
-            )
-        ds.to_netcdf(filename)
-
-    def read_sidecar(
-        self, filename: Union[str, Path], variables: List[str]
-    ) -> dict[str, xr.DataArray]:
-        """Read active-cell vectors from a SFINCS netcdf sidecar onto the grid."""
-        filename = Path(filename)
-        if not filename.is_file():
-            raise FileNotFoundError(filename)
-        ind = self.ind(np.asarray(self.mask.values))
-        shape = (self.nmax, self.mmax)
-        layers = {}
-        with xr.open_dataset(filename) as ds:
-            for name in variables:
-                if name not in ds:
-                    raise ValueError(f"Missing variable '{name}' in {filename}.")
-                layers[name] = xr.DataArray(
-                    vector_to_active_cells(ds[name].values, ind, shape),
-                    coords=self.mask.coords,
-                    dims=self.mask.dims,
-                    name=name,
-                )
-        return layers
 
     def read_map(
         self,

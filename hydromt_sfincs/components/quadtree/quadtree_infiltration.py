@@ -15,7 +15,6 @@ from hydromt_sfincs.utils import fill_nan_in_mask
 from hydromt_sfincs.components.infiltration_common import (
     ALL_VARS,
     BUCKET_VARS,
-    DEFAULT_BUCKETFILE,
     DEFAULT_INFILTRATIONFILE,
     VARIABLES,
     clear_data,
@@ -36,9 +35,9 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
     """SFINCS infiltration component for quadtree grids.
 
-    Unsuffixed ``create_*`` methods use final SFINCS parameter maps directly.
-    Methods with a ``_from_soil`` suffix estimate those parameters from HSG,
-    optional Ksat, and optional land-use modifiers.
+    Unsuffixed ``create_*`` methods estimate parameters from HSG, optional
+    Ksat, and optional land-use modifiers. Methods with a ``_from_maps`` suffix
+    use final SFINCS parameter maps directly.
     """
 
     def __init__(self, model: "SfincsModel"):
@@ -86,31 +85,21 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         # the grid defines the mesh these layers live on, so load it first
         if self.model.quadtree_grid._data is None:
             self.model.quadtree_grid.read(read_components=False)
-        flavor = configured_flavor(self.model.config)
+        flavor = configured_flavor(self.model.config, grid_type="quadtree")
         if flavor is None or flavor == "con":
             return
-        key = "bucketfile" if flavor == "bkt" else "infiltration_file"
-        filename = self.model.config.get(key, abs_path=True)
-        if filename is None and flavor == "bkt":
-            # older models stored the bucket layers under the infiltration key
-            key = "infiltration_file"
-            filename = self.model.config.get(key, abs_path=True)
+        filename = self.model.config.get("inffile", abs_path=True)
         if filename is None or not filename.is_file():
             return
         self.model.quadtree_grid.read_layers(filename)
-        configure(self.model.config, flavor=flavor, grid_type="quadtree")
 
     def write(self) -> None:
         """Write the infiltration layers to their own file."""
-        flavor = configured_flavor(self.model.config)
+        flavor = configured_flavor(self.model.config, grid_type="quadtree")
         if flavor is None or flavor == "con":
             return
-        if flavor == "bkt":
-            config_key, default = "bucketfile", DEFAULT_BUCKETFILE
-        else:
-            config_key, default = "infiltration_file", DEFAULT_INFILTRATIONFILE
         self.model.quadtree_grid.write_layers(
-            flavor_variables(flavor), config_key, default
+            flavor_variables(flavor), "inffile", DEFAULT_INFILTRATIONFILE
         )
 
     @hydromt_step

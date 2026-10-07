@@ -15,8 +15,6 @@ from hydromt_sfincs.components.grid.regulargrid_mixin import SfincsRegularGridMi
 from hydromt_sfincs.components.infiltration_common import (
     ALL_VARS,
     BUCKET_VARS,
-    DEFAULT_BUCKETFILE,
-    DEFAULT_INFILTRATIONFILE,
     VARIABLES,
     clear_data,
     configure,
@@ -35,9 +33,9 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
     """SFINCS infiltration component for regular grids.
 
-    Unsuffixed ``create_*`` methods use final SFINCS parameter maps directly.
-    Methods with a ``_from_soil`` suffix estimate those parameters from HSG,
-    optional Ksat, and optional land-use modifiers.
+    Unsuffixed ``create_*`` methods estimate parameters from HSG, optional
+    Ksat, and optional land-use modifiers. Methods with a ``_from_maps`` suffix
+    use final SFINCS parameter maps directly.
     """
 
     def __init__(self, model: "SfincsModel"):
@@ -52,6 +50,8 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         return self.model.grid.mask
 
     def _set_layers(self, layers: dict[str, xr.DataArray], flavor: str) -> None:
+        if flavor == "bkt":
+            raise ValueError("Bucket infiltration is only supported on quadtree grids")
         self.clear()
         for name, da in layers.items():
             da = da.astype(np.float32)
@@ -71,16 +71,7 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
             self.model.grid.set(da)
         configure(self.model.config, flavor=flavor, grid_type="regular")
 
-    grid_variables = ALL_VARS
-
-    def _configure_netcdf(self, flavor: str, filename=None) -> Path:
-        """Point the config at a single infiltration netcdf instead of binary maps."""
-        reset_config(self.model.config)
-        self.model.config.set("infiltration_type", flavor)
-
-        return self.model.config.get_set_file_variable(
-            "infiltration_file", value=filename, default=DEFAULT_INFILTRATIONFILE
-        )
+    grid_variables = tuple(name for name in ALL_VARS if name not in BUCKET_VARS)
 
     def read(self) -> None:
         """Read the infiltration layers from their own files."""
@@ -88,61 +79,15 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         # check _data directly, since the data property already triggers a read
         if self.model.grid._data is None:
             self.model.grid.read(read_components=False)
-        flavor = configured_flavor(self.model.config)
+        flavor = configured_flavor(self.model.config, grid_type="regular")
         if flavor is None or flavor == "con":
-            return
-        if flavor == "bkt":
-            # bucket variables have no per-variable config key, so they share a netcdf
-            bucketfile = self.model.config.get("bucketfile", abs_path=True)
-            if bucketfile is None:
-                bucketfile = self.model.config.get("infiltration_file", abs_path=True)
-            if bucketfile is None or not bucketfile.is_file():
-                return
-            self._set_layers(
-                self.model.grid.read_sidecar(bucketfile, list(BUCKET_VARS)),
-                flavor="bkt",
-            )
-            return
-        # a single netcdf takes precedence over per-variable binary maps
-        filename = self.model.config.get("infiltration_file", abs_path=True)
-        if filename is not None and filename.is_file():
-            self._set_layers(
-                self.model.grid.read_sidecar(filename, list(flavor_variables(flavor))),
-                flavor=flavor,
-            )
-            self._configure_netcdf(flavor, filename=Path(filename).name)
             return
         self.model.grid.read_layers(list(flavor_variables(flavor)))
-        configure(self.model.config, flavor=flavor, grid_type="regular")
 
-    def write(self, netcdf: bool = False) -> None:
-        """Write the infiltration layers to their own files.
-
-        Parameters
-        ----------
-        netcdf : bool, optional
-            Write all layers of the flavor to a single netcdf (``infiltration_file``)
-            instead of one binary map per variable, by default False. The bucket
-            flavor always uses a netcdf. Confirm the SFINCS kernel reads
-            ``infiltration_file`` for regular grids before enabling this.
-        """
-        flavor = configured_flavor(self.model.config)
+    def write(self) -> None:
+        """Write each regular-grid infiltration layer to its own binary file."""
+        flavor = configured_flavor(self.model.config, grid_type="regular")
         if flavor is None or flavor == "con":
-            return
-        if flavor == "bkt":
-            self.model.grid.write_sidecar(
-                list(BUCKET_VARS), "bucketfile", DEFAULT_BUCKETFILE
-            )
-            return
-        if netcdf:
-            # reset_config would wipe the key again, so configure before writing
-            if all(name in self.data for name in flavor_variables(flavor)):
-                self._configure_netcdf(flavor)
-            self.model.grid.write_sidecar(
-                list(flavor_variables(flavor)),
-                "infiltration_file",
-                DEFAULT_INFILTRATIONFILE,
-            )
             return
         self.model.grid.write_layers(list(flavor_variables(flavor)))
 

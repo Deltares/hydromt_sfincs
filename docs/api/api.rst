@@ -82,12 +82,11 @@ Grid
 ----
 
 The grid owns the mask and elevation. Every other layer is owned by its own
-component, which reads and writes it to its own file through
+component, which reads and writes it to its own binary file through
 :py:meth:`~components.grid.SfincsGrid.read_layers` /
-:py:meth:`~components.grid.SfincsGrid.write_layers`, or through
-:py:meth:`~components.grid.SfincsGrid.read_sidecar` /
-:py:meth:`~components.grid.SfincsGrid.write_sidecar` for groups of variables
-that share a single config key.
+:py:meth:`~components.grid.SfincsGrid.write_layers`. Regular-grid infiltration
+uses one binary file per variable; bucket infiltration is not supported on
+regular grids.
 
 .. autosummary::
    :toctree: ../_generated/
@@ -100,8 +99,6 @@ that share a single config key.
    components.grid.SfincsGrid.create_from_region
    components.grid.SfincsGrid.read_layers
    components.grid.SfincsGrid.write_layers
-   components.grid.SfincsGrid.read_sidecar
-   components.grid.SfincsGrid.write_sidecar
    components.grid.SfincsGrid.read_map
    components.grid.SfincsGrid.write_map
 
@@ -126,11 +123,9 @@ that share a single config key.
    components.grid.SfincsInfiltration.create_cn_from_landuse_hsg
    components.grid.SfincsInfiltration.create_cn_with_recovery
    components.grid.SfincsInfiltration.create_green_ampt
-   components.grid.SfincsInfiltration.create_green_ampt_from_soil
+   components.grid.SfincsInfiltration.create_green_ampt_from_maps
    components.grid.SfincsInfiltration.create_horton
-   components.grid.SfincsInfiltration.create_horton_from_soil
-   components.grid.SfincsInfiltration.create_bucket
-   components.grid.SfincsInfiltration.create_bucket_from_soil
+   components.grid.SfincsInfiltration.create_horton_from_maps
 
    components.grid.SfincsInitialConditions
    components.grid.SfincsInitialConditions.read
@@ -154,6 +149,8 @@ Quadtree
 Quadtree equivalents of the grid components. Layer ownership works the same
 way: each component writes its variables to a standalone UGRID netcdf, and
 anything not claimed by a component stays in the main quadtree file.
+Quadtree infiltration, including bucket variables, is stored in ``inffile``;
+``inftype`` identifies the flavor.
 
 .. autosummary::
    :toctree: ../_generated/
@@ -193,11 +190,11 @@ anything not claimed by a component stays in the main quadtree file.
    components.quadtree.SfincsQuadtreeInfiltration.create_cn_from_landuse_hsg
    components.quadtree.SfincsQuadtreeInfiltration.create_cn_with_recovery
    components.quadtree.SfincsQuadtreeInfiltration.create_green_ampt
-   components.quadtree.SfincsQuadtreeInfiltration.create_green_ampt_from_soil
+   components.quadtree.SfincsQuadtreeInfiltration.create_green_ampt_from_maps
    components.quadtree.SfincsQuadtreeInfiltration.create_horton
-   components.quadtree.SfincsQuadtreeInfiltration.create_horton_from_soil
+   components.quadtree.SfincsQuadtreeInfiltration.create_horton_from_maps
    components.quadtree.SfincsQuadtreeInfiltration.create_bucket
-   components.quadtree.SfincsQuadtreeInfiltration.create_bucket_from_soil
+   components.quadtree.SfincsQuadtreeInfiltration.create_bucket_from_maps
 
    components.quadtree.SfincsQuadtreeInitialConditions
    components.quadtree.SfincsQuadtreeInitialConditions.read
