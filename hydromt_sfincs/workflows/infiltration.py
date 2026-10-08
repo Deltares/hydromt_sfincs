@@ -72,9 +72,16 @@ def _modifier_layers(
     be used as long as a matching table is supplied.
     """
     df = _ensure_modifier_dataframe(df_modifiers)
+    nodata = da_lulc.raster.nodata
+    if nodata is not None and np.isfinite(nodata):
+        df = df.copy()
+        df.loc[nodata] = np.nan
     ds = da_lulc.raster.reclassify(df).astype(np.float32)
 
-    valid = np.isfinite(da_lulc)
+    finite = np.isfinite(da_lulc)
+    valid = finite
+    if nodata is not None and np.isfinite(nodata):
+        valid = valid & (da_lulc != nodata)
     n_unmatched = int((valid & ~da_lulc.isin(df.index.values)).sum())
     if n_unmatched:
         logger.warning(
@@ -84,7 +91,7 @@ def _modifier_layers(
         )
 
     for column in MODIFIER_COLUMNS:
-        ds[column] = ds[column].fillna(default).where(valid).astype(np.float32)
+        ds[column] = ds[column].fillna(default).where(finite).astype(np.float32)
     return ds
 
 
@@ -114,6 +121,17 @@ def normalize_hsg_codes(
     for source_value, target_value in DUAL_HSG_DRAINED_MAPPING.items():
         da_norm = da_norm.where(da_hsg != source_value, np.float32(target_value))
     return da_norm.where(np.isfinite(da_hsg))
+
+
+def _reclassify_hsg(da_hsg: xr.DataArray, df_map: pd.DataFrame) -> xr.Dataset:
+    """Reclassify HSG values while preserving the raster's declared NoData."""
+    nodata = da_hsg.raster.nodata
+    if nodata is not None and np.isfinite(nodata):
+        df_map = df_map.copy()
+        if nodata not in df_map.index:
+            df_map.loc[nodata] = np.nan
+        da_hsg = da_hsg.fillna(nodata)
+    return da_hsg.raster.reclassify(df_map).astype(np.float32)
 
 
 def cn_to_s(da_cn, da_mask=None, nodata=-9999, output_unit="inch"):
@@ -285,7 +303,7 @@ def green_ampt_from_soil(
 
     All inputs must be already-read xarray objects and a pandas DataFrame.
     """
-    ds = da_hsg.raster.reclassify(df_map).astype(np.float32)
+    ds = _reclassify_hsg(da_hsg, df_map)
     if da_ksat is not None:
         ds["ks"] = ksat_to_mmhr(da_ksat, factor_ksat=factor_ksat)
     if "ks" not in ds:
@@ -337,7 +355,7 @@ def horton_from_soil(
 
     All inputs must be already-read xarray objects and a pandas DataFrame.
     """
-    ds = da_hsg.raster.reclassify(df_map).astype(np.float32)
+    ds = _reclassify_hsg(da_hsg, df_map)
     if da_ksat is not None:
         da_fc = ksat_to_mmhr(da_ksat, factor_ksat=factor_ksat)
         if "fc_scale" in ds:
@@ -400,7 +418,7 @@ def bucket_from_soil(
 
     All inputs must be already-read xarray objects and a pandas DataFrame.
     """
-    ds = da_hsg.raster.reclassify(df_map).astype(np.float32)
+    ds = _reclassify_hsg(da_hsg, df_map)
     if "bucket_smax" not in ds:
         if not {"storage_depth_mm", "effective_fraction"}.issubset(ds.data_vars):
             raise ValueError(

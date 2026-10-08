@@ -179,6 +179,27 @@ def test_horton_from_soil_derives_fc_and_f0():
         workflows.horton_from_soil(da_hsg, df_map.drop(columns=["kd"]), da_ksat=da_ksat)
 
 
+def test_soil_reclassification_accepts_declared_nodata(caplog):
+    da_hsg = _raster([[1, 0]], "hsg", dtype=np.int16)
+    da_hsg.raster.set_nodata(0)
+    da_hsg = workflows.normalize_hsg_codes(da_hsg)
+    da_ksat = _raster([[1.0, 1.0]], "ksat")
+    ga_map = pd.DataFrame({"psi": [90.0], "sigma": [0.20]}, index=[1])
+    horton_map = pd.DataFrame(
+        {"fc_scale": [0.4], "f0_scale": [4.0], "kd": [1.0]}, index=[1]
+    )
+
+    with caplog.at_level(logging.WARNING):
+        ds_ga = workflows.green_ampt_from_soil(da_hsg, ga_map, da_ksat=da_ksat)
+        ds_horton = workflows.horton_from_soil(da_hsg, horton_map, da_ksat=da_ksat)
+
+    assert "The nodata value" not in caplog.text
+    assert np.isnan(ds_ga["psi"].values[0, 1])
+    assert np.isnan(ds_ga["sigma"].values[0, 1])
+    assert np.isnan(ds_horton["f0"].values[0, 1])
+    assert np.isnan(ds_horton["fc"].values[0, 1])
+
+
 def test_bucket_from_soil_derives_storage_and_drainage():
     da_hsg = _raster([[1]], "hsg", dtype=np.int16)
     da_ksat = _raster([[1.0]], "ksat")
@@ -367,6 +388,32 @@ def test_modifier_table_warns_on_unmatched_landcover(caplog):
     assert "absent from the modifier table" in caplog.text
     # the unmatched class keeps a neutral factor, so the base value is unchanged
     assert np.isclose(float(ds["sigma"].values[0, 1]), 0.25)
+
+
+def test_modifier_table_does_not_warn_on_nodata(caplog):
+    da_hsg = _raster([[2, 2, 2]], "hsg", dtype=np.int16)
+    da_ksat = _raster(np.full((1, 3), 1.0, dtype=np.float32), "ksat")
+    da_lulc = _raster([[10, 255, 999]], "lulc", dtype=np.int16)
+    da_lulc.raster.set_nodata(255)
+    modifiers = pd.DataFrame(
+        {
+            "surface_factor": [1.15],
+            "storage_factor": [1.30],
+            "drainage_factor": [0.90],
+        },
+        index=[10],
+    )
+    ga_map = pd.DataFrame({"psi": [90.0, 120.0], "sigma": [0.20, 0.25]}, index=[1, 2])
+
+    with caplog.at_level(logging.WARNING):
+        ds = workflows.green_ampt_from_soil_landuse(
+            da_hsg, da_lulc, ga_map, modifiers, da_ksat=da_ksat, dual_hsg="drained"
+        )
+
+    assert "1 cells hold land-use classes" in caplog.text
+    assert "The nodata value" not in caplog.text
+    assert np.isclose(float(ds["sigma"].values[0, 1]), 0.25)
+    assert np.isclose(float(ds["sigma"].values[0, 2]), 0.25)
 
 
 def test_bucket_loss_defaults_with_and_without_landuse(model):
