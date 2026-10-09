@@ -1,113 +1,133 @@
 import logging
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 import xugrid as xu
 
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs.components.quadtree.quadtree_mixin import SfincsQuadtreeMixin
-from hydromt_sfincs import workflows
+from hydromt_sfincs import DATADIR, workflows
+from hydromt_sfincs.utils import fill_nan_in_mask
+from hydromt_sfincs.components.infiltration_common import (
+    ALL_VARS,
+    BUCKET_VARS,
+    DEFAULT_INFILTRATIONFILE,
+    VARIABLES,
+    clear_data,
+    configure,
+    configured_flavor,
+    flavor_variables,
+    get_attrs,
+    reset_config,
+    _require_lulc_modifiers,
+)
+from hydromt_sfincs.components.quadtree import SfincsQuadtreeMixin
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 
-_ATTRS = {
-    "qinf": {
-        "standard_name": "infiltration rate",
-        "unit": "mm.hr-1",
-        "infiltration_type": "c2d",
-    },
-    "scs": {
-        "standard_name": "potential soil moisture retention",
-        "unit": "in",
-        "infiltration_type": "cna",
-    },
-    "smax": {
-        "standard_name": "potential maximum soil moisture retention",
-        "unit": "m",
-        "infiltration_type": "cnb",
-    },
-    "seff": {
-        "standard_name": "effective potential maximum soil moisture retention",
-        "unit": "m",
-        "infiltration_type": "cnb",
-    },
-    "ks": {
-        "standard_name": "saturated hydraulic conductivity",
-        "unit": "mm.hr-1",
-        "infiltration_type": "cnb",
-    },
-}
-
 
 class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
-    """SFINCS infiltration component for quadtree grids. Note that the infiltration component
-    can contain multiple variables, depending on the infiltration type. The variables are stored
-    in the model.quadtree_grid.data with names specified in _ATTRS."""
+    """SFINCS infiltration component for quadtree grids.
 
-    def __init__(
-        self,
-        model: "SfincsModel",
-    ):
-        super().__init__(
-            model=model,
-        )
-        self.attrs = _ATTRS
+    Unsuffixed ``create_*`` methods estimate parameters from HSG, optional
+    Ksat, and optional land-use modifiers. Methods with a ``_from_maps`` suffix
+    use final SFINCS parameter maps directly.
+    """
+
+    def __init__(self, model: "SfincsModel"):
+        super().__init__(model=model)
 
     @property
-    def data(self):
-        """Get the data from the model quadtree grid."""
+    def data(self) -> xu.UgridDataset:
         return self.model.quadtree_grid.data
 
     @property
-    def mask(self):
-        """Get an empty mask with the same shape as the model quadtree grid."""
-        return self.model.quadtree_grid.data["mask"]
+    def mask(self) -> xu.UgridDataArray:
+        return self.model.quadtree_grid.mask
 
-    def read(self):
-        """Read infiltration data for quadtree grid."""
-        pass
+    grid_variables = ALL_VARS
 
-    def write(self):
-        """Write infiltration files for quadtree grid."""
-        pass
+    def _set_layers(
+        self,
+        layers: dict[str, Union[np.ndarray, xr.DataArray, xu.UgridDataArray]],
+        flavor: str,
+    ) -> None:
+        self.clear()
+        for name, layer in layers.items():
+            values = (
+                layer.values
+                if isinstance(layer, (xr.DataArray, xu.UgridDataArray))
+                else layer
+            )
+            da = xr.DataArray(
+                fill_nan_in_mask(
+                    values, self.mask.values, name, VARIABLES[name].fill_value
+                ),
+                dims=[self.data.grid.face_dimension],
+            )
+            uda = xu.UgridDataArray(da, self.data.grid)
+            uda = uda.astype(np.float32)
+            uda.name = name
+            uda.attrs.update(get_attrs(name))
+            self.model.quadtree_grid.set(uda, name=name)
 
-    def get_vars_by_infiltration_type(self, infiltration_type):
-        # Variables that belong to the requested type
-        vars_to_write = {
-            var
-            for var, attrs in self.attrs.items()
-            if attrs.get("infiltration_type") == infiltration_type
-        }
+        configure(self.model.config, flavor=flavor, grid_type="quadtree")
 
-        # Variables that belong to other types
-        vars_other_types = {
-            var
-            for var, attrs in self.attrs.items()
-            if attrs.get("infiltration_type") != infiltration_type
-        }
+    def read(self) -> None:
+        """Read the infiltration layers from their own file."""
+        # TODO discuss whether we want to clear infiltration data first
+        # the grid defines the mesh these layers live on, so load it first
+        if self.model.quadtree_grid._data is None:
+            self.model.quadtree_grid.read(read_components=False)
+        flavor = configured_flavor(self.model.config, grid_type="quadtree")
+        if flavor is None or flavor == "con":
+            return
+        filename = self.model.config.get("inffile", abs_path=True)
+        if filename is None or not filename.is_file():
+            return
+        self.model.quadtree_grid.read_layers(filename)
 
-        # Only remove variables that actually exist in self.data
-        vars_to_remove = vars_other_types.intersection(self.data.keys())
+    def write(self) -> None:
+        """Write the infiltration layers to their own file."""
+        flavor = configured_flavor(self.model.config, grid_type="quadtree")
+        if flavor is None or flavor == "con":
+            return
+        self.model.quadtree_grid.write_layers(
+            flavor_variables(flavor), "inffile", DEFAULT_INFILTRATIONFILE
+        )
 
-        return list(vars_to_write), list(vars_to_remove)
+    @hydromt_step
+    def create_uniform_constant(self, qinf: float) -> None:
+        """Create a uniform constant infiltration rate in model config.
 
-    # Function to create constant spatially varying infiltration
+        Sets the ``qinf`` config entry and clears any existing infiltration
+        layers; no grid layers are added.
+
+        Parameters
+        ----------
+        qinf : float
+            Uniform infiltration rate [mm/hr].
+        """
+        self.clear()
+        self.model.config.set("qinf", float(qinf))
+
     @hydromt_step
     def create_constant(
         self,
-        qinf=None,
-        lulc=None,
-        reclass_table=None,
-        reproj_method="mean",
-        nrmax=2000,
-    ):
-        """Setup spatially varying constant infiltration rate (qinffile) for quadtree grid.
+        qinf: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        reclass_table: Union[str, Path, pd.DataFrame, None] = None,
+        reproj_method: str = "average",
+        nrmax: int = 2000,
+    ) -> None:
+        """Create spatially varying constant infiltration rate.
 
         Adds model layers to SfincsModel.quadtree_grid.data:
 
@@ -116,47 +136,75 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         Parameters
         ----------
         qinf : str, Path, or RasterDataset
-            Spatially varying infiltration rates [mm/hr]
-        lulc: str, Path, or RasterDataset
-            Landuse/landcover data set
-        reclass_table: str, Path, or pd.DataFrame
-            Reclassification table to convert landuse/landcover to infiltration rates [mm/hr]
+            Spatially varying infiltration rates [mm/hr]. If this is an xr.Dataset,
+            it must contain a ``qinf`` variable.
+        lulc : str, Path, or RasterDataset
+            Land-use dataset. Must be combined with ``reclass_table``.
+        reclass_table : str, Path, or pd.DataFrame
+            Reclassification table with a ``qinf`` column to convert land-use classes
+            to infiltration rates [mm/hr].
         reproj_method : str, optional
-            Method to sample from raster data to mesh. By default mean. Options include
-            {"centroid", "barycentric", "mean", "harmonic_mean", "geometric_mean", "sum",
-            "minimum", "maximum", "mode", "median", "max_overlap"}.
-
-        See Also:
-        ---------
-        :py:meth:`~hydromt.model.processes.mesh.mesh2d_from_rasterdataset`
+            Resampling method for reprojecting source data to quadtree blocks.
+        nrmax : int, optional
+            Maximum number of cells per quadtree block.
         """
-
         # Add logger info
-        logger.info(
-            "Creating constant spatially varying infiltration rate for quadtree grid."
-        )
+        logger.info("Creating constant spatially varying infiltration rate.")
 
-        # Get infiltration data
+        # get infiltration data
         if qinf is not None:
-            da_inf = self.model.data_catalog.get_rasterdataset(
+            da_qinf = self.data_catalog.get_rasterdataset(
                 qinf,
                 bbox=self.model.bbox,
                 buffer=10,
-                variables=["qinf"],
             )
+            if isinstance(da_qinf, xr.Dataset):
+                if "qinf" not in da_qinf.data_vars:
+                    raise ValueError(f"Could not find variable qinf in {qinf}")
+                da_qinf = da_qinf["qinf"]
+        # TODO check if this one is really necessary?
+        # elif lulc is not None and ksat is not None:
+        #     da_ksat = self.data_catalog.get_rasterdataset(
+        #         ksat, bbox=self.model.bbox, buffer=10
+        #     )
+        #     da_lulc = self.data_catalog.get_rasterdataset(
+        #         lulc, bbox=self.model.bbox, buffer=10
+        #     )
+        #     if lulc_modifier_table is None:
+        #         lulc_modifier_table = (
+        #             Path(DATADIR)
+        #             / "infiltration"
+        #             / "nlcd_infiltration_modifiers.csv"
+        #         )
+        #     if isinstance(lulc_modifier_table, pd.DataFrame):
+        #         df_modifiers = lulc_modifier_table.copy()
+        #     else:
+        #         df_modifiers = self.data_catalog.get_dataframe(
+        #             lulc_modifier_table,
+        #             source_kwargs={
+        #                 "driver": {"name": "pandas", "options": {"index_col": 0}}
+        #             },
+        #         )
+        #     da_qinf = workflows.constant_infiltration_from_ksat_lulc(
+        #         da_ksat,
+        #         da_lulc,
+        #         df_modifiers,
+        #         da_mask=self.mask,
+        #         factor_ksat=factor_ksat,
+        #     )
         elif lulc is not None:
             # landuse/landcover should always be combined with mapping
             if reclass_table is None:
                 raise IOError(
                     f"Infiltration mapping file should be provided for {lulc}"
                 )
-            da_lulc = self.model.data_catalog.get_rasterdataset(
+            da_lulc = self.data_catalog.get_rasterdataset(
                 lulc,
                 bbox=self.model.bbox,
                 buffer=10,
                 variables=["lulc"],
             )
-            df_map = self.model.data_catalog.get_dataframe(
+            df_map = self.data_catalog.get_dataframe(
                 reclass_table,
                 variables=["qinf"],
                 source_kwargs={
@@ -164,14 +212,14 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                 },
             )
             # reclassify
-            da_inf = da_lulc.raster.reclassify(df_map)["qinf"]
+            da_qinf = da_lulc.raster.reclassify(df_map)["qinf"]
         else:
             raise ValueError(
                 "Either qinf or lulc must be provided when setting up constant infiltration."
             )
 
         # set nodata to nan before reprojecting/interpolating
-        da_inf = da_inf.raster.mask_nodata()
+        da_qinf = da_qinf.raster.mask_nodata()
 
         n_cells = self.data.grid.n_face
         qinf = np.full(n_cells, np.nan)
@@ -179,7 +227,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         # Function to compute infiltration values for a chunk of the quadtree grid
         def compute_constant_infiltration(da_like, ilev=None):
             # reproject infiltration data to model grid
-            da_out = da_inf.raster.reproject_like(da_like, method=reproj_method)
+            da_out = da_qinf.raster.reproject_like(da_like, method=reproj_method)
             return da_out
 
         # Compute constant infiltration in chunks over the quadtree grid
@@ -189,51 +237,38 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             nrmax=nrmax,
         )
 
-        # check on nan values
-        if np.logical_and(np.isnan(qinf), self.mask >= 1).any():
-            logger.warning("NaN values found in infiltration data; filled with 0")
-            qinf = np.where(np.isnan(qinf), 0, qinf)
+        # set grid
+        self._set_layers({"qinf": qinf}, flavor="c2d")
 
-        # Convert constant qinf to ugrid-dataarray and set in self.data
-        da = xr.DataArray(qinf, dims=[self.data.grid.face_dimension])
-        uda = xu.UgridDataArray(da, self.data.grid)
-        self.model.quadtree_grid.set(uda, name="qinf")
-
-        # Update config: remove default inf and set qinf map
-        self.model.config.update(
-            {
-                "infiltration_file": "infiltration.nc",
-                "infiltration_type": "c2d",
-                "qinf": None,
-            }
-        )
-
-    # Function to create curve number for SFINCS quadtree
     @hydromt_step
-    def create_cn(self, cn, antecedent_moisture="avg", reproj_method="med", nrmax=2000):
-        """Setup model potential maximum soil moisture retention map (scsfile)
-        from gridded curve number map for quadtree grid.
+    def create_cn(
+        self,
+        cn: Union[str, Path, xr.DataArray, xr.Dataset],
+        antecedent_moisture: Union[str, None] = "avg",
+        reproj_method: str = "med",
+        nrmax: int = 2000,
+    ) -> None:
+        """Create Curve Number infiltration without recovery for quadtree grids.
 
         Adds model layers:
 
         * **scs** map: potential maximum soil moisture retention [inch]
 
         Parameters
-        ---------
-        cn: str, Path, or RasterDataset
-            Name of gridded curve number map.
-
-            * Required layers without antecedent runoff conditions: ['cn']
-            * Required layers with antecedent runoff conditions: ['cn_dry', 'cn_avg', 'cn_wet']
-        antecedent_moisture: {'dry', 'avg', 'wet'}, optional
-            Antecedent runoff conditions.
-            None if data has no antecedent runoff conditions.
-            By default `avg`
+        ----------
+        cn : str, Path, or RasterDataset
+            Curve number data. Dataset inputs must contain a ``cn`` variable, or
+            ``cn_<antecedent_moisture>`` when ``antecedent_moisture`` is set.
+        antecedent_moisture : {'dry', 'avg', 'wet'}, optional
+            Antecedent runoff condition used to select the source variable. Set to
+            None when the input already holds adjusted curve numbers.
+            By default 'avg'.
         reproj_method : str, optional
-            Resampling method for reprojecting the curve number data to the model grid.
-            By default 'med'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`
+            Resampling method for reprojecting curve number data to quadtree blocks.
+            By default 'med'.
+        nrmax : int, optional
+            Maximum number of cells per quadtree block, by default 2000.
         """
-
         # Add logger info
         logger.info(
             f"Creating curve number values for SFINCS quadtree grid with antecedent moisture condition: {antecedent_moisture}."
@@ -243,155 +278,657 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         da_org = self.model.data_catalog.get_rasterdataset(
             cn, bbox=self.model.bbox, buffer=10
         )
-        # read variable
         v = "cn"
         if antecedent_moisture:
             v = f"cn_{antecedent_moisture}"
         if isinstance(da_org, xr.Dataset) and v in da_org.data_vars:
             da_org = da_org[v]
-        elif not isinstance(da_org, xr.DataArray):
+        elif isinstance(da_org, xr.Dataset):
             raise ValueError(f"Could not find variable {v} in {cn}")
 
         n_cells = self.data.grid.n_face
         scs = np.full(n_cells, np.nan)
 
         def compute_cn_infiltration(da_like, ilev=None):
-            # reproject using reproj method
             da_cn = da_org.raster.reproject_like(da_like, method=reproj_method)
-            # convert to potential maximum soil moisture retention S (1000/CN - 10) [inch]
             da_scs = workflows.cn_to_s(da_cn).round(3)
             return da_scs
 
-        # Compute constant infiltration in chunks over the quadtree grid
         self.compute_quadtree(
             compute_cn_infiltration,
             scs,
             nrmax=nrmax,
         )
 
-        # check on nan values
-        if np.logical_and(np.isnan(scs), self.mask >= 1).any():
-            logger.warning(
-                "NaN values found in curve-number data; filled with 100 (impermeable)"
-            )
-            scs = np.where(np.isnan(scs), 100, scs)
+        self._set_layers({"scs": scs}, flavor="cna")
 
-        # Convert curve number to ugrid-dataarray and set in self.data
-        da = xr.DataArray(scs, dims=[self.data.grid.face_dimension])
-        uda = xu.UgridDataArray(da, self.data.grid)
-        self.model.quadtree_grid.set(uda, name="scs")
-
-        # Update config: remove default inf and set scs map
-        self.model.config.update(
-            {
-                "infiltration_file": "infiltration.nc",
-                "infiltration_type": "cna",
-                "qinf": None,
-            }
-        )
-
-    # Function to create curve number for SFINCS including recovery via saturated hydraulic conductivity [mm/hr]
     @hydromt_step
-    def create_cn_with_recovery(
-        self, lulc, hsg, ksat, reclass_table, effective, nrmax=2000
-    ):
-        """Create curve number for SFINCS quadtree grid including recovery via saturated hydraulic conductivity
-        including recovery term based on the soil saturation.
+    def create_cn_from_landuse_hsg(
+        self,
+        lulc: Union[str, Path, xr.DataArray, xr.Dataset],
+        hsg: Union[str, Path, xr.DataArray, xr.Dataset],
+        reclass_table: Union[str, Path, pd.DataFrame],
+        antecedent_moisture: str = "avg",
+        reproj_method: str = "med",
+    ) -> None:
+        """Create Curve Number infiltration from land use and HSG.
 
         Adds model layers:
 
-        * **smax** map: maximum soil moisture storage capacity (potential storage capacity) in meters
-        * **seff** map: soil moisture storage capacity at the start of the simulation (effective storage capacity) in meters
+        * **scs** map: potential maximum soil moisture retention [inch]
+
+        Parameters
+        ----------
+        lulc : str, Path, or RasterDataset
+            Name of gridded land use map.
+        hsg : str, Path, or RasterDataset
+            Name of gridded hydrologic soil group map.
+        reclass_table : str, Path, or DataFrame
+            Reclassification table mapping land use and hydrologic soil groups to curve numbers.
+        antecedent_moisture : {'dry', 'avg', 'wet'}, optional
+            Antecedent runoff conditions.
+            By default `avg`
+        reproj_method : str, optional
+            Resampling method for reprojecting curve number data to quadtree blocks.
+            By default 'med'.
+        """
+
+        da_lulc = self.data_catalog.get_rasterdataset(
+            lulc, bbox=self.model.bbox, buffer=10, variables=["lulc"]
+        )
+        da_hsg = self.data_catalog.get_rasterdataset(
+            hsg, bbox=self.model.bbox, buffer=10, variables=["hsg"]
+        )
+        df_map = self.data_catalog.get_dataframe(
+            reclass_table,
+            source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
+        )
+
+        da_cn = workflows.curve_number_from_landuse_hsg(da_lulc, da_hsg, df_map)
+        da_cn = workflows.adjust_curve_number(
+            da_cn,
+            antecedent_moisture=antecedent_moisture,
+        )
+
+        self.create_cn(
+            da_cn,
+            antecedent_moisture=None,
+            reproj_method=reproj_method,
+        )
+
+    @hydromt_step
+    def create_cn_with_recovery(
+        self,
+        lulc: Union[str, Path, xr.DataArray, xr.Dataset],
+        hsg: Union[str, Path, xr.DataArray, xr.Dataset],
+        ksat: Union[str, Path, xr.DataArray, xr.Dataset],
+        reclass_table: Union[str, Path, pd.DataFrame],
+        effective: float,
+        factor_ksat: float = 3.6,
+        block_size: int = 2000,
+    ) -> None:
+        """Create Curve Number infiltration with recovery for quadtree grids.
+
+        Adds model layers:
+
+        * **smax** map: maximum soil moisture retention [m]
+        * **seff** map: effective soil moisture retention [m]
+        * **ks** map: saturated hydraulic conductivity [mm/hr]
+
+        Input data are read by the component; each quadtree block is passed to
+        :py:func:`hydromt_sfincs.workflows.curve_number_with_recovery`.
+
+        Parameters
+        ----------
+        lulc : str, Path, or RasterDataset
+            Landuse/landcover data set.
+        hsg : str, Path, or RasterDataset
+            Hydrologic soil group map in integers.
+        ksat : str, Path, or RasterDataset
+            Saturated hydraulic conductivity, in the units implied by ``factor_ksat``.
+        reclass_table : str, Path, or DataFrame
+            Reclassification table relating land cover and soil type to curve numbers.
+        effective : float
+            Fraction of ``smax`` that is effective soil retention, e.g. 0.50 for 50%.
+        factor_ksat : float, optional
+            Factor used to convert Ksat units to mm/hr, by default 3.6
+            (micrometer per second to mm/hr).
+        block_size : int, optional
+            Maximum number of cells per quadtree block, by default 2000.
+        """
+
+        da_lulc = self.data_catalog.get_rasterdataset(
+            lulc, bbox=self.model.bbox, buffer=10
+        )
+        da_hsg = self.data_catalog.get_rasterdataset(
+            hsg, bbox=self.model.bbox, buffer=10
+        )
+        da_ksat = self.data_catalog.get_rasterdataset(
+            ksat, bbox=self.model.bbox, buffer=10
+        )
+        df_map = self.data_catalog.get_dataframe(
+            reclass_table,
+            source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
+        )
+
+        outputs = {
+            name: np.full(self.data.grid.n_face, np.nan)
+            for name in ("smax", "seff", "ks")
+        }
+
+        def compute_cn_recovery_block(da_like, ilev=None):
+            ds = workflows.curve_number_with_recovery(
+                da_lulc,
+                da_hsg,
+                da_ksat,
+                df_map,
+                effective=effective,
+                factor_ksat=factor_ksat,
+                da_mask=da_like,
+            )
+            return tuple(ds[name] for name in outputs)
+
+        self.compute_quadtree(compute_cn_recovery_block, outputs, nrmax=block_size)
+
+        self._set_layers(outputs, flavor="cnb")
+
+    @hydromt_step
+    def create_green_ampt(
+        self,
+        hsg: Union[str, Path, xr.DataArray, xr.Dataset],
+        ksat: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        reclass_table: Union[str, Path, pd.DataFrame, None] = None,
+        lulc_modifier_table: Union[str, Path, pd.DataFrame, None] = None,
+        dual_hsg: Union[str, None] = "drained",
+        factor_ksat: float = 3.6,
+        reproj_method: str = "average",
+    ) -> None:
+        """Estimate Green-Ampt infiltration from HSG and optional landuse.
+
+        Adds model layers:
+
+        * **psi** map: wetting front suction head [mm]
+        * **sigma** map: soil moisture deficit [-]
         * **ks** map: saturated hydraulic conductivity [mm/hr]
 
         Parameters
-        ---------
-        lulc : str, Path, or RasterDataset
-            Landuse/landcover data set
+        ----------
         hsg : str, Path, or RasterDataset
-            HSG (Hydrological Similarity Group) in integers
-        ksat : str, Path, or RasterDataset
-            Ksat (saturated hydraulic conductivity) [micrometer per second]
-        reclass_table : str, Path, or RasterDataset
-            reclass table to relate landcover with soiltype
-        effective : float
-            estimate of percentage effective soil, e.g. 0.50 for 50%
-        nrmax : int
-            maximum block size - use larger values will get more data in memory but can be faster, default=2000
+            Hydrologic soil group map. By default, values are reclassified with
+            the bundled ``hsg_green_ampt.csv`` table.
+        ksat : str, Path, or RasterDataset, optional
+            Saturated hydraulic conductivity map, used to derive ``ks``
+            (``ks = ksat * factor_ksat``). Required unless the reclass table
+            already provides a ``ks`` column. The bundled ``hsg_green_ampt.csv``
+            has only ``psi``/``sigma``, so ksat is required when using it;
+            omitting it raises a ValueError.
+        lulc : str, Path, or RasterDataset, optional
+            Land-use map used to apply infiltration modifiers. Its classes must
+            match the index of ``lulc_modifier_table``.
+        reclass_table : str, Path, or DataFrame, optional
+            Table mapping HSG classes to Green-Ampt parameters.
+        lulc_modifier_table : str, Path, or DataFrame, optional
+            Required with ``lulc``. Table of modifier factors keyed by the
+            land-cover class codes in the supplied dataset.
+        dual_hsg : {None, 'native', 'drained'}, optional
+            How to handle dual HSG classes, by default 'drained'.
+        factor_ksat : float, optional
+            Factor used to convert Ksat units to mm/hr, by default 3.6.
+        reproj_method : str, optional
+            Resampling method for reprojecting final parameter maps to quadtree
+            blocks. By default 'average'.
         """
+        _require_lulc_modifiers(lulc, lulc_modifier_table)
+        if reclass_table is None:
+            reclass_table = Path(DATADIR) / "infiltration" / "hsg_green_ampt.csv"
 
-        # Add logger info
-        logger.info(
-            "Creating curve number values for SFINCS quadtree grid including recovery term."
+        da_hsg = self.data_catalog.get_rasterdataset(
+            hsg, bbox=self.model.bbox, buffer=10, variables=["hsg"]
         )
-
-        # Read the datafiles
-        da_landuse = self.model.data_catalog.get_rasterdataset(
-            lulc, bbox=self.model.bbox, buffer=10
+        df_map = self.data_catalog.get_dataframe(
+            reclass_table,
+            source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
         )
-        da_HSG = self.model.data_catalog.get_rasterdataset(
-            hsg, bbox=self.model.bbox, buffer=10
-        )
-        da_Ksat = self.model.data_catalog.get_rasterdataset(
-            ksat, bbox=self.model.bbox, buffer=10
-        )
-        df_map = self.model.data_catalog.get_dataframe(reclass_table)
-
-        # Compute resolution land use (we are assuming that is the finest)
-        resolution_landuse = np.mean(
-            [abs(da_landuse.raster.res[0]), abs(da_landuse.raster.res[1])]
-        )
-        if da_landuse.raster.crs.is_geographic:
-            resolution_landuse = (
-                resolution_landuse * 111111.0
-            )  # assume 1 degree is 111km
-
-        logger.info("Processing curve number determination for quadtree grid")
-
-        smax = np.full(self.data.grid.n_face, np.nan)
-        ks = np.full(self.data.grid.n_face, np.nan)
-
-        def compute_cn_recovery(da_like, ilev=None):
-            da_smax, da_ks = workflows.curvenumber.scs_recovery_determination(
-                da_landuse, da_HSG, da_Ksat, df_map, da_like
+        da_ksat = None
+        if ksat is not None:
+            da_ksat = self.data_catalog.get_rasterdataset(
+                ksat, bbox=self.model.bbox, buffer=10
             )
-            return da_smax, da_ks
+            da_ksat = da_ksat.raster.reproject_like(da_hsg, method="average")
 
-        # Compute constant infiltration in chunks over the quadtree grid
-        self.compute_quadtree(compute_cn_recovery, output=(smax, ks), nrmax=nrmax)
-
-        # Done
-        logger.info("Done with determination of curve number with recovery.")
-
-        # check on nan values
-        if np.logical_and(np.isnan(smax), self.mask >= 1).any():
-            logger.warning(
-                "NaN values found in storage capacity data; filled with 0 (impermeable)"
+        if lulc is not None:
+            da_lulc = self.data_catalog.get_rasterdataset(
+                lulc, bbox=self.model.bbox, buffer=10, variables=["lulc"]
             )
-            smax = np.where(np.isnan(smax), 0, smax)
-        if np.logical_and(np.isnan(ks), self.mask >= 1).any():
-            logger.warning(
-                "NaN values found in hydraulic conductivity data; filled with 0 (no recovery)"
+            da_lulc = da_lulc.raster.reproject_like(da_hsg, method="nearest")
+            df_modifiers = self.data_catalog.get_dataframe(
+                lulc_modifier_table,
+                source_kwargs={
+                    "driver": {"name": "pandas", "options": {"index_col": 0}}
+                },
             )
-            ks = np.where(np.isnan(ks), 0, ks)
+            ds = workflows.green_ampt_from_soil_landuse(
+                da_hsg,
+                da_lulc,
+                df_map,
+                df_modifiers,
+                da_ksat=da_ksat,
+                factor_ksat=factor_ksat,
+                dual_hsg=dual_hsg,
+            )
+        else:
+            ds = workflows.green_ampt_from_soil(
+                da_hsg,
+                df_map,
+                da_ksat=da_ksat,
+                factor_ksat=factor_ksat,
+            )
 
-        # Specify the effective soil retention (seff)
-        seff = smax
-        seff = seff * effective
+        outputs = {
+            name: np.full(self.data.grid.n_face, np.nan)
+            for name in ("psi", "sigma", "ks")
+        }
 
-        # Convert ks, smax, seff to ugrid-dataset and set in self.data
-        da_smax = xr.DataArray(smax, dims=[self.data.grid.face_dimension])
-        da_ks = xr.DataArray(ks, dims=[self.data.grid.face_dimension])
-        da_seff = xr.DataArray(seff, dims=[self.data.grid.face_dimension])
-        ds = xr.Dataset({"smax": da_smax, "ks": da_ks, "seff": da_seff})
-        uds = xu.UgridDataset(ds, self.data.grid)
-        self.model.quadtree_grid.set(uds)
+        def compute_block(da_like, ilev=None):
+            return tuple(
+                ds[name].raster.reproject_like(da_like, method=reproj_method)
+                for name in outputs
+            )
 
-        # Update config: remove default inf and set scs map
-        self.model.config.update(
-            {
-                "infiltration_file": "infiltration.nc",
-                "infiltration_type": "cnb",
-                "qinf": None,
+        self.compute_quadtree(compute_block, outputs)
+        self._set_layers(outputs, flavor="gai")
+
+    @hydromt_step
+    def create_green_ampt_from_maps(
+        self,
+        psi: Union[str, Path, xr.DataArray, xr.Dataset],
+        sigma: Union[str, Path, xr.DataArray, xr.Dataset],
+        ks: Union[str, Path, xr.DataArray, xr.Dataset],
+        reproj_method: str = "average",
+    ) -> None:
+        """Create Green-Ampt infiltration from final parameter maps.
+
+        Adds model layers:
+
+        * **psi** map: wetting front suction head [mm]
+        * **sigma** map: soil moisture deficit [-]
+        * **ks** map: saturated hydraulic conductivity [mm/hr]
+
+        Parameters
+        ----------
+        psi, sigma, ks : str, Path, or RasterDataset
+            Data with final Green-Ampt parameters. Dataset inputs must contain
+            variables named ``psi``, ``sigma``, and ``ks`` respectively.
+        reproj_method : str, optional
+            Resampling method for reprojecting raster inputs to quadtree blocks.
+        """
+        names = ("psi", "sigma", "ks")
+        layers = {}
+        raster_sources = {}
+        for name, source in zip(names, (psi, sigma, ks)):
+            da = self.data_catalog.get_rasterdataset(
+                source, bbox=self.model.bbox, buffer=10, variables=[name]
+            )
+            raster_sources[name] = da.raster.mask_nodata()
+
+        if raster_sources:
+            outputs = {
+                name: np.full(self.data.grid.n_face, np.nan) for name in raster_sources
             }
+
+            def compute_block(da_like, ilev=None):
+                return tuple(
+                    raster_sources[name].raster.reproject_like(
+                        da_like, method=reproj_method
+                    )
+                    for name in outputs
+                )
+
+            self.compute_quadtree(compute_block, outputs)
+            layers.update(outputs)
+        self._set_layers(layers, flavor="gai")
+
+    @hydromt_step
+    def create_horton(
+        self,
+        hsg: Union[str, Path, xr.DataArray, xr.Dataset],
+        ksat: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        reclass_table: Union[str, Path, pd.DataFrame, None] = None,
+        lulc_modifier_table: Union[str, Path, pd.DataFrame, None] = None,
+        dual_hsg: Union[str, None] = "drained",
+        factor_ksat: float = 3.6,
+        reproj_method: str = "average",
+    ) -> None:
+        """Estimate Horton infiltration from HSG and optional landuse.
+
+        Adds model layers:
+
+        * **f0** map: initial infiltration capacity [mm/hr]
+        * **fc** map: asymptotic infiltration capacity [mm/hr]
+        * **kd** map: Horton decay coefficient [hr-1]
+
+        Parameters
+        ----------
+        hsg : str, Path, or RasterDataset
+            Hydrologic soil group map. By default, values are reclassified with
+            the bundled ``hsg_horton.csv`` table.
+        ksat : str, Path, or RasterDataset, optional
+            Saturated hydraulic conductivity map, used to derive ``fc``
+            (``fc = ksat * factor_ksat * fc_scale``). Required unless the reclass
+            table already provides a literal ``fc`` column. The bundled
+            ``hsg_horton.csv`` has only ``fc_scale``/``f0_scale``/``kd`` (and
+            ``fc_scale`` is applied only when ksat is given), so ksat is required
+            when using it; omitting it raises a ValueError.
+        lulc : str, Path, or RasterDataset, optional
+            Land-use map used to apply infiltration modifiers. Its classes must
+            match the index of ``lulc_modifier_table``.
+        reclass_table : str, Path, or DataFrame, optional
+            Table mapping HSG classes to Horton parameters.
+        lulc_modifier_table : str, Path, or DataFrame, optional
+            Required with ``lulc``. Table of modifier factors keyed by the
+            land-cover class codes in the supplied dataset.
+        dual_hsg : {None, 'native', 'drained'}, optional
+            How to handle dual HSG classes, by default 'drained'.
+        factor_ksat : float, optional
+            Factor used to convert Ksat units to mm/hr, by default 3.6.
+        reproj_method : str, optional
+            Resampling method for reprojecting final parameter maps to quadtree
+            blocks. By default 'average'.
+        """
+        _require_lulc_modifiers(lulc, lulc_modifier_table)
+        if reclass_table is None:
+            reclass_table = Path(DATADIR) / "infiltration" / "hsg_horton.csv"
+
+        da_hsg = self.data_catalog.get_rasterdataset(
+            hsg, bbox=self.model.bbox, buffer=10, variables=["hsg"]
         )
+        df_map = self.data_catalog.get_dataframe(
+            reclass_table,
+            source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
+        )
+        da_ksat = None
+        if ksat is not None:
+            da_ksat = self.data_catalog.get_rasterdataset(
+                ksat, bbox=self.model.bbox, buffer=10
+            )
+            da_ksat = da_ksat.raster.reproject_like(da_hsg, method="average")
+
+        if lulc is not None:
+            da_lulc = self.data_catalog.get_rasterdataset(
+                lulc, bbox=self.model.bbox, buffer=10, variables=["lulc"]
+            )
+            da_lulc = da_lulc.raster.reproject_like(da_hsg, method="nearest")
+            df_modifiers = self.data_catalog.get_dataframe(
+                lulc_modifier_table,
+                source_kwargs={
+                    "driver": {"name": "pandas", "options": {"index_col": 0}}
+                },
+            )
+            ds = workflows.horton_from_soil_landuse(
+                da_hsg,
+                da_lulc,
+                df_map,
+                df_modifiers,
+                da_ksat=da_ksat,
+                factor_ksat=factor_ksat,
+                dual_hsg=dual_hsg,
+            )
+        else:
+            ds = workflows.horton_from_soil(
+                da_hsg,
+                df_map,
+                da_ksat=da_ksat,
+                factor_ksat=factor_ksat,
+            )
+
+        outputs = {
+            name: np.full(self.data.grid.n_face, np.nan) for name in ("f0", "fc", "kd")
+        }
+
+        def compute_block(da_like, ilev=None):
+            return tuple(
+                ds[name].raster.reproject_like(da_like, method=reproj_method)
+                for name in outputs
+            )
+
+        self.compute_quadtree(compute_block, outputs)
+        self._set_layers(outputs, flavor="hor")
+
+    @hydromt_step
+    def create_horton_from_maps(
+        self,
+        f0: Union[str, Path, xr.DataArray, xr.Dataset],
+        fc: Union[str, Path, xr.DataArray, xr.Dataset],
+        kd: Union[str, Path, xr.DataArray, xr.Dataset],
+        reproj_method: str = "average",
+    ) -> None:
+        """Create Horton infiltration from final parameter maps.
+
+        Adds model layers:
+
+        * **f0** map: initial infiltration capacity [mm/hr]
+        * **fc** map: asymptotic infiltration capacity [mm/hr]
+        * **kd** map: Horton decay coefficient [hr-1]
+
+        Parameters
+        ----------
+        f0, fc, kd : str, Path, RasterDataset, or UgridDataArray
+            Data with final Horton parameters. Dataset inputs must contain
+            variables named ``f0``, ``fc``, and ``kd`` respectively.
+        reproj_method : str, optional
+            Resampling method for reprojecting raster inputs to quadtree blocks.
+        """
+        names = ("f0", "fc", "kd")
+        layers = {}
+        raster_sources = {}
+        for name, source in zip(names, (f0, fc, kd)):
+            da = self.data_catalog.get_rasterdataset(
+                source,
+                bbox=self.model.bbox,
+                buffer=10,
+                variables=[name],
+            )
+            raster_sources[name] = da.raster.mask_nodata()
+
+        if raster_sources:
+            outputs = {
+                name: np.full(self.data.grid.n_face, np.nan) for name in raster_sources
+            }
+
+            def compute_block(da_like, ilev=None):
+                return tuple(
+                    raster_sources[name].raster.reproject_like(
+                        da_like, method=reproj_method
+                    )
+                    for name in outputs
+                )
+
+            self.compute_quadtree(compute_block, outputs)
+            layers.update(outputs)
+        self._set_layers(layers, flavor="hor")
+
+    @hydromt_step
+    def create_bucket(
+        self,
+        hsg: Union[str, Path, xr.DataArray, xr.Dataset],
+        ksat: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        reclass_table: Union[str, Path, pd.DataFrame, None] = None,
+        lulc_modifier_table: Union[str, Path, pd.DataFrame, None] = None,
+        dual_hsg: Union[str, None] = "drained",
+        factor_ksat: float = 3.6,
+        bucket_loss: Union[float, None] = None,
+        reproj_method: str = "average",
+    ) -> None:
+        """Estimate bucket infiltration from HSG and optional landuse.
+
+        Adds model layers:
+
+        * **bucket_smax** map: bucket maximum storage [mm]
+        * **bucket_k** map: bucket drainage coefficient [hr-1]
+        * **bucket_loss** map: bucket loss fraction [-]
+
+        Parameters
+        ----------
+        hsg : str, Path, or RasterDataset
+            Hydrologic soil group map. By default, values are reclassified with
+            the bundled ``hsg_bucket.csv`` table.
+        ksat : str, Path, or RasterDataset, optional
+            Saturated hydraulic conductivity map, used to derive ``bucket_k``
+            (via a residence time ``bucket_smax / (ksat * factor_ksat)``).
+            Required unless the reclass table provides a ``bucket_k`` or
+            ``residence_time_hr`` column. The bundled ``hsg_bucket.csv`` provides
+            neither, so ksat is required when using it; omitting it raises a
+            ValueError. (``bucket_smax`` itself comes from the table and does not
+            need ksat.)
+        lulc : str, Path, or RasterDataset, optional
+            Land-use map used to apply infiltration modifiers. Its classes must
+            match the index of ``lulc_modifier_table``.
+        reclass_table : str, Path, or DataFrame, optional
+            Table mapping HSG classes to bucket parameters.
+        lulc_modifier_table : str, Path, or DataFrame, optional
+            Required with ``lulc``. Table of modifier factors keyed by the
+            land-cover class codes in the supplied dataset.
+        dual_hsg : {None, 'native', 'drained'}, optional
+            How to handle dual HSG classes, by default 'drained'.
+        factor_ksat : float, optional
+            Factor used to convert Ksat units to mm/hr, by default 3.6.
+        bucket_loss : float, optional
+            Uniform bucket loss fraction. Defaults to 0.0 without land use and
+            0.10 with land-use modifiers.
+        reproj_method : str, optional
+            Resampling method for reprojecting final parameter maps to quadtree
+            blocks. By default 'average'.
+        """
+        _require_lulc_modifiers(lulc, lulc_modifier_table)
+        if reclass_table is None:
+            reclass_table = Path(DATADIR) / "infiltration" / "hsg_bucket.csv"
+
+        da_hsg = self.data_catalog.get_rasterdataset(
+            hsg, bbox=self.model.bbox, buffer=10, variables=["hsg"]
+        )
+        df_map = self.data_catalog.get_dataframe(
+            reclass_table,
+            source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
+        )
+        da_ksat = None
+        if ksat is not None:
+            da_ksat = self.data_catalog.get_rasterdataset(
+                ksat, bbox=self.model.bbox, buffer=10
+            )
+            da_ksat = da_ksat.raster.reproject_like(da_hsg, method="average")
+
+        if lulc is not None:
+            da_lulc = self.data_catalog.get_rasterdataset(
+                lulc, bbox=self.model.bbox, buffer=10, variables=["lulc"]
+            )
+            da_lulc = da_lulc.raster.reproject_like(da_hsg, method="nearest")
+            df_modifiers = self.data_catalog.get_dataframe(
+                lulc_modifier_table,
+                source_kwargs={
+                    "driver": {"name": "pandas", "options": {"index_col": 0}}
+                },
+            )
+            ds = workflows.bucket_from_soil_landuse(
+                da_hsg,
+                da_lulc,
+                df_map,
+                df_modifiers,
+                da_ksat=da_ksat,
+                factor_ksat=factor_ksat,
+                dual_hsg=dual_hsg,
+                bucket_loss=0.10 if bucket_loss is None else bucket_loss,
+            )
+        else:
+            ds = workflows.bucket_from_soil(
+                da_hsg,
+                df_map,
+                da_ksat=da_ksat,
+                factor_ksat=factor_ksat,
+                bucket_loss=bucket_loss if np.isscalar(bucket_loss) else None,
+            )
+
+        outputs = {name: np.full(self.data.grid.n_face, np.nan) for name in BUCKET_VARS}
+
+        def compute_block(da_like, ilev=None):
+            return tuple(
+                ds[name].raster.reproject_like(da_like, method=reproj_method)
+                for name in outputs
+            )
+
+        self.compute_quadtree(compute_block, outputs)
+        self._set_layers(outputs, flavor="bkt")
+
+    @hydromt_step
+    def create_bucket_from_maps(
+        self,
+        bucket_smax: Union[str, Path, xr.DataArray, xr.Dataset],
+        bucket_k: Union[str, Path, xr.DataArray, xr.Dataset],
+        bucket_loss: Union[float, str, Path, xr.DataArray, xr.Dataset, None] = None,
+        reproj_method: str = "average",
+    ) -> None:
+        """Create bucket infiltration from final parameter maps.
+
+        Adds model layers:
+
+        * **bucket_smax** map: bucket maximum storage [mm]
+        * **bucket_k** map: bucket drainage coefficient [hr-1]
+        * **bucket_loss** map: bucket loss fraction [-]
+
+        Parameters
+        ----------
+        bucket_smax, bucket_k : str, Path, RasterDataset
+            Data with final bucket parameters. Dataset inputs must contain
+            variables named ``bucket_smax`` and ``bucket_k`` respectively.
+        bucket_loss : float, str, Path, RasterDataset, optional
+            Uniform loss fraction or map with final bucket loss fractions.
+            Defaults to 0.0.
+        reproj_method : str, optional
+            Resampling method for reprojecting raster inputs to quadtree blocks.
+        """
+        names = ("bucket_smax", "bucket_k")
+        layers = {}
+        raster_sources = {}
+        for name, source in zip(names, (bucket_smax, bucket_k)):
+            da = self.data_catalog.get_rasterdataset(
+                source,
+                bbox=self.model.bbox,
+                buffer=10,
+                variables=[name],
+            )
+            raster_sources[name] = da.raster.mask_nodata()
+
+        if bucket_loss is None or np.isscalar(bucket_loss):
+            layers["bucket_loss"] = np.full(
+                self.data.grid.n_face,
+                np.float32(0.0 if bucket_loss is None else bucket_loss),
+            )
+        else:
+            da_loss = self.data_catalog.get_rasterdataset(
+                bucket_loss, bbox=self.model.bbox, buffer=10, variables=["bucket_loss"]
+            )
+            raster_sources["bucket_loss"] = da_loss.raster.mask_nodata()
+
+        if raster_sources:
+            outputs = {
+                name: np.full(self.data.grid.n_face, np.nan) for name in raster_sources
+            }
+
+            def compute_block(da_like, ilev=None):
+                return tuple(
+                    raster_sources[name].raster.reproject_like(
+                        da_like, method=reproj_method
+                    )
+                    for name in outputs
+                )
+
+            self.compute_quadtree(compute_block, outputs)
+            layers.update(outputs)
+        self._set_layers(layers, flavor="bkt")
+
+    def clear(self) -> None:
+        """Clear all infiltration layers from the model."""
+        self.model.quadtree_grid._data = clear_data(self.data, keep=())
+        reset_config(self.model.config)

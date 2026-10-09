@@ -1,0 +1,490 @@
+"""Infiltration estimation workflows.
+
+Metadata, configuration bookkeeping, and grid I/O helpers live in
+:py:mod:`hydromt_sfincs.components.infiltration_common`.
+"""
+
+from __future__ import annotations
+
+import logging
+
+import numpy as np
+import pandas as pd
+import xarray as xr
+
+logger = logging.getLogger(__name__)
+
+__all__ = [
+    "INCH_TO_METER",
+    "MICROMETER_PER_SECOND_TO_MM_PER_HOUR",
+    "adjust_curve_number",
+    "bucket_from_soil",
+    "bucket_from_soil_landuse",
+    "cn_to_s",
+    "constant_infiltration_from_ksat_lulc",
+    "curve_number_from_landuse_hsg",
+    "curve_number_with_recovery",
+    "green_ampt_from_soil",
+    "green_ampt_from_soil_landuse",
+    "horton_from_soil",
+    "horton_from_soil_landuse",
+    "ksat_to_mmhr",
+    "normalize_hsg_codes",
+]
+
+INCH_TO_METER = 0.0254
+MICROMETER_PER_SECOND_TO_MM_PER_HOUR = 3.6
+
+
+MODIFIER_COLUMNS = ("surface_factor", "storage_factor", "drainage_factor")
+
+DUAL_HSG_DRAINED_MAPPING = {
+    1: 1,
+    2: 2,
+    3: 3,
+    4: 4,
+    5: 1,
+    6: 2,
+    7: 3,
+    8: 4,
+}
+
+
+def _ensure_modifier_dataframe(df_modifiers: pd.DataFrame) -> pd.DataFrame:
+    df = df_modifiers
+    if "lulc" in df.columns:
+        df = df.set_index("lulc")
+    missing = set(MODIFIER_COLUMNS).difference(df.columns)
+    if missing:
+        raise ValueError(f"Missing land-use modifier columns: {sorted(missing)}")
+    return df[list(MODIFIER_COLUMNS)]
+
+
+def _modifier_layers(
+    da_lulc: xr.DataArray,
+    df_modifiers: pd.DataFrame,
+    *,
+    default: float = 1.0,
+) -> xr.Dataset:
+    """Reclassify land-use classes into infiltration modifier factors.
+
+    ``df_modifiers`` is indexed by land-use class, so any land-cover product can
+    be used as long as a matching table is supplied.
+    """
+    df = _ensure_modifier_dataframe(df_modifiers)
+    nodata = da_lulc.raster.nodata
+    if nodata is not None and np.isfinite(nodata):
+        df = df.copy()
+        df.loc[nodata] = np.nan
+    ds = da_lulc.raster.reclassify(df).astype(np.float32)
+
+    finite = np.isfinite(da_lulc)
+    valid = finite
+    if nodata is not None and np.isfinite(nodata):
+        valid = valid & (da_lulc != nodata)
+    n_unmatched = int((valid & ~da_lulc.isin(df.index.values)).sum())
+    if n_unmatched:
+        logger.warning(
+            f"{n_unmatched} cells hold land-use classes that are absent from the "
+            f"modifier table; a neutral factor of {default} is applied there. "
+            f"Check that the modifier table matches the land-use dataset."
+        )
+
+    for column in MODIFIER_COLUMNS:
+        ds[column] = ds[column].fillna(default).where(finite).astype(np.float32)
+    return ds
+
+
+def ksat_to_mmhr(
+    da_ksat: xr.DataArray,
+    factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
+) -> xr.DataArray:
+    """Convert saturated hydraulic conductivity to mm/hr."""
+    # negative Ksat is physically impossible, so it marks undeclared nodata such
+    # as a raw -9999 that was never converted to NaN
+    da_ksat = da_ksat.astype(np.float32).where(da_ksat >= 0.0)
+    da_ks = da_ksat * factor_ksat
+    return da_ks.fillna(0.0)
+
+
+def normalize_hsg_codes(
+    da_hsg: xr.DataArray,
+    mode: str | None = "drained",
+) -> xr.DataArray:
+    """Normalize single- and dual-HSG classes to the requested convention."""
+    if mode in (None, "none", "native"):
+        return da_hsg.astype(np.float32)
+    if mode != "drained":
+        raise ValueError("dual_hsg must be one of None, 'native', or 'drained'.")
+
+    da_norm = xr.full_like(da_hsg, np.nan, dtype=np.float32)
+    for source_value, target_value in DUAL_HSG_DRAINED_MAPPING.items():
+        da_norm = da_norm.where(da_hsg != source_value, np.float32(target_value))
+    return da_norm.where(np.isfinite(da_hsg))
+
+
+def _reclassify_hsg(da_hsg: xr.DataArray, df_map: pd.DataFrame) -> xr.Dataset:
+    """Reclassify HSG values while preserving the raster's declared NoData."""
+    nodata = da_hsg.raster.nodata
+    if nodata is not None and np.isfinite(nodata):
+        df_map = df_map.copy()
+        if nodata not in df_map.index:
+            df_map.loc[nodata] = np.nan
+        da_hsg = da_hsg.fillna(nodata)
+    return da_hsg.raster.reclassify(df_map).astype(np.float32)
+
+
+def cn_to_s(da_cn, da_mask=None, nodata=-9999, output_unit="inch"):
+    """Convert Curve Numbers to potential maximum soil moisture retention S."""
+    # nodata is mapped to CN 100 (zero infiltration); CN is floored at 1
+    da_cn = np.maximum(1, da_cn.raster.mask_nodata().fillna(100))
+    da_s = np.maximum(1000 / da_cn - 10, 0).round(3)
+    if output_unit == "m":
+        da_s = da_s * INCH_TO_METER
+    elif output_unit != "inch":
+        raise ValueError("output_unit must be either 'inch' or 'm'.")
+    if da_mask is not None:
+        da_s = da_s.where(da_mask, nodata)
+    try:
+        da_s.raster.set_nodata(nodata)
+    except (AttributeError, ValueError):
+        logger.debug("Could not set nodata on curve-number retention", exc_info=True)
+    return da_s
+
+
+def curve_number_from_landuse_hsg(
+    da_lulc: xr.DataArray,
+    da_hsg: xr.DataArray,
+    df_map: pd.DataFrame,
+) -> xr.DataArray:
+    """Map already-read land use and HSG rasters to curve numbers."""
+    da_cn = xr.full_like(da_lulc, np.nan, dtype=np.float32).rename("cn")
+
+    # Interpolate soil type to landuse
+    da_hsg_to_lulc = da_hsg.raster.reproject_like(da_lulc, method="nearest")
+
+    for landuse_value, row in df_map.iterrows():
+        for hsg_value in df_map.columns:
+            mask = (da_lulc == landuse_value) & (da_hsg_to_lulc == int(hsg_value))
+            da_cn = da_cn.where(~mask, np.float32(row[hsg_value]))
+    return da_cn.where(da_cn > 0.0)
+
+
+def adjust_curve_number(
+    da_cn: xr.DataArray,
+    antecedent_moisture: str | None = "avg",
+) -> xr.DataArray:
+    """Adjust CN-II values to the requested antecedent moisture condition."""
+    if antecedent_moisture in (None, "avg"):
+        return da_cn.astype(np.float32)
+    if antecedent_moisture == "dry":
+        da_adj = da_cn / (2.281 - 0.01281 * da_cn)
+    elif antecedent_moisture == "wet":
+        da_adj = da_cn / (0.427 + 0.00573 * da_cn)
+    else:
+        raise ValueError(
+            "antecedent_moisture must be one of None, 'avg', 'dry', or 'wet'."
+        )
+    return da_adj.clip(min=0.0, max=100.0).where(np.isfinite(da_cn)).astype(np.float32)
+
+
+def curve_number_with_recovery(
+    da_lulc: xr.DataArray,
+    da_hsg: xr.DataArray,
+    da_ksat: xr.DataArray,
+    df_map: pd.DataFrame,
+    *,
+    effective: float,
+    factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
+    ksat_max: float | None = 100.0,
+    da_mask: xr.DataArray | None = None,
+) -> xr.Dataset:
+    """Estimate SCS curve-number-with-recovery parameters.
+
+    All inputs must be already-read xarray objects and a pandas DataFrame.
+
+    Parameters
+    ----------
+    effective : float
+        Fraction of ``smax`` that is effective soil retention, e.g. 0.5 for 50%.
+    factor_ksat : float, optional
+        Factor converting Ksat to mm/hr, by default micrometer per second to mm/hr.
+    ksat_max : float, optional
+        Upper cap applied to raw Ksat before unit conversion, following the
+        recovery-rate ranges of SWMM Table 4.7. Set to None to disable.
+    da_mask : xr.DataArray, optional
+        If given, outputs are reprojected onto this grid using 'average'.
+    """
+    # Derive curve number from land use and HSG
+    da_cn = curve_number_from_landuse_hsg(da_lulc, da_hsg, df_map)
+    # Convert CN to maximum soil retention (S) model grid and interpolate
+    da_cn = da_cn.where(da_cn > 0.0)
+    # zero retention is a real value, so it must stay out of the nodata mask or
+    # area-weighted resampling would drop those cells and bias smax upward
+    da_smax = cn_to_s(da_cn, output_unit="m", nodata=np.nan).astype(np.float32)
+    da_smax.name = "smax"
+    # Reproject to mask if provided
+    if da_mask is not None:
+        da_smax = da_smax.raster.reproject_like(da_mask, method="average").fillna(0.0)
+        da_ksat = da_ksat.raster.reproject_like(da_mask, method="average").fillna(0.0)
+    # Convert Ksat to mm/hr and apply maximum cap if provided
+    da_ks = ksat_to_mmhr(da_ksat, factor_ksat=factor_ksat).astype(np.float32)
+    da_ks.name = "ks"
+    if ksat_max is not None:  # not higher than ksat_max (default=100)
+        da_ks = np.minimum(da_ks, ksat_max)
+    # Compute effective soil retention based on the maximum soil retention and the effective fraction
+    da_seff = (da_smax * effective).astype(np.float32)
+    da_seff.name = "seff"
+    return xr.Dataset({"smax": da_smax, "seff": da_seff, "ks": da_ks})
+
+
+def constant_infiltration_from_ksat_lulc(
+    da_ksat: xr.DataArray,
+    da_lulc: xr.DataArray,
+    df_modifiers: pd.DataFrame,
+    *,
+    da_mask: xr.DataArray | None = None,
+    factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
+    qinf_min: float = 0.01,
+    qinf_max: float = 19.9,
+    base_min: float = 0.1,
+    base_max: float = 15.0,
+) -> xr.DataArray:
+    """Estimate spatially varying constant infiltration from Ksat and land use.
+
+    All inputs must be already-read xarray objects and a pandas DataFrame.
+    """
+    df_modifiers = _ensure_modifier_dataframe(df_modifiers)
+    surface_factor = _modifier_layers(da_lulc, df_modifiers)["surface_factor"]
+
+    ks_values = np.asarray(da_ksat.values).astype(np.float32) * factor_ksat
+    ks_values = np.where(np.isfinite(ks_values), np.maximum(ks_values, 0.01), np.nan)
+    log_values = np.where(np.isfinite(ks_values), np.log10(ks_values), np.nan).astype(
+        np.float32
+    )
+
+    valid = np.isfinite(log_values)
+    if da_mask is not None:
+        valid &= np.asarray(da_mask.values) > 0
+    valid_values = log_values.astype(float)[valid]
+    if valid_values.size == 0:
+        raise ValueError("No finite active Ksat values available to estimate qinf.")
+    p5 = np.nanpercentile(valid_values, 5.0)
+    p95 = np.nanpercentile(valid_values, 95.0)
+    if not np.isfinite(p5) or not np.isfinite(p95):
+        raise ValueError("Could not derive finite active-domain Ksat percentiles.")
+    if p95 <= p5:
+        norm_values = np.where(np.isfinite(log_values), 0.5, np.nan).astype(np.float32)
+    else:
+        norm_values = np.clip((log_values - p5) / (p95 - p5), 0.0, 1.0).astype(
+            np.float32
+        )
+
+    surface_values = np.asarray(surface_factor.values).astype(np.float32)
+    qinf_base = (base_min + norm_values * (base_max - base_min)).astype(np.float32)
+    qinf_values = qinf_base * surface_values
+    qinf_values = np.where(
+        np.isfinite(surface_values) & np.isfinite(log_values),
+        np.clip(qinf_values, qinf_min, qinf_max),
+        np.nan,
+    ).astype(np.float32)
+    da_qinf = surface_factor.copy(data=qinf_values).rename("qinf")
+    return da_qinf
+
+
+def green_ampt_from_soil(
+    da_hsg: xr.DataArray,
+    df_map: pd.DataFrame,
+    *,
+    da_ksat: xr.DataArray | None = None,
+    factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
+) -> xr.Dataset:
+    """Estimate Green-Ampt parameters from HSG classes and optional Ksat.
+
+    All inputs must be already-read xarray objects and a pandas DataFrame.
+    """
+    ds = _reclassify_hsg(da_hsg, df_map)
+    if da_ksat is not None:
+        ds["ks"] = ksat_to_mmhr(da_ksat, factor_ksat=factor_ksat)
+    if "ks" not in ds:
+        raise ValueError("Green-Ampt estimation requires either ks or ksat input.")
+    required = {"psi", "sigma", "ks"}
+    missing = required.difference(ds.data_vars)
+    if missing:
+        raise ValueError(f"Missing Green-Ampt parameter columns: {sorted(missing)}")
+    return ds[list(sorted(required, key=("psi", "sigma", "ks").index))]
+
+
+def green_ampt_from_soil_landuse(
+    da_hsg: xr.DataArray,
+    da_lulc: xr.DataArray,
+    df_map: pd.DataFrame,
+    df_modifiers: pd.DataFrame,
+    *,
+    da_ksat: xr.DataArray | None = None,
+    factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
+    dual_hsg: str | None = "drained",
+) -> xr.Dataset:
+    """Estimate Green-Ampt parameters from soil classes, Ksat, and land use.
+
+    All inputs must be already-read xarray objects and pandas DataFrames.
+    """
+    da_hsg = normalize_hsg_codes(da_hsg, mode=dual_hsg)
+    ds = green_ampt_from_soil(
+        da_hsg,
+        df_map,
+        da_ksat=da_ksat,
+        factor_ksat=factor_ksat,
+    )
+    factors = _modifier_layers(da_lulc, df_modifiers)
+    storage_factor = factors["storage_factor"]
+    surface_factor = factors["surface_factor"]
+    ds["sigma"] = (ds["sigma"] * storage_factor).astype(np.float32)
+    ds["ks"] = (ds["ks"] * surface_factor).astype(np.float32)
+    return ds[["psi", "sigma", "ks"]]
+
+
+def horton_from_soil(
+    da_hsg: xr.DataArray,
+    df_map: pd.DataFrame,
+    *,
+    da_ksat: xr.DataArray | None = None,
+    factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
+) -> xr.Dataset:
+    """Estimate Horton parameters from HSG classes and optional Ksat.
+
+    All inputs must be already-read xarray objects and a pandas DataFrame.
+    """
+    ds = _reclassify_hsg(da_hsg, df_map)
+    if da_ksat is not None:
+        da_fc = ksat_to_mmhr(da_ksat, factor_ksat=factor_ksat)
+        if "fc_scale" in ds:
+            da_fc = da_fc * ds["fc_scale"]
+        ds["fc"] = da_fc.astype(np.float32)
+    if "fc" not in ds:
+        raise ValueError("Horton estimation requires fc or ksat input.")
+    if "f0" not in ds:
+        if "f0_scale" not in ds:
+            raise ValueError("Horton estimation requires f0 or f0_scale input.")
+        ds["f0"] = (ds["fc"] * ds["f0_scale"]).astype(np.float32)
+    if "kd" not in ds:
+        raise ValueError("Horton estimation requires kd values.")
+    return ds[["f0", "fc", "kd"]]
+
+
+def horton_from_soil_landuse(
+    da_hsg: xr.DataArray,
+    da_lulc: xr.DataArray,
+    df_map: pd.DataFrame,
+    df_modifiers: pd.DataFrame,
+    *,
+    da_ksat: xr.DataArray | None = None,
+    factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
+    dual_hsg: str | None = "drained",
+) -> xr.Dataset:
+    """Estimate Horton parameters from soil classes, Ksat, and land use.
+
+    All inputs must be already-read xarray objects and pandas DataFrames.
+    """
+    da_hsg = normalize_hsg_codes(da_hsg, mode=dual_hsg)
+    ds = horton_from_soil(
+        da_hsg,
+        df_map,
+        da_ksat=da_ksat,
+        factor_ksat=factor_ksat,
+    )
+    factors = _modifier_layers(da_lulc, df_modifiers)
+    surface_factor = factors["surface_factor"]
+    storage_factor = factors["storage_factor"]
+    drainage_factor = factors["drainage_factor"]
+    f0_factor = xr.where(
+        surface_factor >= storage_factor, surface_factor, storage_factor
+    )
+    ds["fc"] = (ds["fc"] * surface_factor).astype(np.float32)
+    ds["f0"] = (ds["f0"] * f0_factor).astype(np.float32)
+    ds["kd"] = (ds["kd"] * drainage_factor).astype(np.float32)
+    return ds[["f0", "fc", "kd"]]
+
+
+def bucket_from_soil(
+    da_hsg: xr.DataArray,
+    df_map: pd.DataFrame,
+    *,
+    da_ksat: xr.DataArray | None = None,
+    factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
+    bucket_loss: float | None = None,
+) -> xr.Dataset:
+    """Estimate bucket parameters from HSG classes and optional Ksat.
+
+    All inputs must be already-read xarray objects and a pandas DataFrame.
+    """
+    ds = _reclassify_hsg(da_hsg, df_map)
+    if "bucket_smax" not in ds:
+        if not {"storage_depth_mm", "effective_fraction"}.issubset(ds.data_vars):
+            raise ValueError(
+                "Bucket estimation requires bucket_smax or storage_depth_mm and effective_fraction."
+            )
+        ds["bucket_smax"] = (ds["storage_depth_mm"] * ds["effective_fraction"]).astype(
+            np.float32
+        )
+    if "bucket_k" not in ds:
+        if da_ksat is None:
+            if "residence_time_hr" not in ds:
+                raise ValueError(
+                    "Bucket estimation requires bucket_k, residence_time_hr, or ksat."
+                )
+            ds["bucket_k"] = xr.where(
+                ds["residence_time_hr"] > 0.0,
+                1.0 / ds["residence_time_hr"],
+                0.0,
+            ).astype(np.float32)
+        else:
+            ks_mmhr = ksat_to_mmhr(da_ksat, factor_ksat=factor_ksat)
+            drain_factor = ds["drain_factor"] if "drain_factor" in ds else 1.0
+            residence_hours = xr.where(
+                ks_mmhr > 0.0,
+                np.maximum(ds["bucket_smax"] / ks_mmhr * drain_factor, 1.0),
+                np.nan,
+            )
+            ds["bucket_k"] = xr.where(
+                np.isfinite(residence_hours), 1.0 / residence_hours, 0.0
+            ).astype(np.float32)
+    if "bucket_loss" not in ds:
+        loss = 0.0 if bucket_loss is None else bucket_loss
+        ds["bucket_loss"] = xr.full_like(da_hsg, np.float32(loss), dtype=np.float32)
+    return ds[["bucket_smax", "bucket_k", "bucket_loss"]]
+
+
+def bucket_from_soil_landuse(
+    da_hsg: xr.DataArray,
+    da_lulc: xr.DataArray,
+    df_map: pd.DataFrame,
+    df_modifiers: pd.DataFrame,
+    *,
+    da_ksat: xr.DataArray | None = None,
+    factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
+    dual_hsg: str | None = "drained",
+    bucket_loss: float | None = 0.10,
+) -> xr.Dataset:
+    """Estimate bucket parameters from soil classes, Ksat, and land use.
+
+    All inputs must be already-read xarray objects and pandas DataFrames.
+    """
+    da_hsg = normalize_hsg_codes(da_hsg, mode=dual_hsg)
+    ds = bucket_from_soil(
+        da_hsg,
+        df_map,
+        da_ksat=da_ksat,
+        factor_ksat=factor_ksat,
+        bucket_loss=bucket_loss,
+    )
+    factors = _modifier_layers(da_lulc, df_modifiers)
+    storage_factor = factors["storage_factor"]
+    drainage_factor = factors["drainage_factor"]
+    ds["bucket_smax"] = (ds["bucket_smax"] * storage_factor).astype(np.float32)
+    ds["bucket_k"] = (ds["bucket_k"] * drainage_factor).astype(np.float32)
+    loss_value = 0.10 if bucket_loss is None else bucket_loss
+    ds["bucket_loss"] = xr.full_like(
+        ds["bucket_smax"], np.float32(loss_value), dtype=np.float32
+    )
+    return ds[["bucket_smax", "bucket_k", "bucket_loss"]]

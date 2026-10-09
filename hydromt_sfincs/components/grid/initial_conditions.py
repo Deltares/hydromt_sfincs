@@ -51,14 +51,19 @@ class SfincsInitialConditions(ModelComponent):
         """Get an empty mask with the same shape as the model grid."""
         return self.model.grid.mask
 
-    def read(self):
-        # TODO discuss what we want to return/read here, pass is not so informative ..
-        # The ini file is read when all grid files are read in regulargrid.py
-        pass
+    grid_variables = ("zs",)
 
-    def write(self):
-        # The ini file is written when all grid files are written in regulargrid.py
-        pass
+    def read(self) -> None:
+        """Read the initial water level map from its own binary file."""
+        # the grid holds the mask and cell index this map is written against;
+        # check _data directly, since the data property already triggers a read
+        if self.model.grid._data is None:
+            self.model.grid.read(read_components=False)
+        self.model.grid.read_layers(list(self.grid_variables))
+
+    def write(self) -> None:
+        """Write the initial water level map to its own binary file."""
+        self.model.grid.write_layers(list(self.grid_variables))
 
     # Original HydroMT-SFINCS setup_ functions:
     # was not yet implemented
@@ -103,9 +108,7 @@ class SfincsInitialConditions(ModelComponent):
 
         # get initial water level data
         da_zsini = self.data_catalog.get_rasterdataset(
-            zsini,
-            bbox=self.model.bbox,
-            buffer=10,
+            zsini, bbox=self.model.bbox, buffer=10, variables=["zs"]
         )
 
         # reproject initial water level data to model grid
@@ -113,11 +116,11 @@ class SfincsInitialConditions(ModelComponent):
         da_zsini = da_zsini.raster.reproject_like(self.mask, method=reproj_method)
 
         # check on nan values
-        if np.logical_and(np.isnan(da_zsini), self.mask >= 1).any():
+        nmissing = int(np.sum(np.isnan(da_zsini.values) & (self.mask.values > 0)))
+        if nmissing > 0:
             logger.warning(
-                "NaN values found in initial water level data; filled with fill_value {}".format(
-                    fill_value
-                )
+                f"{nmissing} active cells have no initial water level data; filled "
+                f"with {fill_value}."
             )
             da_zsini = da_zsini.fillna(fill_value)
         da_zsini.raster.set_nodata(np.nan)
@@ -212,6 +215,8 @@ class SfincsInitialConditions(ModelComponent):
                 fill_value=np.nan,
                 dtype="float32",
             )
+            # make sure the array has name "zs"
+            da_zsini.name = mname
         else:
             # start with existing ini layer
             da_zsini = self.data[mname]
@@ -222,16 +227,16 @@ class SfincsInitialConditions(ModelComponent):
             gdf_zsini_single = gpd.GeoDataFrame(
                 [row], columns=gdf_zsini.columns, crs=gdf_zsini.crs
             )
-            da_zsini0 = self.mask.raster.geometry_mask(gdf_zsini_single)
+            da_zsini0 = da_zsini.raster.geometry_mask(gdf_zsini_single)
             # where da_zsini0 is True, set values of da_zsini to zsini_single:
             da_zsini = xr.where(da_zsini0, zsini_single, da_zsini)
 
         # check on nan values
-        if np.logical_and(np.isnan(da_zsini), self.mask >= 1).any():
+        nmissing = int(np.sum(np.isnan(da_zsini.values) & (self.mask.values > 0)))
+        if nmissing > 0:
             logger.warning(
-                "NaN values found in initial water level data; filled with fill_value {}".format(
-                    fill_value
-                )
+                f"{nmissing} active cells have no initial water level data; filled "
+                f"with {fill_value}."
             )
             da_zsini = da_zsini.fillna(fill_value)
         da_zsini.raster.set_nodata(np.nan)

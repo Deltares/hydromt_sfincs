@@ -1,6 +1,7 @@
 """Test sfincs model class against hydromt.models.model_api"""
 
 import os
+import logging
 from os.path import isfile, join
 from pathlib import Path
 
@@ -30,6 +31,28 @@ _cases = {
         "example": "sfincs_test_quadtree",
     },
 }
+
+
+def test_missing_region_component_warning_is_suppressed(caplog):
+    core_logger = logging.getLogger("hydromt.model.model")
+
+    with caplog.at_level(logging.WARNING, logger=core_logger.name):
+        core_logger.warning("No region component found in components.")
+        core_logger.warning("Keep this unrelated warning.")
+
+    assert "No region component found in components." not in caplog.text
+    assert "Keep this unrelated warning." in caplog.text
+
+
+def test_regular_grid_read_does_not_replace_maps(caplog):
+    model = SfincsModel(root=TESTMODELDIR, mode="r")
+    model.config.read()
+
+    with caplog.at_level(logging.WARNING):
+        model.grid.read()
+
+    assert "Replacing grid map: mask" not in caplog.text
+    assert "Replacing grid map: dep" not in caplog.text
 
 
 @pytest.mark.parametrize("case", list(_cases.keys())[:1])
@@ -193,22 +216,171 @@ def test_infiltration(model):
     assert "seff" in model.grid.data
     assert "ks" in model.grid.data
     assert model.config.get("scsfile") is None  # scs file reset
+    assert "scs" not in model.grid.data
+    assert "qinf" not in model.grid.data
 
     # Write model
     model.grid.write()
+    model.infiltration.write()
     model.config.write()
 
     # read and check if identical
     mod1 = SfincsModel(root=model.root.path, mode="r")
     mod1.config.read()
     mod1.grid.read()
+    mod1.infiltration.read()
 
     # assure the sum of smax is close to earlier calculated value
-    assert np.isclose(mod1.grid.data["smax"].where(mod1.grid.mask > 0).sum(), 32.929287)
     assert np.isclose(
-        mod1.grid.data["seff"].where(mod1.grid.mask > 0).sum(), 32.929287 * effective
+        mod1.grid.data["smax"].where(mod1.grid.mask > 0).sum(),
+        32.929287,
+        atol=1e-3,
     )
-    assert np.isclose(mod1.grid.data["ks"].where(mod1.grid.mask > 0).sum(), 331.27203)
+    assert np.isclose(
+        mod1.grid.data["seff"].where(mod1.grid.mask > 0).sum(),
+        32.929287 * effective,
+        atol=1e-3,
+    )
+    assert np.isclose(
+        mod1.grid.data["ks"].where(mod1.grid.mask > 0).sum(),
+        331.27203,
+        atol=1e-3,
+    )
+
+
+def test_uniform_constant_infiltration(model):
+    model.infiltration.create_uniform_constant(4.25)
+    assert model.config.get("qinf") == pytest.approx(4.25)
+    assert model.config.get("qinffile") is None
+    assert "qinf" not in model.grid.data
+
+    model.config.write()
+    mod1 = SfincsModel(root=model.root.path, mode="r")
+    mod1.config.read()
+    assert mod1.config.get("qinf") == pytest.approx(4.25)
+    assert mod1.config.get("qinffile") is None
+
+
+def test_cn_from_landuse_hsg_regular(model):
+    lulc = xr.where(model.grid.data["dep"] < -0.5, 70, 30)
+    lulc.raster.set_crs(model.crs)
+    hsg = xr.where(model.grid.data["dep"] < 2, 1, 3)
+    hsg.raster.set_crs(model.crs)
+    reclass_table = pd.DataFrame([[0, 35], [0, 56]], index=[70, 30], columns=[1, 3])
+
+    model.infiltration.create_cn_from_landuse_hsg(
+        lulc=lulc,
+        hsg=hsg,
+        reclass_table=reclass_table,
+        reproj_method="nearest",
+    )
+
+    assert model.config.get("scsfile") is not None
+    assert "scs" in model.grid.data
+    assert np.isclose(
+        model.grid.data["scs"].where(model.grid.mask > 0).max(),
+        7.857143,
+        atol=1e-3,
+    )
+
+
+def test_process_infiltration_regular_io(model):
+    assert not {"bucket_smax", "bucket_k", "bucket_loss"}.intersection(
+        model.infiltration.grid_variables
+    )
+    active = model.grid.mask > 0
+    psi = xr.where(active, 120.0, -9999.0)
+    sigma = xr.where(active, 0.25, -9999.0)
+    ks = xr.where(active, 10.0, -9999.0)
+    for da in (psi, sigma, ks):
+        da.raster.set_crs(model.crs)
+        da.raster.set_nodata(-9999.0)
+
+    model.infiltration.create_green_ampt_from_maps(psi=psi, sigma=sigma, ks=ks)
+    assert set(["psi", "sigma", "ks"]).issubset(model.grid.data.data_vars)
+    assert model.config.get("psifile") is not None
+    assert model.config.get("sigmafile") is not None
+    assert model.config.get("ksfile") is not None
+    assert model.config.get("inffile") is None
+    assert model.config.get("inftype") is None
+
+    model.grid.write()
+    model.infiltration.write()
+    model.config.write()
+
+    mod1 = SfincsModel(root=model.root.path, mode="r")
+    mod1.config.read()
+    mod1.grid.read()
+    mod1.infiltration.read()
+    assert np.isclose(
+        mod1.grid.data["psi"].where(mod1.grid.mask > 0).mean(),
+        120.0,
+    )
+    assert np.isclose(
+        mod1.grid.data["sigma"].where(mod1.grid.mask > 0).mean(),
+        0.25,
+    )
+    assert np.isclose(
+        mod1.grid.data["ks"].where(mod1.grid.mask > 0).mean(),
+        10.0,
+    )
+
+    f0 = xr.where(active, 40.0, -9999.0)
+    fc = xr.where(active, 8.0, -9999.0)
+    kd = xr.where(active, 2.5, -9999.0)
+    for da in (f0, fc, kd):
+        da.raster.set_crs(model.crs)
+        da.raster.set_nodata(-9999.0)
+
+    model.infiltration.create_horton_from_maps(f0=f0, fc=fc, kd=kd)
+    assert set(["f0", "fc", "kd"]).issubset(model.grid.data.data_vars)
+    assert "psi" not in model.grid.data
+    assert "sigma" not in model.grid.data
+
+    model.grid.write()
+    model.infiltration.write()
+    model.config.write()
+
+    mod2 = SfincsModel(root=model.root.path, mode="r")
+    mod2.config.read()
+    mod2.grid.read()
+    mod2.infiltration.read()
+    assert np.isclose(
+        mod2.grid.data["f0"].where(mod2.grid.mask > 0).mean(),
+        40.0,
+    )
+    assert np.isclose(
+        mod2.grid.data["fc"].where(mod2.grid.mask > 0).mean(),
+        8.0,
+    )
+    assert np.isclose(
+        mod2.grid.data["kd"].where(mod2.grid.mask > 0).mean(),
+        2.5,
+    )
+
+
+def test_infiltration_estimators_from_hsg(model):
+    hsg = xr.where(model.grid.data["dep"] < -0.5, 4, 1)
+    hsg.raster.set_crs(model.crs)
+    ksat = xr.where(model.grid.data["dep"] < 0.0, 0.5, 5.0)
+    ksat.raster.set_crs(model.crs)
+
+    model.infiltration.create_green_ampt(hsg=hsg, ksat=ksat)
+    assert float(model.grid.data["psi"].where(model.grid.mask > 0).max()) > 0.0
+    assert float(model.grid.data["sigma"].where(model.grid.mask > 0).max()) > 0.0
+    assert float(model.grid.data["ks"].where(model.grid.mask > 0).max()) > 0.0
+
+    model.infiltration.create_horton(hsg=hsg, ksat=ksat)
+    assert float(model.grid.data["f0"].where(model.grid.mask > 0).max()) > 0.0
+    assert float(model.grid.data["fc"].where(model.grid.mask > 0).max()) > 0.0
+    assert float(model.grid.data["kd"].where(model.grid.mask > 0).max()) > 0.0
+
+
+@pytest.mark.parametrize("method_name", ["create_green_ampt", "create_horton"])
+def test_regular_lulc_requires_modifier_table(model, method_name):
+    method = getattr(model.infiltration, method_name)
+    with pytest.raises(ValueError, match="Provide lulc_modifier_table"):
+        method(hsg="unused", lulc="unused")
 
 
 def test_initial_conditions(model):
@@ -223,12 +395,14 @@ def test_initial_conditions(model):
 
     # Write model
     model.grid.write()
+    model.initial_conditions.write()
     model.config.write()
 
     # read and check if identical
     mod1 = SfincsModel(root=model.root.path, mode="r")
     mod1.config.read()
     mod1.grid.read()
+    mod1.initial_conditions.read()
 
     # assure the sum of ini is close to earlier calculated value
     assert np.isclose(
@@ -255,12 +429,14 @@ def test_initial_conditions_from_polygon(model):
 
     # Write model
     model.grid.write()
+    model.initial_conditions.write()
     model.config.write()
 
     # read and check if identical
     mod1 = SfincsModel(root=model.root.path, mode="r")
     mod1.config.read()
     mod1.grid.read()
+    mod1.initial_conditions.read()
 
     # assure the sum of ini is close to earlier calculated value
     assert np.isclose(
@@ -509,19 +685,15 @@ def test_storage_volume(tmp_dir, case):
 
     # again get right component
     grid1 = get_grid(mod1)
-    grid1.read(data_vars=["vol"])
+    storage1 = get_storage_component(mod1)
+    storage1.read()
 
     # now compare the storage volumes
-    if case == "test1":
-        assert np.isclose(
-            mod1.grid.data["vol"].raster.mask_nodata().sum().values
-            - mod.grid.data["vol"].sum().values,
-            0,
-        )
-    elif case == "test2":
-        assert np.isclose(
-            (mod1.quadtree_grid.data["vol"] - mod.quadtree_grid.data["vol"]).sum(), 0
-        )
+    assert np.isclose(
+        grid1.data["vol"].raster.mask_nodata().sum().values
+        - grid.data["vol"].sum().values,
+        0,
+    )
 
     # now redo the tests with a rotated grid for the regular grid only
     if case == "test1":

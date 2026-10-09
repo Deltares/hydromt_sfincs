@@ -829,15 +829,42 @@ class SfincsConfigVariables(BaseSettings):
     amprfile: str | None = Field(None, description="Precipitation file")
     z0lfile: str | None = Field(None, description="Wind reduction over land file")
     wvmfile: str | None = Field(None, description="Wave maker input points file")
-    qinffile: str | None = Field(None, description="Infiltration file")
-    infiltration_file: str | None = Field(
-        None, description="Infiltration file (alternative)"
+    # ================================================================
+    # Infiltration files
+    # ================================================================
+    inffile: str | None = Field(
+        None,
+        description="Name of the quadtree NetCDF infiltration input file",
     )
-    infiltration_type: str | None = Field(None, description="Infiltration type")
-
+    inftype: str | None = Field(
+        None,
+        description="SFINCS infiltration flavor used with inffile (con, c2d, cna, cnb, gai, hor, or bkt)",
+    )
+    infiltration_file: str | None = Field(
+        None,
+        description="[DEPRECATED] Name of the quadtree NetCDF infiltration input file",
+        json_schema_extra={
+            "min_version": "2.3.2",
+            "max_version": "2.4.1",
+            "new_name": "inffile",
+        },
+    )
+    infiltration_type: str | None = Field(
+        None,
+        description="[DEPRECATED] SFINCS infiltration flavor used with infiltration_file (con, c2d, cna, cnb, gai, hor, or bkt)",
+        json_schema_extra={
+            "min_version": "2.3.2",
+            "max_version": "2.4.1",
+            "new_name": "inftype",
+        },
+    )
     # ================================================================
-    # Curve Number / Green-Ampt / Horton files
+    # Legacy Infiltraiton / Curve Number / Green-Ampt / Horton files
     # ================================================================
+    qinffile: str | None = Field(
+        None,
+        description="Name of the spatially-varying, constant in time infiltration file",
+    )
     scsfile: str | None = Field(None, description="Curve Number max soil moisture file")
     smaxfile: str | None = Field(None, description="Curve Number max storage file")
     sefffile: str | None = Field(None, description="Curve Number initial storage file")
