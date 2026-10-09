@@ -439,8 +439,11 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
             Hydrologic soil group map. By default, values are reclassified with
             the bundled ``hsg_green_ampt.csv`` table.
         ksat : str, Path, or RasterDataset, optional
-            Saturated hydraulic conductivity map. If provided, it overrides or
-            derives ``ks`` values from the reclassification table.
+            Saturated hydraulic conductivity map, used to derive ``ks``
+            (``ks = ksat * factor_ksat``). Required unless the reclass table
+            already provides a ``ks`` column. The bundled ``hsg_green_ampt.csv``
+            has only ``psi``/``sigma``, so ksat is required when using it;
+            omitting it raises a ValueError.
         lulc : str, Path, or RasterDataset, optional
             Land-use map used to apply infiltration modifiers. Its classes must
             match the index of ``lulc_modifier_table``.
@@ -580,8 +583,12 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
             Hydrologic soil group map. By default, values are reclassified with
             the bundled ``hsg_horton.csv`` table.
         ksat : str, Path, or RasterDataset, optional
-            Saturated hydraulic conductivity map. If provided, it overrides or
-            derives ``fc`` values from the reclassification table.
+            Saturated hydraulic conductivity map, used to derive ``fc``
+            (``fc = ksat * factor_ksat * fc_scale``). Required unless the reclass
+            table already provides a literal ``fc`` column. The bundled
+            ``hsg_horton.csv`` has only ``fc_scale``/``f0_scale``/``kd`` (and
+            ``fc_scale`` is applied only when ksat is given), so ksat is required
+            when using it; omitting it raises a ValueError.
         lulc : str, Path, or RasterDataset, optional
             Land-use map used to apply infiltration modifiers. Its classes must
             match the index of ``lulc_modifier_table``.
