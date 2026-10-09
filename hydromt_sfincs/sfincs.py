@@ -83,6 +83,16 @@ __hydromt_eps__ = ["SfincsModel"]  # core entrypoints
 logger = logging.getLogger(f"hydromt.{__name__}")
 
 
+class _IgnoreMissingRegionComponentWarning(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.getMessage() != "No region component found in components."
+
+
+logging.getLogger("hydromt.model.model").addFilter(
+    _IgnoreMissingRegionComponentWarning()
+)
+
+
 # %% SfincsModel class - in V1 style:
 class SfincsModel(Model):
     """SFINCS model class."""

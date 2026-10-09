@@ -33,6 +33,28 @@ _cases = {
 }
 
 
+def test_missing_region_component_warning_is_suppressed(caplog):
+    core_logger = logging.getLogger("hydromt.model.model")
+
+    with caplog.at_level(logging.WARNING, logger=core_logger.name):
+        core_logger.warning("No region component found in components.")
+        core_logger.warning("Keep this unrelated warning.")
+
+    assert "No region component found in components." not in caplog.text
+    assert "Keep this unrelated warning." in caplog.text
+
+
+def test_regular_grid_read_does_not_replace_maps(caplog):
+    model = SfincsModel(root=TESTMODELDIR, mode="r")
+    model.config.read()
+
+    with caplog.at_level(logging.WARNING):
+        model.grid.read()
+
+    assert "Replacing grid map: mask" not in caplog.text
+    assert "Replacing grid map: dep" not in caplog.text
+
+
 @pytest.mark.parametrize("case", list(_cases.keys())[:1])
 def test_model_build(tmpdir, case):
     # compare results with model from examples folder

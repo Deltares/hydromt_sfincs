@@ -242,8 +242,61 @@ class SfincsQuadtreeGrid(MeshComponent):
     def read_layers(self, filename: Union[str, Path]) -> None:
         """Read face variables from a standalone UGRID netcdf file into `data`."""
         ds = xu.load_dataset(filename)
-        ds.grid.set_crs(self.model.crs)
-        self.set(ds)
+        grid = self.data.grid
+        try:
+            sidecar_grid = ds.grid
+            # TODO: Test attaching layers directly via MeshComponent.set()
+            # for current and supported legacy files. Remove this check only if
+            # that works and a different face ordering is still rejected.
+            self._validate_layer_grid(sidecar_grid, grid)
+
+            layers = {}
+            for name, layer in ds.data_vars.items():
+                if (
+                    name.startswith(f"{sidecar_grid.name}_")
+                    or grid.face_dimension not in layer.dims
+                ):
+                    continue
+                if layer.sizes[sidecar_grid.face_dimension] != grid.n_face:
+                    raise ValueError(
+                        f"Quadtree layer {name} does not match the main grid face count."
+                    )
+                layers[name] = xr.DataArray(
+                    layer.values, dims=layer.dims, name=name, attrs=layer.attrs
+                )
+            if layers:
+                self.set(xu.UgridDataset(xr.Dataset(layers), grid))
+        finally:
+            ds.close()
+
+    def _validate_layer_grid(self, sidecar_grid: xu.Ugrid2d, grid: xu.Ugrid2d) -> None:
+        """Verify that sidecar face values correspond to the main grid's faces.
+
+        Checks CRS, face count, connectivity, and node coordinates before the
+        values are attached to the main grid. ``MeshComponent.set`` applies a
+        stricter full-grid equality check, including UGRID representation details.
+        """
+        if sidecar_grid.crs is None:
+            sidecar_grid.set_crs(grid.crs)
+        if sidecar_grid.crs != grid.crs:
+            raise ValueError("Quadtree layer file CRS does not match the main grid.")
+        if (
+            sidecar_grid.face_dimension != grid.face_dimension
+            or sidecar_grid.n_face != grid.n_face
+        ):
+            raise ValueError(
+                "Quadtree layer file face grid does not match the main grid."
+            )
+        if (
+            not np.array_equal(
+                sidecar_grid.face_node_connectivity, grid.face_node_connectivity
+            )
+            or not np.array_equal(sidecar_grid.node_x, grid.node_x)
+            or not np.array_equal(sidecar_grid.node_y, grid.node_y)
+        ):
+            raise ValueError(
+                "Quadtree layer file topology does not match the main grid."
+            )
 
     def read(
         self,
