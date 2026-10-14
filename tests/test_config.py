@@ -110,13 +110,11 @@ def test_config_reads_kernel_keywords_without_warning(tmp_path, caplog):
     values = {
         "urbfile": "sfincs.urb",
         "dkbfile": "sfincs.dkb",
-        "cstfile": "sfincs.cst",
         "vegetation": "1",
         "vegfile": "sfincs.veg.nc",
         "storetzsmax": "1",
         "storezvolmax": "0",
         "store_river_discharge": "1",
-        "dtoutfixed": "0",
         "wavemaker_nfreqs_inc": "50",
         "snapwave": "1",
         "snapwave_gamma": "0.8",
@@ -195,7 +193,7 @@ def test_config_io(tmp_path):
 def test_config_read_write_roundtrip(tmp_path, caplog):
     # legacy (unversioned) sfincs.inp with keys equal to schema defaults that are
     # NOT flagged 'always' (fields flagged 'always' get force-written regardless of
-    # input and are omitted here) plus the deprecated 'dtout' key (see
+    # input and are omitted here) plus the legacy 'dtout' keyword of 'dtmapout' (see
     # examples/missing_inp_values.py)
     inp_str = """rotation             = 0
 epsg                 = 32617
@@ -216,8 +214,7 @@ outputformat         = net
     inpfile = tmp_path / "sfincs.inp"
     inpfile.write_text(inp_str)
 
-    with pytest.warns(DeprecationWarning, match="dtout"):
-        data = SfincsConfigVariables.read(inpfile)
+    data = SfincsConfigVariables.read(inpfile)
 
     test_inpfile = tmp_path / "sfincs.inp.test"
     data.write(test_inpfile)
@@ -230,11 +227,12 @@ outputformat         = net
             if line.strip() and not line.strip().startswith("#")
         ]
 
-    original_keys = set(_keys(inp_str))
+    # legacy keywords are read into (and written as) their current field
+    original_keys = {SfincsConfigVariables.resolve_key(key) for key in _keys(inp_str)}
     test_keys = set(_keys(test_inp_str))
 
-    # fields flagged 'always' (with a non-None default and no 'min_version') are
-    # force-written even though absent from this legacy file
+    # fields flagged 'always' (with a non-None default) are force-written even
+    # though absent from this legacy file
     model_fields = SfincsConfigVariables.model_fields
     expected_extras = {
         key
@@ -242,7 +240,6 @@ outputformat         = net
         if key not in original_keys
         and (field.json_schema_extra or {}).get("always")
         and field.default is not None
-        and "min_version" not in (field.json_schema_extra or {})
     }
 
     assert not original_keys - test_keys, "missing keys after round-trip"
@@ -250,17 +247,14 @@ outputformat         = net
         test_keys - original_keys == expected_extras
     ), "unexpected extra keys after round-trip"
 
-    # deprecated 'dtout' key is preserved literally, not renamed to 'dtmapout'
-    assert "dtout" in test_keys
-    assert "dtmapout" not in test_keys
+    # an unversioned file targets the latest SFINCS version: 'dtout' -> 'dtmapout'
+    assert "dtmapout" in test_keys
+    assert "dtout" not in test_keys
 
     # an unrecognized key in the source file should trigger a warning, but be kept
     with open(inpfile, "a") as fid:
         fid.write("some_unknown_key   = 1\n")
-    with (
-        caplog.at_level(logging.WARNING),
-        pytest.warns(DeprecationWarning, match="dtout"),
-    ):
+    with caplog.at_level(logging.WARNING):
         data2 = SfincsConfigVariables.read(inpfile)
     assert "some_unknown_key" in caplog.text
 
@@ -279,9 +273,7 @@ def test_config_read_migrates_changed_field_names_by_version(tmp_path):
 
     data = SfincsConfigVariables.read(inpfile)
     assert data.dtmapout == 1800
-    assert data.dtout is None
     assert data.epsg == 32633
-    assert data.crs is None
 
     output = tmp_path / "migrated.inp"
     data.write(output, write_comments=True, explicit_only=True)
@@ -312,6 +304,21 @@ def test_config_read_migrates_changed_field_names_by_version(tmp_path):
         ),
         (
             "2.4.1",
+            {
+                "wavemaker_wvmfile",
+                "wavemaker_hmin",
+                "global",
+                "regular_output_on_mesh",
+                "storeqdrain",
+                "wavemaker_nfreqs_inc",
+                "infiltration_file",
+                "infiltration_type",
+                "vegetationfile",
+                "vegetationtype_toml",
+            },
+        ),
+        (
+            "2.3.2",
             {
                 "wvmfile",
                 "wmhmin",
@@ -351,20 +358,37 @@ def test_config_read_migrates_renamed_keywords(tmp_path, sfincs_version, expecte
     assert keys == expected_keys | {"sfincs_version"}
 
 
-def test_config_global_alias_roundtrip(tmp_path, caplog):
+@pytest.mark.parametrize(
+    ("sfincs_version", "expected_key"),
+    [(None, "global_model"), ("2.5.0", "global_model"), ("2.4.1", "global")],
+)
+def test_config_legacy_alias_written_by_version(
+    tmp_path, caplog, sfincs_version, expected_key
+):
     inpfile = tmp_path / "sfincs.inp"
-    inpfile.write_text("global = 1\n")
+    version_line = f"sfincs_version = {sfincs_version}\n" if sfincs_version else ""
+    inpfile.write_text(version_line + "global = 1\n")
 
     with caplog.at_level(logging.WARNING):
         data = SfincsConfigVariables.read(inpfile)
     assert "Unrecognized" not in caplog.text
-    assert data.global_ == 1
+    assert data.global_model == 1
 
     output = tmp_path / "out.inp"
     data.write(output)
     keys = {line.split()[0] for line in output.read_text().splitlines()}
-    assert "global" in keys
-    assert "global_" not in keys
+    other_key = "global" if expected_key == "global_model" else "global_model"
+    assert expected_key in keys
+    assert other_key not in keys
+
+
+def test_config_get_set_legacy_alias(tmp_path):
+    data = SfincsConfigVariables().set_values({"wvmfile": "sfincs.wvm"})
+    assert data.wavemaker_wvmfile == "sfincs.wvm"
+    assert "wvmfile" not in (data.model_extra or {})
+    assert SfincsConfigVariables.resolve_key("wvmfile") == "wavemaker_wvmfile"
+    assert SfincsConfigVariables.resolve_key("precipfile") == "prcfile"
+    assert SfincsConfigVariables.resolve_key("mmax") == "mmax"
 
 
 def test_config_read_migration_prefers_new_name_by_version(tmp_path):
@@ -379,9 +403,7 @@ def test_config_read_migration_prefers_new_name_by_version(tmp_path):
     data = SfincsConfigVariables.read(inpfile)
 
     assert data.dtmapout == 3600
-    assert data.dtout is None
     assert data.epsg == 32633
-    assert data.crs == None
     output = tmp_path / "migrated.inp"
     data.write(output, write_comments=True, explicit_only=True)
     output_text = output.read_text()
@@ -395,23 +417,23 @@ def test_config_read_warns_and_removes_unsupported_fields(tmp_path):
     inpfile = tmp_path / "sfincs.inp"
     inpfile.write_text(
         "sfincs_version       = 2.0.0\n"
-        "dtmapout             = 1800  # unsupported interval\n"
-        "epsg                 = 32633\n"
+        "urbfile              = sfincs.urb  # unsupported file\n"
+        "storetzsmax          = 1\n"
         "custom_key           = keep\n"
     )
 
     with pytest.warns(UserWarning, match="below the minimum supported"):
         data = SfincsConfigVariables.read(inpfile)
 
-    assert data.dtmapout == 3600
-    assert data.epsg is None
+    assert data.urbfile is None
+    assert data.storetzsmax == 0
     assert data.model_extra["custom_key"] == "keep"
 
     output = tmp_path / "filtered.inp"
     data.write(output, explicit_only=True)
     output_text = output.read_text()
-    assert "dtmapout" not in output_text
-    assert "epsg" not in output_text
+    assert "urbfile" not in output_text
+    assert "storetzsmax" not in output_text
     assert "custom_key" in output_text
 
 
@@ -424,7 +446,6 @@ def test_config_read_migrates_unsupported_alias(tmp_path):
 
     data = SfincsConfigVariables.read(inpfile)
 
-    assert data.dtout is None
     assert data.dtmapout == 1800
 
     output = tmp_path / "migrated.inp"
@@ -445,7 +466,6 @@ def test_config_read_migration_prefers_supported_current_name(tmp_path):
 
     data = SfincsConfigVariables.read(inpfile)
 
-    assert data.dtout is None
     assert data.dtmapout == 3600
 
 

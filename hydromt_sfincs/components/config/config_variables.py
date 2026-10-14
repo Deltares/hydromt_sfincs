@@ -15,11 +15,17 @@ Write policy (controls which fields appear in sfincs.inp):
   model-field values **and** the value differs from the field default.
 * ``json_schema_extra={"min_version": "<X.Y.Z>"}`` — field was introduced in
   this SFINCS kernel version; not written when ``sfincs_version`` is older.
+* ``json_schema_extra={"legacy_alias": ["<name>", ...]}`` — earlier names of the
+  keyword. They are read into this field, and the first one is written instead
+  when ``sfincs_version`` is older than ``min_version``.
 * ``json_schema_extra={"max_version": "<X.Y.Z>"}`` — field is deprecated as of
   this kernel version; when ``sfincs_version`` is newer it is only kept if
   explicitly present in the source file (never force-written via ``always``).
+
+A file without ``sfincs_version`` targets ``LATEST_SFINCS_VERSION``.
 """
 
+import functools
 import logging
 import math
 import warnings
@@ -29,7 +35,7 @@ from pathlib import Path
 from pydantic import ConfigDict, Field, PrivateAttr, field_validator, model_serializer
 from pydantic_settings import BaseSettings
 
-from hydromt_sfincs import MIN_SUPPORTED_SFINCS_VERSION
+from hydromt_sfincs import LATEST_SFINCS_VERSION, MIN_SUPPORTED_SFINCS_VERSION
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 NOW = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
@@ -86,6 +92,12 @@ def _read_config(filename: str | Path) -> tuple[dict[str, str], dict[str, str]]:
     return inp_dict, comments
 
 
+def _legacy_aliases(extra: dict) -> list[str]:
+    """Return the legacy keyword names of a field; the first one is written for
+    SFINCS versions older than the field's ``min_version``."""
+    return list(extra.get("legacy_alias", []))
+
+
 def _parse_version(version: str) -> tuple[int, ...]:
     """Parse a simple 'X.Y.Z'-style version string into a comparable tuple."""
     return tuple(int(part) for part in version.strip().split("."))
@@ -101,11 +113,9 @@ def _version_status(
     max_version = extra.get("max_version")
     if not min_version and not max_version:
         return "ok"
+    # An unversioned file targets the latest SFINCS release
     if user_sfincs_version is None:
-        # Unversioned/legacy file: a field with a max_version is inherently a
-        # legacy/deprecated key regardless of version; a min_version-only field
-        # is of unknown validity since we can't confirm the target kernel supports it.
-        return "deprecated" if max_version is not None else "unknown"
+        user_sfincs_version = LATEST_SFINCS_VERSION
     try:
         current = _parse_version(str(user_sfincs_version))
         if min_version is not None and current < _parse_version(min_version):
@@ -221,12 +231,7 @@ class SfincsConfigVariables(BaseSettings):
         3600.0,
         ge=0.0,
         description="Spatial map output interval (seconds)",
-        json_schema_extra={"always": True, "min_version": "2.3.0"},
-    )
-    dtout: float | None = Field(
-        None,
-        description="[DEPRECATED] legacy alias of dtmapout",
-        json_schema_extra={"max_version": "2.3.0", "new_name": "dtmapout"},
+        json_schema_extra={"always": True, "legacy_alias": ["dtout"]},
     )
     dtmaxout: float = Field(
         86400.0,
@@ -253,12 +258,6 @@ class SfincsConfigVariables(BaseSettings):
         1800.0,
         description="Interval of updating wind forcing (seconds)",
         json_schema_extra={"always": True},
-    )
-    dtoutfixed: int = Field(
-        1,
-        ge=0,
-        le=1,
-        description="Write output at exact output intervals (1: yes) or let them drift with the time step (0: no)",
     )
 
     # ================================================================
@@ -297,6 +296,7 @@ class SfincsConfigVariables(BaseSettings):
     huvmin: float = Field(
         0.0,
         description="Minimum water depth for velocity computation (meters)",
+        json_schema_extra={"min_version": "2.3.2"},
     )
     advection: int = Field(
         1,
@@ -344,6 +344,7 @@ class SfincsConfigVariables(BaseSettings):
         100.0,
         ge=0.0,
         description="Viscosity factor (-)",
+        json_schema_extra={"min_version": "2.1.3"},
     )
     friction2d: int = Field(
         1,
@@ -354,10 +355,12 @@ class SfincsConfigVariables(BaseSettings):
     uvlim: float = Field(
         10.0,
         description="Velocity limiter (m/s)",
+        json_schema_extra={"min_version": "2.1.3"},
     )
     uvmax: float = Field(
         1000.0,
         description="Maximum velocity (m/s)",
+        json_schema_extra={"min_version": "2.1.3"},
     )
     wiggle_suppression: int = Field(
         1,
@@ -478,6 +481,7 @@ class SfincsConfigVariables(BaseSettings):
         ge=0,
         le=1,
         description="Use tidal boundary condition file (1: on, 0: off)",
+        json_schema_extra={"min_version": "2.3.0"},
     )
 
     # ================================================================
@@ -512,146 +516,94 @@ class SfincsConfigVariables(BaseSettings):
         ge=1,
         le=500,
         description="Wave maker number of frequency bins IG spectrum (-)",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    nfreqsig: int = Field(
-        100,
-        ge=1,
-        le=500,
-        description="[DEPRECATED] legacy alias of wavemaker_nfreqs_ig; Wave maker number of frequency bins IG spectrum (-)",
-        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_nfreqs_ig"},
+        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["nfreqsig"]},
     )
     wavemaker_freqmin_ig: float = Field(
         0.0,
         ge=0.0,
         description="Minimum frequency wave maker IG spectrum (Hz)",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    freqminig: float = Field(
-        0.0,
-        ge=0.0,
-        description="[DEPRECATED] legacy alias of wavemaker_freqmin_ig; Minimum frequency wave maker IG spectrum (Hz)",
-        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_freqmin_ig"},
+        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["freqminig"]},
     )
     wavemaker_freqmax_ig: float = Field(
         0.1,
         ge=0.0,
         description="Maximum frequency wave maker IG spectrum (Hz)",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    freqmaxig: float = Field(
-        0.1,
-        ge=0.0,
-        description="[DEPRECATED] legacy alias of wavemaker_freqmax_ig; Maximum frequency wave maker IG spectrum (Hz)",
-        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_freqmax_ig"},
+        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["freqmaxig"]},
     )
     wavemaker_filter_time: float = Field(
         600.0,
         ge=0.0,
         description="Filtering duration for wave maker mean water level (s)",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    wmtfilter: float = Field(
-        600.0,
-        ge=0.0,
-        description="[DEPRECATED] legacy alias of wavemaker_filter_time; Filtering duration for wave maker mean water level (s)",
-        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_filter_time"},
+        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["wmtfilter"]},
     )
     wavemaker_filter_fred: float = Field(
         0.99,
         description="Filtering variable in wave maker (-)",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    wmfred: float = Field(
-        0.99,
-        description="[DEPRECATED] legacy alias of wavemaker_filter_fred; Filtering variable in wave maker (-)",
-        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_filter_fred"},
+        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["wmfred"]},
     )
     wavemaker_signal: str = Field(
         "spectrum",
         description="Wavemaker signal type ('spectrum' or 'mon')",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    wmsignal: str = Field(
-        "spectrum",
-        description="[DEPRECATED] legacy alias of wavemaker_signal; Wavemaker signal type ('spectrum' or 'mon')",
-        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_signal"},
+        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["wmsignal"]},
     )
     wavemaker_hmin: float = Field(
         0.1,
         description="Wavemaker minimum water depth (m)",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    wmhmin: float = Field(
-        0.1,
-        description="[DEPRECATED] legacy alias of wavemaker_hmin; Wavemaker minimum water depth (m)",
-        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_hmin"},
+        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["wmhmin"]},
     )
     wavemaker_nfreqs_inc: int = Field(
         100,
         description="Wave maker number of frequency bins incident wave spectrum (-)",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    nfreqsinc: int = Field(
-        100,
-        description="[DEPRECATED] legacy alias of wavemaker_nfreqs_inc; Wave maker number of frequency bins incident wave spectrum (-)",
-        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_nfreqs_inc"},
+        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["nfreqsinc"]},
     )
     wavemaker_freqmin_inc: float = Field(
         0.04,
         description="Minimum frequency wave maker incident wave spectrum (Hz)",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    freqmininc: float = Field(
-        0.04,
-        description="[DEPRECATED] legacy alias of wavemaker_freqmin_inc; Minimum frequency wave maker incident wave spectrum (Hz)",
-        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_freqmin_inc"},
+        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["freqmininc"]},
     )
     wavemaker_freqmax_inc: float = Field(
         1.0,
         description="Maximum frequency wave maker incident wave spectrum (Hz)",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    freqmaxinc: float = Field(
-        1.0,
-        description="[DEPRECATED] legacy alias of wavemaker_freqmax_inc; Maximum frequency wave maker incident wave spectrum (Hz)",
-        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_freqmax_inc"},
+        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["freqmaxinc"]},
     )
     wavemaker_tinc2ig: float = Field(
         -1.0,
         description="Wave maker ratio of IG to incident wave period; <= 0 uses Herbers (-)",
-    )
-    wavemaker_surfslope: float = Field(
-        -1.0,
-        description="Wave maker surf zone slope for empirical IG wave period; <= 0 is not used (-)",
+        json_schema_extra={"min_version": "2.3.3"},
     )
     wavemaker_hm0_ig_factor: float = Field(
         1.0,
         description="Wave maker IG wave height scale factor (-)",
+        json_schema_extra={"min_version": "2.3.3"},
     )
     wavemaker_hm0_inc_factor: float = Field(
         1.0,
         description="Wave maker incident wave height scale factor (-)",
+        json_schema_extra={"min_version": "2.3.3"},
     )
     wavemaker_gammax: float = Field(
         1.0,
         description="Wave maker maximum ratio of wave height over water depth (-)",
+        json_schema_extra={"min_version": "2.3.3"},
     )
     wavemaker_tpmin: float = Field(
         1.0,
         description="Wave maker minimum peak wave period (s)",
+        json_schema_extra={"min_version": "2.3.3"},
     )
     wavemaker_hig: int = Field(
         1,
         ge=0,
         le=1,
         description="Wave maker include IG waves when forced by SnapWave (1: on, 0: off)",
+        json_schema_extra={"min_version": "2.3.3"},
     )
     wavemaker_hinc: int = Field(
         0,
         ge=0,
         le=1,
         description="Wave maker include incident waves when forced by SnapWave (1: on, 0: off)",
+        json_schema_extra={"min_version": "2.3.3"},
     )
 
     # ================================================================
@@ -688,18 +640,22 @@ class SfincsConfigVariables(BaseSettings):
     factor_wind: float = Field(
         1.0,
         description="Wind forcing scale factor (-)",
+        json_schema_extra={"min_version": "2.3.0"},
     )
     factor_pres: float = Field(
         1.0,
         description="Pressure forcing scale factor (-)",
+        json_schema_extra={"min_version": "2.3.0"},
     )
     factor_prcp: float = Field(
         1.0,
         description="Precipitation forcing scale factor (-)",
+        json_schema_extra={"min_version": "2.3.0"},
     )
     factor_spw_size: float = Field(
         1.0,
         description="Spiderweb size scale factor (-)",
+        json_schema_extra={"min_version": "2.3.0"},
     )
 
     # ================================================================
@@ -716,14 +672,14 @@ class SfincsConfigVariables(BaseSettings):
         ge=0,
         le=1,
         description="SnapWave wind growth process (1: on, 0: off)",
-        json_schema_extra={"condition": "snapwave == 1"},
+        json_schema_extra={"min_version": "2.1.2", "condition": "snapwave == 1"},
     )
     snapwave_use_nearest: int = Field(
         1,
         ge=0,
         le=1,
         description="SnapWave use nearest interpolation (1: on, 0: off)",
-        json_schema_extra={"condition": "snapwave == 1"},
+        json_schema_extra={"min_version": "2.3.0", "condition": "snapwave == 1"},
     )
     snapwave_igwaves: int = Field(
         1,
@@ -736,12 +692,6 @@ class SfincsConfigVariables(BaseSettings):
         10.0,
         gt=0,
         description="SnapWave directional resolution (degrees)",
-        json_schema_extra={"condition": "snapwave == 1"},
-    )
-    snapwave_nrsweeps: int = Field(
-        4,
-        ge=1,
-        description="SnapWave maximum number of sweeps (-)",
         json_schema_extra={"condition": "snapwave == 1"},
     )
     snapwave_crit: float = Field(
@@ -761,12 +711,16 @@ class SfincsConfigVariables(BaseSettings):
         ge=0,
         le=1,
         description="SnapWave vegetation dissipation (1: on, 0: off)",
-        json_schema_extra={"condition": "snapwave == 1"},
+        json_schema_extra={"min_version": "2.4.0", "condition": "snapwave == 1"},
     )
     snapwave_waveforces_ratio: float = Field(
         1.0,
         description="Multiplication factor on SnapWave wave forces (-)",
-        json_schema_extra={"condition": "snapwave == 1"},
+        json_schema_extra={
+            "min_version": "2.4.0",
+            "condition": "snapwave == 1",
+            "legacy_alias": ["snapwave_waveforces_factor", "waveforces_ratio"],
+        },
     )
     radstr: int = Field(
         0,
@@ -782,7 +736,7 @@ class SfincsConfigVariables(BaseSettings):
     snapwave_gammax: float = Field(
         999.0,
         description="SnapWave maximum ratio of wave height over water depth (-)",
-        json_schema_extra={"condition": "snapwave == 1"},
+        json_schema_extra={"min_version": "2.2.0", "condition": "snapwave == 1"},
     )
     snapwave_alpha: float = Field(
         1.0,
@@ -822,7 +776,7 @@ class SfincsConfigVariables(BaseSettings):
     snapwave_niter: int = Field(
         10,
         description="SnapWave maximum number of iterations (-)",
-        json_schema_extra={"condition": "snapwave == 1"},
+        json_schema_extra={"min_version": "2.1.2", "condition": "snapwave == 1"},
     )
     snapwave_baldock_ratio: float = Field(
         0.2,
@@ -832,54 +786,54 @@ class SfincsConfigVariables(BaseSettings):
     snapwave_baldock_exponent: int = Field(
         2,
         description="SnapWave exponent of Baldock dissipation enhancement factor; 0 is unused (-)",
-        json_schema_extra={"condition": "snapwave == 1"},
+        json_schema_extra={"min_version": "2.4.0", "condition": "snapwave == 1"},
     )
     snapwave_Tpini: float = Field(
         1.0,
         description="SnapWave initial peak wave period (s)",
-        json_schema_extra={"condition": "snapwave == 1"},
+        json_schema_extra={"min_version": "2.1.2", "condition": "snapwave == 1"},
     )
     snapwave_mwind: int = Field(
         2,
         description="SnapWave wind growth option (-)",
-        json_schema_extra={"condition": "snapwave == 1"},
+        json_schema_extra={"min_version": "2.1.2", "condition": "snapwave == 1"},
     )
     snapwave_sigmin: float = Field(
         2 * math.pi / 25.0,
         description="SnapWave minimum radial frequency (rad/s)",
-        json_schema_extra={"condition": "snapwave == 1"},
+        json_schema_extra={"min_version": "2.1.2", "condition": "snapwave == 1"},
     )
     snapwave_sigmax: float = Field(
         2 * math.pi,
         description="SnapWave maximum radial frequency (rad/s)",
-        json_schema_extra={"condition": "snapwave == 1"},
+        json_schema_extra={"min_version": "2.1.2", "condition": "snapwave == 1"},
     )
     snapwave_jadcgdx: int = Field(
         1,
         ge=0,
         le=1,
         description="SnapWave include dcg/dx term (1: on, 0: off)",
-        json_schema_extra={"condition": "snapwave == 1"},
+        json_schema_extra={"min_version": "2.1.2", "condition": "snapwave == 1"},
     )
     snapwave_c_dispT: float = Field(
         1.0,
         description="SnapWave wave period dispersion coefficient (-)",
-        json_schema_extra={"condition": "snapwave == 1"},
+        json_schema_extra={"min_version": "2.1.2", "condition": "snapwave == 1"},
     )
     snapwave_sector: float = Field(
         180.0,
         description="SnapWave directional sector (degrees)",
-        json_schema_extra={"condition": "snapwave == 1"},
+        json_schema_extra={"min_version": "2.1.2", "condition": "snapwave == 1"},
     )
     snapwave_relax_factor_DoverA: float = Field(
         0.25,
         description="SnapWave underrelaxation factor for DoverA; 1.0 disables (-)",
-        json_schema_extra={"condition": "snapwave == 1"},
+        json_schema_extra={"min_version": "2.4.0", "condition": "snapwave == 1"},
     )
     snapwave_relax_factor_DoverE: float = Field(
         0.25,
         description="SnapWave underrelaxation factor for DoverE; 1.0 disables (-)",
-        json_schema_extra={"condition": "snapwave == 1"},
+        json_schema_extra={"min_version": "2.4.0", "condition": "snapwave == 1"},
     )
     snapwave_alpha_ig: float = Field(
         1.0,
@@ -894,7 +848,7 @@ class SfincsConfigVariables(BaseSettings):
     snapwave_gamma_fac_br: float = Field(
         0.45,
         description="SnapWave factor on gamma to determine the incident wave breaking point (-)",
-        json_schema_extra={"condition": "snapwave == 1"},
+        json_schema_extra={"min_version": "2.4.0", "condition": "snapwave == 1"},
     )
     snapwave_shinc2ig: float = Field(
         1.0,
@@ -955,6 +909,7 @@ class SfincsConfigVariables(BaseSettings):
         ge=0,
         le=1,
         description="Wave enhanced roughness (1: on, 0: off)",
+        json_schema_extra={"min_version": "2.3.0"},
     )
 
     # ================================================================
@@ -965,26 +920,27 @@ class SfincsConfigVariables(BaseSettings):
         ge=0,
         le=1,
         description="Enable non-hydrostatic mode (1: on, 0: off)",
+        json_schema_extra={"min_version": "2.2.0"},
     )
     nh_fnudge: float = Field(
         0.9,
         description="Non-hydrostatic nudge factor (-)",
-        json_schema_extra={"condition": "nonh == 1"},
+        json_schema_extra={"min_version": "2.2.0", "condition": "nonh == 1"},
     )
     nh_tstop: float = Field(
         -999.0,
         description="Non-hydrostatic stop time (seconds)",
-        json_schema_extra={"condition": "nonh == 1"},
+        json_schema_extra={"min_version": "2.2.0", "condition": "nonh == 1"},
     )
     nh_tol: float = Field(
         0.001,
         description="Non-hydrostatic tolerance (-)",
-        json_schema_extra={"condition": "nonh == 1"},
+        json_schema_extra={"min_version": "2.2.0", "condition": "nonh == 1"},
     )
     nh_itermax: int = Field(
         100,
         description="Non-hydrostatic maximum iterations (-)",
-        json_schema_extra={"condition": "nonh == 1"},
+        json_schema_extra={"min_version": "2.2.0", "condition": "nonh == 1"},
     )
 
     # ================================================================
@@ -993,6 +949,7 @@ class SfincsConfigVariables(BaseSettings):
     structure_relax: float = Field(
         10.0,
         description="Structure relaxation factor (-)",
+        json_schema_extra={"min_version": "2.2.0"},
     )
 
     # ================================================================
@@ -1003,6 +960,7 @@ class SfincsConfigVariables(BaseSettings):
         ge=0,
         le=1,
         description="Enable vegetation drag (1: on, 0: off)",
+        json_schema_extra={"min_version": "2.1.2"},
     )
 
     # ================================================================
@@ -1013,16 +971,17 @@ class SfincsConfigVariables(BaseSettings):
         ge=0,
         le=1,
         description="Enable bathtub mode (1: on, 0: off)",
+        json_schema_extra={"min_version": "2.3.2"},
     )
     bathtub_fachs: float = Field(
         0.2,
         description="Bathtub wave height factor (-)",
-        json_schema_extra={"condition": "bathtub == 1"},
+        json_schema_extra={"min_version": "2.3.2", "condition": "bathtub == 1"},
     )
     bathtub_dt: float = Field(
         -999.0,
         description="Bathtub time step (seconds)",
-        json_schema_extra={"condition": "bathtub == 1"},
+        json_schema_extra={"min_version": "2.3.2", "condition": "bathtub == 1"},
     )
 
     # ================================================================
@@ -1037,15 +996,7 @@ class SfincsConfigVariables(BaseSettings):
         ge=0,
         le=1,
         description="Global spherical model that wraps over the edge (1: on, 0: off)",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    global_: int = Field(
-        0,
-        ge=0,
-        le=1,
-        alias="global",
-        description="[DEPRECATED] legacy alias of global_model; Global spherical model that wraps over the edge (1: on, 0: off)",
-        json_schema_extra={"max_version": "2.4.1", "new_name": "global_model"},
+        json_schema_extra={"min_version": "2.5.0", "legacy_alias": ["global"]},
     )
     crsgeo: int = Field(
         0,
@@ -1056,12 +1007,7 @@ class SfincsConfigVariables(BaseSettings):
     epsg: int | None = Field(
         None,
         description="EPSG code for spatial reference system",
-        json_schema_extra={"min_version": "2.3.0"},
-    )
-    crs: int | None = Field(
-        None,
-        description="[DEPRECATED] legacy alias of epsg",
-        json_schema_extra={"max_version": "2.0.0", "new_name": "epsg"},
+        json_schema_extra={"legacy_alias": ["crs"]},
     )
     utmzone: str | None = Field(
         None,
@@ -1090,12 +1036,14 @@ class SfincsConfigVariables(BaseSettings):
     rugdepth: float = Field(
         0.05,
         description="Runup gauge depth threshold (m)",
+        json_schema_extra={"min_version": "2.3.0"},
     )
     h73table: int = Field(
         0,
         ge=0,
         le=1,
         description="Use h73 table (1: on, 0: off)",
+        json_schema_extra={"min_version": "2.2.0"},
     )
 
     # ================================================================
@@ -1132,7 +1080,6 @@ class SfincsConfigVariables(BaseSettings):
     manningfile: str | None = Field(None, description="Manning's n file")
     drnfile: str | None = Field(None, description="Drainage structure file")
     volfile: str | None = Field(None, description="Storage volume file")
-    cstfile: str | None = Field(None, description="Coastline polyline file")
     dkbfile: str | None = Field(
         None,
         description="Dike breaches file",
@@ -1146,22 +1093,15 @@ class SfincsConfigVariables(BaseSettings):
     vegfile: str | None = Field(
         None,
         description="Vegetation characteristics file",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    vegetationfile: str | None = Field(
-        None,
-        description="[DEPRECATED] legacy alias of vegfile; Vegetation characteristics file",
-        json_schema_extra={"max_version": "2.4.1", "new_name": "vegfile"},
+        json_schema_extra={"min_version": "2.5.0", "legacy_alias": ["vegetationfile"]},
     )
     vegtype: str | None = Field(
         None,
         description="Vegetation type lookup table file (toml)",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    vegetationtype_toml: str | None = Field(
-        None,
-        description="[DEPRECATED] legacy alias of vegtype; Vegetation type lookup table file (toml)",
-        json_schema_extra={"max_version": "2.4.1", "new_name": "vegtype"},
+        json_schema_extra={
+            "min_version": "2.5.0",
+            "legacy_alias": ["vegetationtype_toml"],
+        },
     )
 
     # ================================================================
@@ -1169,97 +1109,81 @@ class SfincsConfigVariables(BaseSettings):
     # ================================================================
     bndfile: str | None = Field(None, description="Water level boundary points file")
     bzsfile: str | None = Field(None, description="Water level time-series file")
-    bcafile: str | None = Field(None, description="Tidal boundary component file")
+    bcafile: str | None = Field(
+        None,
+        description="Tidal boundary component file",
+        json_schema_extra={"min_version": "2.3.0"},
+    )
     bzifile: str | None = Field(None, description="Individual wave water level file")
-    bdrfile: str | None = Field(None, description="Downstream river boundary file")
+    bdrfile: str | None = Field(
+        None,
+        description="Downstream river boundary file",
+        json_schema_extra={"min_version": "2.3.0"},
+    )
     wavemaker_wfpfile: str | None = Field(
         None,
         description="Wavemaker location points file",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    wfpfile: str | None = Field(
-        None,
-        description="[DEPRECATED] legacy alias of wavemaker_wfpfile; Wavemaker location points file",
-        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_wfpfile"},
+        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["wfpfile"]},
     )
     wavemaker_whifile: str | None = Field(
         None,
         description="Wavemaker IG wave height file",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    whifile: str | None = Field(
-        None,
-        description="[DEPRECATED] legacy alias of wavemaker_whifile; Wavemaker IG wave height file",
-        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_whifile"},
+        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["whifile"]},
     )
     wavemaker_wtifile: str | None = Field(
         None,
         description="Wavemaker IG wave period file",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    wtifile: str | None = Field(
-        None,
-        description="[DEPRECATED] legacy alias of wavemaker_wtifile; Wavemaker IG wave period file",
-        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_wtifile"},
+        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["wtifile"]},
     )
     wavemaker_wstfile: str | None = Field(
         None,
         description="Wavemaker setup file",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    wstfile: str | None = Field(
-        None,
-        description="[DEPRECATED] legacy alias of wavemaker_wstfile; Wavemaker setup file",
-        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_wstfile"},
+        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["wstfile"]},
     )
     srcfile: str | None = Field(None, description="Discharge input points file")
     disfile: str | None = Field(None, description="Discharge input time-series file")
     spwfile: str | None = Field(None, description="Spiderweb tropical cyclone file")
     wndfile: str | None = Field(None, description="Spatially uniform wind file")
     prcfile: str | None = Field(
-        None, description="Spatially uniform precipitation file"
-    )
-    precipfile: str | None = Field(
-        None, description="LEGACY precipitation file (use prcfile)"
+        None,
+        description="Spatially uniform precipitation file",
+        json_schema_extra={"legacy_alias": ["precipfile", "prcpfile"]},
     )
     amufile: str | None = Field(None, description="Wind u-component file")
     amvfile: str | None = Field(None, description="Wind v-component file")
     ampfile: str | None = Field(None, description="Atmospheric pressure file")
-    amprfile: str | None = Field(None, description="Precipitation file")
+    amprfile: str | None = Field(
+        None,
+        description="Precipitation file",
+        json_schema_extra={"legacy_alias": ["amrfile"]},
+    )
     z0lfile: str | None = Field(None, description="Wind reduction over land file")
     wavemaker_wvmfile: str | None = Field(
         None,
         description="Wave maker input points file",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    wvmfile: str | None = Field(
-        None,
-        description="[DEPRECATED] legacy alias of wavemaker_wvmfile; Wave maker input points file",
-        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_wvmfile"},
+        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["wvmfile"]},
     )
     wavemaker_timeseries_wvmfile: str | None = Field(
-        None, description="Wave maker input points file, forced by IG time series"
+        None,
+        description="Wave maker input points file, forced by IG time series",
+        json_schema_extra={"min_version": "2.4.1"},
     )
     qinffile: str | None = Field(None, description="Infiltration file")
     inffile: str | None = Field(
         None,
         description="Infiltration parameters NetCDF file",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    infiltration_file: str | None = Field(
-        None,
-        description="[DEPRECATED] legacy alias of inffile; Infiltration parameters NetCDF file",
-        json_schema_extra={"max_version": "2.4.1", "new_name": "inffile"},
+        json_schema_extra={
+            "min_version": "2.5.0",
+            "legacy_alias": ["infiltration_file", "infiltrationfile"],
+        },
     )
     inftype: str | None = Field(
         None,
         description="Infiltration type (con, c2d, cna, cnb, gai, hor, bkt, r2d)",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    infiltration_type: str | None = Field(
-        None,
-        description="[DEPRECATED] legacy alias of inftype; Infiltration type",
-        json_schema_extra={"max_version": "2.4.1", "new_name": "inftype"},
+        json_schema_extra={
+            "min_version": "2.5.0",
+            "legacy_alias": ["infiltration_type", "infiltrationtype"],
+        },
     )
 
     # ================================================================
@@ -1362,7 +1286,11 @@ class SfincsConfigVariables(BaseSettings):
     # ================================================================
     obsfile: str | None = Field(None, description="Observation points file")
     crsfile: str | None = Field(None, description="Cross-section lines file")
-    rugfile: str | None = Field(None, description="Runup gauges file")
+    rugfile: str | None = Field(
+        None,
+        description="Runup gauges file",
+        json_schema_extra={"min_version": "2.3.0"},
+    )
 
     # ================================================================
     # Output storage options
@@ -1394,7 +1322,11 @@ class SfincsConfigVariables(BaseSettings):
         0, ge=0, le=1, description="Write subgrid depth output (1: yes, 0: no)"
     )
     storehmean: int = Field(
-        0, ge=0, le=1, description="Write mean water depth output (1: yes, 0: no)"
+        0,
+        ge=0,
+        le=1,
+        description="Write mean water depth output (1: yes, 0: no)",
+        json_schema_extra={"min_version": "2.2.0"},
     )
     storemeteo: int = Field(
         0,
@@ -1423,19 +1355,28 @@ class SfincsConfigVariables(BaseSettings):
         0, ge=0, le=1, description="Write storage volume output (1: yes, 0: no)"
     )
     storestoragevolume: int = Field(
-        0, ge=0, le=1, description="Write total storage volume output (1: yes, 0: no)"
+        0,
+        ge=0,
+        le=1,
+        description="Write total storage volume output (1: yes, 0: no)",
+        json_schema_extra={"min_version": "2.3.0"},
     )
     store_tsunami_arrival_time: int = Field(
         0, ge=0, le=1, description="Write tsunami arrival time output (1: yes, 0: no)"
     )
     store_dynamic_bed_level: int = Field(
-        0, ge=0, le=1, description="Write dynamic bed level output (1: yes, 0: no)"
+        0,
+        ge=0,
+        le=1,
+        description="Write dynamic bed level output (1: yes, 0: no)",
+        json_schema_extra={"min_version": "2.1.3"},
     )
     storetzsmax: int = Field(
         0,
         ge=0,
         le=1,
         description="Write time of maximum water level output (1: yes, 0: no)",
+        json_schema_extra={"min_version": "2.3.0"},
     )
     storezvolmax: int = Field(
         1,
@@ -1470,7 +1411,7 @@ class SfincsConfigVariables(BaseSettings):
         ge=0,
         le=1,
         description="Write SnapWave grid output (1: yes, 0: no)",
-        json_schema_extra={"condition": "snapwave == 1"},
+        json_schema_extra={"min_version": "2.4.0", "condition": "snapwave == 1"},
     )
     writeruntime: int = Field(
         0,
@@ -1483,32 +1424,29 @@ class SfincsConfigVariables(BaseSettings):
         ge=0,
         le=1,
         description="Write quadtree without refinement on quadtree mesh (1: yes) or regular grid (0: no)",
-        json_schema_extra={"min_version": "2.5.0"},
-    )
-    regular_output_on_mesh: int = Field(
-        1,
-        ge=0,
-        le=1,
-        description="[DEPRECATED] legacy alias of output_on_quadtree_mesh; Write quadtree without refinement on quadtree mesh (1: yes) or regular grid (0: no)",
         json_schema_extra={
-            "max_version": "2.4.1",
-            "new_name": "output_on_quadtree_mesh",
+            "min_version": "2.5.0",
+            "legacy_alias": ["regular_output_on_mesh"],
         },
     )
     twet_threshold: float = Field(
         0.01, ge=0.0, description="Time-wet minimum depth threshold (m)"
     )
-    tsunami_arrival_threshold: float = Field(
-        0.01, ge=0.0, description="Tsunami arrival minimum depth threshold (m)"
-    )
     timestep_analysis: int = Field(
-        0, ge=0, le=1, description="Enable timestep analysis output (1: yes, 0: no)"
+        0,
+        ge=0,
+        le=1,
+        description="Enable timestep analysis output (1: yes, 0: no)",
+        json_schema_extra={"min_version": "2.3.2"},
     )
     debug: int = Field(
         0, ge=0, le=1, description="Debug mode — write every timestep (1: yes, 0: no)"
     )
     percentage_done: int = Field(
-        5, ge=1, description="Percentage done output interval (%)"
+        5,
+        ge=1,
+        description="Percentage done output interval (%)",
+        json_schema_extra={"min_version": "2.1.3"},
     )
 
     # ================================================================
@@ -1522,6 +1460,21 @@ class SfincsConfigVariables(BaseSettings):
     _comments: dict[str, str] = PrivateAttr(default_factory=dict)
 
     @classmethod
+    @functools.cache
+    def _legacy_alias_map(cls) -> dict[str, str]:
+        """Map each legacy keyword to the name of its current field."""
+        return {
+            legacy: name
+            for name, field in cls.model_fields.items()
+            for legacy in _legacy_aliases(field.json_schema_extra or {})
+        }
+
+    @classmethod
+    def resolve_key(cls, key: str) -> str:
+        """Return the current field name for a (legacy) keyword, e.g. 'wvmfile'."""
+        return cls._legacy_alias_map().get(key, key)
+
+    @classmethod
     def read(
         cls,
         filename: str | Path,
@@ -1530,10 +1483,8 @@ class SfincsConfigVariables(BaseSettings):
         filename = Path(filename)
         inp_dict, comments = _read_config(filename=filename)
 
-        # Warn about keys not recognized by the schema; they are kept as
-        # pass-through attributes (Config.extra = "allow") and always rewritten.
         # The file uses the alias for fields whose keyword is not a valid
-        # attribute name (e.g. 'global').
+        # attribute name.
         model_fields = {
             (field.alias or name): field for name, field in cls.model_fields.items()
         }
@@ -1546,7 +1497,24 @@ class SfincsConfigVariables(BaseSettings):
             warnings.warn(message, UserWarning, stacklevel=2)
             logger.warning(message)
 
-        for key, value in list(inp_dict.items()):
+        # Read legacy keywords into their current field; write() converts them
+        # back when the targeted sfincs_version is older than the field.
+        for legacy, key in cls._legacy_alias_map().items():
+            if legacy not in inp_dict:
+                continue
+            value = inp_dict.pop(legacy)
+            comment = comments.pop(legacy, None)
+            if key in inp_dict:
+                logger.warning(f"'{legacy}' is ignored, since '{key}' is also set.")
+                continue
+            inp_dict[key] = value
+            if comment:
+                comments[key] = comment
+            logger.debug(f"Legacy keyword '{legacy}' is read as '{key}'.")
+
+        # Drop keys the targeted sfincs_version does not support (kept for an
+        # unversioned file); a field with a legacy alias is written under that alias.
+        for key in list(inp_dict):
             field_info = model_fields.get(key)
             if field_info is None:
                 continue
@@ -1554,24 +1522,16 @@ class SfincsConfigVariables(BaseSettings):
             status = _version_status(extra, sfincs_version)
             if sfincs_version is None or status not in {"too_old", "deprecated"}:
                 continue
-
-            new_name = extra.get("new_name")
-            new_field = model_fields.get(new_name) if new_name is not None else None
-            new_extra = new_field.json_schema_extra or {} if new_field else {}
-            replacement_supported = (
-                new_field is not None
-                and _version_status(new_extra, sfincs_version) == "ok"
-            )
-            if replacement_supported and new_name not in inp_dict:
-                inp_dict[new_name] = value
-                if key in comments:
-                    comments[new_name] = comments[key]
+            if status == "too_old" and _legacy_aliases(extra):
+                continue
             inp_dict.pop(key)
             comments.pop(key, None)
             logger.warning(
-                f"'{key}' is not supported for sfincs_version {sfincs_version}; "
-                f"removed{f' or migrated to {new_name!r}' if new_name else ''}."
+                f"'{key}' is not supported for sfincs_version {sfincs_version}; removed."
             )
+
+        # Warn about keys not recognized by the schema; they are kept as
+        # pass-through attributes (Config.extra = "allow") and always rewritten.
 
         unknown_keys = sorted(set(inp_dict) - set(model_fields))
         if unknown_keys:
@@ -1591,7 +1551,7 @@ class SfincsConfigVariables(BaseSettings):
                 message = f"'{key}' is deprecated for sfincs_version {sfincs_version}."
                 warnings.warn(message, DeprecationWarning, stacklevel=2)
                 logger.warning(message)
-            elif status == "too_old":
+            elif status == "too_old" and not _legacy_aliases(extra):
                 logger.warning(
                     f"'{key}' is not yet supported for sfincs_version {sfincs_version}."
                 )
@@ -1663,7 +1623,8 @@ class SfincsConfigVariables(BaseSettings):
         for key, value in data.items():
             field_info = model_fields.get(key)
             extra = (field_info.json_schema_extra or {}) if field_info else {}
-            # sfincs.inp uses the alias (e.g. 'global' for the field 'global_')
+            # sfincs.inp uses the alias for fields whose keyword is not a valid
+            # attribute name
             file_key = (field_info.alias or key) if field_info else key
             explicitly_set = bool({key, file_key} & self._explicit_keys)
 
@@ -1688,10 +1649,14 @@ class SfincsConfigVariables(BaseSettings):
                 if not matches:
                     continue
 
-            # Skip fields not (yet) valid for the targeted sfincs_version
+            # Fields not (yet) valid for the targeted sfincs_version are skipped,
+            # or written under the legacy keyword that version reads
             version_status = _version_status(extra, sfincs_version)
             if version_status == "too_old":
-                continue
+                legacy = _legacy_aliases(extra)
+                if not legacy:
+                    continue
+                file_key = legacy[0]
 
             # Decide always vs skip-if-default
             # A deprecated field is never force-written via "always"; it is only
@@ -1766,10 +1731,12 @@ class SfincsConfigVariables(BaseSettings):
         Parameters:
         -----------
         updates (dict):
-            Mapping of key-value pairs to update.
+            Mapping of key-value pairs to update. Legacy keywords (e.g. 'wvmfile')
+            are set on their current field.
         skip_validation (bool):
             If True, skips pydantic validation of the new values.
         """
+        updates = {self.resolve_key(key): value for key, value in updates.items()}
         model_fields = type(self).model_fields
         unknown_keys = [key for key in updates if key not in model_fields]
         for key in unknown_keys:

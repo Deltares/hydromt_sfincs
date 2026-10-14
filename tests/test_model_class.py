@@ -69,7 +69,13 @@ def test_model_build(tmpdir, case):
         return a == b
 
     # ignore some keys that we know are different
-    ignore_keys = {"bzsfile", "bndfile", "bcafile", "netbndbzsbzifile", "wvmfile"}
+    ignore_keys = {
+        "bzsfile",
+        "bndfile",
+        "bcafile",
+        "netbndbzsbzifile",
+        "wavemaker_wvmfile",
+    }
     diff = {
         k: (d0.get(k), d1.get(k))
         for k in d0.keys() | d1.keys()
