@@ -1,5 +1,10 @@
-from os.path import abspath, dirname, join, isfile
+import logging
 from datetime import datetime
+from os.path import abspath, dirname, isfile, join
+
+import pandas as pd
+import pytest
+import xarray as xr
 
 from hydromt_sfincs.sfincs import SfincsModel
 
@@ -40,6 +45,24 @@ def test_create_uniform_precip(model_config):
     model_config.precipitation.create_uniform(timeseries=timeseries)
 
     assert "precip" in model_config.precipitation.data
+
+
+def test_set_precip_reindexes_existing_data_to_new_time_index(model_config):
+    old_times = pd.date_range("2010-02-05", periods=2, freq="D")
+    new_times = pd.date_range("2020-02-05", periods=2, freq="D")
+
+    model_config.precipitation.set(
+        xr.DataArray([1.0, 2.0], coords={"time": old_times}, dims="time"),
+        name="precip",
+    )
+    model_config.precipitation.set(
+        xr.DataArray([3.0, 4.0], coords={"time": new_times}, dims="time"),
+        name="precip",
+    )
+
+    data = model_config.precipitation.data
+    assert data.indexes["time"].equals(new_times)
+    assert data["precip"].values.tolist() == [3.0, 4.0]
 
 
 def test_create_meteo_latlon(tmp_dir):
@@ -93,3 +116,24 @@ def test_create_meteo_latlon(tmp_dir):
         assert comp.data is not None
         assert comp.data.raster.dims == ("y", "x")
         assert comp.data.raster.crs == "EPSG:4326"
+
+
+def test_create_meteo_time_bounds(model_config, caplog):
+    # get the forcing data from the data catalog
+    ds = model_config.data_catalog.get_rasterdataset("era5_hourly_zarr")
+
+    # forcing starts too late -> should warn
+    ds_late = ds.sel(time=slice("2010-02-06", None))
+
+    with caplog.at_level(logging.WARNING):
+        model_config.precipitation.create(precip=ds_late)
+
+    assert "forcing does not cover the full model period" in caplog.text
+
+    # forcing covers tstart but ends before tstop -> should warn
+    ds_short = ds.sel(time=slice("2010-02-01", "2010-02-06"))
+
+    with caplog.at_level(logging.WARNING):
+        model_config.precipitation.create(precip=ds_short)
+
+    assert "forcing does not cover the full model period" in caplog.text

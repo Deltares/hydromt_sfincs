@@ -1,8 +1,10 @@
 import numpy as np
 from pyproj import CRS
 import pytest
+from unittest.mock import MagicMock, patch
 import os
 
+from xugrid import UgridDataArray
 from hydromt_sfincs.sfincs import SfincsModel
 
 from .conftest import TESTDATADIR, TESTMODELDIR
@@ -56,6 +58,10 @@ def test_grid_io(model_config, tmp_path):
 
     # assert the grid is the same
     assert model.grid.data.equals(model1.grid.data)
+
+    # check that the quadtree grid was created
+    assert isinstance(model.quadtree_grid.data, UgridDataArray)
+    assert model.quadtree_grid.crs == model.grid.crs
 
 
 def test_grid_create(model_init):

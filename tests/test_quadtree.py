@@ -105,28 +105,3 @@ def test_xu_open_dataset_delete(tmp_dir):
     ds = xu.open_dataset(fn_copy)
     ds.close()
     os.remove(fn_copy)
-
-
-@pytest.mark.skip(
-    reason="Documents a fragile, version-dependent file-lock behaviour: "
-    "older xarray/netCDF4 raised PermissionError on Windows, but current "
-    "xugrid/xarray release the handle after ds.close() so the overwrite "
-    "succeeds and the lazy reread fails with KeyError instead. Re-enable "
-    "if/when this is consistently reproducible across platforms.",
-)
-def test_xu_open_dataset_overwrite(tmp_dir):
-    # copy the test data to the tmp_path
-    fn = join(TESTDATADIR, "sfincs_test_quadtree", "sfincs.nc")
-    fn_copy = tmp_dir.joinpath("sfincs.nc")
-
-    shutil.copy(fn, fn_copy)
-
-    # lazy load
-    ds = xu.open_dataset(fn_copy)
-
-    # now perform a computation on the dataset
-    ds = ds.ugrid.to_dataset()
-
-    # NOTE this will raise a PermissionError because the file is lazily loaded
-    with pytest.raises(PermissionError):
-        ds.to_netcdf(fn_copy)

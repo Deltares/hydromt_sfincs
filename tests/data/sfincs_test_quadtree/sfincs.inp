@@ -43,3 +43,4 @@ snapwave_bhsfile     = snapwave.bhs
 snapwave_btpfile     = snapwave.btp
 snapwave_bwdfile     = snapwave.bwd
 snapwave_bdsfile     = snapwave.bds
+weirfile             = sfincs.weir

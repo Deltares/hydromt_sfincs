@@ -413,7 +413,7 @@ class SfincsSubgridTable(ModelComponent):
                 ds[var].values.flatten()[active_cells], dims=("np")
             )
 
-        z_level = np.zeros((nr_levels, nr_z_points))
+        z_level = np.zeros((nr_levels, nr_z_points), dtype=np.float32)
         for ilevel in range(nr_levels):
             z_level[ilevel] = ds["z_level"][ilevel].values.flatten()[active_cells]
         ds_new["z_level"] = xr.DataArray(z_level, dims=("levels", "np"))
@@ -421,7 +421,7 @@ class SfincsSubgridTable(ModelComponent):
         # u and v points
         var_list = ["zmin", "zmax", "ffit", "navg"]
         for var in var_list:
-            uv_var = np.zeros(nr_uv_points)
+            uv_var = np.zeros(nr_uv_points, dtype=np.float32)
             uv_var[index_mu1[index_mu1 > -1]] = ds["u_" + var].values.flatten()[
                 index_mu1 > -1
             ]
@@ -432,7 +432,7 @@ class SfincsSubgridTable(ModelComponent):
 
         var_list_levels = ["havg", "nrep", "pwet"]
         for var in var_list_levels:
-            uv_var = np.zeros((nr_levels, nr_uv_points))
+            uv_var = np.zeros((nr_levels, nr_uv_points), dtype=np.float32)
             for ilevel in range(nr_levels):
                 uv_var[ilevel, index_mu1[index_mu1 > -1]] = ds["u_" + var][
                     ilevel

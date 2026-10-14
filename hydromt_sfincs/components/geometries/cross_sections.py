@@ -289,10 +289,9 @@ class SfincsCrossSections(ModelComponent):
 
     def snap_to_grid(self):
         """Returns GeoDataFrame with cross-sections snapped to model grid."""
-        # FIXME - this probably only works for quadtree grids for now
         if self.model.grid_type != "quadtree":
-            raise NotImplementedError(
-                "Snap to grid is only implemented for quadtree grids."
+            logger.info(
+                "Snapping to grid uses the quadtree representation. Regular grid will be converted to a quadtree grid first."
             )
         snap_gdf = self.model.quadtree_grid.snap_to_grid(self.data)
         return snap_gdf

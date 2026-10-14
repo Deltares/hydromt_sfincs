@@ -459,9 +459,8 @@ class SfincsWeirs(ModelComponent):
     def snap_to_grid(self):
         """Returns GeoDataFrame with weirs snapped to model grid."""
         if self.model.grid_type != "quadtree":
-            logger.warning(
-                "Snap to grid is only implemented for quadtree grids. Returning original weirs GeoDataFrame."
+            logger.info(
+                "Snapping to grid uses the quadtree representation. Regular grid will be converted to a quadtree grid first."
             )
-            return gpd.GeoDataFrame()  # return empty gdf if not quadtree grid
         snap_gdf = self.model.quadtree_grid.snap_to_grid(self.data)
         return snap_gdf
