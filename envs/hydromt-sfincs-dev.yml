@@ -31,6 +31,7 @@ dependencies:
 - scipy
 - shapely
 - sphinx
+- sphinxcontrib-mermaid
 - xarray
 - xugrid
 - pip:
