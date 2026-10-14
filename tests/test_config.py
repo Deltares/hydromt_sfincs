@@ -108,7 +108,6 @@ def test_config_condition_controls_written_fields(tmp_path, updates, expected_ke
 def test_config_reads_kernel_keywords_without_warning(tmp_path, caplog):
     inpfile = tmp_path / "sfincs.inp"
     values = {
-        "drainagefile": "sfincs.drainage.nc",
         "urbfile": "sfincs.urb",
         "dkbfile": "sfincs.dkb",
         "cstfile": "sfincs.cst",
@@ -129,7 +128,7 @@ def test_config_reads_kernel_keywords_without_warning(tmp_path, caplog):
         data = SfincsConfigVariables.read(inpfile)
 
     assert "Unrecognized" not in caplog.text
-    assert data.drainagefile == "sfincs.drainage.nc"
+    assert data.urbfile == "sfincs.urb"
     assert data.storezvolmax == 0
     assert data.snapwave_gamma == 0.8
 
@@ -304,11 +303,27 @@ def test_config_read_migrates_changed_field_names_by_version(tmp_path):
                 "wavemaker_hmin",
                 "global_model",
                 "output_on_quadtree_mesh",
+                "wavemaker_nfreqs_inc",
+                "inffile",
+                "inftype",
+                "vegfile",
+                "vegtype",
             },
         ),
         (
             "2.4.1",
-            {"wvmfile", "wmhmin", "global", "regular_output_on_mesh", "storeqdrain"},
+            {
+                "wvmfile",
+                "wmhmin",
+                "global",
+                "regular_output_on_mesh",
+                "storeqdrain",
+                "nfreqsinc",
+                "infiltration_file",
+                "infiltration_type",
+                "vegetationfile",
+                "vegetationtype_toml",
+            },
         ),
     ],
 )
@@ -321,6 +336,11 @@ def test_config_read_migrates_renamed_keywords(tmp_path, sfincs_version, expecte
         "global               = 1\n"
         "regular_output_on_mesh = 1\n"
         "storeqdrain          = 1\n"
+        "nfreqsinc            = 50\n"
+        "infiltration_file    = sfincs.inf.nc\n"
+        "infiltration_type    = cna\n"
+        "vegetationfile       = sfincs.veg.nc\n"
+        "vegetationtype_toml  = vegetation.toml\n"
     )
 
     data = SfincsConfigVariables.read(inpfile)

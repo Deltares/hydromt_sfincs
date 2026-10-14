@@ -590,14 +590,32 @@ class SfincsConfigVariables(BaseSettings):
     wavemaker_nfreqs_inc: int = Field(
         100,
         description="Wave maker number of frequency bins incident wave spectrum (-)",
+        json_schema_extra={"min_version": "2.5.0"},
+    )
+    nfreqsinc: int = Field(
+        100,
+        description="[DEPRECATED] legacy alias of wavemaker_nfreqs_inc; Wave maker number of frequency bins incident wave spectrum (-)",
+        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_nfreqs_inc"},
     )
     wavemaker_freqmin_inc: float = Field(
         0.04,
         description="Minimum frequency wave maker incident wave spectrum (Hz)",
+        json_schema_extra={"min_version": "2.5.0"},
+    )
+    freqmininc: float = Field(
+        0.04,
+        description="[DEPRECATED] legacy alias of wavemaker_freqmin_inc; Minimum frequency wave maker incident wave spectrum (Hz)",
+        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_freqmin_inc"},
     )
     wavemaker_freqmax_inc: float = Field(
         1.0,
         description="Maximum frequency wave maker incident wave spectrum (Hz)",
+        json_schema_extra={"min_version": "2.5.0"},
+    )
+    freqmaxinc: float = Field(
+        1.0,
+        description="[DEPRECATED] legacy alias of wavemaker_freqmax_inc; Maximum frequency wave maker incident wave spectrum (Hz)",
+        json_schema_extra={"max_version": "2.4.1", "new_name": "wavemaker_freqmax_inc"},
     )
     wavemaker_tinc2ig: float = Field(
         -1.0,
@@ -1115,14 +1133,35 @@ class SfincsConfigVariables(BaseSettings):
     drnfile: str | None = Field(None, description="Drainage structure file")
     volfile: str | None = Field(None, description="Storage volume file")
     cstfile: str | None = Field(None, description="Coastline polyline file")
-    dkbfile: str | None = Field(None, description="Dike breaches file")
-    urbfile: str | None = Field(None, description="Urban drainage zones file")
-    drainagefile: str | None = Field(
-        None, description="Netcdf drainage rate file (variable drainage_rate, mm/hr)"
+    dkbfile: str | None = Field(
+        None,
+        description="Dike breaches file",
+        json_schema_extra={"min_version": "2.5.0"},
     )
-    vegfile: str | None = Field(None, description="Vegetation characteristics file")
+    urbfile: str | None = Field(
+        None,
+        description="Urban drainage zones file",
+        json_schema_extra={"min_version": "2.5.0"},
+    )
+    vegfile: str | None = Field(
+        None,
+        description="Vegetation characteristics file",
+        json_schema_extra={"min_version": "2.5.0"},
+    )
+    vegetationfile: str | None = Field(
+        None,
+        description="[DEPRECATED] legacy alias of vegfile; Vegetation characteristics file",
+        json_schema_extra={"max_version": "2.4.1", "new_name": "vegfile"},
+    )
     vegtype: str | None = Field(
-        None, description="Vegetation type lookup table file (toml)"
+        None,
+        description="Vegetation type lookup table file (toml)",
+        json_schema_extra={"min_version": "2.5.0"},
+    )
+    vegetationtype_toml: str | None = Field(
+        None,
+        description="[DEPRECATED] legacy alias of vegtype; Vegetation type lookup table file (toml)",
+        json_schema_extra={"max_version": "2.4.1", "new_name": "vegtype"},
     )
 
     # ================================================================
@@ -1202,10 +1241,26 @@ class SfincsConfigVariables(BaseSettings):
         None, description="Wave maker input points file, forced by IG time series"
     )
     qinffile: str | None = Field(None, description="Infiltration file")
-    infiltration_file: str | None = Field(
-        None, description="Infiltration file (alternative)"
+    inffile: str | None = Field(
+        None,
+        description="Infiltration parameters NetCDF file",
+        json_schema_extra={"min_version": "2.5.0"},
     )
-    infiltration_type: str | None = Field(None, description="Infiltration type")
+    infiltration_file: str | None = Field(
+        None,
+        description="[DEPRECATED] legacy alias of inffile; Infiltration parameters NetCDF file",
+        json_schema_extra={"max_version": "2.4.1", "new_name": "inffile"},
+    )
+    inftype: str | None = Field(
+        None,
+        description="Infiltration type (con, c2d, cna, cnb, gai, hor, bkt, r2d)",
+        json_schema_extra={"min_version": "2.5.0"},
+    )
+    infiltration_type: str | None = Field(
+        None,
+        description="[DEPRECATED] legacy alias of inftype; Infiltration type",
+        json_schema_extra={"max_version": "2.4.1", "new_name": "inftype"},
+    )
 
     # ================================================================
     # Curve Number / Green-Ampt / Horton files
@@ -1387,24 +1442,28 @@ class SfincsConfigVariables(BaseSettings):
         ge=0,
         le=1,
         description="Write maximum subgrid cell volume output, subgrid only (1: yes, 0: no)",
+        json_schema_extra={"min_version": "2.5.0"},
     )
     store_river_discharge: int = Field(
         0,
         ge=0,
         le=1,
         description="Write river point discharge output (1: yes, 0: no)",
+        json_schema_extra={"min_version": "2.5.0"},
     )
     store_urban_drainage_discharge: int = Field(
         0,
         ge=0,
         le=1,
         description="Write urban drainage discharge output (1: yes, 0: no)",
+        json_schema_extra={"min_version": "2.5.0"},
     )
     store_cumulative_urban_drainage: int = Field(
         0,
         ge=0,
         le=1,
         description="Write cumulative urban drainage output (1: yes, 0: no)",
+        json_schema_extra={"min_version": "2.5.0"},
     )
     storesnapwavegrid: int = Field(
         0,
