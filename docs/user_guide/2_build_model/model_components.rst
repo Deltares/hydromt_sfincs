@@ -39,6 +39,67 @@ that are mentioned in the configuration file will be used by the SFINCS model.
      - Model configuration settings and parameters.
      - ``sfincs.inp`` (main input file)
 
+.. _config_keywords_versions:
+
+Renamed keywords and SFINCS versions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Some ``sfincs.inp`` keywords were renamed in newer SFINCS versions, for example ``wvmfile``
+became ``wavemaker_wvmfile``. HydroMT-SFINCS stores each setting under its current name only.
+The old name is a *legacy alias*: you can still use it when reading a file or calling
+``config.set()`` and ``config.get()``.
+
+Which name is written to ``sfincs.inp`` depends on the ``sfincs_version`` setting:
+
+* If ``sfincs_version`` is older than the version that introduced a keyword, the old name is
+  written. If the keyword has no old name, it is left out, because that SFINCS version can't
+  read it.
+* Otherwise the current name is written.
+* If ``sfincs_version`` is not set, the latest SFINCS version is assumed.
+
+When a file with a ``sfincs_version`` is read, keywords that this version does not support are
+removed with a warning. Keywords that have an old name are kept.
+
+.. mermaid::
+
+   flowchart TD
+       subgraph READ["Reading sfincs.inp"]
+           R0["Keyword in file<br/>e.g. 'wvmfile' or 'wavemaker_wvmfile'"] --> R1{"Is it an old name<br/>of a setting?"}
+           R1 -- yes --> R2{"Current name<br/>also in the file?"}
+           R2 -- yes --> R3["Old name ignored<br/>warning"]
+           R2 -- no --> R4["Stored under the<br/>current name"]
+           R1 -- no --> R5["Name kept as is"]
+           R4 --> R6
+           R5 --> R6{"Known setting?"}
+           R6 -- no --> R7["Kept and rewritten as is<br/>warning: unrecognized key"]
+           R6 -- yes --> R8{"sfincs_version<br/>in file?"}
+           R8 -- "no: latest version" --> R12["Kept"]
+           R8 -- yes --> R9{"Supported by<br/>this version?"}
+           R9 -- yes --> R12
+           R9 -- "no: too new" --> R10{"Has an<br/>old name?"}
+           R10 -- yes --> R12
+           R10 -- no --> R11["Removed<br/>warning: not supported"]
+           R9 -- "no: deprecated" --> R11
+       end
+
+       subgraph SETGET["config.set() / config.get()"]
+           S0["Old or current name"] --> S1["Stored and read under<br/>the current name"]
+       end
+
+       R12 --> M[("Model configuration<br/>current names only")]
+       R7 --> M
+       S1 --> M
+
+       subgraph WRITE["Writing sfincs.inp"]
+           M --> W0{"Is the setting newer than<br/>the target sfincs_version?"}
+           W0 -- no --> W1["Written under<br/>the current name"]
+           W0 -- yes --> W2{"Has an<br/>old name?"}
+           W2 -- yes --> W3["Written under the old name<br/>e.g. wavemaker_wvmfile as wvmfile"]
+           W2 -- no --> W4["Not written"]
+       end
+
+The diagram leaves out the general write rules: a setting is only written when it has a value,
+and only when it differs from its default, was set explicitly, or is always required.
+
 Regular grid components
 -----------------------
 These components define the model grid and its physical parameters for SFINCS models on regular grids.

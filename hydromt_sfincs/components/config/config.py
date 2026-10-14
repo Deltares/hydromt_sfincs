@@ -117,6 +117,8 @@ class SfincsConfig(ModelComponent):
             If True and the value is a string or Path, return the absolute path.
         """
 
+        # Legacy keywords (e.g. 'wvmfile') are stored under their current field
+        key = self.data.resolve_key(key)
         value = getattr(self.data, key, fallback)
 
         if value is None and fallback is not None:
