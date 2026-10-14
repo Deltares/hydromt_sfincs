@@ -953,17 +953,6 @@ class SfincsConfigVariables(BaseSettings):
     )
 
     # ================================================================
-    # Vegetation
-    # ================================================================
-    vegetation: int = Field(
-        0,
-        ge=0,
-        le=1,
-        description="Enable vegetation drag (1: on, 0: off)",
-        json_schema_extra={"min_version": "2.1.2"},
-    )
-
-    # ================================================================
     # Bathtub
     # ================================================================
     bathtub: int = Field(

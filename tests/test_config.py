@@ -110,7 +110,6 @@ def test_config_reads_kernel_keywords_without_warning(tmp_path, caplog):
     values = {
         "urbfile": "sfincs.urb",
         "dkbfile": "sfincs.dkb",
-        "vegetation": "1",
         "vegfile": "sfincs.veg.nc",
         "storetzsmax": "1",
         "storezvolmax": "0",
