@@ -20,10 +20,11 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "ALL_VARS",
-    "BUCKET_VARS",
     "DEFAULT_INFILTRATIONFILE",
     "FLAVORS",
     "InfiltrationVariable",
+    "QUADTREE_ONLY_FLAVORS",
+    "QUADTREE_ONLY_VARS",
     "VARIABLES",
     "clear_data",
     "configure",
@@ -110,6 +111,7 @@ VARIABLES: dict[str, InfiltrationVariable] = {
         ("bucket_smax", None, None, "bucket maximum storage", "mm", 0.0),
         ("bucket_k", None, None, "bucket drainage coefficient", "hr-1", 0.0),
         ("bucket_loss", None, None, "bucket loss fraction", "-", 0.0),
+        ("runoff", None, None, "run-off coefficient", "%", 0.0),
     ]
 }
 
@@ -121,9 +123,13 @@ FLAVORS: dict[str, tuple[str, ...]] = {
     "gai": ("psi", "sigma", "ks"),
     "hor": ("f0", "fc", "kd"),
     "bkt": ("bucket_smax", "bucket_k", "bucket_loss"),
+    "r2d": ("runoff",),
 }
 
-BUCKET_VARS = FLAVORS["bkt"]
+QUADTREE_ONLY_FLAVORS = ("bkt", "r2d")
+QUADTREE_ONLY_VARS = tuple(
+    name for flavor in QUADTREE_ONLY_FLAVORS for name in FLAVORS[flavor]
+)
 ALL_VARS = tuple(VARIABLES)
 
 
@@ -204,8 +210,10 @@ def configure(config: "SfincsConfig", flavor: str, grid_type: str) -> None:
     """Update model config for one infiltration flavor."""
     if grid_type not in ("regular", "quadtree"):
         raise ValueError(f"Unsupported grid_type: {grid_type}")
-    if grid_type == "regular" and flavor == "bkt":
-        raise ValueError("Bucket infiltration is only supported on quadtree grids")
+    if grid_type == "regular" and flavor in QUADTREE_ONLY_FLAVORS:
+        raise ValueError(
+            f"Infiltration flavor '{flavor}' is only supported on quadtree grids"
+        )
     reset_config(config)
     if flavor == "con":
         return

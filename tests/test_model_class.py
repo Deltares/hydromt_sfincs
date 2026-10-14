@@ -285,7 +285,7 @@ def test_cn_from_landuse_hsg_regular(model):
 
 
 def test_process_infiltration_regular_io(model):
-    assert not {"bucket_smax", "bucket_k", "bucket_loss"}.intersection(
+    assert not {"bucket_smax", "bucket_k", "bucket_loss", "runoff"}.intersection(
         model.infiltration.grid_variables
     )
     active = model.grid.mask > 0

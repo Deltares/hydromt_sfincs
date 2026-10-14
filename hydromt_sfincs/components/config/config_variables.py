@@ -838,7 +838,7 @@ class SfincsConfigVariables(BaseSettings):
     )
     inftype: str | None = Field(
         None,
-        description="SFINCS infiltration flavor used with inffile (con, c2d, cna, cnb, gai, hor, or bkt)",
+        description="SFINCS infiltration flavor used with inffile (con, c2d, cna, cnb, gai, hor, bkt, or r2d)",
     )
     infiltration_file: str | None = Field(
         None,
