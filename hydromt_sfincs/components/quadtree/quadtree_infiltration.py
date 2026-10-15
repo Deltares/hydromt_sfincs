@@ -148,8 +148,85 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             Maximum number of cells per quadtree block.
         """
         logger.info("Creating constant spatially varying infiltration rate.")
-        qinf = self._map_from_raster_or_lulc(
-            "qinf", qinf, lulc, reclass_table, reproj_method, nrmax
+
+        # get infiltration data
+        if qinf is not None:
+            da_qinf = self.data_catalog.get_rasterdataset(
+                qinf,
+                bbox=self.model.bbox,
+                variables=["qinf"],
+                buffer=10,
+            )
+        # TODO check if this one is really necessary?
+        # elif lulc is not None and ksat is not None:
+        #     da_ksat = self.data_catalog.get_rasterdataset(
+        #         ksat, bbox=self.model.bbox, buffer=10
+        #     )
+        #     da_lulc = self.data_catalog.get_rasterdataset(
+        #         lulc, bbox=self.model.bbox, buffer=10
+        #     )
+        #     if lulc_modifier_table is None:
+        #         lulc_modifier_table = (
+        #             Path(DATADIR)
+        #             / "infiltration"
+        #             / "nlcd_infiltration_modifiers.csv"
+        #         )
+        #     if isinstance(lulc_modifier_table, pd.DataFrame):
+        #         df_modifiers = lulc_modifier_table.copy()
+        #     else:
+        #         df_modifiers = self.data_catalog.get_dataframe(
+        #             lulc_modifier_table,
+        #             source_kwargs={
+        #                 "driver": {"name": "pandas", "options": {"index_col": 0}}
+        #             },
+        #         )
+        #     da_qinf = workflows.constant_infiltration_from_ksat_lulc(
+        #         da_ksat,
+        #         da_lulc,
+        #         df_modifiers,
+        #         da_mask=self.mask,
+        #         factor_ksat=factor_ksat,
+        #     )
+        elif lulc is not None:
+            # landuse/landcover should always be combined with mapping
+            if reclass_table is None:
+                raise IOError(
+                    f"Infiltration mapping file should be provided for {lulc}"
+                )
+            da_lulc = self.data_catalog.get_rasterdataset(
+                lulc,
+                bbox=self.model.bbox,
+                buffer=10,
+                variables=["lulc"],
+            )
+            df_map = self.data_catalog.get_dataframe(
+                reclass_table,
+                variables=["qinf"],
+                source_kwargs={
+                    "driver": {"name": "pandas", "options": {"index_col": 0}}
+                },
+            )
+            # reclassify
+            da_qinf = da_lulc.raster.reclassify(df_map)["qinf"]
+        else:
+            raise ValueError(
+                "Either qinf or lulc must be provided when setting up constant infiltration."
+            )
+
+        # set nodata to nan before reprojecting/interpolating
+        da_qinf = da_qinf.raster.mask_nodata()
+
+        n_cells = self.data.grid.n_face
+        qinf = np.full(n_cells, np.nan)
+
+        def compute_constant_infiltration(da_like, ilev=None):
+            # reproject infiltration data to model grid
+            return da_qinf.raster.reproject_like(da_like, method=reproj_method)
+
+        self.compute_quadtree(
+            compute_constant_infiltration,
+            qinf,
+            nrmax=nrmax,
         )
         self._set_layers({"qinf": qinf}, flavor="c2d")
 
@@ -188,37 +265,15 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             Maximum number of cells per quadtree block.
         """
         logger.info("Creating spatially varying run-off coefficient.")
-        runoff = self._map_from_raster_or_lulc(
-            "runoff", runoff, lulc, reclass_table, reproj_method, nrmax
-        )
-        if np.nanmin(runoff) < 0.0 or np.nanmax(runoff) > 100.0:
-            raise ValueError(
-                "Run-off coefficients must be a percentage between 0 and 100."
-            )
-        self._set_layers({"runoff": runoff}, flavor="r2d")
 
-    def _map_from_raster_or_lulc(
-        self,
-        name: str,
-        data: Union[str, Path, xr.DataArray, xr.Dataset, None],
-        lulc: Union[str, Path, xr.DataArray, xr.Dataset, None],
-        reclass_table: Union[str, Path, pd.DataFrame, None],
-        reproj_method: str,
-        nrmax: int,
-    ) -> np.ndarray:
-        """Return ``name`` on the quadtree faces from a raster or reclassified lulc."""
-        if data is not None:
-            da = self.data_catalog.get_rasterdataset(
-                data,
+        if runoff is not None:
+            da_runoff = self.data_catalog.get_rasterdataset(
+                runoff,
                 bbox=self.model.bbox,
+                variables=["runoff"],
                 buffer=10,
             )
-            if isinstance(da, xr.Dataset):
-                if name not in da.data_vars:
-                    raise ValueError(f"Could not find variable {name} in {data}")
-                da = da[name]
         elif lulc is not None:
-            # landuse/landcover should always be combined with mapping
             if reclass_table is None:
                 raise IOError(
                     f"Infiltration mapping file should be provided for {lulc}"
@@ -231,26 +286,27 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             )
             df_map = self.data_catalog.get_dataframe(
                 reclass_table,
-                variables=[name],
+                variables=["runoff"],
                 source_kwargs={
                     "driver": {"name": "pandas", "options": {"index_col": 0}}
                 },
             )
-            # reclassify
-            da = da_lulc.raster.reclassify(df_map)[name]
+            da_runoff = da_lulc.raster.reclassify(df_map)["runoff"]
         else:
-            raise ValueError(f"Either {name} or lulc must be provided.")
+            raise ValueError("Either runoff or lulc must be provided.")
 
-        # set nodata to nan before reprojecting/interpolating
-        da = da.raster.mask_nodata()
+        da_runoff = da_runoff.raster.mask_nodata()
+        runoff = np.full(self.data.grid.n_face, np.nan)
 
-        values = np.full(self.data.grid.n_face, np.nan)
+        def compute_runoff(da_like, ilev=None):
+            return da_runoff.raster.reproject_like(da_like, method=reproj_method)
 
-        def compute_block(da_like, ilev=None):
-            return da.raster.reproject_like(da_like, method=reproj_method)
-
-        self.compute_quadtree(compute_block, values, nrmax=nrmax)
-        return values
+        self.compute_quadtree(compute_runoff, runoff, nrmax=nrmax)
+        if np.nanmin(runoff) < 0.0 or np.nanmax(runoff) > 100.0:
+            raise ValueError(
+                "Run-off coefficients must be a percentage between 0 and 100."
+            )
+        self._set_layers({"runoff": runoff}, flavor="r2d")
 
     @hydromt_step
     def create_cn(
