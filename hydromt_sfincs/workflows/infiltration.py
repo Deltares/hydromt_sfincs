@@ -51,6 +51,22 @@ DUAL_HSG_DRAINED_MAPPING = {
 
 
 def _ensure_modifier_dataframe(df_modifiers: pd.DataFrame) -> pd.DataFrame:
+    """Validate and select the required land-use modifier columns.
+
+    The land-use class may be supplied as the index or in a ``lulc`` column.
+
+    Parameters
+    ----------
+    df_modifiers : pd.DataFrame
+        Modifier table containing ``surface_factor``, ``storage_factor``, and
+        ``drainage_factor`` columns.
+
+    Returns
+    -------
+    pd.DataFrame
+        Modifier table with only the required columns and land-use classes as
+        its index.
+    """
     df = df_modifiers
     if "lulc" in df.columns:
         df = df.set_index("lulc")
@@ -68,8 +84,22 @@ def _modifier_layers(
 ) -> xr.Dataset:
     """Reclassify land-use classes into infiltration modifier factors.
 
-    ``df_modifiers`` is indexed by land-use class, so any land-cover product can
-    be used as long as a matching table is supplied.
+    Unmatched finite classes receive ``default`` for each modifier, while
+    raster nodata remains nodata.
+
+    Parameters
+    ----------
+    da_lulc : xr.DataArray
+        Land-use or land-cover class raster.
+    df_modifiers : pd.DataFrame
+        Modifier table indexed by land-use class.
+    default : float, optional
+        Neutral value used for unmatched classes, by default 1.0.
+
+    Returns
+    -------
+    xr.Dataset
+        Raster layers for the surface, storage, and drainage factors.
     """
     df = _ensure_modifier_dataframe(df_modifiers)
     nodata = da_lulc.raster.nodata
@@ -99,7 +129,23 @@ def ksat_to_mmhr(
     da_ksat: xr.DataArray,
     factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
 ) -> xr.DataArray:
-    """Convert saturated hydraulic conductivity to mm/hr."""
+    """Convert saturated hydraulic conductivity to mm/hr.
+
+    Negative and missing input values are returned as zero.
+
+    Parameters
+    ----------
+    da_ksat : xr.DataArray
+        Saturated hydraulic conductivity raster.
+    factor_ksat : float, optional
+        Multiplier converting input values to mm/hr, by default
+        ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
+
+    Returns
+    -------
+    xr.DataArray
+        Conductivity in mm/hr.
+    """
     # negative Ksat is physically impossible, so it marks undeclared nodata such
     # as a raw -9999 that was never converted to NaN
     da_ksat = da_ksat.astype(np.float32).where(da_ksat >= 0.0)
@@ -111,7 +157,25 @@ def normalize_hsg_codes(
     da_hsg: xr.DataArray,
     mode: str | None = "drained",
 ) -> xr.DataArray:
-    """Normalize single- and dual-HSG classes to the requested convention. Note"""
+    """Normalize single- and dual-HSG classes to the requested convention.
+
+    In ``drained`` mode, dual classes 5-8 map to drained classes 1-4. Other
+    finite values not represented by the mapping become NaN. ``None``,
+    ``"none"``, and ``"native"`` leave class values unchanged.
+
+    Parameters
+    ----------
+    da_hsg : xr.DataArray
+        Raster of hydrologic soil group classes.
+    mode : str or None, optional
+        Normalization convention: ``"drained"`` (default) or a native mode
+        (``None``, ``"none"``, or ``"native"``).
+
+    Returns
+    -------
+    xr.DataArray
+        HSG raster normalized to the requested convention.
+    """
     if mode in (None, "none", "native"):
         return da_hsg.astype(np.float32)
     if mode != "drained":
@@ -129,7 +193,22 @@ def normalize_hsg_codes(
 
 
 def _reclassify_hsg(da_hsg: xr.DataArray, df_map: pd.DataFrame) -> xr.Dataset:
-    """Reclassify HSG values while preserving the raster's declared NoData."""
+    """Map HSG classes to parameter layers and report unmapped finite values.
+
+    The raster's declared nodata value is preserved during reclassification.
+
+    Parameters
+    ----------
+    da_hsg : xr.DataArray
+        Raster of hydrologic soil group classes.
+    df_map : pd.DataFrame
+        Parameter table indexed by HSG class.
+
+    Returns
+    -------
+    xr.Dataset
+        Reclassified parameter rasters, one variable per table column.
+    """
     nodata = da_hsg.raster.nodata
     if nodata is not None and np.isfinite(nodata):
         df_map = df_map.copy()
@@ -147,7 +226,28 @@ def _reclassify_hsg(da_hsg: xr.DataArray, df_map: pd.DataFrame) -> xr.Dataset:
 
 
 def cn_to_s(da_cn, da_mask=None, nodata=-9999, output_unit="inch"):
-    """Convert Curve Numbers to potential maximum soil moisture retention S."""
+    """Convert curve numbers to potential maximum soil moisture retention S.
+
+    Nodata curve numbers are treated as 100, and curve numbers are floored at
+    1. Retention is rounded to 0.001 inches before optional conversion to
+    metres.
+
+    Parameters
+    ----------
+    da_cn : xr.DataArray
+        Curve-number raster.
+    da_mask : xr.DataArray, optional
+        Boolean or binary mask; cells outside the mask are set to ``nodata``.
+    nodata : float, optional
+        Output nodata value, by default -9999.
+    output_unit : {"inch", "m"}, optional
+        Output unit for S, by default ``"inch"``.
+
+    Returns
+    -------
+    xr.DataArray
+        Potential maximum soil moisture retention S in the requested unit.
+    """
     # nodata is mapped to CN 100 (zero infiltration); CN is floored at 1
     da_cn = np.maximum(1, da_cn.raster.mask_nodata().fillna(100))
     da_s = np.maximum(1000 / da_cn - 10, 0).round(3)
@@ -169,7 +269,27 @@ def curve_number_from_landuse_hsg(
     da_hsg: xr.DataArray,
     df_map: pd.DataFrame,
 ) -> xr.DataArray:
-    """Map already-read land use and HSG rasters to curve numbers."""
+    """Map land-use and HSG classes to curve numbers.
+
+    HSG values are nearest-neighbour reprojected onto the land-use grid before
+    the two classes are looked up in ``df_map``.
+
+    Parameters
+    ----------
+    da_lulc : xr.DataArray
+        Land-use or land-cover class raster; defines the output grid.
+    da_hsg : xr.DataArray
+        Hydrologic soil group class raster.
+    df_map : pd.DataFrame
+        Curve-number table indexed by land-use class, with HSG classes as
+        columns.
+
+    Returns
+    -------
+    xr.DataArray
+        Curve numbers on the land-use grid; unmapped and nonpositive values
+        are NaN.
+    """
     da_cn = xr.full_like(da_lulc, np.nan, dtype=np.float32).rename("cn")
 
     # Interpolate soil type to landuse
@@ -186,7 +306,24 @@ def adjust_curve_number(
     da_cn: xr.DataArray,
     antecedent_moisture: str | None = "avg",
 ) -> xr.DataArray:
-    """Adjust CN-II values to the requested antecedent moisture condition."""
+    """Adjust CN-II values to a requested antecedent moisture condition.
+
+    Average-condition values are returned unchanged. Dry and wet values are
+    converted using the standard empirical CN relationships and clipped to
+    [0, 100].
+
+    Parameters
+    ----------
+    da_cn : xr.DataArray
+        Curve-number raster for average antecedent moisture.
+    antecedent_moisture : {"avg", "dry", "wet"} or None, optional
+        Target condition, by default ``"avg"``.
+
+    Returns
+    -------
+    xr.DataArray
+        Curve numbers adjusted to the requested condition.
+    """
     if antecedent_moisture in (None, "avg"):
         return da_cn.astype(np.float32)
     if antecedent_moisture == "dry":
@@ -213,19 +350,34 @@ def curve_number_with_recovery(
 ) -> xr.Dataset:
     """Estimate SCS curve-number-with-recovery parameters.
 
-    All inputs must be already-read xarray objects and a pandas DataFrame.
+    Curve numbers are derived from land use and HSG, converted to maximum soil
+    retention, then combined with Ksat to calculate effective retention and
+    recovery rate. Inputs must already be-read xarray objects and a DataFrame.
 
     Parameters
     ----------
+    da_lulc : xr.DataArray
+        Land-use or land-cover class raster.
+    da_hsg : xr.DataArray
+        Hydrologic soil group class raster.
+    da_ksat : xr.DataArray
+        Saturated hydraulic conductivity raster.
+    df_map : pd.DataFrame
+        Curve-number table indexed by land-use class, with HSG classes as
+        columns.
     effective : float
-        Fraction of ``smax`` that is effective soil retention, e.g. 0.5 for 50%.
+        Fraction of ``smax`` used for effective retention, e.g. 0.5 for 50%.
     factor_ksat : float, optional
-        Factor converting Ksat to mm/hr, by default micrometer per second to mm/hr.
-    ksat_max : float, optional
-        Upper cap applied to raw Ksat before unit conversion, following the
-        recovery-rate ranges of SWMM Table 4.7. Set to None to disable.
-    da_mask : xr.DataArray, optional
-        If given, outputs are reprojected onto this grid using 'average'.
+        Conversion factor to mm/hr, by default
+        ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
+    ksat_max : float or None, optional
+        Upper cap for converted Ksat in mm/hr; None disables the cap, by
+        default 100.0.
+
+    Returns
+    -------
+    xr.Dataset
+        ``smax`` and ``seff`` in metres and ``ks`` in mm/hr.
     """
     # Derive curve number from land use and HSG
     da_cn = curve_number_from_landuse_hsg(da_lulc, da_hsg, df_map)
@@ -264,7 +416,34 @@ def constant_infiltration_from_ksat_lulc(
 ) -> xr.DataArray:
     """Estimate spatially varying constant infiltration from Ksat and land use.
 
-    All inputs must be already-read xarray objects and a pandas DataFrame.
+    Ksat is converted to mm/hr and normalized between active-domain 5th and
+    95th percentiles. The normalized value is scaled by the land-use surface
+    modifier. Inputs must already be-read xarray objects and a DataFrame.
+
+    Parameters
+    ----------
+    da_ksat : xr.DataArray
+        Saturated hydraulic conductivity raster.
+    da_lulc : xr.DataArray
+        Land-use or land-cover class raster.
+    df_modifiers : pd.DataFrame
+        Modifier table indexed by land-use class.
+    da_mask : xr.DataArray, optional
+        Active-cell mask used to determine Ksat percentiles.
+    factor_ksat : float, optional
+        Conversion factor to mm/hr, by default
+        ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
+    qinf_min, qinf_max : float, optional
+        Minimum and maximum output infiltration rates, by default 0.01 and
+        19.9.
+    base_min, base_max : float, optional
+        Infiltration range before applying the land-use modifier, by default
+        0.1 and 15.0.
+
+    Returns
+    -------
+    xr.DataArray
+        Spatially varying constant infiltration rate.
     """
     df_modifiers = _ensure_modifier_dataframe(df_modifiers)
     surface_factor = _modifier_layers(da_lulc, df_modifiers)["surface_factor"]
@@ -312,7 +491,10 @@ def green_ampt_from_hsg(
     factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
 ) -> xr.Dataset:
     """Estimate Green-Ampt parameters from HSG classes and optional Ksat.
-    Note that ks will be derived from da_ksat if provided, otherwise it must be included in df_map.
+
+    ``psi`` and ``sigma`` are reclassified from ``df_map``. ``ks`` is derived
+    from ``da_ksat`` when supplied; otherwise the table must include ``ks``.
+    Inputs must already be-read xarray objects and a DataFrame.
 
     Parameters
     ----------
@@ -321,7 +503,8 @@ def green_ampt_from_hsg(
     df_map : pd.DataFrame
         Mapping from HSG classes to Green-Ampt parameters psi, sigma (and optionally ks).
     da_ksat : xr.DataArray, optional
-        Saturated hydraulic conductivity, by default None.
+        Saturated hydraulic conductivity; when supplied it overrides table
+        ``ks`` and is converted to mm/hr, by default None.
     factor_ksat : float, optional
         Conversion factor for Ksat, by default MICROMETER_PER_SECOND_TO_MM_PER_HOUR.
 
@@ -356,7 +539,32 @@ def green_ampt_from_hsg_landuse(
 ) -> xr.Dataset:
     """Estimate Green-Ampt parameters from soil classes, Ksat, and land use.
 
-    All inputs must be already-read xarray objects and pandas DataFrames.
+    Starts with :func:`green_ampt_from_hsg`, then scales ``sigma`` by the
+    storage modifier and ``ks`` by the surface modifier. Inputs must already
+    be-read xarray objects and DataFrames.
+
+    Parameters
+    ----------
+    da_hsg : xr.DataArray
+        Hydrologic soil group class raster.
+    da_lulc : xr.DataArray
+        Land-use or land-cover class raster.
+    df_map : pd.DataFrame
+        Green-Ampt parameter table indexed by HSG class.
+    df_modifiers : pd.DataFrame
+        Land-use modifier table indexed by class.
+    da_ksat : xr.DataArray, optional
+        Saturated hydraulic conductivity raster; overrides table ``ks``.
+    factor_ksat : float, optional
+        Conversion factor to mm/hr, by default
+        ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
+    dual_hsg : str or None, optional
+        HSG normalization mode, by default ``"drained"``.
+
+    Returns
+    -------
+    xr.Dataset
+        Green-Ampt ``psi``, ``sigma``, and ``ks`` rasters.
     """
     da_hsg = normalize_hsg_codes(da_hsg, mode=dual_hsg)
     ds = green_ampt_from_hsg(
@@ -382,7 +590,26 @@ def horton_from_hsg(
 ) -> xr.Dataset:
     """Estimate Horton parameters from HSG classes and optional Ksat.
 
-    All inputs must be already-read xarray objects and a pandas DataFrame.
+    Reclassifies ``kd`` and either ``fc``/``f0`` or ``fc_scale``/``f0_scale``.
+    If Ksat is supplied, it determines ``fc`` and the optional ``fc_scale`` is
+    applied. Inputs must already be-read xarray objects and a DataFrame.
+
+    Parameters
+    ----------
+    da_hsg : xr.DataArray
+        Hydrologic soil group class raster.
+    df_map : pd.DataFrame
+        Horton parameter table indexed by HSG class.
+    da_ksat : xr.DataArray, optional
+        Saturated hydraulic conductivity raster used to derive ``fc``.
+    factor_ksat : float, optional
+        Conversion factor to mm/hr, by default
+        ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
+
+    Returns
+    -------
+    xr.Dataset
+        Horton ``f0``, ``fc``, and ``kd`` rasters.
     """
     ds = _reclassify_hsg(da_hsg, df_map)
     if da_ksat is not None:
@@ -413,7 +640,32 @@ def horton_from_hsg_landuse(
 ) -> xr.Dataset:
     """Estimate Horton parameters from soil classes, Ksat, and land use.
 
-    All inputs must be already-read xarray objects and pandas DataFrames.
+    Starts with :func:`horton_from_hsg`, then applies land-use surface,
+    storage, and drainage modifiers. Inputs must already be-read xarray
+    objects and DataFrames.
+
+    Parameters
+    ----------
+    da_hsg : xr.DataArray
+        Hydrologic soil group class raster.
+    da_lulc : xr.DataArray
+        Land-use or land-cover class raster.
+    df_map : pd.DataFrame
+        Horton parameter table indexed by HSG class.
+    df_modifiers : pd.DataFrame
+        Land-use modifier table indexed by class.
+    da_ksat : xr.DataArray, optional
+        Saturated hydraulic conductivity raster used to derive ``fc``.
+    factor_ksat : float, optional
+        Conversion factor to mm/hr, by default
+        ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
+    dual_hsg : str or None, optional
+        HSG normalization mode, by default ``"drained"``.
+
+    Returns
+    -------
+    xr.Dataset
+        Horton ``f0``, ``fc``, and ``kd`` rasters.
     """
     da_hsg = normalize_hsg_codes(da_hsg, mode=dual_hsg)
     ds = horton_from_hsg(
@@ -445,7 +697,29 @@ def bucket_from_hsg(
 ) -> xr.Dataset:
     """Estimate bucket parameters from HSG classes and optional Ksat.
 
-    All inputs must be already-read xarray objects and a pandas DataFrame.
+    Storage is derived from ``storage_depth_mm * effective_fraction`` when
+    needed. Drainage is derived from Ksat or ``residence_time_hr`` if the
+    table does not provide ``bucket_k``. Inputs must already be-read xarray
+    objects and a DataFrame.
+
+    Parameters
+    ----------
+    da_hsg : xr.DataArray
+        Hydrologic soil group class raster.
+    df_map : pd.DataFrame
+        Bucket parameter table indexed by HSG class.
+    da_ksat : xr.DataArray, optional
+        Saturated hydraulic conductivity raster used to derive ``bucket_k``.
+    factor_ksat : float, optional
+        Conversion factor to mm/hr, by default
+        ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
+    bucket_loss : float, optional
+        Loss fraction used when the table has no ``bucket_loss`` column.
+
+    Returns
+    -------
+    xr.Dataset
+        Bucket ``bucket_smax``, ``bucket_k``, and ``bucket_loss`` rasters.
     """
     ds = _reclassify_hsg(da_hsg, df_map)
     if "bucket_smax" not in ds:
@@ -497,7 +771,34 @@ def bucket_from_hsg_landuse(
 ) -> xr.Dataset:
     """Estimate bucket parameters from soil classes, Ksat, and land use.
 
-    All inputs must be already-read xarray objects and pandas DataFrames.
+    Starts with :func:`bucket_from_hsg`, then scales storage and drainage by
+    land-use modifiers. Inputs must already be-read xarray objects and
+    DataFrames.
+
+    Parameters
+    ----------
+    da_hsg : xr.DataArray
+        Hydrologic soil group class raster.
+    da_lulc : xr.DataArray
+        Land-use or land-cover class raster.
+    df_map : pd.DataFrame
+        Bucket parameter table indexed by HSG class.
+    df_modifiers : pd.DataFrame
+        Land-use modifier table indexed by class.
+    da_ksat : xr.DataArray, optional
+        Saturated hydraulic conductivity raster used to derive ``bucket_k``.
+    factor_ksat : float, optional
+        Conversion factor to mm/hr, by default
+        ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
+    dual_hsg : str or None, optional
+        HSG normalization mode, by default ``"drained"``.
+    bucket_loss : float or None, optional
+        Loss fraction, by default 0.10. ``None`` also selects 0.10.
+
+    Returns
+    -------
+    xr.Dataset
+        Bucket ``bucket_smax``, ``bucket_k``, and ``bucket_loss`` rasters.
     """
     da_hsg = normalize_hsg_codes(da_hsg, mode=dual_hsg)
     ds = bucket_from_hsg(
