@@ -328,7 +328,7 @@ class SfincsRivers(ModelComponent):
                 hydrography,
                 bbox=self.model.bbox,
                 variables=["uparea", "flwdir"],
-                buffer=10000,
+                buffer=10,
             )
             da_uparea = ds["uparea"]  # reused in river_source_points
         # get river centerlines
@@ -367,7 +367,7 @@ class SfincsRivers(ModelComponent):
         )
 
         if gdf_out.empty:
-            self.logger.info("No river outflow points found.")
+            logger.info("No river outflow points found.")
             return
 
         gdf_out_lines = gdf_out.copy()
