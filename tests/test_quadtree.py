@@ -121,13 +121,13 @@ def test_quadtree_layer_read_matches_main_grid(quadtree_model, values):
         for name, value in values.items()
     }
     grid.set(xu.UgridDataset(xr.Dataset(layers), grid.data.grid))
-    grid.write_layers(list(values), "inffile", "sfincs.infiltration.nc")
+    grid._write_layers(list(values), "inffile", "sfincs.infiltration.nc")
     sidecar = quadtree_model.config.get("inffile", abs_path=True)
 
     mod = SfincsModel(root=join(TESTDATADIR, "sfincs_test_quadtree"), mode="r")
     mod.config.read()
     mod.quadtree_grid.read()
-    mod.quadtree_grid.read_layers(sidecar)
+    mod.quadtree_grid._read_layers(sidecar)
 
     for name, value in values.items():
         assert np.allclose(mod.quadtree_grid.data[name].values, value)
@@ -142,7 +142,7 @@ def test_quadtree_layer_read_rejects_different_grid(quadtree_model, tmp_path):
         name="qinf",
     )
     grid.set(xu.UgridDataset(xr.Dataset({"qinf": qinf}), grid.data.grid))
-    grid.write_layers(["qinf"], "inffile", "sfincs.infiltration.nc")
+    grid._write_layers(["qinf"], "inffile", "sfincs.infiltration.nc")
     sidecar = quadtree_model.config.get("inffile", abs_path=True)
 
     with xr.open_dataset(sidecar) as source:
@@ -155,7 +155,7 @@ def test_quadtree_layer_read_rejects_different_grid(quadtree_model, tmp_path):
     mod.config.read()
     mod.quadtree_grid.read()
     with pytest.raises(ValueError, match="topology does not match"):
-        mod.quadtree_grid.read_layers(mismatched_file)
+        mod.quadtree_grid._read_layers(mismatched_file)
 
 
 def test_quadtree_write_skips_layer_that_was_never_created(quadtree_model, caplog):

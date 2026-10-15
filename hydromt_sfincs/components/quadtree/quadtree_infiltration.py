@@ -92,14 +92,14 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         filename = self.model.config.get("inffile", abs_path=True)
         if filename is None or not filename.is_file():
             return
-        self.model.quadtree_grid.read_layers(filename)
+        self.model.quadtree_grid._read_layers(filename)
 
     def write(self) -> None:
         """Write the infiltration layers to their own file."""
         flavor = configured_flavor(self.model.config, grid_type="quadtree")
         if flavor is None or flavor == "con":
             return
-        self.model.quadtree_grid.write_layers(
+        self.model.quadtree_grid._write_layers(
             flavor_variables(flavor), "inffile", DEFAULT_INFILTRATIONFILE
         )
 

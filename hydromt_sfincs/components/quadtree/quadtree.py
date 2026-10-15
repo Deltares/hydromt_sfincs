@@ -52,7 +52,7 @@ class SfincsQuadtreeGrid(MeshComponent):
     component may claim the layers it is responsible for through a
     ``grid_variables`` attribute. ``write()`` keeps those out of ``sfincs.nc``
     unless called with ``write_components=True``; the component writes them to
-    its own UGRID netcdf through :py:meth:`write_layers`. Anything not claimed
+    its own UGRID netcdf through :py:meth:`_write_layers`. Anything not claimed
     stays in the main file.
     """
 
@@ -198,7 +198,7 @@ class SfincsQuadtreeGrid(MeshComponent):
                 ds[coord].attrs["grid_mapping"] = crs_var_name
         return ds
 
-    def write_layers(
+    def _write_layers(
         self,
         variables: List[str],
         config_key: str,
@@ -239,7 +239,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         ds = self._add_cf_metadata(ds)
         ds.to_netcdf(filename)
 
-    def read_layers(self, filename: Union[str, Path]) -> None:
+    def _read_layers(self, filename: Union[str, Path]) -> None:
         """Read face variables from a standalone UGRID netcdf file into `data`."""
         ds = xu.load_dataset(filename)
         grid = self.data.grid
