@@ -17,6 +17,47 @@ def test_ind(reggrid, mask):
     assert ind.size == np.sum(mask > 0)
 
 
+def test_grid_read_loads_index_once(model_config):
+    grid = model_config.grid
+    with patch("numpy.fromfile", wraps=np.fromfile) as read_file:
+        grid.read()
+        grid._read_layers(["dep"])
+        grid._read_layers(["dep"])
+    index_path = model_config.config.get("indexfile", abs_path=True)
+    index_reads = [
+        call for call in read_file.call_args_list if call.args[0] == index_path
+    ]
+    assert len(index_reads) == 1
+
+
+def test_read_ind_reads_file(model_init, tmp_path):
+    grid = model_init.grid
+    index_path = tmp_path / "sfincs.ind"
+    np.array([2, 1, 3], dtype="u4").tofile(index_path)
+    with patch("numpy.fromfile", wraps=np.fromfile) as read_file:
+        np.testing.assert_array_equal(grid.read_ind(index_path), [0, 2])
+        np.testing.assert_array_equal(grid.read_ind(index_path), [0, 2])
+        assert read_file.call_count == 2
+
+
+def test_indices_use_file_then_refresh_from_mask(model_config, tmp_path):
+    grid = model_config.grid
+    np.testing.assert_array_equal(
+        grid.indices,
+        grid.read_ind(model_config.config.get("indexfile", abs_path=True)),
+    )
+    grid.read()
+    original_indices = grid.indices.copy()
+    grid.data["mask"].values[:] = 0
+    grid.data["mask"].values[0, 0] = 1
+    np.testing.assert_array_equal(grid.indices, original_indices)
+    grid.data["dep"].values[:] = 0
+    grid.root.set(tmp_path, mode="w+")
+    grid.model.config.write()
+    grid.write()
+    np.testing.assert_array_equal(grid.indices, [0])
+
+
 def test_grid_io(model_config, tmp_path):
     # create a model instance with configuration read
     model = model_config

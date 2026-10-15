@@ -63,7 +63,7 @@ class SfincsGrid(GridComponent):
     A component may claim the layers it is responsible for through a
     ``grid_variables`` attribute. ``write()`` skips those layers unless called
     with ``write_components=True``; the component writes them itself through
-    :py:meth:`write_layers`. ``read()`` stays permissive and loads whatever
+    :py:meth:`_write_layers`. ``read()`` stays permissive and loads whatever
     exists on disk.
 
     This grid always owns the cell index file (``sfincs.ind``), the mask and the
@@ -90,6 +90,7 @@ class SfincsGrid(GridComponent):
         )
         # initialize data attribute
         self._data = None
+        self._indices = None
 
     @property
     def transform(self):
@@ -172,6 +173,25 @@ class SfincsGrid(GridComponent):
         return da_mask
 
     @property
+    def indices(self) -> np.ndarray:
+        """Return active-cell indices in SFINCS (south-to-north) order.
+
+        Return the index loaded for existing maps, or derive it from the current
+        mask when the grid is newly created.
+        """
+        if self._indices is not None:
+            return self._indices
+        if self._data is not None:
+            mask = self.mask
+            if mask.raster.res[1] < 0:
+                mask = mask.raster.flipud()
+            return self.ind(mask.values)
+        self._indices = self.read_ind(
+            self.model.config.get("indexfile", fallback="sfincs.ind", abs_path=True)
+        )
+        return self._indices
+
+    @property
     def region(self) -> gpd.GeoDataFrame:
         """Return the active region of the regular grid."""
         if "mask" in self.data and np.any(self.data["mask"] > 0):
@@ -193,9 +213,8 @@ class SfincsGrid(GridComponent):
         """Read SFINCS binary grid files and save to `data` attribute.
         Filenames are taken from the `model.config` attribute (i.e. input file).
 
-        Reading is permissive: every map listed in ``_MAPS`` that exists on disk
-        is loaded, including layers owned by a component. Writing is not - see
-        :py:meth:`write`.
+        Reads the mask and elevation. Component-owned layers are loaded only
+        when ``read_components`` is True, or through component ``read()`` methods.
 
         Parameters
         ----------
@@ -211,44 +230,14 @@ class SfincsGrid(GridComponent):
         # first update grid from config
         self.update_grid_from_config()
 
-        # now read in the actual files
-        da_lst = []
-        data_vars = ["mask", "dep"]
-        provide_warnings = False  # all variables are asked, so no warnings
-
-        # read index file
         ind_fn = self.model.config.get(
             "indexfile", fallback="sfincs.ind", abs_path=True
         )
         if not isfile(ind_fn):
             raise IOError(f".ind path {ind_fn} does not exist")
-
-        dtypes = {"mask": "u1"}
-        mvs = {"mask": 0}
-        ind = self.read_ind(ind_fn=ind_fn)
-
-        for name in data_vars:
-            if name == "mask":
-                # mask is special, it is always read
-                fn = self.model.config.get_set_file_variable("mskfile", "sfincs.msk")
-            else:
-                config_key, fallback = _MAP_EXCEPTIONS.get(
-                    name, (f"{name}file", f"sfincs.{name}")
-                )
-                fn = self.model.config.get(config_key, fallback=fallback, abs_path=True)
-            if not isfile(fn):
-                if provide_warnings:
-                    logger.warning(f"{name}file not found at {fn}")
-                continue
-            dtype = dtypes.get(name, "f4")
-            mv = mvs.get(name, np.nan)
-            da = self.read_map(fn, ind, dtype, mv, name=name)
-            da_lst.append(da)
-        ds = xr.merge(da_lst)
-        epsg = self.model.config.get("epsg", None)
-        if epsg is not None:
-            ds.raster.set_crs(epsg)
-        self.set(ds)
+        self._indices = None
+        self._indices = self.read_ind(ind_fn=ind_fn)
+        self._read_layers(["mask", "dep"])
 
         if read_components:
             # after the grid itself, so the components find the mask and index
@@ -276,15 +265,15 @@ class SfincsGrid(GridComponent):
             Also write the layers owned by other components, by calling their
             ``write()`` after the index file exists, by default False.
         """
-        self.root._assert_write_mode
+        self.root._assert_write_mode()
 
-        dtypes = {"mask": "u1"}  # default to f4
         if len(self.data.data_vars) > 0 and "mask" in self.data:
             # make sure orientation is S->N
             ds_out = self.data
             if ds_out.raster.res[1] < 0:
                 ds_out = ds_out.raster.flipud()
             mask = ds_out["mask"].values
+            self._indices = self.ind(mask)
 
             logger.debug("Write binary map indices based on mask.")
             if self.model.config.get("indexfile") is None:
@@ -301,39 +290,12 @@ class SfincsGrid(GridComponent):
                 owned.update(getattr(component, "grid_variables", ()) or ())
             data_vars = [v for v in _MAPS if v in ds_out and v not in owned]
             # always rewrite the mask
-            if "mask" not in data_vars:
-                data_vars.append("mask")
+            for name in ("mask", "dep"):
+                if name in ds_out and name not in data_vars:
+                    data_vars.append(name)
 
             logger.debug(f"Write binary map files: {data_vars}.")
-            for name in data_vars:
-                # Set file name and get absolute path
-                if name == "mask":
-                    abs_file_path = self.model.config.get_set_file_variable(
-                        "mskfile", default="sfincs.msk"
-                    )
-                else:
-                    config_key, default = _MAP_EXCEPTIONS.get(
-                        name, (f"{name}file", f"sfincs.{name}")
-                    )
-                    abs_file_path = self.model.config.get_set_file_variable(
-                        config_key, default=default
-                    )
-
-                # write to binary model files
-                self.write_map(
-                    map_fn=abs_file_path,
-                    data=ds_out[name].values,
-                    mask=mask,
-                    dtype=dtypes.get(name, "f4"),
-                )
-
-                # write to gis-files for visualization
-                if self.model.write_gis:
-                    writers.write_raster(
-                        ds_out[name],
-                        root=join(self.model.root.path, "gis"),
-                        mask=mask,
-                    )
+            self._write_layers(data_vars)
 
             # write the model region to a geojson file for visualization
             if self.model.write_gis:
@@ -402,6 +364,7 @@ class SfincsGrid(GridComponent):
 
         # set the grid in the model data
         self.set(ds)
+        self._indices = None
 
     @hydromt_step
     def create_from_region(
@@ -479,6 +442,7 @@ class SfincsGrid(GridComponent):
 
         # add the grid to the model
         self.set(ds)
+        self._indices = None
 
         # update the grid attributes in the model config
         self.update_config_from_grid()
@@ -509,13 +473,13 @@ class SfincsGrid(GridComponent):
 
         return ind
 
-    def write_layers(self, variables: List[str]) -> None:
+    def _write_layers(self, variables: List[str]) -> None:
         """Write variables from `data` as SFINCS binary maps, one file per variable.
 
         The index file is written first if it does not exist yet, since every
         binary map is indexed against it.
         """
-        self.root._assert_write_mode
+        self.root._assert_write_mode()
         for name in variables:
             if name in self.data:
                 continue
@@ -535,25 +499,21 @@ class SfincsGrid(GridComponent):
         variables = [v for v in variables if v in self.data]
         if not variables:
             return
+        if self._indices is None:
+            raise RuntimeError("Call grid.write() before writing grid layers.")
 
         # binary maps are stored S->N, flip if needed
         ds_out = self.data
         if ds_out.raster.res[1] < 0:
             ds_out = ds_out.raster.flipud()
 
-        ind_fn = self.model.config.get("indexfile", abs_path=True)
-        if ind_fn is None or not isfile(ind_fn):
-            ind_fn = self.model.config.get_set_file_variable(
-                "indexfile", default="sfincs.ind"
-            )
-            ind_fn.parent.mkdir(parents=True, exist_ok=True)
-            self.write_ind(ind_fn=ind_fn, mask=ds_out["mask"].values)
-
         mask = ds_out["mask"].values
         for name in variables:
             config_key, default = _MAP_EXCEPTIONS.get(
                 name, (f"{name}file", f"sfincs.{name}")
             )
+            if name == "mask":
+                config_key, default = "mskfile", "sfincs.msk"
             abs_file_path = self.model.config.get_set_file_variable(
                 config_key, default=default
             )
@@ -572,25 +532,33 @@ class SfincsGrid(GridComponent):
                     mask=mask,
                 )
 
-    def read_layers(self, variables: List[str]) -> None:
+    def _read_layers(self, variables: List[str]) -> None:
         """Read SFINCS binary maps into `data`, one file per variable."""
         self.root._assert_read_mode()
-        ind_fn = self.model.config.get(
-            "indexfile", fallback="sfincs.ind", abs_path=True
-        )
-        if not isfile(ind_fn):
-            raise IOError(f".ind path {ind_fn} does not exist")
-        ind = self.read_ind(ind_fn=ind_fn)
+        if self._indices is None:
+            raise RuntimeError("Call grid.read() before reading grid layers.")
 
+        arrays = []
         for name in variables:
             config_key, fallback = _MAP_EXCEPTIONS.get(
                 name, (f"{name}file", f"sfincs.{name}")
             )
-            fn = self.model.config.get(config_key, fallback=fallback, abs_path=True)
+            if name == "mask":
+                config_key = "mskfile"
+                fn = self.model.config.get_set_file_variable(config_key, "sfincs.msk")
+            else:
+                fn = self.model.config.get(config_key, fallback=fallback, abs_path=True)
             if not isfile(fn):
                 logger.warning(f"{config_key} not found at {fn}")
                 continue
-            self.set(self.read_map(fn, ind, "f4", np.nan, name=name))
+            dtype, nodata = ("u1", 0) if name == "mask" else ("f4", np.nan)
+            arrays.append(self.read_map(fn, self._indices, dtype, nodata, name=name))
+        if arrays:
+            ds = xr.merge(arrays)
+            epsg = self.model.config.get("epsg", None)
+            if epsg is not None:
+                ds.raster.set_crs(epsg)
+            self.set(ds)
 
     def read_map(
         self,

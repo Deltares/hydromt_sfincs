@@ -73,11 +73,11 @@ class SfincsStorageVolume(ModelComponent):
         # check _data directly, since the data property already triggers a read
         if self.model.grid._data is None:
             self.model.grid.read(read_components=False)
-        self.model.grid.read_layers(list(self.grid_variables))
+        self.model.grid._read_layers(list(self.grid_variables))
 
     def write(self) -> None:
         """Write the storage volume map to its own binary file."""
-        self.model.grid.write_layers(list(self.grid_variables))
+        self.model.grid._write_layers(list(self.grid_variables))
 
     @hydromt_step
     def create(

@@ -83,14 +83,14 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         flavor = configured_flavor(self.model.config, grid_type="regular")
         if flavor is None or flavor == "con":
             return
-        self.model.grid.read_layers(list(flavor_variables(flavor)))
+        self.model.grid._read_layers(list(flavor_variables(flavor)))
 
     def write(self) -> None:
         """Write each regular-grid infiltration layer to its own binary file."""
         flavor = configured_flavor(self.model.config, grid_type="regular")
         if flavor is None or flavor == "con":
             return
-        self.model.grid.write_layers(list(flavor_variables(flavor)))
+        self.model.grid._write_layers(list(flavor_variables(flavor)))
 
     @hydromt_step
     def create_uniform_constant(self, qinf: float) -> None:
