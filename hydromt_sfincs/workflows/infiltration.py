@@ -18,16 +18,16 @@ __all__ = [
     "INCH_TO_METER",
     "MICROMETER_PER_SECOND_TO_MM_PER_HOUR",
     "adjust_curve_number",
-    "bucket_from_soil",
-    "bucket_from_soil_landuse",
+    "bucket_from_hsg",
+    "bucket_from_hsg_landuse",
     "cn_to_s",
     "constant_infiltration_from_ksat_lulc",
     "curve_number_from_landuse_hsg",
     "curve_number_with_recovery",
-    "green_ampt_from_soil",
-    "green_ampt_from_soil_landuse",
-    "horton_from_soil",
-    "horton_from_soil_landuse",
+    "green_ampt_from_hsg",
+    "green_ampt_from_hsg_landuse",
+    "horton_from_hsg",
+    "horton_from_hsg_landuse",
     "ksat_to_mmhr",
     "normalize_hsg_codes",
 ]
@@ -111,14 +111,19 @@ def normalize_hsg_codes(
     da_hsg: xr.DataArray,
     mode: str | None = "drained",
 ) -> xr.DataArray:
-    """Normalize single- and dual-HSG classes to the requested convention."""
+    """Normalize single- and dual-HSG classes to the requested convention. Note"""
     if mode in (None, "none", "native"):
         return da_hsg.astype(np.float32)
     if mode != "drained":
         raise ValueError("dual_hsg must be one of None, 'native', or 'drained'.")
 
+    present_values = np.unique(da_hsg.values)
     da_norm = xr.full_like(da_hsg, np.nan, dtype=np.float32)
     for source_value, target_value in DUAL_HSG_DRAINED_MAPPING.items():
+        if source_value in present_values:
+            logger.info(
+                f"Mapping HSG value {source_value} to drained value {target_value}"
+            )
         da_norm = da_norm.where(da_hsg != source_value, np.float32(target_value))
     return da_norm.where(np.isfinite(da_hsg))
 
@@ -131,6 +136,13 @@ def _reclassify_hsg(da_hsg: xr.DataArray, df_map: pd.DataFrame) -> xr.Dataset:
         if nodata not in df_map.index:
             df_map.loc[nodata] = np.nan
         da_hsg = da_hsg.fillna(nodata)
+    # add logger warning for unmapped HSG values
+    unique_values = np.unique(da_hsg.values).tolist()
+    unmapped_values = [
+        v for v in unique_values if v not in df_map.index and np.isfinite(v)
+    ]
+    if unmapped_values:
+        logger.warning(f"Unmapped HSG values found: {unmapped_values}")
     return da_hsg.raster.reclassify(df_map).astype(np.float32)
 
 
@@ -292,7 +304,7 @@ def constant_infiltration_from_ksat_lulc(
     return da_qinf
 
 
-def green_ampt_from_soil(
+def green_ampt_from_hsg(
     da_hsg: xr.DataArray,
     df_map: pd.DataFrame,
     *,
@@ -300,14 +312,31 @@ def green_ampt_from_soil(
     factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
 ) -> xr.Dataset:
     """Estimate Green-Ampt parameters from HSG classes and optional Ksat.
+    Note that ks will be derived from da_ksat if provided, otherwise it must be included in df_map.
 
-    All inputs must be already-read xarray objects and a pandas DataFrame.
+    Parameters
+    ----------
+    da_hsg : xr.DataArray
+        Soil hydrologic group classification.
+    df_map : pd.DataFrame
+        Mapping from HSG classes to Green-Ampt parameters psi, sigma (and optionally ks).
+    da_ksat : xr.DataArray, optional
+        Saturated hydraulic conductivity, by default None.
+    factor_ksat : float, optional
+        Conversion factor for Ksat, by default MICROMETER_PER_SECOND_TO_MM_PER_HOUR.
+
+    Returns
+    -------
+    xr.Dataset
+        Green-Ampt parameters (psi, sigma, ks) for each grid cell.
     """
     ds = _reclassify_hsg(da_hsg, df_map)
     if da_ksat is not None:
         ds["ks"] = ksat_to_mmhr(da_ksat, factor_ksat=factor_ksat)
     if "ks" not in ds:
-        raise ValueError("Green-Ampt estimation requires either ks or ksat input.")
+        raise ValueError(
+            "Green-Ampt estimation requires either hydraulic conductivity (ks)."
+        )
     required = {"psi", "sigma", "ks"}
     missing = required.difference(ds.data_vars)
     if missing:
@@ -315,7 +344,7 @@ def green_ampt_from_soil(
     return ds[list(sorted(required, key=("psi", "sigma", "ks").index))]
 
 
-def green_ampt_from_soil_landuse(
+def green_ampt_from_hsg_landuse(
     da_hsg: xr.DataArray,
     da_lulc: xr.DataArray,
     df_map: pd.DataFrame,
@@ -330,7 +359,7 @@ def green_ampt_from_soil_landuse(
     All inputs must be already-read xarray objects and pandas DataFrames.
     """
     da_hsg = normalize_hsg_codes(da_hsg, mode=dual_hsg)
-    ds = green_ampt_from_soil(
+    ds = green_ampt_from_hsg(
         da_hsg,
         df_map,
         da_ksat=da_ksat,
@@ -344,7 +373,7 @@ def green_ampt_from_soil_landuse(
     return ds[["psi", "sigma", "ks"]]
 
 
-def horton_from_soil(
+def horton_from_hsg(
     da_hsg: xr.DataArray,
     df_map: pd.DataFrame,
     *,
@@ -372,7 +401,7 @@ def horton_from_soil(
     return ds[["f0", "fc", "kd"]]
 
 
-def horton_from_soil_landuse(
+def horton_from_hsg_landuse(
     da_hsg: xr.DataArray,
     da_lulc: xr.DataArray,
     df_map: pd.DataFrame,
@@ -387,7 +416,7 @@ def horton_from_soil_landuse(
     All inputs must be already-read xarray objects and pandas DataFrames.
     """
     da_hsg = normalize_hsg_codes(da_hsg, mode=dual_hsg)
-    ds = horton_from_soil(
+    ds = horton_from_hsg(
         da_hsg,
         df_map,
         da_ksat=da_ksat,
@@ -406,7 +435,7 @@ def horton_from_soil_landuse(
     return ds[["f0", "fc", "kd"]]
 
 
-def bucket_from_soil(
+def bucket_from_hsg(
     da_hsg: xr.DataArray,
     df_map: pd.DataFrame,
     *,
@@ -455,7 +484,7 @@ def bucket_from_soil(
     return ds[["bucket_smax", "bucket_k", "bucket_loss"]]
 
 
-def bucket_from_soil_landuse(
+def bucket_from_hsg_landuse(
     da_hsg: xr.DataArray,
     da_lulc: xr.DataArray,
     df_map: pd.DataFrame,
@@ -471,7 +500,7 @@ def bucket_from_soil_landuse(
     All inputs must be already-read xarray objects and pandas DataFrames.
     """
     da_hsg = normalize_hsg_codes(da_hsg, mode=dual_hsg)
-    ds = bucket_from_soil(
+    ds = bucket_from_hsg(
         da_hsg,
         df_map,
         da_ksat=da_ksat,

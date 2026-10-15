@@ -508,7 +508,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                     "driver": {"name": "pandas", "options": {"index_col": 0}}
                 },
             )
-            ds = workflows.green_ampt_from_soil_landuse(
+            ds = workflows.green_ampt_from_hsg_landuse(
                 da_hsg,
                 da_lulc,
                 df_map,
@@ -518,7 +518,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                 dual_hsg=dual_hsg,
             )
         else:
-            ds = workflows.green_ampt_from_soil(
+            ds = workflows.green_ampt_from_hsg(
                 da_hsg,
                 df_map,
                 da_ksat=da_ksat,
@@ -666,7 +666,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                     "driver": {"name": "pandas", "options": {"index_col": 0}}
                 },
             )
-            ds = workflows.horton_from_soil_landuse(
+            ds = workflows.horton_from_hsg_landuse(
                 da_hsg,
                 da_lulc,
                 df_map,
@@ -676,7 +676,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                 dual_hsg=dual_hsg,
             )
         else:
-            ds = workflows.horton_from_soil(
+            ds = workflows.horton_from_hsg(
                 da_hsg,
                 df_map,
                 da_ksat=da_ksat,
@@ -831,7 +831,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                     "driver": {"name": "pandas", "options": {"index_col": 0}}
                 },
             )
-            ds = workflows.bucket_from_soil_landuse(
+            ds = workflows.bucket_from_hsg_landuse(
                 da_hsg,
                 da_lulc,
                 df_map,
@@ -842,7 +842,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                 bucket_loss=0.10 if bucket_loss is None else bucket_loss,
             )
         else:
-            ds = workflows.bucket_from_soil(
+            ds = workflows.bucket_from_hsg(
                 da_hsg,
                 df_map,
                 da_ksat=da_ksat,

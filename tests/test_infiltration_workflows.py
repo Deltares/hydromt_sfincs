@@ -90,6 +90,19 @@ def test_normalize_hsg_codes_drained():
     )
 
 
+def test_normalize_hsg_codes_logs_present_mappings(caplog):
+    da_hsg = _raster([[5, 8]], "hsg", dtype=np.int16)
+
+    with caplog.at_level(logging.INFO, logger="hydromt_sfincs.workflows.infiltration"):
+        da_norm = workflows.normalize_hsg_codes(da_hsg, mode="drained")
+
+    np.testing.assert_array_equal(da_norm.values, [[1.0, 4.0]])
+    assert caplog.messages == [
+        "Mapping HSG value 5 to drained value 1",
+        "Mapping HSG value 8 to drained value 4",
+    ]
+
+
 def test_normalize_hsg_codes_native_and_invalid():
     da_hsg = _raster([[5, 6, 7, 8]], "hsg", dtype=np.int16)
     np.testing.assert_array_equal(
@@ -147,20 +160,20 @@ def test_adjust_curve_number_dry_wet_avg():
         workflows.adjust_curve_number(da_cn, "soaked")
 
 
-def test_green_ampt_from_soil_requires_ks_or_ksat():
+def test_green_ampt_from_hsg_requires_ks_or_ksat():
     da_hsg = _raster([[1, 2]], "hsg", dtype=np.int16)
     df_map = pd.DataFrame({"psi": [90.0, 120.0], "sigma": [0.20, 0.25]}, index=[1, 2])
 
-    with pytest.raises(ValueError, match="ks or ksat"):
-        workflows.green_ampt_from_soil(da_hsg, df_map)
+    with pytest.raises(ValueError, match="hydraulic conductivity"):
+        workflows.green_ampt_from_hsg(da_hsg, df_map)
 
     da_ksat = _raster([[1.0, 2.0]], "ksat")
-    ds = workflows.green_ampt_from_soil(da_hsg, df_map, da_ksat=da_ksat)
+    ds = workflows.green_ampt_from_hsg(da_hsg, df_map, da_ksat=da_ksat)
     np.testing.assert_allclose(ds["psi"].values, [[90.0, 120.0]], rtol=1e-6)
     np.testing.assert_allclose(ds["ks"].values, [[3.6, 7.2]], rtol=1e-6)
 
 
-def test_horton_from_soil_derives_fc_and_f0():
+def test_horton_from_hsg_derives_fc_and_f0():
     da_hsg = _raster([[1, 2]], "hsg", dtype=np.int16)
     da_ksat = _raster([[1.0, 1.0]], "ksat")
     df_map = pd.DataFrame(
@@ -168,7 +181,7 @@ def test_horton_from_soil_derives_fc_and_f0():
         index=[1, 2],
     )
 
-    ds = workflows.horton_from_soil(da_hsg, df_map, da_ksat=da_ksat)
+    ds = workflows.horton_from_hsg(da_hsg, df_map, da_ksat=da_ksat)
 
     # fc = ksat * factor * fc_scale, f0 = fc * f0_scale
     np.testing.assert_allclose(ds["fc"].values, [[1.44, 1.8]], rtol=1e-5)
@@ -176,7 +189,20 @@ def test_horton_from_soil_derives_fc_and_f0():
     np.testing.assert_allclose(ds["kd"].values, [[1.0, 2.0]], rtol=1e-6)
 
     with pytest.raises(ValueError, match="kd"):
-        workflows.horton_from_soil(da_hsg, df_map.drop(columns=["kd"]), da_ksat=da_ksat)
+        workflows.horton_from_hsg(da_hsg, df_map.drop(columns=["kd"]), da_ksat=da_ksat)
+
+
+def test_reclassify_hsg_warns_on_unmapped_values(caplog):
+    da_hsg = _raster([[1, 99]], "hsg", dtype=np.int16)
+    df_map = pd.DataFrame({"psi": [90.0], "sigma": [0.2], "ks": [5.0]}, index=[1])
+
+    with caplog.at_level(
+        logging.WARNING, logger="hydromt_sfincs.workflows.infiltration"
+    ):
+        workflows.green_ampt_from_hsg(da_hsg, df_map)
+
+    assert len(caplog.records) == 1
+    assert "Unmapped HSG values found: [99]" in caplog.text
 
 
 def test_soil_reclassification_accepts_declared_nodata(caplog):
@@ -190,8 +216,8 @@ def test_soil_reclassification_accepts_declared_nodata(caplog):
     )
 
     with caplog.at_level(logging.WARNING):
-        ds_ga = workflows.green_ampt_from_soil(da_hsg, ga_map, da_ksat=da_ksat)
-        ds_horton = workflows.horton_from_soil(da_hsg, horton_map, da_ksat=da_ksat)
+        ds_ga = workflows.green_ampt_from_hsg(da_hsg, ga_map, da_ksat=da_ksat)
+        ds_horton = workflows.horton_from_hsg(da_hsg, horton_map, da_ksat=da_ksat)
 
     assert "The nodata value" not in caplog.text
     assert np.isnan(ds_ga["psi"].values[0, 1])
@@ -200,7 +226,7 @@ def test_soil_reclassification_accepts_declared_nodata(caplog):
     assert np.isnan(ds_horton["fc"].values[0, 1])
 
 
-def test_bucket_from_soil_derives_storage_and_drainage():
+def test_bucket_from_hsg_derives_storage_and_drainage():
     da_hsg = _raster([[1]], "hsg", dtype=np.int16)
     da_ksat = _raster([[1.0]], "ksat")
     df_map = pd.DataFrame(
@@ -212,7 +238,7 @@ def test_bucket_from_soil_derives_storage_and_drainage():
         index=[1],
     )
 
-    ds = workflows.bucket_from_soil(da_hsg, df_map, da_ksat=da_ksat, bucket_loss=0.1)
+    ds = workflows.bucket_from_hsg(da_hsg, df_map, da_ksat=da_ksat, bucket_loss=0.1)
 
     # smax = 120 * 0.4 = 48 mm; residence = 48 / 3.6 h, so k is its reciprocal
     np.testing.assert_allclose(ds["bucket_smax"].values, [[48.0]], rtol=1e-6)
@@ -220,7 +246,7 @@ def test_bucket_from_soil_derives_storage_and_drainage():
     np.testing.assert_allclose(ds["bucket_loss"].values, [[0.1]], rtol=1e-6)
 
 
-def test_bucket_from_soil_uses_residence_time_without_ksat():
+def test_bucket_from_hsg_uses_residence_time_without_ksat():
     da_hsg = _raster([[1]], "hsg", dtype=np.int16)
     df_map = pd.DataFrame(
         {
@@ -231,13 +257,13 @@ def test_bucket_from_soil_uses_residence_time_without_ksat():
         index=[1],
     )
 
-    ds = workflows.bucket_from_soil(da_hsg, df_map)
+    ds = workflows.bucket_from_hsg(da_hsg, df_map)
 
     np.testing.assert_allclose(ds["bucket_k"].values, [[0.25]], rtol=1e-6)
     np.testing.assert_allclose(ds["bucket_loss"].values, [[0.0]], rtol=1e-6)
 
     with pytest.raises(ValueError, match="bucket_k, residence_time_hr, or ksat"):
-        workflows.bucket_from_soil(da_hsg, df_map.drop(columns=["residence_time_hr"]))
+        workflows.bucket_from_hsg(da_hsg, df_map.drop(columns=["residence_time_hr"]))
 
 
 def test_constant_infiltration_from_ksat_lulc_spread():
@@ -299,7 +325,7 @@ def test_green_ampt_horton_bucket_landuse_modifiers():
     )
     modifiers = _modifier_table()
 
-    ds_ga = workflows.green_ampt_from_soil_landuse(
+    ds_ga = workflows.green_ampt_from_hsg_landuse(
         da_hsg,
         da_lulc,
         ga_map,
@@ -312,7 +338,7 @@ def test_green_ampt_horton_bucket_landuse_modifiers():
     assert float(ds_ga["sigma"].values[0, 0]) > float(ds_ga["sigma"].values[0, 1])
     assert float(ds_ga["ks"].values[0, 0]) > float(ds_ga["ks"].values[0, 1])
 
-    ds_horton = workflows.horton_from_soil_landuse(
+    ds_horton = workflows.horton_from_hsg_landuse(
         da_hsg,
         da_lulc,
         horton_map,
@@ -324,7 +350,7 @@ def test_green_ampt_horton_bucket_landuse_modifiers():
     assert float(ds_horton["f0"].values[0, 0]) > float(ds_horton["f0"].values[0, 1])
     assert float(ds_horton["kd"].values[0, 1]) > float(ds_horton["kd"].values[0, 0])
 
-    ds_bucket = workflows.bucket_from_soil_landuse(
+    ds_bucket = workflows.bucket_from_hsg_landuse(
         da_hsg,
         da_lulc,
         bucket_map,
@@ -359,7 +385,7 @@ def test_modifier_table_supports_non_nlcd_landcover():
     )
     ga_map = pd.DataFrame({"psi": [90.0, 120.0], "sigma": [0.20, 0.25]}, index=[1, 2])
 
-    ds = workflows.green_ampt_from_soil_landuse(
+    ds = workflows.green_ampt_from_hsg_landuse(
         da_hsg, da_lulc, ga_map, modifiers, da_ksat=da_ksat, dual_hsg="drained"
     )
     assert float(ds["sigma"].values[0, 0]) > float(ds["sigma"].values[0, 1])
@@ -381,7 +407,7 @@ def test_modifier_table_warns_on_unmatched_landcover(caplog):
     ga_map = pd.DataFrame({"psi": [90.0, 120.0], "sigma": [0.20, 0.25]}, index=[1, 2])
 
     with caplog.at_level(logging.WARNING):
-        ds = workflows.green_ampt_from_soil_landuse(
+        ds = workflows.green_ampt_from_hsg_landuse(
             da_hsg, da_lulc, ga_map, modifiers, da_ksat=da_ksat, dual_hsg="drained"
         )
 
@@ -406,7 +432,7 @@ def test_modifier_table_does_not_warn_on_nodata(caplog):
     ga_map = pd.DataFrame({"psi": [90.0, 120.0], "sigma": [0.20, 0.25]}, index=[1, 2])
 
     with caplog.at_level(logging.WARNING):
-        ds = workflows.green_ampt_from_soil_landuse(
+        ds = workflows.green_ampt_from_hsg_landuse(
             da_hsg, da_lulc, ga_map, modifiers, da_ksat=da_ksat, dual_hsg="drained"
         )
 
@@ -430,7 +456,7 @@ def test_bucket_loss_defaults_with_and_without_landuse(model):
         source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
     )
 
-    ds = workflows.bucket_from_soil(da_hsg=hsg, df_map=df_map, da_ksat=ksat)
+    ds = workflows.bucket_from_hsg(da_hsg=hsg, df_map=df_map, da_ksat=ksat)
     assert np.isclose(float(ds["bucket_loss"].where(model.grid.mask > 0).mean()), 0.0)
 
     modifier_table_path = (
@@ -441,7 +467,7 @@ def test_bucket_loss_defaults_with_and_without_landuse(model):
         source_kwargs={"driver": {"name": "pandas", "options": {"index_col": 0}}},
     )
 
-    ds = workflows.bucket_from_soil_landuse(
+    ds = workflows.bucket_from_hsg_landuse(
         da_hsg=hsg,
         df_map=df_map,
         da_ksat=ksat,

@@ -494,7 +494,7 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
                     "driver": {"name": "pandas", "options": {"index_col": 0}}
                 },
             )
-            ds = workflows.green_ampt_from_soil_landuse(
+            ds = workflows.green_ampt_from_hsg_landuse(
                 da_soil,
                 da_lulc,
                 df_map,
@@ -504,7 +504,7 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
                 dual_hsg=dual_hsg,
             )
         else:
-            ds = workflows.green_ampt_from_soil(
+            ds = workflows.green_ampt_from_hsg(
                 da_soil,
                 df_map,
                 da_ksat=da_ksat,
@@ -639,7 +639,7 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
                     "driver": {"name": "pandas", "options": {"index_col": 0}}
                 },
             )
-            ds = workflows.horton_from_soil_landuse(
+            ds = workflows.horton_from_hsg_landuse(
                 da_soil,
                 da_lulc,
                 df_map,
@@ -649,7 +649,7 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
                 dual_hsg=dual_hsg,
             )
         else:
-            ds = workflows.horton_from_soil(
+            ds = workflows.horton_from_hsg(
                 da_soil,
                 df_map,
                 da_ksat=da_ksat,

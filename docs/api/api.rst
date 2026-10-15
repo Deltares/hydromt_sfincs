@@ -81,11 +81,10 @@ Configuration
 Grid
 ----
 
-The grid owns the mask and elevation. Every other layer is owned by its own
-component, which reads and writes it to its own binary file through
-:py:meth:`~components.grid.SfincsGrid.read_layers` /
-:py:meth:`~components.grid.SfincsGrid.write_layers`. Regular-grid infiltration
-uses one binary file per variable; bucket infiltration is not supported on
+The grid owns all data layers, but only read/writes the mask and elevation.
+Every other layer is owned by its own component, which reads and writes it to its own binary file through
+:py:meth:`~components.grid.SfincsGrid._read_layers` /
+:py:meth:`~components.grid.SfincsGrid._write_layers`. Regular-grid infiltration
 regular grids.
 
 .. autosummary::
@@ -97,8 +96,8 @@ regular grids.
    components.grid.SfincsGrid.write
    components.grid.SfincsGrid.create
    components.grid.SfincsGrid.create_from_region
-   components.grid.SfincsGrid.read_layers
-   components.grid.SfincsGrid.write_layers
+   components.grid.SfincsGrid._read_layers
+   components.grid.SfincsGrid._write_layers
    components.grid.SfincsGrid.read_map
    components.grid.SfincsGrid.write_map
 
@@ -158,11 +157,11 @@ Quadtree infiltration, including bucket variables, is stored in ``inffile``;
    components.quadtree.SfincsQuadtreeGrid
    components.quadtree.SfincsQuadtreeGrid.data
    components.quadtree.SfincsQuadtreeGrid.read
+   components.quadtree.SfincsQuadtreeGrid._read_layers
+   components.quadtree.SfincsQuadtreeGrid._write_layers
    components.quadtree.SfincsQuadtreeGrid.write
    components.quadtree.SfincsQuadtreeGrid.create
    components.quadtree.SfincsQuadtreeGrid.create_from_region
-   components.quadtree.SfincsQuadtreeGrid.read_layers
-   components.quadtree.SfincsQuadtreeGrid.write_layers
 
    components.quadtree.SfincsQuadtreeElevation
    components.quadtree.SfincsQuadtreeElevation.read
@@ -342,12 +341,12 @@ infiltration components.
    workflows.adjust_curve_number
    workflows.curve_number_with_recovery
    workflows.constant_infiltration_from_ksat_lulc
-   workflows.green_ampt_from_soil
-   workflows.green_ampt_from_soil_landuse
-   workflows.horton_from_soil
-   workflows.horton_from_soil_landuse
-   workflows.bucket_from_soil
-   workflows.bucket_from_soil_landuse
+   workflows.green_ampt_from_hsg
+   workflows.green_ampt_from_hsg_landuse
+   workflows.horton_from_hsg
+   workflows.horton_from_hsg_landuse
+   workflows.bucket_from_hsg
+   workflows.bucket_from_hsg_landuse
 
 Flood map downscaling
 ---------------------
