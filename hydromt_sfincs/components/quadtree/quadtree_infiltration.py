@@ -303,8 +303,10 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
 
         self.compute_quadtree(compute_runoff, runoff, nrmax=nrmax)
         if np.nanmin(runoff) < 0.0 or np.nanmax(runoff) > 100.0:
-            raise ValueError(
-                "Run-off coefficients must be a percentage between 0 and 100."
+            # apply cap when run-off coefficients are out of the valid range
+            runoff = np.clip(runoff, 0.0, 100.0)
+            logger.warning(
+                "Run-off coefficients are out of the valid range (0-100). Clipping to valid range."
             )
         self._set_layers({"runoff": runoff}, flavor="r2d")
 
