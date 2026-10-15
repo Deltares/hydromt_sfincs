@@ -194,6 +194,7 @@ Quadtree infiltration, including bucket variables, is stored in ``inffile``;
    components.quadtree.SfincsQuadtreeInfiltration.create_horton_from_maps
    components.quadtree.SfincsQuadtreeInfiltration.create_bucket
    components.quadtree.SfincsQuadtreeInfiltration.create_bucket_from_maps
+   components.quadtree.SfincsQuadtreeInfiltration.create_runoff_coefficient
 
    components.quadtree.SfincsQuadtreeInitialConditions
    components.quadtree.SfincsQuadtreeInitialConditions.read

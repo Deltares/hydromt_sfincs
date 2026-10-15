@@ -14,7 +14,8 @@ from hydromt_sfincs.utils import fill_nan_in_mask
 from hydromt_sfincs.components.grid.regulargrid_mixin import SfincsRegularGridMixin
 from hydromt_sfincs.components.infiltration_common import (
     ALL_VARS,
-    BUCKET_VARS,
+    QUADTREE_ONLY_FLAVORS,
+    QUADTREE_ONLY_VARS,
     VARIABLES,
     clear_data,
     configure,
@@ -51,8 +52,10 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         return self.model.grid.mask
 
     def _set_layers(self, layers: dict[str, xr.DataArray], flavor: str) -> None:
-        if flavor == "bkt":
-            raise ValueError("Bucket infiltration is only supported on quadtree grids")
+        if flavor in QUADTREE_ONLY_FLAVORS:
+            raise ValueError(
+                f"Infiltration flavor '{flavor}' is only supported on quadtree grids"
+            )
         self.clear()
         for name, da in layers.items():
             da = da.astype(np.float32)
@@ -72,7 +75,7 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
             self.model.grid.set(da)
         configure(self.model.config, flavor=flavor, grid_type="regular")
 
-    grid_variables = tuple(name for name in ALL_VARS if name not in BUCKET_VARS)
+    grid_variables = tuple(name for name in ALL_VARS if name not in QUADTREE_ONLY_VARS)
 
     def read(self) -> None:
         """Read the infiltration layers from their own files."""

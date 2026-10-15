@@ -300,3 +300,37 @@ def test_quadtree_lulc_requires_modifier_table(quadtree_model, method_name):
     method = getattr(quadtree_model.quadtree_infiltration, method_name)
     with pytest.raises(ValueError, match="Provide lulc_modifier_table"):
         method(hsg="unused", lulc="unused")
+
+
+def test_runoff_coefficient_quadtree_io(model, quadtree_model):
+    runoff = xr.where(model.grid.data["dep"] < -0.5, 100.0, 40.0)
+    runoff.raster.set_nodata(np.nan)
+    runoff.raster.set_crs(model.crs)
+
+    quadtree_model.quadtree_infiltration.create_runoff_coefficient(
+        runoff, reproj_method="nearest"
+    )
+    assert quadtree_model.config.get("qinf") is None
+    assert quadtree_model.config.get("inffile") is not None
+    assert quadtree_model.config.get("inftype") == "r2d"
+    assert "runoff" in quadtree_model.quadtree_grid.data
+
+    quadtree_model.quadtree_grid.write()
+    quadtree_model.quadtree_infiltration.write()
+    quadtree_model.config.write()
+
+    mod1 = SfincsModel(root=quadtree_model.root.path, mode="r")
+    mod1.config.read()
+    mod1.quadtree_grid.read()
+    mod1.quadtree_infiltration.read()
+    runoff_read = mod1.quadtree_grid.data["runoff"].where(mod1.quadtree_grid.mask > 0)
+    assert np.isclose(float(runoff_read.max()), 100.0)
+    # active cells without source data are filled with 0 (all rainfall infiltrates)
+    assert np.isin(
+        runoff_read.dropna(dim=runoff_read.dims[0]).values, [0.0, 40.0, 100.0]
+    ).all()
+
+    with pytest.raises(ValueError, match="between 0 and 100"):
+        quadtree_model.quadtree_infiltration.create_runoff_coefficient(
+            runoff * 2, reproj_method="nearest"
+        )

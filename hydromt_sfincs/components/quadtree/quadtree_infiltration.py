@@ -14,7 +14,6 @@ from hydromt_sfincs import DATADIR, workflows
 from hydromt_sfincs.utils import fill_nan_in_mask
 from hydromt_sfincs.components.infiltration_common import (
     ALL_VARS,
-    BUCKET_VARS,
     DEFAULT_INFILTRATIONFILE,
     VARIABLES,
     clear_data,
@@ -148,7 +147,6 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         nrmax : int, optional
             Maximum number of cells per quadtree block.
         """
-        # Add logger info
         logger.info("Creating constant spatially varying infiltration rate.")
 
         # get infiltration data
@@ -156,12 +154,9 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             da_qinf = self.data_catalog.get_rasterdataset(
                 qinf,
                 bbox=self.model.bbox,
+                variables=["qinf"],
                 buffer=10,
             )
-            if isinstance(da_qinf, xr.Dataset):
-                if "qinf" not in da_qinf.data_vars:
-                    raise ValueError(f"Could not find variable qinf in {qinf}")
-                da_qinf = da_qinf["qinf"]
         # TODO check if this one is really necessary?
         # elif lulc is not None and ksat is not None:
         #     da_ksat = self.data_catalog.get_rasterdataset(
@@ -224,21 +219,96 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         n_cells = self.data.grid.n_face
         qinf = np.full(n_cells, np.nan)
 
-        # Function to compute infiltration values for a chunk of the quadtree grid
         def compute_constant_infiltration(da_like, ilev=None):
             # reproject infiltration data to model grid
-            da_out = da_qinf.raster.reproject_like(da_like, method=reproj_method)
-            return da_out
+            return da_qinf.raster.reproject_like(da_like, method=reproj_method)
 
-        # Compute constant infiltration in chunks over the quadtree grid
         self.compute_quadtree(
             compute_constant_infiltration,
             qinf,
             nrmax=nrmax,
         )
-
-        # set grid
         self._set_layers({"qinf": qinf}, flavor="c2d")
+
+    @hydromt_step
+    def create_runoff_coefficient(
+        self,
+        runoff: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
+        reclass_table: Union[str, Path, pd.DataFrame, None] = None,
+        reproj_method: str = "average",
+        nrmax: int = 2000,
+    ) -> None:
+        """Create a spatially varying constant run-off coefficient.
+
+        A fixed percentage of the rainfall runs off; the remainder infiltrates
+        (SFINCS ``inftype = r2d``). A value of 0 means all rainfall infiltrates,
+        100 means all rainfall runs off.
+
+        Adds model layers to SfincsModel.quadtree_grid.data:
+
+        * **runoff** map: run-off coefficient [%]
+
+        Parameters
+        ----------
+        runoff : str, Path, or RasterDataset
+            Spatially varying run-off coefficients [%], between 0 and 100. If this
+            is an xr.Dataset, it must contain a ``runoff`` variable.
+        lulc : str, Path, or RasterDataset
+            Land-use dataset. Must be combined with ``reclass_table``.
+        reclass_table : str, Path, or pd.DataFrame
+            Reclassification table with a ``runoff`` column to convert land-use
+            classes to run-off coefficients [%].
+        reproj_method : str, optional
+            Resampling method for reprojecting source data to quadtree blocks.
+        nrmax : int, optional
+            Maximum number of cells per quadtree block.
+        """
+        logger.info("Creating spatially varying run-off coefficient.")
+
+        if runoff is not None:
+            da_runoff = self.data_catalog.get_rasterdataset(
+                runoff,
+                bbox=self.model.bbox,
+                variables=["runoff"],
+                buffer=10,
+            )
+        elif lulc is not None:
+            if reclass_table is None:
+                raise IOError(
+                    f"Infiltration mapping file should be provided for {lulc}"
+                )
+            da_lulc = self.data_catalog.get_rasterdataset(
+                lulc,
+                bbox=self.model.bbox,
+                buffer=10,
+                variables=["lulc"],
+            )
+            df_map = self.data_catalog.get_dataframe(
+                reclass_table,
+                variables=["runoff"],
+                source_kwargs={
+                    "driver": {"name": "pandas", "options": {"index_col": 0}}
+                },
+            )
+            da_runoff = da_lulc.raster.reclassify(df_map)["runoff"]
+        else:
+            raise ValueError("Either runoff or lulc must be provided.")
+
+        da_runoff = da_runoff.raster.mask_nodata()
+        runoff = np.full(self.data.grid.n_face, np.nan)
+
+        def compute_runoff(da_like, ilev=None):
+            return da_runoff.raster.reproject_like(da_like, method=reproj_method)
+
+        self.compute_quadtree(compute_runoff, runoff, nrmax=nrmax)
+        if np.nanmin(runoff) < 0.0 or np.nanmax(runoff) > 100.0:
+            # apply cap when run-off coefficients are out of the valid range
+            runoff = np.clip(runoff, 0.0, 100.0)
+            logger.warning(
+                "Run-off coefficients are out of the valid range (0-100). Clipping to valid range."
+            )
+        self._set_layers({"runoff": runoff}, flavor="r2d")
 
     @hydromt_step
     def create_cn(
@@ -850,7 +920,10 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                 bucket_loss=bucket_loss if np.isscalar(bucket_loss) else None,
             )
 
-        outputs = {name: np.full(self.data.grid.n_face, np.nan) for name in BUCKET_VARS}
+        outputs = {
+            name: np.full(self.data.grid.n_face, np.nan)
+            for name in flavor_variables("bkt")
+        }
 
         def compute_block(da_like, ilev=None):
             return tuple(
