@@ -31,7 +31,7 @@ Changed
 - Moved the downscaling utilities from ``hydromt_sfincs.utils`` to a dedicated ``hydromt_sfincs.workflows.downscaling`` submodule (re-exported via ``hydromt_sfincs.workflows``).
 - ``downscale_floodmap`` is now parameterised by ``reproj_method`` (``nearest`` or ``bilinear``) and a ``subtract_dem`` flag (flood depth vs. raw water level), and works on both regular and quadtree grids.
 - Moved readers and writers from ``utils.py`` to dedicated ``readers.py`` and ``writers.py`` modules (#390)
-- ``grid.read()`` and ``quadtree_grid.read()`` now read only grid-owned layers by default, and their ``write()`` methods only write grid-owned layers. Use ``read_components=True`` / ``write_components=True`` to include component-owned layers, or call component ``read()`` / ``write()`` methods directly; ``model.read()`` / ``model.write()`` handle all components (#419).
+- ``grid.read()`` and ``quadtree_grid.read()`` read only the main grid data files by default. Read or write additional gridded variables through their component methods, or pass ``read_components=True`` / ``write_components=True`` to have the grid delegate to those components. ``model.read()`` / ``model.write()`` handle all components (#419).
 
 v2.0.0-rc3 (22-5-2026)
 =============================

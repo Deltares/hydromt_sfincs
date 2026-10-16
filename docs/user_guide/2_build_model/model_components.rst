@@ -3,12 +3,25 @@
 Model Components
 ================
 
-The :py:class:`~hydromt_sfincs.SfincsModel` consists of several components that together
-represent the full SFINCS model setup. Each component manages a specific part of the
-model (e.g., configuration, grid definition, forcings, or output) and can be read from or
-written to disk using the corresponding ``read()`` and ``write()`` methods. Furhermore,
-each component has its own ``data`` attribute that stores the relevant data for that component,
-and a ``create()`` method to generate or update the component data (see also :ref:`model_methods`).
+The :py:class:`~hydromt_sfincs.SfincsModel` consists of components that together represent
+the SFINCS model setup. Each component manages a specific part of the model and exposes
+its relevant data through a ``data`` attribute. Grid-layer data is shared through
+``model.grid.data`` or ``model.quadtree_grid.data``, while other components (e.g. geometries or boundary conditions) keep their own
+data. Components load and persist data with ``read()`` and ``write()``. Each component
+also provides methods to create or update its data, typically named ``create()`` or
+``create_*()`` (see :ref:`model_methods`).
+
+.. warning::
+
+  **Grid read/write behavior has changed.** ``model.grid.read()`` and
+  ``model.quadtree_grid.read()`` read the grid's main data files by default
+  (mask and elevation for regular grids; the main mesh file including mask and elevation for quadtree grids).
+  The normal way to read or write additional gridded variables is through their
+  component methods, such as ``model.roughness.read()`` or
+  ``model.infiltration.write()``. As a shortcut, pass ``read_components=True``
+  or ``write_components=True`` to have the grid call the read/write methods of
+  components that manage gridded variables. ``model.read()`` and
+  ``model.write()`` continue to read or write all active model components.
 
 An overview of all model components is presented in :ref:`hydromt_sfincs_diagram`, and each component
 will be introduced in the following sections. For more details about each component,
@@ -88,6 +101,38 @@ The different components are interrelated, since they all share the same spatial
     component has its own data attribute, whereas all other grid components store their data in the
     :py:class:`grid <hydromt_sfincs.components.grid.regulargrid.SfincsGrid>` component.
 
+
+Quadtree grid components
+------------------------
+These components define the mesh and physical parameters for quadtree SFINCS models.
+The main mesh file stores the mesh, elevation, mask and quadtree-specific variables.
+Additional gridded variables are read and written through their components and stored
+in separate UGRID NetCDF files.
+
+.. list-table::
+   :widths: 35 65
+   :header-rows: 1
+
+   * - **Component**
+     - **Description**
+   * - :py:class:`quadtree_grid <hydromt_sfincs.components.quadtree.quadtree.SfincsQuadtreeGrid>`
+     - Main quadtree mesh file, including the mask, elevation and quadtree-specific variables not stored in component-specific files (``qtrfile``, default ``sfincs.nc``).
+   * - :py:class:`quadtree_elevation <hydromt_sfincs.components.quadtree.quadtree_elevation.SfincsQuadtreeElevation>`
+     - Elevation (bathymetry/topography) on the quadtree mesh.
+   * - :py:class:`quadtree_mask <hydromt_sfincs.components.quadtree.quadtree_mask.SfincsQuadtreeMask>`
+     - Active domain and boundary mask on the quadtree mesh.
+   * - :py:class:`quadtree_roughness <hydromt_sfincs.components.quadtree.quadtree_roughness.SfincsQuadtreeRoughness>`
+     - Manning's n roughness (``manningfile``).
+   * - :py:class:`quadtree_infiltration <hydromt_sfincs.components.quadtree.quadtree_infiltration.SfincsQuadtreeInfiltration>`
+     - Infiltration layers, including runoff coefficient and bucket parameters (``inffile``).
+   * - :py:class:`quadtree_initial_conditions <hydromt_sfincs.components.quadtree.quadtree_initial_conditions.SfincsQuadtreeInitialConditions>`
+     - Initial water levels (``inifile``).
+   * - :py:class:`quadtree_storage_volume <hydromt_sfincs.components.quadtree.quadtree_storage_volume.SfincsQuadtreeStorageVolume>`
+     - Storage volume layer (``volfile``).
+   * - :py:class:`quadtree_subgrid <hydromt_sfincs.components.quadtree.quadtree_subgrid.SfincsQuadtreeSubgridTable>`
+     - Subgrid table (``sbgfile``).
+   * - :py:class:`quadtree_snapwave_mask <hydromt_sfincs.components.quadtree.snapwave_quadtree_mask.SnapWaveQuadtreeMask>`
+     - Optional SnapWave mask on the quadtree mesh.
 
 Geometries and structures
 -------------------------

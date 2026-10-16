@@ -156,25 +156,32 @@ Read and write operations are now handled at the **component level**.
     # Write updated grid to disk
     model.grid.write()
 
-.. note::
-    ``model.grid.write()`` and ``model.quadtree_grid.write()`` only write the
-    layers they own themselves. Layers belonging to a component - ``manning``,
-    ``vol``, ``zs`` and the infiltration layers - are written by that component:
+.. warning::
+    ``model.grid.read()`` / ``write()`` and ``model.quadtree_grid.read()`` /
+    ``write()`` read or write the grid's main data files by default. For regular
+    grids, this is the mask and elevation; for quadtree grids, it is the main
+    mesh file. Read and write other gridded variables through their components
+    (for example ``model.roughness.read()`` and ``model.infiltration.write()``).
+    This is the normal component-level workflow:
 
     .. code-block:: python
 
-        # either write each component explicitly
+        # read or write the relevant components directly
+        model.roughness.read()
+        model.infiltration.read()
         model.grid.write()
         model.roughness.write()
         model.infiltration.write()
 
-        # or let the grid trigger them
+        # alternatively, have the grid call component read/write methods
+        model.grid.read(read_components=True)
         model.grid.write(write_components=True)
 
-    Use ``model.write()`` to write everything in one call, since it loops over
-    all components. The same applies when reading a single component: it pulls
-    in the grid itself, so ``model.infiltration.read()`` works without a
-    preceding ``model.grid.read()``.
+    ``read_components=True`` and ``write_components=True`` are shortcuts for
+    having the grid delegate to components that manage gridded variables. Use
+    ``model.read()`` or ``model.write()`` to read or write all active components.
+    A component read also loads the grid when needed, so there is no need to call
+    ``model.grid.read()`` before ``model.infiltration.read()``.
 
 These changes provide a clearer and more modular interface, making it easier to manipulate model components independently.
 
