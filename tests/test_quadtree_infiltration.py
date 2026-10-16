@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import pytest
 from os.path import isfile
-from types import SimpleNamespace
 import xarray as xr
 
 # from hydromt.log import setuplog
@@ -302,7 +301,7 @@ def test_quadtree_lulc_requires_modifier_table(quadtree_model, method_name):
         method(hsg="unused", lulc="unused")
 
 
-def test_runoff_coefficient_quadtree_io(model, quadtree_model):
+def test_runoff_coefficient_quadtree_io(model, quadtree_model, caplog):
     runoff = xr.where(model.grid.data["dep"] < -0.5, 100.0, 40.0)
     runoff.raster.set_nodata(np.nan)
     runoff.raster.set_crs(model.crs)
@@ -330,7 +329,13 @@ def test_runoff_coefficient_quadtree_io(model, quadtree_model):
         runoff_read.dropna(dim=runoff_read.dims[0]).values, [0.0, 40.0, 100.0]
     ).all()
 
-    with pytest.raises(ValueError, match="between 0 and 100"):
+    with caplog.at_level("WARNING"):
         quadtree_model.quadtree_infiltration.create_runoff_coefficient(
             runoff * 2, reproj_method="nearest"
         )
+
+    assert "Clipping to valid range" in caplog.text
+    runoff_capped = quadtree_model.quadtree_grid.data["runoff"].where(
+        quadtree_model.quadtree_grid.mask > 0
+    )
+    assert np.isclose(float(runoff_capped.max()), 100.0)
