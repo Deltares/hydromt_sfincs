@@ -605,11 +605,41 @@ def test_plots(case, tmpdir):
     assert isfile(join(tmpdir, "forcing.png"))
     fn_out = join(tmpdir, "basemap.png")
     if case == "test2":
-        mod.plot_basemap(
+        fig, ax = mod.plot_basemap(
             fn_out=fn_out,
             bmap="sat",
             plot_bounds=False,  # does not work yet for quadtree
         )
     else:
-        mod.plot_basemap(fn_out=fn_out, bmap="sat")
+        fig, ax = mod.plot_basemap(fn_out=fn_out, bmap="sat")
+    assert any(
+        text.get_text() == "© Powered by HydroMT-SFINCS | Deltares" for text in ax.texts
+    )
+    credit = next(
+        text
+        for text in ax.texts
+        if text.get_text() == "© Powered by HydroMT-SFINCS | Deltares"
+    )
+    assert credit.get_position() == (0.01, 0.01)
     assert isfile(fn_out)
+
+
+def test_contextily_attribution_moves_project_credit_to_top_left(monkeypatch):
+    cx = pytest.importorskip("contextily")
+    root = join(TESTDATADIR, _cases["test1"]["example"])
+    mod = SfincsModel(root=root, mode="r")
+    mod.read()
+
+    def add_basemap(ax, crs, source, **kwargs):
+        ax.text(0.005, 0.005, "provider attribution", transform=ax.transAxes)
+
+    monkeypatch.setattr(cx, "add_basemap", add_basemap)
+    _, ax = mod.plot_basemap(
+        bmap="OpenStreetMap.Mapnik", plot_bounds=False, plot_geoms=False
+    )
+    credit = next(
+        text
+        for text in ax.texts
+        if text.get_text() == "© Powered by HydroMT-SFINCS | Deltares"
+    )
+    assert credit.get_position() == (0.01, 0.99)
