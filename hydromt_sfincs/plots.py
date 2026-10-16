@@ -244,6 +244,7 @@ def plot_basemap(
     fig = plt.figure(figsize=figsize)
     ax = plt.subplot(projection=crs)
     ax.set_extent(extent, crs=crs)
+    bmap_has_attribution = False
     if bmap is not None:
         if zoomlevel == "auto":  # auto zoomlevel
             c = 2 * np.pi * 6378137  # Earth circumference
@@ -258,6 +259,11 @@ def plot_basemap(
         #  short names for cartopy image tiles
         bmap = {"sat": "QuadtreeTiles", "osm": "OSM"}.get(bmap, bmap)
         if has_cx and bmap in list(cx.providers.flatten()):
+            source = cx.providers.flatten()[bmap]
+            attribution = bmap_kwargs.get("attribution")
+            if attribution is None:
+                attribution = source.get("attribution")
+            bmap_has_attribution = bool(attribution)
             bmap_kwargs = dict(zoom=zoomlevel, **bmap_kwargs)
             cx.add_basemap(ax, crs=crs, source=bmap, **bmap_kwargs)
         elif hasattr(cimgt, bmap):
@@ -449,6 +455,31 @@ def plot_basemap(
         )
         legend_kwargs0.update(**legend_kwargs)
         ax.legend(**legend_kwargs0)
+
+    tile_name = "" if bmap is None else str(bmap).lower()
+    is_satellite = any(
+        keyword in tile_name for keyword in ("sat", "imagery", "aerial", "quadtree")
+    )
+    credit_x, credit_y, credit_va = (
+        (0.01, 0.99, "top") if bmap_has_attribution else (0.01, 0.01, "bottom")
+    )
+    ax.text(
+        credit_x,
+        credit_y,
+        "© Powered by HydroMT-SFINCS | Deltares",
+        transform=ax.transAxes,
+        ha="left",
+        va=credit_va,
+        fontsize=6,
+        color="white" if is_satellite else "0.25",
+        bbox=dict(
+            facecolor="0.1" if is_satellite else "white",
+            alpha=0.75,
+            edgecolor="none",
+            pad=1.5,
+        ),
+        zorder=10,
+    )
 
     return fig, ax
 

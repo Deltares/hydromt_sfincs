@@ -17,6 +17,7 @@ Added
 - Added reusable pre-processing (``adjust_zsmax_dilation``, ``adjust_zsmax_energyhead``) and post-processing (``remove_disconnected_flooding``) helpers as separate functions.
 - Added optional argument to ``elevation.create()`` to skip extrapolation of the DEM (#392)
 - re-introduced snap_to_grid of relevant geometries for regular grids (#400)
+- ``plot_basemap`` now adds a persistent HydroMT-SFINCS/Deltares credit inside the map, positioned to avoid overlapping provider attribution. (#427)
 
 Fixed
 -----
