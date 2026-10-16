@@ -24,7 +24,10 @@ from shapely.geometry import LineString, Polygon
 
 
 __all__ = [
+    "active_cells_vector",
     "downscale_floodmap",
+    "fill_nan_in_mask",
+    "vector_to_active_cells",
     "get_bounds_vector",
     "create_boundary_points",
     "mask2gdf",
@@ -40,6 +43,73 @@ __all__ = [
 ]
 
 logger = logging.getLogger(f"hydromt.{__name__}")
+
+
+def active_cells_vector(data: np.ndarray, msk: np.ndarray) -> np.ndarray:
+    """Flatten active cells of a 2D map into the 1D SFINCS ordering.
+
+    NOTE: the array should be in S->N and W->E orientation, with origin in the
+    SW corner.
+    """
+    return np.asarray(data).transpose()[np.asarray(msk).transpose() > 0]
+
+
+def vector_to_active_cells(
+    values: np.ndarray,
+    ind: np.ndarray,
+    shape: Tuple[int, int],
+    mv: float = np.nan,
+    dtype: Union[str, np.dtype] = "f4",
+) -> np.ndarray:
+    """Scatter a 1D active-cell vector back onto a full 2D map.
+
+    Parameters
+    ----------
+    values : np.ndarray
+        1D array with one value per active cell, in SFINCS ordering.
+    ind : np.ndarray
+        Flat indices of the active cells.
+    shape : tuple of int
+        (nrow, ncol) shape of the output map.
+    mv : float
+        Value for cells outside the active mask.
+    """
+    nrow, ncol = shape
+    data = np.full((ncol, nrow), mv, dtype=dtype)
+    data.flat[ind] = np.asarray(values, dtype=dtype)
+    return data.transpose()
+
+
+def fill_nan_in_mask(
+    values: np.ndarray,
+    mask: np.ndarray,
+    name: str,
+    fill: float,
+) -> np.ndarray:
+    """Fill NaNs inside the active mask and warn how many cells were affected.
+
+    Parameters
+    ----------
+    values : np.ndarray
+        Layer values, may contain NaN.
+    mask : np.ndarray
+        Active cell mask; only cells > 0 are checked.
+    name : str
+        Variable name, used in the warning message.
+    fill : float
+        Value written where an active cell has no data.
+    """
+    values = np.asarray(values, dtype=np.float32)
+    missing = np.isnan(values) & (np.asarray(mask) > 0)
+    n_missing = int(missing.sum())
+    if n_missing:
+        logger.warning(
+            f"{n_missing} active cells have no '{name}' data after resampling; "
+            f"filled with {fill}. Check that the input data covers the full "
+            f"model domain."
+        )
+        values = np.where(missing, np.float32(fill), values)
+    return values
 
 
 def downscale_floodmap(*args, **kwargs):

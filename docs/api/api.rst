@@ -81,6 +81,12 @@ Configuration
 Grid
 ----
 
+The grid owns all data layers, but only read/writes the mask and elevation.
+Every other layer is owned by its own component, which reads and writes it to its own binary file through
+:py:meth:`~components.grid.SfincsGrid._read_layers` /
+:py:meth:`~components.grid.SfincsGrid._write_layers`. Regular-grid infiltration
+regular grids.
+
 .. autosummary::
    :toctree: ../_generated/
 
@@ -90,6 +96,10 @@ Grid
    components.grid.SfincsGrid.write
    components.grid.SfincsGrid.create
    components.grid.SfincsGrid.create_from_region
+   components.grid.SfincsGrid._read_layers
+   components.grid.SfincsGrid._write_layers
+   components.grid.SfincsGrid.read_map
+   components.grid.SfincsGrid.write_map
 
    components.grid.SfincsElevation
    components.grid.SfincsElevation.create
@@ -99,17 +109,31 @@ Grid
    components.grid.SfincsMask.create_boundary
 
    components.grid.SfincsRoughness
+   components.grid.SfincsRoughness.read
+   components.grid.SfincsRoughness.write
    components.grid.SfincsRoughness.create
 
    components.grid.SfincsInfiltration
+   components.grid.SfincsInfiltration.read
+   components.grid.SfincsInfiltration.write
+   components.grid.SfincsInfiltration.create_uniform_constant
    components.grid.SfincsInfiltration.create_constant
    components.grid.SfincsInfiltration.create_cn
+   components.grid.SfincsInfiltration.create_cn_from_landuse_hsg
    components.grid.SfincsInfiltration.create_cn_with_recovery
+   components.grid.SfincsInfiltration.create_green_ampt
+   components.grid.SfincsInfiltration.create_green_ampt_from_maps
+   components.grid.SfincsInfiltration.create_horton
+   components.grid.SfincsInfiltration.create_horton_from_maps
 
    components.grid.SfincsInitialConditions
+   components.grid.SfincsInitialConditions.read
+   components.grid.SfincsInitialConditions.write
    components.grid.SfincsInitialConditions.create
 
    components.grid.SfincsStorageVolume
+   components.grid.SfincsStorageVolume.read
+   components.grid.SfincsStorageVolume.write
    components.grid.SfincsStorageVolume.create
 
    components.grid.SfincsSubgridTable
@@ -117,6 +141,81 @@ Grid
    components.grid.SfincsSubgridTable.read
    components.grid.SfincsSubgridTable.write
    components.grid.SfincsSubgridTable.create
+
+Quadtree
+--------
+
+Quadtree equivalents of the grid components. Layer ownership works the same
+way: each component writes its variables to a standalone UGRID netcdf, and
+anything not claimed by a component stays in the main quadtree file.
+Quadtree infiltration, including bucket variables, is stored in ``inffile``;
+``inftype`` identifies the flavor.
+
+.. autosummary::
+   :toctree: ../_generated/
+
+   components.quadtree.SfincsQuadtreeGrid
+   components.quadtree.SfincsQuadtreeGrid.data
+   components.quadtree.SfincsQuadtreeGrid.read
+   components.quadtree.SfincsQuadtreeGrid._read_layers
+   components.quadtree.SfincsQuadtreeGrid._write_layers
+   components.quadtree.SfincsQuadtreeGrid.write
+   components.quadtree.SfincsQuadtreeGrid.create
+   components.quadtree.SfincsQuadtreeGrid.create_from_region
+
+   components.quadtree.SfincsQuadtreeElevation
+   components.quadtree.SfincsQuadtreeElevation.read
+   components.quadtree.SfincsQuadtreeElevation.write
+   components.quadtree.SfincsQuadtreeElevation.create
+   components.quadtree.SfincsQuadtreeElevation.create_uniform
+
+   components.quadtree.SfincsQuadtreeMask
+   components.quadtree.SfincsQuadtreeMask.read
+   components.quadtree.SfincsQuadtreeMask.write
+   components.quadtree.SfincsQuadtreeMask.create_active
+   components.quadtree.SfincsQuadtreeMask.create_boundary
+
+   components.quadtree.SfincsQuadtreeRoughness
+   components.quadtree.SfincsQuadtreeRoughness.read
+   components.quadtree.SfincsQuadtreeRoughness.write
+   components.quadtree.SfincsQuadtreeRoughness.create
+
+   components.quadtree.SfincsQuadtreeInfiltration
+   components.quadtree.SfincsQuadtreeInfiltration.read
+   components.quadtree.SfincsQuadtreeInfiltration.write
+   components.quadtree.SfincsQuadtreeInfiltration.create_uniform_constant
+   components.quadtree.SfincsQuadtreeInfiltration.create_constant
+   components.quadtree.SfincsQuadtreeInfiltration.create_cn
+   components.quadtree.SfincsQuadtreeInfiltration.create_cn_from_landuse_hsg
+   components.quadtree.SfincsQuadtreeInfiltration.create_cn_with_recovery
+   components.quadtree.SfincsQuadtreeInfiltration.create_green_ampt
+   components.quadtree.SfincsQuadtreeInfiltration.create_green_ampt_from_maps
+   components.quadtree.SfincsQuadtreeInfiltration.create_horton
+   components.quadtree.SfincsQuadtreeInfiltration.create_horton_from_maps
+   components.quadtree.SfincsQuadtreeInfiltration.create_bucket
+   components.quadtree.SfincsQuadtreeInfiltration.create_bucket_from_maps
+   components.quadtree.SfincsQuadtreeInfiltration.create_runoff_coefficient
+
+   components.quadtree.SfincsQuadtreeInitialConditions
+   components.quadtree.SfincsQuadtreeInitialConditions.read
+   components.quadtree.SfincsQuadtreeInitialConditions.write
+   components.quadtree.SfincsQuadtreeInitialConditions.create
+   components.quadtree.SfincsQuadtreeInitialConditions.create_from_polygon
+
+   components.quadtree.SfincsQuadtreeStorageVolume
+   components.quadtree.SfincsQuadtreeStorageVolume.read
+   components.quadtree.SfincsQuadtreeStorageVolume.write
+   components.quadtree.SfincsQuadtreeStorageVolume.create
+
+   components.quadtree.SfincsQuadtreeSubgridTable
+   components.quadtree.SfincsQuadtreeSubgridTable.read
+   components.quadtree.SfincsQuadtreeSubgridTable.write
+   components.quadtree.SfincsQuadtreeSubgridTable.create
+
+   components.quadtree.SnapWaveQuadtreeMask
+   components.quadtree.SnapWaveQuadtreeMask.create
+   components.quadtree.SnapWaveQuadtreeMask.create_active
+   components.quadtree.SnapWaveQuadtreeMask.create_boundary
 
 Geometries
 -----------
@@ -224,9 +323,31 @@ SFINCS workflows
    workflows.snap_discharge
    workflows.river_source_points
    workflows.river_centerline_from_hydrography
-   workflows.landuse
-   workflows.cn_to_s
    workflows.create_topobathy_tiles
+
+Infiltration
+------------
+
+Estimation maths only; these take already-read arrays and tables and return
+SFINCS parameter maps. Reading data and writing config is done by the
+infiltration components.
+
+.. autosummary::
+   :toctree: ../_generated/
+
+   workflows.ksat_to_mmhr
+   workflows.normalize_hsg_codes
+   workflows.cn_to_s
+   workflows.curve_number_from_landuse_hsg
+   workflows.adjust_curve_number
+   workflows.curve_number_with_recovery
+   workflows.constant_infiltration_from_ksat_lulc
+   workflows.green_ampt_from_hsg
+   workflows.green_ampt_from_hsg_landuse
+   workflows.horton_from_hsg
+   workflows.horton_from_hsg_landuse
+   workflows.bucket_from_hsg
+   workflows.bucket_from_hsg_landuse
 
 Flood map downscaling
 ---------------------

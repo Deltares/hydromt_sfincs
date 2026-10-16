@@ -10,13 +10,15 @@ The format is based on `Keep a Changelog`_, and this project adheres to
 
 v2.0.0-rc4 (unreleased)
 =============================
-**This release contains minor bugfixes and improvements to the v2.0.0-rc3 release.**
+**This release includes changes to grid I/O and infiltration APIs, alongside bugfixes and improvements to v2.0.0-rc3.**
 
 Added
 -----
 - Added reusable pre-processing (``adjust_zsmax_dilation``, ``adjust_zsmax_energyhead``) and post-processing (``remove_disconnected_flooding``) helpers as separate functions.
 - Added optional argument to ``elevation.create()`` to skip extrapolation of the DEM (#392)
 - re-introduced snap_to_grid of relevant geometries for regular grids (#400)
+- Added infiltration workflows to estimate Curve Number, Green-Ampt, Horton, and bucket parameters from HSG data, with optional land-use modifiers, plus constant infiltration from Ksat and land-use data (#419).
+- Added infiltration component methods to populate regular-grid and quadtree SFINCS models with derived or supplied infiltration layers: ``create_cn_from_landuse_hsg``, ``create_green_ampt``, ``create_horton``, their map-based variants, and ``create_uniform_constant``. Quadtree models also support ``create_runoff_coefficient``, ``create_bucket`` and ``create_bucket_from_maps`` (#419).
 
 Fixed
 -----
@@ -29,6 +31,7 @@ Changed
 - Moved the downscaling utilities from ``hydromt_sfincs.utils`` to a dedicated ``hydromt_sfincs.workflows.downscaling`` submodule (re-exported via ``hydromt_sfincs.workflows``).
 - ``downscale_floodmap`` is now parameterised by ``reproj_method`` (``nearest`` or ``bilinear``) and a ``subtract_dem`` flag (flood depth vs. raw water level), and works on both regular and quadtree grids.
 - Moved readers and writers from ``utils.py`` to dedicated ``readers.py`` and ``writers.py`` modules (#390)
+- ``grid.read()`` and ``quadtree_grid.read()`` read only the main grid data files by default. Read or write additional gridded variables through their component methods, or pass ``read_components=True`` / ``write_components=True`` to have the grid delegate to those components. ``model.read()`` / ``model.write()`` handle all components (#419).
 
 v2.0.0-rc3 (22-5-2026)
 =============================
