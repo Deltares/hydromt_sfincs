@@ -24,6 +24,7 @@ Fixed
 - Fixed plot_basemap() for very flat and/or below-sea-level Models (#394)
 - Always write ``manning_land``, ``manning_sea`` and ``rgh_lev_land`` to config when they are set by the user (#398)
 - Fixed writing of infiltration layers in Quadtree models (#397)
+- Respect explicit ``reproj_method`` values in ``merge_multi_dataarrays`` for first and subsequent datasets (#425)
 
 Changed
 -------
