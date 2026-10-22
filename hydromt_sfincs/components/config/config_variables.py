@@ -18,7 +18,8 @@ Write policy (controls which fields appear in sfincs.inp):
 * ``json_schema_extra={"legacy_alias": [("<name>", "<X.Y.Z>" | None), ...]}`` —
   earlier names of the keyword, with the last SFINCS version in which ``<name>``
   was the kernel keyword (``None`` for a spelling variant that only the latest
-  kernel accepts). They are read into this field.
+  kernel accepts). They are read into this field. The list follows the kernel's
+  lookup order: when several aliases are in a file, the first one listed is used.
 * ``json_schema_extra={"max_version": "<X.Y.Z>"}`` — field is deprecated as of
   this kernel version; when ``sfincs_version`` is newer it is only kept if
   explicitly present in the source file (never force-written via ``always``).
@@ -1240,7 +1241,7 @@ class SfincsConfigVariables(BaseSettings):
         None,
         description="Spatially uniform precipitation file",
         json_schema_extra={
-            "legacy_alias": [("precipfile", "2.4.1"), ("prcpfile", None)]
+            "legacy_alias": [("prcpfile", None), ("precipfile", "2.4.1")]
         },
     )
     amufile: str | None = Field(None, description="Wind u-component file")
@@ -1272,8 +1273,8 @@ class SfincsConfigVariables(BaseSettings):
         json_schema_extra={
             "min_version": "2.5.0",
             "legacy_alias": [
-                ("infiltration_file", "2.4.1"),
                 ("infiltrationfile", None),
+                ("infiltration_file", "2.4.1"),
             ],
         },
     )
@@ -1283,8 +1284,8 @@ class SfincsConfigVariables(BaseSettings):
         json_schema_extra={
             "min_version": "2.5.0",
             "legacy_alias": [
-                ("infiltration_type", "2.4.1"),
                 ("infiltrationtype", None),
+                ("infiltration_type", "2.4.1"),
             ],
         },
     )

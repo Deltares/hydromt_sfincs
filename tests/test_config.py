@@ -533,6 +533,29 @@ def test_config_multiple_aliases_written_as_read(
     assert keys - {"sfincs_version", "snapwave"} == {expected_key}
 
 
+@pytest.mark.parametrize(
+    ("used", "ignored"),
+    [
+        ("prcpfile", "precipfile"),
+        ("infiltrationfile", "infiltration_file"),
+        ("infiltrationtype", "infiltration_type"),
+        ("snapwave_waveforces_factor", "waveforces_ratio"),
+    ],
+)
+def test_config_duplicate_aliases_follow_kernel_order(tmp_path, caplog, used, ignored):
+    # with several aliases of one field in a file, the one the kernel looks up
+    # first is used, regardless of the order in the file
+    inpfile = tmp_path / "sfincs.inp"
+    inpfile.write_text(f"snapwave = 1\n{ignored} = 0.3\n{used} = 0.5\n")
+
+    with caplog.at_level(logging.WARNING):
+        data = SfincsConfigVariables.read(inpfile)
+    assert f"'{ignored}' is ignored" in caplog.text
+    key = SfincsConfigVariables.resolve_key(used)
+    assert data._explicit_keys[key] == used
+    assert float(getattr(data, key)) == 0.5
+
+
 def test_config_read_warns_deprecated_field_unversioned(tmp_path):
     inpfile = tmp_path / "sfincs.inp"
     inpfile.write_text("storeqdrain = 1\n")
