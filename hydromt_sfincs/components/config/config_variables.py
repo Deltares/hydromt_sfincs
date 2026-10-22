@@ -310,7 +310,7 @@ class SfincsConfigVariables(BaseSettings):
     dtwnd: float = Field(
         1800.0,
         description="Interval of updating wind forcing (seconds)",
-        json_schema_extra={"always": True},
+        json_schema_extra={"always": False},
     )
 
     # ================================================================
@@ -391,7 +391,7 @@ class SfincsConfigVariables(BaseSettings):
         0.01,
         ge=0.0,
         description="Viscosity coefficient per metre of grid cell length (-)",
-        json_schema_extra={"always": True},
+        json_schema_extra={"always": False},
     )
     nuviscfac: float = Field(
         100.0,
@@ -481,13 +481,13 @@ class SfincsConfigVariables(BaseSettings):
         1.25,
         gt=0.0,
         description="Air density (kg/m^3)",
-        json_schema_extra={"always": True},
+        json_schema_extra={"always": False},
     )
     rhow: float = Field(
         1024.0,
         gt=0.0,
         description="Water density (kg/m^3)",
-        json_schema_extra={"always": True},
+        json_schema_extra={"always": False},
     )
     latitude: float = Field(
         0.0,
@@ -498,12 +498,12 @@ class SfincsConfigVariables(BaseSettings):
         ge=0,
         le=1,
         description="Enable atmospheric pressure term (1: yes, 0: no)",
-        json_schema_extra={"always": True},
+        json_schema_extra={"always": False},
     )
     pavbnd: float = Field(
         0.0,
         description="Atmospheric pressure at boundary (Pa)",
-        json_schema_extra={"always": True},
+        json_schema_extra={"always": False},
     )
     gapres: float = Field(
         101200.0,
@@ -527,7 +527,7 @@ class SfincsConfigVariables(BaseSettings):
         60.0,
         ge=0.0,
         description="Water level boundary timeseries filtering period (seconds)",
-        json_schema_extra={"always": True},
+        json_schema_extra={"always": False},
     )
     use_bcafile: int = Field(
         1,
@@ -1130,17 +1130,17 @@ class SfincsConfigVariables(BaseSettings):
     cdnrb: int = Field(
         3,
         description="Number of wind speed ranges for drag coefficient",
-        json_schema_extra={"always": True},
+        json_schema_extra={"always": False},
     )
     cdwnd: list[float] | None = Field(
         [0.0, 28.0, 50.0],
         description="Wind speed ranges for drag coefficient (m/s)",
-        json_schema_extra={"always": True},
+        json_schema_extra={"always": False},
     )
     cdval: list[float] | None = Field(
         [0.001, 0.0025, 0.0015],
         description="Drag coefficient values corresponding to cdwnd",
-        json_schema_extra={"always": True},
+        json_schema_extra={"always": False},
     )
 
     # ================================================================
@@ -1480,7 +1480,7 @@ class SfincsConfigVariables(BaseSettings):
         ge=0,
         le=1,
         description="Write time of maximum water level output (1: yes, 0: no)",
-        json_schema_extra={"min_version": "2.3.0"},
+        json_schema_extra={"always": True, "min_version": "2.3.0"},
     )
     storezvolmax: int = Field(
         1,
@@ -1541,7 +1541,7 @@ class SfincsConfigVariables(BaseSettings):
         ge=0,
         le=1,
         description="Enable timestep analysis output (1: yes, 0: no)",
-        json_schema_extra={"min_version": "2.3.2"},
+        json_schema_extra={"always": True, "min_version": "2.3.2"},
     )
     debug: int = Field(
         0, ge=0, le=1, description="Debug mode — write every timestep (1: yes, 0: no)"
