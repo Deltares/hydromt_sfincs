@@ -43,34 +43,34 @@ def test_wave_makers_io(model_config, tmp_path):
     # compare whether the 2 gdf's are the same
     assert obs0.equals(obs1)
 
-    # clear in config
+    # clear the legacy key read from the test model in config
     model_config.config.set("wvmfile", None)
 
-    # write again and check whether 'wvmfile' is added to config
+    # write again and check whether 'wavemaker_wvmfile' is added to config
     model_config.wave_makers.write(filename=wvmfile)
 
-    obs2 = model_config.config.get("wvmfile")
+    obs2 = model_config.config.get("wavemaker_wvmfile")
     # assert wvmfile == obs2
     assert "sfincs.wvm" == obs2
 
     # clear in config
-    model_config.config.set("wvmfile", None)
+    model_config.config.set("wavemaker_wvmfile", None)
 
     # write without filename specified
     model_config.wave_makers.write()
 
     # check if added with default name
-    obs3 = model_config.config.get("wvmfile")
+    obs3 = model_config.config.get("wavemaker_wvmfile")
     assert "sfincs.wvm" == obs3
 
     # clear in config
-    model_config.config.set("wvmfile", None)
+    model_config.config.set("wavemaker_wvmfile", None)
 
     # write with filename not as path
     model_config.wave_makers.write(filename="sfincs_test.wvm")
 
     # check if added with default name
-    obs4 = model_config.config.get("wvmfile")
+    obs4 = model_config.config.get("wavemaker_wvmfile")
     assert "sfincs_test.wvm" == obs4
 
     # reading random nonexisting file > should raise warning
@@ -86,6 +86,37 @@ def test_wave_makers_io(model_config, tmp_path):
 
     # result should be that no file is created
     assert Path(join(tmp_path, filename2)).exists() == False
+
+
+@pytest.mark.parametrize(
+    ("sfincs_version", "expected_key", "other_key"),
+    [
+        (None, "wvmfile", "wavemaker_wvmfile"),
+        ("2.3.2", "wvmfile", "wavemaker_wvmfile"),
+        ("2.5.0", "wavemaker_wvmfile", "wvmfile"),
+    ],
+)
+def test_wave_makers_legacy_wvmfile(
+    model_config, tmp_path, sfincs_version, expected_key, other_key
+):
+    # the test model sets the legacy 'wvmfile' (renamed in SFINCS v2.3.3); the
+    # config reads it as 'wavemaker_wvmfile' and writes it back as 'wvmfile',
+    # unless the targeted SFINCS version no longer reads that keyword
+    assert model_config.config.data.wavemaker_wvmfile == "sfincs.wvm"
+    assert model_config.config.get("wvmfile") == "sfincs.wvm"
+
+    model_config.wave_makers.read()
+    assert not model_config.wave_makers.data.empty
+
+    model_config.config.set("sfincs_version", sfincs_version)
+    model_config.root.set(tmp_path, mode="r+")
+    model_config.wave_makers.write()
+    model_config.config.write()
+    keys = {
+        line.split()[0] for line in (tmp_path / "sfincs.inp").read_text().splitlines()
+    }
+    assert expected_key in keys
+    assert other_key not in keys
 
 
 def test_wave_makers_create(model_config):

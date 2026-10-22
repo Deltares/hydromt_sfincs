@@ -28,6 +28,10 @@ Fixed
 
 Changed
 -------
+- Synced the config keywords with the SFINCS kernel: added missing keywords, removed keywords the kernel does not use, and set ``min_version`` to the release that introduced each keyword (#417)
+- Renamed keywords are one config field with a ``legacy_alias`` of ``(name, max_version)``: the old name (e.g. ``wvmfile``) is read into the current field (``wavemaker_wvmfile``) and written back as read, unless the ``sfincs_version`` of the file does not read it or, without ``sfincs_version``, it predates ``MIN_SUPPORTED_SFINCS_VERSION`` (#417)
+- Added ``config.write(update_to_latest=True)`` to write a model for ``LATEST_SFINCS_VERSION``; new models write ``sfincs_version`` (#417)
+- Components use the current keywords: ``wavemaker_wvmfile``, ``inffile``/``inftype`` and ``prcfile`` (#417)
 - Moved the downscaling utilities from ``hydromt_sfincs.utils`` to a dedicated ``hydromt_sfincs.workflows.downscaling`` submodule (re-exported via ``hydromt_sfincs.workflows``).
 - ``downscale_floodmap`` is now parameterised by ``reproj_method`` (``nearest`` or ``bilinear``) and a ``subtract_dem`` flag (flood depth vs. raw water level), and works on both regular and quadtree grids.
 - Moved readers and writers from ``utils.py`` to dedicated ``readers.py`` and ``writers.py`` modules (#390)
