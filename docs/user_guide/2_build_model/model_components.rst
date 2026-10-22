@@ -70,8 +70,8 @@ written with ``update_to_latest=True``.
    flowchart TD
        subgraph READ["Reading sfincs.inp"]
            R0["Keyword in file<br/>e.g. 'wvmfile' or 'wavemaker_wvmfile'"] --> R1{"Is it an old name<br/>of a setting?"}
-           R1 -- yes --> R2{"Current name<br/>also in the file?"}
-           R2 -- yes --> R3["Old name ignored<br/>warning"]
+           R1 -- yes --> R2{"Current name, or an old name the<br/>kernel reads first, also in the file?"}
+           R2 -- yes --> R3["This name ignored<br/>warning"]
            R2 -- no --> R4["Stored under the current name,<br/>keyword remembered"]
            R1 -- no --> R6
            R4 --> R6{"Known setting?"}
