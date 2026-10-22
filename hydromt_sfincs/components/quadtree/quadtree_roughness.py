@@ -29,8 +29,9 @@ class SfincsQuadtreeRoughness(SfincsQuadtreeMixin, ModelComponent):
 
     @property
     def data(self):
-        """Get the data from the quadtree grid."""
-        return self.model.quadtree_grid.data
+        """Return only roughness layers, retaining the parent mesh."""
+        data = self.model.quadtree_grid.data
+        return data[[name for name in self.grid_variables if name in data]]
 
     @property
     def mask(self):
@@ -108,12 +109,14 @@ class SfincsQuadtreeRoughness(SfincsQuadtreeMixin, ModelComponent):
 
         # Now fill any remaining nans with depth-based manning
         nr_nan = np.isnan(manning).sum()
-        if "z" in self.data:
+        if "z" in self.model.quadtree_grid.data:
             logger.info(
                 f"Filled {nr_nan} remaining cells in manning with depth-based roughness."
             )
             manning0 = xr.where(
-                self.data["z"] >= rgh_lev_land, manning_land, manning_sea
+                self.model.quadtree_grid.data["z"] >= rgh_lev_land,
+                manning_land,
+                manning_sea,
             )
             manning = np.where(np.isnan(manning), manning0, manning)
         else:

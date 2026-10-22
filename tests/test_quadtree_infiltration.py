@@ -107,6 +107,21 @@ def test_uniform_constant_infiltration_quadtree(quadtree_model):
     assert mod1.config.get("inffile") is None
 
 
+def test_quadtree_infiltration_clear_preserves_grid_layers(quadtree_model_config):
+    model = quadtree_model_config
+    grid = model.quadtree_grid
+    grid.read()
+    mask = grid.data["mask"].copy(deep=True)
+    elevation = grid.data["z"].copy(deep=True)
+    grid.set(grid.mask.astype(np.float32), name="qinf")
+
+    model.quadtree_infiltration.clear()
+
+    assert "qinf" not in grid.data
+    np.testing.assert_array_equal(grid.data["mask"].values, mask.values)
+    np.testing.assert_array_equal(grid.data["z"].values, elevation.values)
+
+
 def test_cn_from_landuse_hsg_quadtree(model, quadtree_model):
     lulc = xr.where(model.grid.data["dep"] < -0.5, 70, 30)
     lulc.raster.set_crs(model.crs)

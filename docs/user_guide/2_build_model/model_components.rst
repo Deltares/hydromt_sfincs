@@ -11,6 +11,15 @@ data. Components load and persist data with ``read()`` and ``write()``. Each com
 also provides methods to create or update its data, typically named ``create()`` or
 ``create_*()`` (see :ref:`model_methods`).
 
+For grid-layer components, ``component.data`` is a component-specific view of
+the layers stored on the shared grid; it is not a separate copy or storage
+location. For example, ``model.elevation.data`` exposes the regular-grid
+``dep`` layer, while ``model.grid.data`` contains ``dep`` together with the
+other grid layers. Likewise, ``model.quadtree_elevation.data`` exposes ``z``
+from ``model.quadtree_grid.data``. Use the parent grid's ``set()`` method to
+add or replace a layer; the component's ``data`` view is for accessing its
+relevant data.
+
 .. warning::
 
   **Grid read/write behavior has changed.** ``model.grid.read()`` and
@@ -97,9 +106,10 @@ The different components are interrelated, since they all share the same spatial
 
 .. note::
 
-    Please be aware the the :py:class:`subgrid <hydromt_sfincs.components.grid.subgrid.SfincsSubgridTable>`
-    component has its own data attribute, whereas all other grid components store their data in the
-    :py:class:`grid <hydromt_sfincs.components.grid.regulargrid.SfincsGrid>` component.
+    The regular-grid subgrid-table component is an exception: its table data is
+    stored in its own ``data`` attribute. Other regular-grid layer data is
+    stored in the shared :py:class:`grid <hydromt_sfincs.components.grid.regulargrid.SfincsGrid>`
+    dataset and exposed through each layer component's filtered ``data`` view.
 
 
 Quadtree grid components

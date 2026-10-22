@@ -33,8 +33,9 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
 
     @property
     def data(self):
-        """Get the data from the model grid."""
-        return self.model.quadtree_grid.data
+        """Return only initial-condition layers, retaining the parent mesh."""
+        data = self.model.quadtree_grid.data
+        return data[[name for name in self.grid_variables if name in data]]
 
     @property
     def mask(self):

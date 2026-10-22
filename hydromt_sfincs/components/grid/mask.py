@@ -29,7 +29,9 @@ class SfincsMask(ModelComponent):
     for water level and outflow boundaries.
 
     .. note::
-        The mask data is stored in the model grid's data dataset under the key "mask".
+        Mask data is stored as ``mask`` in the model grid. ``data`` exposes only
+        this layer. The grid reads and writes it through ``mskfile``, together
+        with elevation and the cell index.
 
     See Also
     --------
@@ -49,8 +51,9 @@ class SfincsMask(ModelComponent):
 
     @property
     def data(self):
-        """Get the data from the model grid."""
-        return self.model.grid.data
+        """Return only the available mask layer from the model grid."""
+        data = self.model.grid.data
+        return data[[name for name in ("mask",) if name in data]]
 
     @property
     def empty_mask(self):
@@ -62,15 +65,20 @@ class SfincsMask(ModelComponent):
         """Get the affine transform of the model grid."""
         return self.model.grid.transform
 
-    def read(self):
-        """Not implemented, mask data is read when the grid is read."""
-        # TODO discuss what we want to return/read here, pass is not so informative ..
-        # The mask values are read when the quadtree grid is read
-        pass
+    def read(self) -> None:
+        """Ensure the grid is loaded; it reads the mask from ``mskfile``.
 
-    def write(self):
-        """Not implemented, mask data is written when the grid is written."""
-        # The mask values are written when the quadtree grid is written
+        An already loaded grid is not reread.
+        """
+        if self.model.grid._data is None:
+            self.model.grid.read(read_components=False)
+
+    def write(self) -> None:
+        """Leave mask persistence to ``model.grid.write()``.
+
+        No file is written here: the grid writes ``mskfile`` together with
+        elevation and the cell index.
+        """
         pass
 
     @hydromt_step
@@ -231,7 +239,7 @@ class SfincsMask(ModelComponent):
 
         # get mask and dep data
         da_mask = self.data["mask"] if "mask" in self.data else None
-        da_dep = self.data["dep"] if "dep" in self.data else None
+        da_dep = self.model.grid.data.get("dep")
 
         # check if we are going to apply any z constraints, if so we need dep data
         has_z_constraints = any(
@@ -459,7 +467,7 @@ class SfincsMask(ModelComponent):
             raise ValueError(
                 "No mask data found in model, please create a mask first using `SfincsModel.mask.create_active`"
             )
-        da_dep = self.data["dep"] if "dep" in self.data else None
+        da_dep = self.model.grid.data.get("dep")
 
         # check if mask and dep data are compatible
         if da_dep is None and (zmin is not None or zmax is not None):

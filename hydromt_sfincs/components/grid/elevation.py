@@ -24,7 +24,9 @@ class SfincsElevation(ModelComponent):
     bed level representation interpolated onto the model grid.
 
     .. note::
-        The elevation data is stored in the model grid's data dataset under the key "z".
+        Elevation is stored as ``dep`` in the model grid. ``data`` exposes only
+        this layer. The grid reads and writes it through ``depfile``, together
+        with the mask and cell index.
 
     See Also
     --------
@@ -36,27 +38,36 @@ class SfincsElevation(ModelComponent):
         self,
         model: "SfincsModel",
     ):
-        # The data for the elevation is stored in the model.grid.data["z"]
+        # The data for the elevation is stored in the model.grid.data["dep"]
         super().__init__(
             model=model,
         )
 
     @property
     def data(self):
-        """Get the data from the model grid."""
-        return self.model.grid.data
+        """Return only the available elevation layer from the model grid."""
+        data = self.model.grid.data
+        return data[[name for name in ("dep",) if name in data]]
 
     @property
     def mask(self):
         """Get an empty mask with the same shape as the model grid."""
         return self.model.grid.mask
 
-    def read(self):
-        """Not implemented, elevation data is read when the grid is read."""
-        pass
+    def read(self) -> None:
+        """Ensure the grid is loaded; it reads elevation from ``depfile``.
 
-    def write(self):
-        """Not implemented, elevation data is written when the grid is written."""
+        An already loaded grid is not reread.
+        """
+        if self.model.grid._data is None:
+            self.model.grid.read(read_components=False)
+
+    def write(self) -> None:
+        """Leave elevation persistence to ``model.grid.write()``.
+
+        No file is written here: the grid writes ``depfile`` together with
+        the mask and cell index.
+        """
         pass
 
     @hydromt_step

@@ -45,7 +45,9 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
 
     @property
     def data(self) -> xu.UgridDataset:
-        return self.model.quadtree_grid.data
+        """Return only infiltration layers, retaining the parent mesh."""
+        data = self.model.quadtree_grid.data
+        return data[[name for name in self.grid_variables if name in data]]
 
     @property
     def mask(self) -> xu.UgridDataArray:
@@ -1003,5 +1005,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
 
     def clear(self) -> None:
         """Clear all infiltration layers from the model."""
-        self.model.quadtree_grid._data = clear_data(self.data, keep=())
+        self.model.quadtree_grid._data = clear_data(
+            self.model.quadtree_grid.data, keep=()
+        )
         reset_config(self.model.config)

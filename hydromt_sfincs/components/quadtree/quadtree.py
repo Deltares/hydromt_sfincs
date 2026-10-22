@@ -54,6 +54,12 @@ class SfincsQuadtreeGrid(MeshComponent):
     unless called with ``write_components=True``; the component writes them to
     its own UGRID netcdf through :py:meth:`_write_layers`. Anything not claimed
     stays in the main file.
+
+    Elevation, the SFINCS mask and the SnapWave mask stay in ``qtrfile``.
+    Their component ``read()`` methods ensure this grid is loaded, while their
+    ``write()`` methods are no-ops; persistence is handled here. Component
+    ``data`` properties expose their own layers with the mesh and attributes;
+    this grid remains the full dataset and the destination for ``set()`` calls.
     """
 
     def __init__(

@@ -57,6 +57,47 @@ def test_quadtree_io(tmp_dir):
     os.remove(mod1.root.path / "sfincs.nc")
 
 
+def test_quadtree_component_data_contains_only_owned_layers(quadtree_model_config):
+    model = quadtree_model_config
+    grid = model.quadtree_grid
+    grid.read()
+    components = {
+        "quadtree_elevation": ("z",),
+        "quadtree_mask": ("mask",),
+        "quadtree_snapwave_mask": ("snapwave_mask",),
+        "quadtree_roughness": ("manning",),
+        "quadtree_storage_volume": ("vol",),
+        "quadtree_initial_conditions": ("zs",),
+        "quadtree_infiltration": model.quadtree_infiltration.grid_variables,
+    }
+    layer = grid.data["mask"].astype(np.float32)
+    for name in set().union(*map(set, components.values())):
+        grid.set(layer, name=name)
+
+    for name, variables in components.items():
+        data = model.components[name].data
+        assert isinstance(data, xu.UgridDataset)
+        assert set(data.data_vars) == set(variables)
+        assert data.grid.n_face == grid.data.grid.n_face
+
+
+def test_quadtree_elevation_uniform_updates_parent_grid(quadtree_model_config):
+    model = quadtree_model_config
+    model.quadtree_grid.read()
+    model.quadtree_elevation.create_uniform(2.0)
+    np.testing.assert_array_equal(model.quadtree_grid.data["z"].values, 2.0)
+
+
+def test_quadtree_mask_active_updates_parent_grid(quadtree_model_config):
+    model = quadtree_model_config
+    model.quadtree_grid.read()
+    elevation = model.quadtree_grid.data["z"]
+    model.quadtree_mask.create_active(zmin=0.0)
+    np.testing.assert_array_equal(
+        model.quadtree_grid.data["mask"].values > 0, elevation.values >= 0.0
+    )
+
+
 def test_quadtree_write_excludes_component_layers(quadtree_model):
     # manning is owned by the roughness component, so it must not end up in sfincs.nc
     mask = quadtree_model.quadtree_grid.data["mask"]

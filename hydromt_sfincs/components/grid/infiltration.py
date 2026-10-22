@@ -45,7 +45,9 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
 
     @property
     def data(self) -> xr.Dataset:
-        return self.model.grid.data
+        """Return only the available infiltration layers from the model grid."""
+        data = self.model.grid.data
+        return data[[name for name in self.grid_variables if name in data]]
 
     @property
     def mask(self) -> xr.DataArray:
@@ -707,5 +709,5 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
 
     def clear(self) -> None:
         """Clear all infiltration layers from the model."""
-        self.model.grid._data = clear_data(self.data, keep=())
+        self.model.grid._data = clear_data(self.model.grid.data, keep=())
         reset_config(self.model.config)

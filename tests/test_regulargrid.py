@@ -105,6 +105,39 @@ def test_grid_io(model_config, tmp_path):
     assert model.quadtree_grid.crs == model.grid.crs
 
 
+def test_grid_component_data_contains_only_owned_layers(model_config):
+    model = model_config
+    grid = model.grid
+    grid.read()
+    components = {
+        "elevation": ("dep",),
+        "mask": ("mask",),
+        "roughness": ("manning",),
+        "storage_volume": ("vol",),
+        "initial_conditions": ("zs",),
+        "infiltration": model.infiltration.grid_variables,
+    }
+    for name in set().union(*map(set, components.values())):
+        grid.set(grid.mask.astype(np.float32), name=name)
+
+    for name, variables in components.items():
+        assert set(model.components[name].data.data_vars) == set(variables)
+
+
+def test_regular_infiltration_clear_preserves_grid_layers(model_config):
+    model = model_config
+    model.grid.read()
+    mask = model.grid.data["mask"].copy(deep=True)
+    dep = model.grid.data["dep"].copy(deep=True)
+    model.grid.set(model.grid.mask.astype(np.float32), name="qinf")
+
+    model.infiltration.clear()
+
+    assert "qinf" not in model.grid.data
+    np.testing.assert_array_equal(model.grid.data["mask"].values, mask.values)
+    np.testing.assert_array_equal(model.grid.data["dep"].values, dep.values)
+
+
 def test_grid_create(model_init):
     model = model_init
     # create a simple regular grid similar to sfincs_test

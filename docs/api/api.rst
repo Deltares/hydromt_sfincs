@@ -81,11 +81,19 @@ Configuration
 Grid
 ----
 
-The grid owns all data layers, but only read/writes the mask and elevation.
-Every other layer is owned by its own component, which reads and writes it to its own binary file through
-:py:meth:`~components.grid.SfincsGrid._read_layers` /
-:py:meth:`~components.grid.SfincsGrid._write_layers`. Regular-grid infiltration
-regular grids.
+The regular-grid component's ``data`` property contains the complete gridded
+dataset. The individual grid components (for example, elevation, mask, and
+roughness) also provide a ``data`` property, but that property exposes only the
+layer or layers relevant to that component. These are component-specific views
+of data stored on the shared grid; they are not separate data stores. To add or
+replace a layer, use the parent grid's ``set()`` method.
+
+The grid reads and writes the cell index, mask, and elevation maps. Other
+component-owned maps are read and written by their components through the
+grid's internal layer I/O methods. When ``SfincsGrid.write()`` is called with
+``write_components=True``, it also calls the owning components' ``write()``
+methods. Regular-grid infiltration layers are stored in their configured
+binary map files; subgrid tables are managed by the subgrid component.
 
 .. autosummary::
    :toctree: ../_generated/
@@ -102,18 +110,22 @@ regular grids.
    components.grid.SfincsGrid.write_map
 
    components.grid.SfincsElevation
+   components.grid.SfincsElevation.data
    components.grid.SfincsElevation.create
 
    components.grid.SfincsMask
+   components.grid.SfincsMask.data
    components.grid.SfincsMask.create_active
    components.grid.SfincsMask.create_boundary
 
    components.grid.SfincsRoughness
+   components.grid.SfincsRoughness.data
    components.grid.SfincsRoughness.read
    components.grid.SfincsRoughness.write
    components.grid.SfincsRoughness.create
 
    components.grid.SfincsInfiltration
+   components.grid.SfincsInfiltration.data
    components.grid.SfincsInfiltration.read
    components.grid.SfincsInfiltration.write
    components.grid.SfincsInfiltration.create_uniform_constant
@@ -127,11 +139,13 @@ regular grids.
    components.grid.SfincsInfiltration.create_horton_from_maps
 
    components.grid.SfincsInitialConditions
+   components.grid.SfincsInitialConditions.data
    components.grid.SfincsInitialConditions.read
    components.grid.SfincsInitialConditions.write
    components.grid.SfincsInitialConditions.create
 
    components.grid.SfincsStorageVolume
+   components.grid.SfincsStorageVolume.data
    components.grid.SfincsStorageVolume.read
    components.grid.SfincsStorageVolume.write
    components.grid.SfincsStorageVolume.create
@@ -145,11 +159,20 @@ regular grids.
 Quadtree
 --------
 
-Quadtree equivalents of the grid components. Layer ownership works the same
-way: each component writes its variables to a standalone UGRID netcdf, and
-anything not claimed by a component stays in the main quadtree file.
-Quadtree infiltration, including bucket variables, is stored in ``inffile``;
-``inftype`` identifies the flavor.
+The quadtree grid's ``data`` property contains the complete mesh dataset.
+Individual quadtree components expose their relevant layer or layers through
+their own ``data`` properties. These are component-specific views of data
+stored on the shared quadtree grid, not separate data stores; use the parent
+grid's ``set()`` method to add or replace a layer. The component views retain
+the mesh topology.
+
+The mask, elevation, and any quadtree-specific variables are stored in the main
+quadtree file (``qtrfile``). Other component-owned variables are written to
+standalone UGRID netCDF files by their components. Calling
+``SfincsQuadtreeGrid.write()`` with ``write_components=True`` also invokes those
+component writers. Quadtree infiltration, including bucket variables, is
+stored in ``inffile``; ``inftype`` identifies the flavor. The subgrid table is
+managed separately by its subgrid component.
 
 .. autosummary::
    :toctree: ../_generated/
@@ -164,23 +187,27 @@ Quadtree infiltration, including bucket variables, is stored in ``inffile``;
    components.quadtree.SfincsQuadtreeGrid.create_from_region
 
    components.quadtree.SfincsQuadtreeElevation
+   components.quadtree.SfincsQuadtreeElevation.data
    components.quadtree.SfincsQuadtreeElevation.read
    components.quadtree.SfincsQuadtreeElevation.write
    components.quadtree.SfincsQuadtreeElevation.create
    components.quadtree.SfincsQuadtreeElevation.create_uniform
 
    components.quadtree.SfincsQuadtreeMask
+   components.quadtree.SfincsQuadtreeMask.data
    components.quadtree.SfincsQuadtreeMask.read
    components.quadtree.SfincsQuadtreeMask.write
    components.quadtree.SfincsQuadtreeMask.create_active
    components.quadtree.SfincsQuadtreeMask.create_boundary
 
    components.quadtree.SfincsQuadtreeRoughness
+   components.quadtree.SfincsQuadtreeRoughness.data
    components.quadtree.SfincsQuadtreeRoughness.read
    components.quadtree.SfincsQuadtreeRoughness.write
    components.quadtree.SfincsQuadtreeRoughness.create
 
    components.quadtree.SfincsQuadtreeInfiltration
+   components.quadtree.SfincsQuadtreeInfiltration.data
    components.quadtree.SfincsQuadtreeInfiltration.read
    components.quadtree.SfincsQuadtreeInfiltration.write
    components.quadtree.SfincsQuadtreeInfiltration.create_uniform_constant
@@ -197,12 +224,14 @@ Quadtree infiltration, including bucket variables, is stored in ``inffile``;
    components.quadtree.SfincsQuadtreeInfiltration.create_runoff_coefficient
 
    components.quadtree.SfincsQuadtreeInitialConditions
+   components.quadtree.SfincsQuadtreeInitialConditions.data
    components.quadtree.SfincsQuadtreeInitialConditions.read
    components.quadtree.SfincsQuadtreeInitialConditions.write
    components.quadtree.SfincsQuadtreeInitialConditions.create
    components.quadtree.SfincsQuadtreeInitialConditions.create_from_polygon
 
    components.quadtree.SfincsQuadtreeStorageVolume
+   components.quadtree.SfincsQuadtreeStorageVolume.data
    components.quadtree.SfincsQuadtreeStorageVolume.read
    components.quadtree.SfincsQuadtreeStorageVolume.write
    components.quadtree.SfincsQuadtreeStorageVolume.create
@@ -213,6 +242,7 @@ Quadtree infiltration, including bucket variables, is stored in ``inffile``;
    components.quadtree.SfincsQuadtreeSubgridTable.create
 
    components.quadtree.SnapWaveQuadtreeMask
+   components.quadtree.SnapWaveQuadtreeMask.data
    components.quadtree.SnapWaveQuadtreeMask.create
    components.quadtree.SnapWaveQuadtreeMask.create_active
    components.quadtree.SnapWaveQuadtreeMask.create_boundary

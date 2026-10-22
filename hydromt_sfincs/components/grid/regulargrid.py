@@ -63,11 +63,15 @@ class SfincsGrid(GridComponent):
     A component may claim the layers it is responsible for through a
     ``grid_variables`` attribute. ``write()`` skips those layers unless called
     with ``write_components=True``; the component writes them itself through
-    :py:meth:`_write_layers`. ``read()`` stays permissive and loads whatever
-    exists on disk.
+    :py:meth:`_write_layers`. ``read()`` loads the mask and elevation;
+    component-owned layers are read by their respective components.
 
     This grid always owns the cell index file (``sfincs.ind``), the mask and the
     elevation, since every other binary map is indexed against them.
+    Mask and elevation component ``read()`` methods ensure this grid is loaded.
+    Their ``write()`` methods are no-ops; persistence is handled here.
+    Component ``data`` properties expose only their relevant layers; this
+    grid remains the full dataset and the destination for ``set()`` calls.
 
     See Also
     --------

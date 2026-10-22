@@ -24,6 +24,12 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
+    """Elevation stored as ``z`` in the quadtree grid.
+
+    ``data`` exposes only elevation, with its mesh and grid attributes.
+    The parent grid reads and writes elevation in ``qtrfile``.
+    """
+
     def __init__(
         self,
         model: "SfincsModel",
@@ -37,20 +43,29 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
 
     @property
     def data(self):
-        """Get the data from the quadtree grid."""
-        return self.model.quadtree_grid.data
+        """Return only elevation, retaining the mesh even before it is created."""
+        data = self.model.quadtree_grid.data
+        return data[[name for name in ("z",) if name in data]]
 
     @property
     def mask(self):
         """Get the mask from the quadtree grid."""
         return self.model.quadtree_mask.data["mask"]
 
-    def read(self):
-        # The mask elevation are read when the quadtree grid is read
-        pass
+    def read(self) -> None:
+        """Ensure the parent grid is loaded, including elevation in ``qtrfile``.
 
-    def write(self):
-        # The mask elevation are written when the quadtree grid is written
+        An already loaded grid is not reread.
+        """
+        if self.model.quadtree_grid._data is None:
+            self.model.quadtree_grid.read(read_components=False)
+
+    def write(self) -> None:
+        """Leave elevation persistence in ``qtrfile`` to the parent grid.
+
+        Call ``model.quadtree_grid.write()`` to persist it; this method does
+        not write a separate file or rewrite the shared grid.
+        """
         pass
 
     @hydromt_step
@@ -131,7 +146,13 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
 
     @hydromt_step
     def create_uniform(self, zb):
-        self.data["z"][:] = zb
+        self.model.quadtree_grid.set(
+            xu.UgridDataArray(
+                xr.full_like(self.model.quadtree_grid.data["z"].obj, zb),
+                self.model.quadtree_grid.data.grid,
+            ),
+            name="z",
+        )
 
     def interpolate_bathymetry(self, x, y, z, method="linear"):
         """x, y, and z are numpy arrays with coordinates and bathymetry values"""
@@ -141,8 +162,11 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
         yz = xy[:, 1]
         zz = interp2(x, y, z, xz, yz, method=method)
         ugrid2d = self.data.grid
-        self.data["z"] = xu.UgridDataArray(
-            xr.DataArray(data=zz, dims=[ugrid2d.face_dimension]), ugrid2d
+        self.model.quadtree_grid.set(
+            xu.UgridDataArray(
+                xr.DataArray(data=zz, dims=[ugrid2d.face_dimension]), ugrid2d
+            ),
+            name="z",
         )
 
     # ------------------------------------------------------------------
@@ -174,7 +198,7 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
         return self._overlay.render(
             face_xy=self.data.grid.face_coordinates,
             z=self.data["z"].values[:],
-            level=self.data["level"].values[:],
+            level=self.model.quadtree_grid.data["level"].values[:],
             dx0=self.data.attrs["dx"],
             dy0=self.data.attrs["dy"],
             rotation=self.data.attrs["rotation"],

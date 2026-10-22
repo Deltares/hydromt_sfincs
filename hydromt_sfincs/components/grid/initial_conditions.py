@@ -24,7 +24,9 @@ class SfincsInitialConditions(ModelComponent):
     on regular grids.
 
     .. note::
-        The initial water level data is stored in the model grid's data dataset under the key "ini".
+        Initial water level is stored in the model grid under the key ``zs``.
+        ``data`` exposes only this layer; the component reads and writes it
+        through ``inifile``.
 
     See Also
     --------
@@ -36,15 +38,16 @@ class SfincsInitialConditions(ModelComponent):
         self,
         model: "SfincsModel",
     ):
-        # The data for the mask is stored in the model.grid.data["ini"]
+        # The initial water level is stored in the model.grid.data["zs"]
         super().__init__(
             model=model,
         )
 
     @property
     def data(self):
-        """Get the data from the model grid."""
-        return self.model.grid.data
+        """Return only the available initial-condition layers from the grid."""
+        data = self.model.grid.data
+        return data[[name for name in self.grid_variables if name in data]]
 
     @property
     def mask(self):
