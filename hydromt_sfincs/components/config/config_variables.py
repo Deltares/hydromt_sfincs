@@ -1138,7 +1138,7 @@ class SfincsConfigVariables(BaseSettings):
         json_schema_extra={"always": True},
     )
     cdval: list[float] | None = Field(
-        [0.001, 0.0025, 0.0025],
+        [0.001, 0.0025, 0.0015],
         description="Drag coefficient values corresponding to cdwnd",
         json_schema_extra={"always": True},
     )
