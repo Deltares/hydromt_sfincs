@@ -205,10 +205,10 @@ water level boundaries, discharge sources, precipitation, wind, and atmospheric 
      - ``srcfile``, ``disfile``, ``netsrcdisfile``
    * - :py:class:`precipitation <hydromt_sfincs.components.forcing.meteo.SfincsPrecipitation>`
      - Spatially and/or temporally variable rainfall.
-     - ``precipfile``, ``netamprfile``
+     - ``prcfile``, ``netamprfile``
    * - :py:class:`wind <hydromt_sfincs.components.forcing.meteo.SfincsWind>`
      - Spatially and/or temporally variable wind forcing.
-     - ``wndfile``, ``netamuvfile``
+     - ``wndfile``, ``netamuamvfile``
    * - :py:class:`pressure <hydromt_sfincs.components.forcing.meteo.SfincsPressure>`
      - Atmospheric pressure fields.
      - ``netampfile``
