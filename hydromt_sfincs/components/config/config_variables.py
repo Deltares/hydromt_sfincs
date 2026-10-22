@@ -13,16 +13,21 @@ Write policy (controls which fields appear in sfincs.inp):
 * ``json_schema_extra={"condition": "<expr>"}`` — written only when the
   Python expression *<expr>* evaluates to ``True`` against the current
   model-field values **and** the value differs from the field default.
-* ``json_schema_extra={"min_version": "<X.Y.Z>"}`` — field was introduced in
+* ``json_schema_extra={"min_version": "<X.Y.Z>"}`` — the keyword was introduced in
   this SFINCS kernel version; not written when ``sfincs_version`` is older.
-* ``json_schema_extra={"legacy_alias": ["<name>", ...]}`` — earlier names of the
-  keyword. They are read into this field, and the first one is written instead
-  when ``sfincs_version`` is older than ``min_version``.
+* ``json_schema_extra={"legacy_alias": [("<name>", "<X.Y.Z>" | None), ...]}`` —
+  earlier names of the keyword, with the last SFINCS version in which ``<name>``
+  was the kernel keyword (``None`` for a spelling variant that only the latest
+  kernel accepts). They are read into this field.
 * ``json_schema_extra={"max_version": "<X.Y.Z>"}`` — field is deprecated as of
   this kernel version; when ``sfincs_version`` is newer it is only kept if
   explicitly present in the source file (never force-written via ``always``).
 
-A file without ``sfincs_version`` targets ``LATEST_SFINCS_VERSION``.
+Keywords are written as they were read or set. They are only changed (with a
+warning) when they are not valid for the ``sfincs_version`` of the file, or, for a
+file without ``sfincs_version``, when they predate
+``MIN_SUPPORTED_SFINCS_VERSION``. ``write(update_to_latest=True)`` writes all
+keywords for ``LATEST_SFINCS_VERSION``.
 """
 
 import functools
@@ -92,15 +97,62 @@ def _read_config(filename: str | Path) -> tuple[dict[str, str], dict[str, str]]:
     return inp_dict, comments
 
 
-def _legacy_aliases(extra: dict) -> list[str]:
-    """Return the legacy keyword names of a field; the first one is written for
-    SFINCS versions older than the field's ``min_version``."""
-    return list(extra.get("legacy_alias", []))
+def _legacy_aliases(extra: dict) -> list[tuple[str, str | None]]:
+    """Return the legacy keywords of a field as ``(name, max_version)`` pairs."""
+    return [
+        (alias, None) if isinstance(alias, str) else tuple(alias)
+        for alias in extra.get("legacy_alias", [])
+    ]
 
 
 def _parse_version(version: str) -> tuple[int, ...]:
     """Parse a simple 'X.Y.Z'-style version string into a comparable tuple."""
     return tuple(int(part) for part in version.strip().split("."))
+
+
+def _try_parse_version(version: str | None) -> tuple[int, ...] | None:
+    """Parse a version string, returning None when it is missing or not 'X.Y.Z'."""
+    if version is None:
+        return None
+    try:
+        return _parse_version(str(version))
+    except ValueError:
+        return None
+
+
+def _keyword_valid(keyword: str, key: str, extra: dict, version: tuple) -> bool:
+    """Return whether SFINCS ``version`` reads field ``key`` under ``keyword``."""
+    if keyword == key:
+        min_version = extra.get("min_version")
+        return min_version is None or version >= _parse_version(min_version)
+    for alias, max_version in _legacy_aliases(extra):
+        if alias == keyword:
+            return max_version is not None and version <= _parse_version(max_version)
+    return False
+
+
+def _keyword_for_version(key: str, extra: dict, version: tuple) -> str | None:
+    """Return the keyword under which SFINCS ``version`` reads field ``key``.
+
+    The current name is preferred; otherwise the legacy alias that was the kernel
+    keyword at ``version``. Returns None when ``version`` does not know the field.
+    """
+    if _keyword_valid(key, key, extra, version):
+        return key
+    candidates = sorted(
+        (_parse_version(max_version), alias)
+        for alias, max_version in _legacy_aliases(extra)
+        if max_version is not None and version <= _parse_version(max_version)
+    )
+    return candidates[0][1] if candidates else None
+
+
+def _is_obsolete_alias(keyword: str, extra: dict) -> bool:
+    """Return whether a legacy keyword predates the minimum supported SFINCS version."""
+    max_version = dict(_legacy_aliases(extra)).get(keyword)
+    return max_version is not None and _parse_version(max_version) < _parse_version(
+        MIN_SUPPORTED_SFINCS_VERSION
+    )
 
 
 def _version_status(
@@ -231,7 +283,7 @@ class SfincsConfigVariables(BaseSettings):
         3600.0,
         ge=0.0,
         description="Spatial map output interval (seconds)",
-        json_schema_extra={"always": True, "legacy_alias": ["dtout"]},
+        json_schema_extra={"always": True, "legacy_alias": [("dtout", "2.4.1")]},
     )
     dtmaxout: float = Field(
         86400.0,
@@ -516,55 +568,85 @@ class SfincsConfigVariables(BaseSettings):
         ge=1,
         le=500,
         description="Wave maker number of frequency bins IG spectrum (-)",
-        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["nfreqsig"]},
+        json_schema_extra={
+            "min_version": "2.3.3",
+            "legacy_alias": [("nfreqsig", "2.4.1")],
+        },
     )
     wavemaker_freqmin_ig: float = Field(
         0.0,
         ge=0.0,
         description="Minimum frequency wave maker IG spectrum (Hz)",
-        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["freqminig"]},
+        json_schema_extra={
+            "min_version": "2.3.3",
+            "legacy_alias": [("freqminig", "2.4.1")],
+        },
     )
     wavemaker_freqmax_ig: float = Field(
         0.1,
         ge=0.0,
         description="Maximum frequency wave maker IG spectrum (Hz)",
-        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["freqmaxig"]},
+        json_schema_extra={
+            "min_version": "2.3.3",
+            "legacy_alias": [("freqmaxig", "2.4.1")],
+        },
     )
     wavemaker_filter_time: float = Field(
         600.0,
         ge=0.0,
         description="Filtering duration for wave maker mean water level (s)",
-        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["wmtfilter"]},
+        json_schema_extra={
+            "min_version": "2.3.3",
+            "legacy_alias": [("wmtfilter", "2.4.1")],
+        },
     )
     wavemaker_filter_fred: float = Field(
         0.99,
         description="Filtering variable in wave maker (-)",
-        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["wmfred"]},
+        json_schema_extra={
+            "min_version": "2.3.3",
+            "legacy_alias": [("wmfred", "2.4.1")],
+        },
     )
     wavemaker_signal: str = Field(
         "spectrum",
         description="Wavemaker signal type ('spectrum' or 'mon')",
-        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["wmsignal"]},
+        json_schema_extra={
+            "min_version": "2.3.3",
+            "legacy_alias": [("wmsignal", "2.4.1")],
+        },
     )
     wavemaker_hmin: float = Field(
         0.1,
         description="Wavemaker minimum water depth (m)",
-        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["wmhmin"]},
+        json_schema_extra={
+            "min_version": "2.3.3",
+            "legacy_alias": [("wmhmin", "2.4.1")],
+        },
     )
     wavemaker_nfreqs_inc: int = Field(
         100,
         description="Wave maker number of frequency bins incident wave spectrum (-)",
-        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["nfreqsinc"]},
+        json_schema_extra={
+            "min_version": "2.3.3",
+            "legacy_alias": [("nfreqsinc", "2.4.1")],
+        },
     )
     wavemaker_freqmin_inc: float = Field(
         0.04,
         description="Minimum frequency wave maker incident wave spectrum (Hz)",
-        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["freqmininc"]},
+        json_schema_extra={
+            "min_version": "2.3.3",
+            "legacy_alias": [("freqmininc", "2.4.1")],
+        },
     )
     wavemaker_freqmax_inc: float = Field(
         1.0,
         description="Maximum frequency wave maker incident wave spectrum (Hz)",
-        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["freqmaxinc"]},
+        json_schema_extra={
+            "min_version": "2.3.3",
+            "legacy_alias": [("freqmaxinc", "2.4.1")],
+        },
     )
     wavemaker_tinc2ig: float = Field(
         -1.0,
@@ -719,7 +801,10 @@ class SfincsConfigVariables(BaseSettings):
         json_schema_extra={
             "min_version": "2.4.0",
             "condition": "snapwave == 1",
-            "legacy_alias": ["snapwave_waveforces_factor", "waveforces_ratio"],
+            "legacy_alias": [
+                ("snapwave_waveforces_factor", "2.3.3"),
+                ("waveforces_ratio", None),
+            ],
         },
     )
     radstr: int = Field(
@@ -985,7 +1070,10 @@ class SfincsConfigVariables(BaseSettings):
         ge=0,
         le=1,
         description="Global spherical model that wraps over the edge (1: on, 0: off)",
-        json_schema_extra={"min_version": "2.5.0", "legacy_alias": ["global"]},
+        json_schema_extra={
+            "min_version": "2.5.0",
+            "legacy_alias": [("global", "2.4.1")],
+        },
     )
     crsgeo: int = Field(
         0,
@@ -996,7 +1084,7 @@ class SfincsConfigVariables(BaseSettings):
     epsg: int | None = Field(
         None,
         description="EPSG code for spatial reference system",
-        json_schema_extra={"legacy_alias": ["crs"]},
+        json_schema_extra={"legacy_alias": [("crs", "2.0.0")]},
     )
     utmzone: str | None = Field(
         None,
@@ -1082,14 +1170,17 @@ class SfincsConfigVariables(BaseSettings):
     vegfile: str | None = Field(
         None,
         description="Vegetation characteristics file",
-        json_schema_extra={"min_version": "2.5.0", "legacy_alias": ["vegetationfile"]},
+        json_schema_extra={
+            "min_version": "2.5.0",
+            "legacy_alias": [("vegetationfile", "2.4.1")],
+        },
     )
     vegtype: str | None = Field(
         None,
         description="Vegetation type lookup table file (toml)",
         json_schema_extra={
             "min_version": "2.5.0",
-            "legacy_alias": ["vegetationtype_toml"],
+            "legacy_alias": [("vegetationtype_toml", "2.4.1")],
         },
     )
 
@@ -1112,22 +1203,34 @@ class SfincsConfigVariables(BaseSettings):
     wavemaker_wfpfile: str | None = Field(
         None,
         description="Wavemaker location points file",
-        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["wfpfile"]},
+        json_schema_extra={
+            "min_version": "2.3.3",
+            "legacy_alias": [("wfpfile", "2.4.1")],
+        },
     )
     wavemaker_whifile: str | None = Field(
         None,
         description="Wavemaker IG wave height file",
-        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["whifile"]},
+        json_schema_extra={
+            "min_version": "2.3.3",
+            "legacy_alias": [("whifile", "2.4.1")],
+        },
     )
     wavemaker_wtifile: str | None = Field(
         None,
         description="Wavemaker IG wave period file",
-        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["wtifile"]},
+        json_schema_extra={
+            "min_version": "2.3.3",
+            "legacy_alias": [("wtifile", "2.4.1")],
+        },
     )
     wavemaker_wstfile: str | None = Field(
         None,
         description="Wavemaker setup file",
-        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["wstfile"]},
+        json_schema_extra={
+            "min_version": "2.3.3",
+            "legacy_alias": [("wstfile", "2.4.1")],
+        },
     )
     srcfile: str | None = Field(None, description="Discharge input points file")
     disfile: str | None = Field(None, description="Discharge input time-series file")
@@ -1136,7 +1239,9 @@ class SfincsConfigVariables(BaseSettings):
     prcfile: str | None = Field(
         None,
         description="Spatially uniform precipitation file",
-        json_schema_extra={"legacy_alias": ["precipfile", "prcpfile"]},
+        json_schema_extra={
+            "legacy_alias": [("precipfile", "2.4.1"), ("prcpfile", None)]
+        },
     )
     amufile: str | None = Field(None, description="Wind u-component file")
     amvfile: str | None = Field(None, description="Wind v-component file")
@@ -1144,13 +1249,16 @@ class SfincsConfigVariables(BaseSettings):
     amprfile: str | None = Field(
         None,
         description="Precipitation file",
-        json_schema_extra={"legacy_alias": ["amrfile"]},
+        json_schema_extra={"legacy_alias": [("amrfile", None)]},
     )
     z0lfile: str | None = Field(None, description="Wind reduction over land file")
     wavemaker_wvmfile: str | None = Field(
         None,
         description="Wave maker input points file",
-        json_schema_extra={"min_version": "2.3.3", "legacy_alias": ["wvmfile"]},
+        json_schema_extra={
+            "min_version": "2.3.3",
+            "legacy_alias": [("wvmfile", "2.4.1")],
+        },
     )
     wavemaker_timeseries_wvmfile: str | None = Field(
         None,
@@ -1163,7 +1271,10 @@ class SfincsConfigVariables(BaseSettings):
         description="Infiltration parameters NetCDF file",
         json_schema_extra={
             "min_version": "2.5.0",
-            "legacy_alias": ["infiltration_file", "infiltrationfile"],
+            "legacy_alias": [
+                ("infiltration_file", "2.4.1"),
+                ("infiltrationfile", None),
+            ],
         },
     )
     inftype: str | None = Field(
@@ -1171,7 +1282,10 @@ class SfincsConfigVariables(BaseSettings):
         description="Infiltration type (con, c2d, cna, cnb, gai, hor, bkt, r2d)",
         json_schema_extra={
             "min_version": "2.5.0",
-            "legacy_alias": ["infiltration_type", "infiltrationtype"],
+            "legacy_alias": [
+                ("infiltration_type", "2.4.1"),
+                ("infiltrationtype", None),
+            ],
         },
     )
 
@@ -1415,7 +1529,7 @@ class SfincsConfigVariables(BaseSettings):
         description="Write quadtree without refinement on quadtree mesh (1: yes) or regular grid (0: no)",
         json_schema_extra={
             "min_version": "2.5.0",
-            "legacy_alias": ["regular_output_on_mesh"],
+            "legacy_alias": [("regular_output_on_mesh", "2.4.1")],
         },
     )
     twet_threshold: float = Field(
@@ -1441,9 +1555,10 @@ class SfincsConfigVariables(BaseSettings):
     # ================================================================
     # Read / write
     # ================================================================
-    # Keys that were explicitly present in the source file (or set afterwards);
-    # these always round-trip on write(), even if they equal the field default.
-    _explicit_keys: set[str] = PrivateAttr(default_factory=set)
+    # Keyword under which each field was explicitly read from the source file (or
+    # set afterwards), e.g. {"wavemaker_wvmfile": "wvmfile"}; these fields always
+    # round-trip on write() under that keyword, even if they equal the default.
+    _explicit_keys: dict[str, str] = PrivateAttr(default_factory=dict)
     # Inline trailing comment (after '#') read per key from the source file, used
     # by write(write_comments=True) in preference over the schema description.
     _comments: dict[str, str] = PrivateAttr(default_factory=dict)
@@ -1455,7 +1570,7 @@ class SfincsConfigVariables(BaseSettings):
         return {
             legacy: name
             for name, field in cls.model_fields.items()
-            for legacy in _legacy_aliases(field.json_schema_extra or {})
+            for legacy, _ in _legacy_aliases(field.json_schema_extra or {})
         }
 
     @classmethod
@@ -1464,20 +1579,60 @@ class SfincsConfigVariables(BaseSettings):
         return cls._legacy_alias_map().get(key, key)
 
     @classmethod
+    def _check_keyword(
+        cls, key: str, keyword: str, sfincs_version: str | None
+    ) -> str | None:
+        """Return the keyword to use for field ``key`` that was given as ``keyword``.
+
+        A keyword that the targeted ``sfincs_version`` does not read is replaced
+        (with a warning) by the one it does; None when that version does not know
+        the field. Without a (valid) ``sfincs_version`` the keyword is kept, unless
+        it predates ``MIN_SUPPORTED_SFINCS_VERSION``.
+        """
+        extra = cls.model_fields[key].json_schema_extra or {}
+        version = _try_parse_version(sfincs_version)
+        if version is not None:
+            if _keyword_valid(keyword, key, extra, version):
+                return keyword
+            new_keyword = _keyword_for_version(key, extra, version)
+            reason = f"is not valid for sfincs_version {sfincs_version}"
+        elif _is_obsolete_alias(keyword, extra):
+            min_version = _parse_version(MIN_SUPPORTED_SFINCS_VERSION)
+            new_keyword = _keyword_for_version(key, extra, min_version)
+            reason = (
+                "predates the minimum supported SFINCS version "
+                f"{MIN_SUPPORTED_SFINCS_VERSION}"
+            )
+        else:
+            if keyword != key:
+                logger.info(f"Legacy keyword '{keyword}' of '{key}' is kept.")
+            return keyword
+        if new_keyword is not None:
+            logger.warning(f"'{keyword}' {reason}; replaced by '{new_keyword}'.")
+        return new_keyword
+
+    @classmethod
     def read(
         cls,
         filename: str | Path,
     ) -> "SfincsConfigVariables":
-        """Read a SFINCS input file (sfincs.inp) into a validated instance."""
+        """Read a SFINCS input file (sfincs.inp) into a validated instance.
+
+        Keywords are kept as read (and written back as such), except those that
+        are not valid for the ``sfincs_version`` in the file or, without
+        ``sfincs_version``, that predate ``MIN_SUPPORTED_SFINCS_VERSION``; these
+        are replaced or removed with a warning.
+        """
         filename = Path(filename)
         inp_dict, comments = _read_config(filename=filename)
 
-        # The file uses the alias for fields whose keyword is not a valid
-        # attribute name.
-        model_fields = {
-            (field.alias or name): field for name, field in cls.model_fields.items()
-        }
+        model_fields = cls.model_fields
         sfincs_version = inp_dict.get("sfincs_version")
+        if sfincs_version is not None and _try_parse_version(sfincs_version) is None:
+            logger.warning(
+                f"sfincs_version {sfincs_version} is not an 'X.Y.Z' version; "
+                "keywords are kept as read."
+            )
         if _is_below_min_supported(sfincs_version):
             message = (
                 f"sfincs_version {sfincs_version} is below the minimum supported "
@@ -1486,42 +1641,59 @@ class SfincsConfigVariables(BaseSettings):
             warnings.warn(message, UserWarning, stacklevel=2)
             logger.warning(message)
 
-        # Read legacy keywords into their current field; write() converts them
-        # back when the targeted sfincs_version is older than the field.
+        # Read legacy keywords into their current field, remembering the keyword
+        # they were read with so that write() can write them back as such.
+        keywords = {}
         for legacy, key in cls._legacy_alias_map().items():
             if legacy not in inp_dict:
                 continue
             value = inp_dict.pop(legacy)
             comment = comments.pop(legacy, None)
             if key in inp_dict:
-                logger.warning(f"'{legacy}' is ignored, since '{key}' is also set.")
+                logger.warning(
+                    f"'{legacy}' is ignored, since '{keywords.get(key, key)}' is also set."
+                )
                 continue
             inp_dict[key] = value
+            keywords[key] = legacy
             if comment:
                 comments[key] = comment
             logger.debug(f"Legacy keyword '{legacy}' is read as '{key}'.")
 
-        # Drop keys the targeted sfincs_version does not support (kept for an
-        # unversioned file); a field with a legacy alias is written under that alias.
+        # Check the keywords against the targeted sfincs_version: deprecated fields
+        # are dropped (kept for an unversioned file) and keywords the version does
+        # not read are replaced or dropped.
         for key in list(inp_dict):
             field_info = model_fields.get(key)
             if field_info is None:
                 continue
             extra = field_info.json_schema_extra or {}
-            status = _version_status(extra, sfincs_version)
-            if sfincs_version is None or status not in {"too_old", "deprecated"}:
-                continue
-            if status == "too_old" and _legacy_aliases(extra):
-                continue
-            inp_dict.pop(key)
-            comments.pop(key, None)
-            logger.warning(
-                f"'{key}' is not supported for sfincs_version {sfincs_version}; removed."
-            )
+            if _version_status(extra, sfincs_version) == "deprecated":
+                if sfincs_version is not None:
+                    inp_dict.pop(key)
+                    comments.pop(key, None)
+                    keywords.pop(key, None)
+                    logger.warning(
+                        f"'{key}' is not supported for sfincs_version {sfincs_version}; removed."
+                    )
+                    continue
+                message = f"'{key}' is deprecated since SFINCS version {extra['max_version']}."
+                warnings.warn(message, DeprecationWarning, stacklevel=2)
+                logger.warning(message)
+
+            keyword = cls._check_keyword(key, keywords.get(key, key), sfincs_version)
+            if keyword is None:
+                inp_dict.pop(key)
+                comments.pop(key, None)
+                keywords.pop(key, None)
+                logger.warning(
+                    f"'{key}' is not supported for sfincs_version {sfincs_version}; removed."
+                )
+            else:
+                keywords[key] = keyword
 
         # Warn about keys not recognized by the schema; they are kept as
         # pass-through attributes (Config.extra = "allow") and always rewritten.
-
         unknown_keys = sorted(set(inp_dict) - set(model_fields))
         if unknown_keys:
             logger.warning(
@@ -1529,25 +1701,9 @@ class SfincsConfigVariables(BaseSettings):
                 "They will be kept and rewritten as-is."
             )
 
-        # Warn about keys that are outside the range of the targeted sfincs_version
-        for key in inp_dict:
-            field_info = model_fields.get(key)
-            if field_info is None:
-                continue
-            extra = field_info.json_schema_extra or {}
-            status = _version_status(extra, sfincs_version)
-            if status == "deprecated":
-                message = f"'{key}' is deprecated for sfincs_version {sfincs_version}."
-                warnings.warn(message, DeprecationWarning, stacklevel=2)
-                logger.warning(message)
-            elif status == "too_old" and not _legacy_aliases(extra):
-                logger.warning(
-                    f"'{key}' is not yet supported for sfincs_version {sfincs_version}."
-                )
-
         # Full pydantic validation (type coercion, field constraints, validators)
         instance = cls.model_validate(inp_dict)
-        instance._explicit_keys = set(inp_dict.keys())
+        instance._explicit_keys = {key: keywords.get(key, key) for key in inp_dict}
         instance._comments = comments
         return instance
 
@@ -1557,6 +1713,7 @@ class SfincsConfigVariables(BaseSettings):
         write_description: bool = False,
         write_comments: bool = False,
         explicit_only: bool = False,
+        update_to_latest: bool = False,
     ) -> None:
         """Write the configuration variables to a SFINCS input file (sfincs.inp).
 
@@ -1573,6 +1730,11 @@ class SfincsConfigVariables(BaseSettings):
             write_description for keys that have one. Default is False.
         explicit_only (bool):
             If True, write only fields explicitly read or set. Default is False.
+        update_to_latest (bool):
+            If True, write the configuration for ``LATEST_SFINCS_VERSION``:
+            current keywords instead of legacy ones, no deprecated fields and
+            ``sfincs_version`` set to that version. The configuration itself is
+            not changed. Default is False, which writes keywords as read or set.
         """
         filename = Path(filename)
         filename.parent.mkdir(parents=True, exist_ok=True)
@@ -1580,15 +1742,22 @@ class SfincsConfigVariables(BaseSettings):
         model_fields = type(self).model_fields
         # model_dump() applies the write-only filtering/formatting via the
         # _serialize_for_write model_serializer below.
-        data_dict = self.model_dump(context={"explicit_only": explicit_only})
+        data_dict = self.model_dump(
+            context={
+                "explicit_only": explicit_only,
+                "update_to_latest": update_to_latest,
+            }
+        )
 
         with open(filename, "w") as fid:
             for key, value in data_dict.items():
                 string = f"{key.ljust(20)} = {value}"
 
-                comment = self._comments.get(key) if write_comments else None
-                if not comment and write_description and key in model_fields:
-                    comment = model_fields[key].description
+                # comments and descriptions are stored under the current field name
+                field_key = self.resolve_key(key)
+                comment = self._comments.get(field_key) if write_comments else None
+                if not comment and write_description and field_key in model_fields:
+                    comment = model_fields[field_key].description
                 if comment:
                     string = string.ljust(50) + f" # {comment}"
 
@@ -1600,28 +1769,30 @@ class SfincsConfigVariables(BaseSettings):
 
         Drops fields whose ``condition``/``min_version``/``max_version`` policy
         excludes them, or that equal their default and were never explicitly
-        read/set; formats the remaining values (numbers, joined lists, dates) as
-        plain strings/numbers ready to write. Used exclusively by :py:meth:`write`;
-        use :py:meth:`to_dict` for the unfiltered, native-typed configuration.
+        read/set; writes explicit fields under the keyword they were read/set with
+        (unless the targeted ``sfincs_version`` does not read it); formats the
+        remaining values (numbers, joined lists, dates) as plain strings/numbers
+        ready to write. Used exclusively by :py:meth:`write`; use
+        :py:meth:`to_dict` for the unfiltered, native-typed configuration.
         """
         data = handler(self)
         model_fields = type(self).model_fields
+        context = info.context or {}
+        update_to_latest = context.get("update_to_latest", False)
+        if update_to_latest:
+            data["sfincs_version"] = LATEST_SFINCS_VERSION
         sfincs_version = data.get("sfincs_version")
+        version = _try_parse_version(sfincs_version)
 
         result = {}
         for key, value in data.items():
             field_info = model_fields.get(key)
             extra = (field_info.json_schema_extra or {}) if field_info else {}
-            # sfincs.inp uses the alias for fields whose keyword is not a valid
-            # attribute name
-            file_key = (field_info.alias or key) if field_info else key
-            explicitly_set = bool({key, file_key} & self._explicit_keys)
+            explicitly_set = key in self._explicit_keys or (
+                update_to_latest and key == "sfincs_version"
+            )
 
-            if (
-                info.context
-                and info.context.get("explicit_only")
-                and not explicitly_set
-            ):
+            if context.get("explicit_only") and not explicitly_set:
                 continue
 
             # Never write None
@@ -1638,20 +1809,39 @@ class SfincsConfigVariables(BaseSettings):
                 if not matches:
                     continue
 
-            # Fields not (yet) valid for the targeted sfincs_version are skipped,
-            # or written under the legacy keyword that version reads
             version_status = _version_status(extra, sfincs_version)
-            if version_status == "too_old":
-                legacy = _legacy_aliases(extra)
-                if not legacy:
+            if update_to_latest and version_status == "deprecated":
+                if explicitly_set:
+                    logger.warning(
+                        f"'{key}' is deprecated for sfincs_version {sfincs_version}; "
+                        "not written."
+                    )
+                continue
+
+            # Write under the keyword the field was read/set with, unless the
+            # targeted sfincs_version does not read it; then use the keyword it
+            # does read, or skip the field when that version does not know it.
+            file_key = self._explicit_keys.get(key, key)
+            if (
+                field_info is not None
+                and version is not None
+                and not _keyword_valid(file_key, key, extra, version)
+            ):
+                new_key = _keyword_for_version(key, extra, version)
+                if explicitly_set and new_key != file_key:
+                    logger.info(
+                        f"'{file_key}' is written as '{new_key}' for "
+                        f"sfincs_version {sfincs_version}."
+                    )
+                if new_key is None:
                     continue
-                file_key = legacy[0]
+                file_key = new_key
 
             # Decide always vs skip-if-default
             # A deprecated field is never force-written via "always"; it is only
             # kept when it was explicitly read/set (round-trip fidelity). A field
-            # with an unconfirmed min_version (unversioned file) is treated the
-            # same way, since we can't confirm the target kernel supports it.
+            # with an unconfirmed min_version (unparsable sfincs_version) is
+            # treated the same way, since we can't confirm the kernel supports it.
             suppress_always = version_status == "deprecated" or (
                 version_status == "unknown" and "min_version" in extra
             )
@@ -1721,10 +1911,12 @@ class SfincsConfigVariables(BaseSettings):
         -----------
         updates (dict):
             Mapping of key-value pairs to update. Legacy keywords (e.g. 'wvmfile')
-            are set on their current field.
+            are set on their current field and written as such, unless the
+            targeted ``sfincs_version`` does not read them.
         skip_validation (bool):
             If True, skips pydantic validation of the new values.
         """
+        keywords = {self.resolve_key(key): key for key in updates}
         updates = {self.resolve_key(key): value for key, value in updates.items()}
         model_fields = type(self).model_fields
         unknown_keys = [key for key in updates if key not in model_fields]
@@ -1742,7 +1934,22 @@ class SfincsConfigVariables(BaseSettings):
             new_data.update(updates)
             instance = type(self).model_validate(new_data)
 
-        instance._explicit_keys = self._explicit_keys | set(updates.keys())
+        # Keywords the targeted sfincs_version does not read are set under the
+        # keyword it does
+        sfincs_version = instance.sfincs_version
+        explicit_keys = dict(self._explicit_keys)
+        for key, keyword in keywords.items():
+            if key in model_fields:
+                checked = type(self)._check_keyword(key, keyword, sfincs_version)
+                if checked is None:
+                    logger.warning(
+                        f"'{key}' is not supported for sfincs_version "
+                        f"{sfincs_version}; it is not written."
+                    )
+                keyword = checked or key
+            explicit_keys[key] = keyword
+
+        instance._explicit_keys = explicit_keys
         instance._comments = dict(self._comments)
         return instance
 

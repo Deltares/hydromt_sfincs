@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from hydromt_sfincs import SfincsModel
+from hydromt_sfincs import LATEST_SFINCS_VERSION, SfincsModel
 from hydromt_sfincs.components.config.config_variables import (
     SfincsConfigVariables,
     _read_config,
@@ -226,8 +226,9 @@ outputformat         = net
             if line.strip() and not line.strip().startswith("#")
         ]
 
-    # legacy keywords are read into (and written as) their current field
-    original_keys = {SfincsConfigVariables.resolve_key(key) for key in _keys(inp_str)}
+    # keywords (including legacy ones) are written as read
+    original_keys = set(_keys(inp_str))
+    original_fields = {SfincsConfigVariables.resolve_key(key) for key in original_keys}
     test_keys = set(_keys(test_inp_str))
 
     # fields flagged 'always' (with a non-None default) are force-written even
@@ -236,7 +237,7 @@ outputformat         = net
     expected_extras = {
         key
         for key, field in model_fields.items()
-        if key not in original_keys
+        if key not in original_fields
         and (field.json_schema_extra or {}).get("always")
         and field.default is not None
     }
@@ -246,9 +247,10 @@ outputformat         = net
         test_keys - original_keys == expected_extras
     ), "unexpected extra keys after round-trip"
 
-    # an unversioned file targets the latest SFINCS version: 'dtout' -> 'dtmapout'
-    assert "dtmapout" in test_keys
-    assert "dtout" not in test_keys
+    # an unversioned file keeps its legacy keywords, and gets no sfincs_version
+    assert "dtout" in test_keys
+    assert "dtmapout" not in test_keys
+    assert "sfincs_version" not in test_keys
 
     # an unrecognized key in the source file should trigger a warning, but be kept
     with open(inpfile, "a") as fid:
@@ -262,7 +264,7 @@ outputformat         = net
     assert "some_unknown_key" in test_inpfile2.read_text()
 
 
-def test_config_read_migrates_changed_field_names_by_version(tmp_path):
+def test_config_read_keeps_legacy_keywords_valid_for_version(tmp_path, caplog):
     inpfile = tmp_path / "sfincs.inp"
     inpfile.write_text(
         "sfincs_version       = 2.4.0\n"
@@ -270,18 +272,19 @@ def test_config_read_migrates_changed_field_names_by_version(tmp_path):
         "crs                  = 32633\n"
     )
 
-    data = SfincsConfigVariables.read(inpfile)
+    with caplog.at_level(logging.WARNING):
+        data = SfincsConfigVariables.read(inpfile)
     assert data.dtmapout == 1800
     assert data.epsg == 32633
+    # 'dtout' is read by SFINCS 2.4.0; 'crs' never was
+    assert "'dtout'" not in caplog.text
+    assert "'crs' is not valid for sfincs_version 2.4.0" in caplog.text
 
     output = tmp_path / "migrated.inp"
     data.write(output, write_comments=True, explicit_only=True)
-    output_text = output.read_text()
-    assert "dtmapout" in output_text
-    assert "dtout" not in output_text
-    assert "# legacy map interval" in output_text
-    assert "epsg" in output_text
-    assert "crs" not in output_text
+    keys = {line.split()[0] for line in output.read_text().splitlines()}
+    assert keys == {"sfincs_version", "dtout", "epsg"}
+    assert "# legacy map interval" in output.read_text()
 
 
 @pytest.mark.parametrize(
@@ -304,12 +307,12 @@ def test_config_read_migrates_changed_field_names_by_version(tmp_path):
         (
             "2.4.1",
             {
-                "wavemaker_wvmfile",
-                "wavemaker_hmin",
+                "wvmfile",
+                "wmhmin",
                 "global",
                 "regular_output_on_mesh",
                 "storeqdrain",
-                "wavemaker_nfreqs_inc",
+                "nfreqsinc",
                 "infiltration_file",
                 "infiltration_type",
                 "vegetationfile",
@@ -359,7 +362,7 @@ def test_config_read_migrates_renamed_keywords(tmp_path, sfincs_version, expecte
 
 @pytest.mark.parametrize(
     ("sfincs_version", "expected_key"),
-    [(None, "global_model"), ("2.5.0", "global_model"), ("2.4.1", "global")],
+    [(None, "global"), ("2.5.0", "global_model"), ("2.4.1", "global")],
 )
 def test_config_legacy_alias_written_by_version(
     tmp_path, caplog, sfincs_version, expected_key
@@ -436,14 +439,16 @@ def test_config_read_warns_and_removes_unsupported_fields(tmp_path):
     assert "custom_key" in output_text
 
 
-def test_config_read_migrates_unsupported_alias(tmp_path):
+def test_config_read_migrates_unsupported_alias(tmp_path, caplog):
     inpfile = tmp_path / "sfincs.inp"
     inpfile.write_text(
-        "sfincs_version       = 2.4.0\n"
+        "sfincs_version       = 2.5.0\n"
         "dtout                = 1800  # legacy interval\n"
     )
 
-    data = SfincsConfigVariables.read(inpfile)
+    with caplog.at_level(logging.WARNING):
+        data = SfincsConfigVariables.read(inpfile)
+    assert "replaced by 'dtmapout'" in caplog.text
 
     assert data.dtmapout == 1800
 
@@ -466,6 +471,127 @@ def test_config_read_migration_prefers_supported_current_name(tmp_path):
     data = SfincsConfigVariables.read(inpfile)
 
     assert data.dtmapout == 3600
+
+
+def test_config_unversioned_keeps_legacy_keywords(tmp_path, caplog):
+    # without sfincs_version, every keyword is written as read, except those that
+    # predate the minimum supported SFINCS version ('crs')
+    inp_str = (
+        "dtout                = 1800.0\n"
+        "crs                  = 32633\n"
+        "precipfile           = sfincs.precip\n"
+        "amrfile              = sfincs.ampr.nc\n"
+        "wvmfile              = sfincs.wvm\n"
+        "infiltrationfile     = sfincs.inf.nc\n"
+        "waveforces_ratio     = 0.5\n"
+        "snapwave             = 1\n"
+    )
+    inpfile = tmp_path / "sfincs.inp"
+    inpfile.write_text(inp_str)
+
+    with caplog.at_level(logging.WARNING):
+        data = SfincsConfigVariables.read(inpfile)
+    assert data.wavemaker_wvmfile == "sfincs.wvm"
+    assert data.snapwave_waveforces_ratio == 0.5
+    assert "'crs' predates the minimum supported" in caplog.text
+    assert "'wvmfile'" not in caplog.text
+
+    output = tmp_path / "out.inp"
+    data.write(output, explicit_only=True)
+    keys = [line.split()[0] for line in output.read_text().splitlines()]
+    expected = {line.split()[0] for line in inp_str.splitlines()} - {"crs"}
+    assert set(keys) == expected | {"epsg"}
+
+
+@pytest.mark.parametrize(
+    ("sfincs_version", "keyword", "expected_key"),
+    [
+        # each alias is written back as read when the version reads it ...
+        (None, "snapwave_waveforces_factor", "snapwave_waveforces_factor"),
+        (None, "waveforces_ratio", "waveforces_ratio"),
+        ("2.3.3", "snapwave_waveforces_factor", "snapwave_waveforces_factor"),
+        # ... and otherwise as the keyword of that version
+        ("2.3.3", "waveforces_ratio", "snapwave_waveforces_factor"),
+        ("2.4.1", "snapwave_waveforces_factor", "snapwave_waveforces_ratio"),
+        ("2.4.1", "waveforces_ratio", "snapwave_waveforces_ratio"),
+        ("2.4.1", "prcpfile", "prcfile"),
+        ("2.4.1", "precipfile", "precipfile"),
+    ],
+)
+def test_config_multiple_aliases_written_as_read(
+    tmp_path, sfincs_version, keyword, expected_key
+):
+    inpfile = tmp_path / "sfincs.inp"
+    version_line = f"sfincs_version = {sfincs_version}\n" if sfincs_version else ""
+    value = "sfincs.prcp" if "file" in keyword else "0.5"
+    inpfile.write_text(version_line + f"snapwave = 1\n{keyword} = {value}\n")
+
+    data = SfincsConfigVariables.read(inpfile)
+    output = tmp_path / "out.inp"
+    data.write(output, explicit_only=True)
+    keys = {line.split()[0] for line in output.read_text().splitlines()}
+    assert keys - {"sfincs_version", "snapwave"} == {expected_key}
+
+
+def test_config_read_warns_deprecated_field_unversioned(tmp_path):
+    inpfile = tmp_path / "sfincs.inp"
+    inpfile.write_text("storeqdrain = 1\n")
+
+    with pytest.warns(DeprecationWarning, match="'storeqdrain' is deprecated since"):
+        data = SfincsConfigVariables.read(inpfile)
+
+    output = tmp_path / "out.inp"
+    data.write(output, explicit_only=True)
+    assert "storeqdrain" in output.read_text()
+
+
+def test_config_set_legacy_keyword_for_latest_version(caplog):
+    data = SfincsConfigVariables().set_value("sfincs_version", LATEST_SFINCS_VERSION)
+
+    with caplog.at_level(logging.WARNING):
+        data = data.set_value("wvmfile", "sfincs.wvm")
+    assert "replaced by 'wavemaker_wvmfile'" in caplog.text
+    assert data._explicit_keys["wavemaker_wvmfile"] == "wavemaker_wvmfile"
+
+    # without sfincs_version, the keyword is kept as set
+    data = SfincsConfigVariables().set_value("wvmfile", "sfincs.wvm")
+    assert data._explicit_keys["wavemaker_wvmfile"] == "wvmfile"
+
+
+def test_config_write_update_to_latest(tmp_path):
+    inpfile = tmp_path / "sfincs.inp"
+    inpfile.write_text(
+        "dtout                = 1800.0  # map interval\n"
+        "wvmfile              = sfincs.wvm\n"
+        "global               = 1\n"
+        "storeqdrain          = 1\n"
+    )
+    with pytest.warns(DeprecationWarning):
+        data = SfincsConfigVariables.read(inpfile)
+
+    output = tmp_path / "latest.inp"
+    data.write(output, write_comments=True, explicit_only=True, update_to_latest=True)
+    text = output.read_text()
+    keys = {line.split()[0] for line in text.splitlines()}
+    assert keys == {"sfincs_version", "dtmapout", "wavemaker_wvmfile", "global_model"}
+    assert f"sfincs_version       = {LATEST_SFINCS_VERSION}" in text
+    assert "# map interval" in text
+
+    # the configuration itself is not changed
+    assert data.sfincs_version is None
+    output = tmp_path / "as_read.inp"
+    data.write(output, explicit_only=True)
+    keys = {line.split()[0] for line in output.read_text().splitlines()}
+    assert keys == {"dtout", "wvmfile", "global", "storeqdrain"}
+
+
+def test_new_model_writes_sfincs_version(tmp_path):
+    model = SfincsModel(root=tmp_path, mode="w")
+    model.config.write()
+    assert (
+        f"sfincs_version       = {LATEST_SFINCS_VERSION}"
+        in (tmp_path / "sfincs.inp").read_text()
+    )
 
 
 def test_read_config_raw(config_path: Path):

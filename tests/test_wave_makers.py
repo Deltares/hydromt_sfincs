@@ -91,16 +91,17 @@ def test_wave_makers_io(model_config, tmp_path):
 @pytest.mark.parametrize(
     ("sfincs_version", "expected_key", "other_key"),
     [
-        (None, "wavemaker_wvmfile", "wvmfile"),
+        (None, "wvmfile", "wavemaker_wvmfile"),
         ("2.3.2", "wvmfile", "wavemaker_wvmfile"),
+        ("2.5.0", "wavemaker_wvmfile", "wvmfile"),
     ],
 )
 def test_wave_makers_legacy_wvmfile(
     model_config, tmp_path, sfincs_version, expected_key, other_key
 ):
     # the test model sets the legacy 'wvmfile' (renamed in SFINCS v2.3.3); the
-    # config reads it as 'wavemaker_wvmfile' and writes the keyword that the
-    # targeted SFINCS version reads
+    # config reads it as 'wavemaker_wvmfile' and writes it back as 'wvmfile',
+    # unless the targeted SFINCS version no longer reads that keyword
     assert model_config.config.data.wavemaker_wvmfile == "sfincs.wvm"
     assert model_config.config.get("wvmfile") == "sfincs.wvm"
 

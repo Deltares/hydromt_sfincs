@@ -75,6 +75,8 @@ def test_model_build(tmpdir, case):
         "bcafile",
         "netbndbzsbzifile",
         "wavemaker_wvmfile",
+        # a new model writes the latest sfincs_version; the reference model has none
+        "sfincs_version",
     }
     diff = {
         k: (d0.get(k), d1.get(k))

@@ -44,20 +44,26 @@ that are mentioned in the configuration file will be used by the SFINCS model.
 Renamed keywords and SFINCS versions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Some ``sfincs.inp`` keywords were renamed in newer SFINCS versions, for example ``wvmfile``
-became ``wavemaker_wvmfile``. HydroMT-SFINCS stores each setting under its current name only.
-The old name is a *legacy alias*: you can still use it when reading a file or calling
-``config.set()`` and ``config.get()``.
+became ``wavemaker_wvmfile``. HydroMT-SFINCS stores each setting under its current name. The
+old name is a *legacy alias*: you can still use it when reading a file or calling
+``config.set()`` and ``config.get()``. Each legacy alias records the last SFINCS version in
+which it was the keyword.
 
-Which name is written to ``sfincs.inp`` depends on the ``sfincs_version`` setting:
+By default, what is read is what is written: HydroMT-SFINCS remembers the keyword each
+setting was read or set with, and writes the setting back under that keyword. A keyword is
+only changed, always with a warning, when:
 
-* If ``sfincs_version`` is older than the version that introduced a keyword, the old name is
-  written. If the keyword has no old name, it is left out, because that SFINCS version can't
-  read it.
-* Otherwise the current name is written.
-* If ``sfincs_version`` is not set, the latest SFINCS version is assumed.
+* the file has a ``sfincs_version`` that does not read the keyword. The keyword is then
+  replaced by the one that version reads (for example ``wvmfile`` by ``wavemaker_wvmfile``
+  for ``sfincs_version = 2.5.0``), or removed if that version does not know the setting;
+* the file has no ``sfincs_version`` and the keyword is older than the minimum supported
+  SFINCS version (for example ``crs``, which is replaced by ``epsg``).
 
-When a file with a ``sfincs_version`` is read, keywords that this version does not support are
-removed with a warning. Keywords that have an old name are kept.
+To update a model to the latest SFINCS version, use
+``model.config.write(update_to_latest=True)``. This writes the current keywords, leaves out
+deprecated settings and writes ``sfincs_version``. New models always get the latest
+``sfincs_version``. A model that was read without ``sfincs_version`` only gets one when it is
+written with ``update_to_latest=True``.
 
 .. mermaid::
 
@@ -66,35 +72,35 @@ removed with a warning. Keywords that have an old name are kept.
            R0["Keyword in file<br/>e.g. 'wvmfile' or 'wavemaker_wvmfile'"] --> R1{"Is it an old name<br/>of a setting?"}
            R1 -- yes --> R2{"Current name<br/>also in the file?"}
            R2 -- yes --> R3["Old name ignored<br/>warning"]
-           R2 -- no --> R4["Stored under the<br/>current name"]
-           R1 -- no --> R5["Name kept as is"]
-           R4 --> R6
-           R5 --> R6{"Known setting?"}
+           R2 -- no --> R4["Stored under the current name,<br/>keyword remembered"]
+           R1 -- no --> R6
+           R4 --> R6{"Known setting?"}
            R6 -- no --> R7["Kept and rewritten as is<br/>warning: unrecognized key"]
            R6 -- yes --> R8{"sfincs_version<br/>in file?"}
-           R8 -- "no: latest version" --> R12["Kept"]
-           R8 -- yes --> R9{"Supported by<br/>this version?"}
+           R8 -- no --> R13{"Keyword older than the<br/>minimum supported version?"}
+           R13 -- no --> R12["Keyword kept"]
+           R13 -- yes --> R14["Replaced by the current name<br/>warning"]
+           R8 -- yes --> R9{"Keyword read by<br/>this version?"}
            R9 -- yes --> R12
-           R9 -- "no: too new" --> R10{"Has an<br/>old name?"}
-           R10 -- yes --> R12
+           R9 -- no --> R10{"Another keyword read<br/>by this version?"}
+           R10 -- yes --> R15["Replaced by that keyword<br/>warning"]
            R10 -- no --> R11["Removed<br/>warning: not supported"]
-           R9 -- "no: deprecated" --> R11
        end
 
        subgraph SETGET["config.set() / config.get()"]
-           S0["Old or current name"] --> S1["Stored and read under<br/>the current name"]
+           S0["Old or current name"] --> S1["Stored under the current name,<br/>keyword checked as when reading"]
        end
 
-       R12 --> M[("Model configuration<br/>current names only")]
+       R12 --> M[("Model configuration<br/>with the keyword per setting")]
+       R14 --> M
+       R15 --> M
        R7 --> M
        S1 --> M
 
        subgraph WRITE["Writing sfincs.inp"]
-           M --> W0{"Is the setting newer than<br/>the target sfincs_version?"}
-           W0 -- no --> W1["Written under<br/>the current name"]
-           W0 -- yes --> W2{"Has an<br/>old name?"}
-           W2 -- yes --> W3["Written under the old name<br/>e.g. wavemaker_wvmfile as wvmfile"]
-           W2 -- no --> W4["Not written"]
+           M --> W0{"update_to_latest?"}
+           W0 -- no --> W1["Written under the keyword<br/>it was read or set with"]
+           W0 -- yes --> W2["Written under the current name,<br/>deprecated settings left out,<br/>sfincs_version written"]
        end
 
 The diagram leaves out the general write rules: a setting is only written when it has a value,
