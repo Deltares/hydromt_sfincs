@@ -512,7 +512,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
         reclass_table: Union[str, Path, pd.DataFrame, None] = None,
         lulc_modifier_table: Union[str, Path, pd.DataFrame, None] = None,
-        dual_hsg: Union[str, None] = "drained",
+        dual_hsg: str = "drained",
         factor_ksat: float = 3.6,
         reproj_method: str = "average",
     ) -> None:
@@ -543,8 +543,9 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         lulc_modifier_table : str, Path, or DataFrame, optional
             Required with ``lulc``. Table of modifier factors keyed by the
             land-cover class codes in the supplied dataset.
-        dual_hsg : {None, 'native', 'drained'}, optional
-            How to handle dual HSG classes, by default 'drained'.
+        dual_hsg : {'native', 'drained'}, optional
+            How to handle dual HSG classes, by default 'drained'. Native dual
+            classes must be present in the reclassification table.
         factor_ksat : float, optional
             Factor used to convert Ksat units to mm/hr, by default 3.6.
         reproj_method : str, optional
@@ -595,6 +596,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                 df_map,
                 da_ksat=da_ksat,
                 factor_ksat=factor_ksat,
+                dual_hsg=dual_hsg,
             )
 
         outputs = {
@@ -669,7 +671,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
         reclass_table: Union[str, Path, pd.DataFrame, None] = None,
         lulc_modifier_table: Union[str, Path, pd.DataFrame, None] = None,
-        dual_hsg: Union[str, None] = "drained",
+        dual_hsg: str = "drained",
         factor_ksat: float = 3.6,
         reproj_method: str = "average",
     ) -> None:
@@ -701,8 +703,9 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         lulc_modifier_table : str, Path, or DataFrame, optional
             Required with ``lulc``. Table of modifier factors keyed by the
             land-cover class codes in the supplied dataset.
-        dual_hsg : {None, 'native', 'drained'}, optional
-            How to handle dual HSG classes, by default 'drained'.
+        dual_hsg : {'native', 'drained'}, optional
+            How to handle dual HSG classes, by default 'drained'. Native dual
+            classes must be present in the reclassification table.
         factor_ksat : float, optional
             Factor used to convert Ksat units to mm/hr, by default 3.6.
         reproj_method : str, optional
@@ -753,6 +756,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                 df_map,
                 da_ksat=da_ksat,
                 factor_ksat=factor_ksat,
+                dual_hsg=dual_hsg,
             )
 
         outputs = {
@@ -829,7 +833,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         lulc: Union[str, Path, xr.DataArray, xr.Dataset, None] = None,
         reclass_table: Union[str, Path, pd.DataFrame, None] = None,
         lulc_modifier_table: Union[str, Path, pd.DataFrame, None] = None,
-        dual_hsg: Union[str, None] = "drained",
+        dual_hsg: str = "drained",
         factor_ksat: float = 3.6,
         bucket_loss: Union[float, None] = None,
         reproj_method: str = "average",
@@ -863,8 +867,9 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         lulc_modifier_table : str, Path, or DataFrame, optional
             Required with ``lulc``. Table of modifier factors keyed by the
             land-cover class codes in the supplied dataset.
-        dual_hsg : {None, 'native', 'drained'}, optional
-            How to handle dual HSG classes, by default 'drained'.
+        dual_hsg : {'native', 'drained'}, optional
+            How to handle dual HSG classes, by default 'drained'. Native dual
+            classes must be present in the reclassification table.
         factor_ksat : float, optional
             Factor used to convert Ksat units to mm/hr, by default 3.6.
         bucket_loss : float, optional
@@ -920,6 +925,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                 da_ksat=da_ksat,
                 factor_ksat=factor_ksat,
                 bucket_loss=bucket_loss if np.isscalar(bucket_loss) else None,
+                dual_hsg=dual_hsg,
             )
 
         outputs = {

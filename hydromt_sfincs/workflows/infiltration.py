@@ -155,31 +155,30 @@ def ksat_to_mmhr(
 
 def normalize_hsg_codes(
     da_hsg: xr.DataArray,
-    mode: str | None = "drained",
+    mode: str = "drained",
 ) -> xr.DataArray:
     """Normalize single- and dual-HSG classes to the requested convention.
 
     In ``drained`` mode, dual classes 5-8 map to drained classes 1-4. Other
-    finite values not represented by the mapping become NaN. ``None``,
-    ``"none"``, and ``"native"`` leave class values unchanged.
+    finite values not represented by the mapping become NaN. ``"native"``
+    leaves class values unchanged.
 
     Parameters
     ----------
     da_hsg : xr.DataArray
         Raster of hydrologic soil group classes.
-    mode : str or None, optional
-        Normalization convention: ``"drained"`` (default) or a native mode
-        (``None``, ``"none"``, or ``"native"``).
+    mode : {"drained", "native"}, optional
+        Normalization convention, by default ``"drained"``.
 
     Returns
     -------
     xr.DataArray
         HSG raster normalized to the requested convention.
     """
-    if mode in (None, "none", "native"):
+    if mode == "native":
         return da_hsg.astype(np.float32)
     if mode != "drained":
-        raise ValueError("dual_hsg must be one of None, 'native', or 'drained'.")
+        raise ValueError("dual_hsg must be either 'native' or 'drained'.")
 
     present_values = np.unique(da_hsg.values)
     da_norm = xr.full_like(da_hsg, np.nan, dtype=np.float32)
@@ -192,7 +191,12 @@ def normalize_hsg_codes(
     return da_norm.where(np.isfinite(da_hsg))
 
 
-def _reclassify_hsg(da_hsg: xr.DataArray, df_map: pd.DataFrame) -> xr.Dataset:
+def _reclassify_hsg(
+    da_hsg: xr.DataArray,
+    df_map: pd.DataFrame,
+    *,
+    require_dual_hsg: bool = False,
+) -> xr.Dataset:
     """Map HSG classes to parameter layers and report unmapped finite values.
 
     The raster's declared nodata value is preserved during reclassification.
@@ -203,6 +207,9 @@ def _reclassify_hsg(da_hsg: xr.DataArray, df_map: pd.DataFrame) -> xr.Dataset:
         Raster of hydrologic soil group classes.
     df_map : pd.DataFrame
         Parameter table indexed by HSG class.
+    require_dual_hsg : bool, optional
+        Raise an error when native dual-HSG values 5-8 are present in the
+        raster but absent from the parameter table.
 
     Returns
     -------
@@ -220,6 +227,12 @@ def _reclassify_hsg(da_hsg: xr.DataArray, df_map: pd.DataFrame) -> xr.Dataset:
     unmapped_values = [
         v for v in unique_values if v not in df_map.index and np.isfinite(v)
     ]
+    unmapped_dual_hsg = sorted(set(unmapped_values) & set(DUAL_HSG_DRAINED_MAPPING))
+    if require_dual_hsg and unmapped_dual_hsg:
+        raise ValueError(
+            "Native dual-HSG values are present in the raster but missing from "
+            f"the reclassification table: {unmapped_dual_hsg}."
+        )
     if unmapped_values:
         logger.warning(f"Unmapped HSG values found: {unmapped_values}")
     return da_hsg.raster.reclassify(df_map).astype(np.float32)
@@ -489,6 +502,7 @@ def green_ampt_from_hsg(
     *,
     da_ksat: xr.DataArray | None = None,
     factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
+    dual_hsg: str = "drained",
 ) -> xr.Dataset:
     """Estimate Green-Ampt parameters from HSG classes and optional Ksat.
 
@@ -507,13 +521,21 @@ def green_ampt_from_hsg(
         ``ks`` and is converted to mm/hr, by default None.
     factor_ksat : float, optional
         Conversion factor for Ksat, by default MICROMETER_PER_SECOND_TO_MM_PER_HOUR.
+    dual_hsg : {"drained", "native"}, optional
+        HSG normalization mode, by default ``"drained"``. Native dual-HSG
+        classes require corresponding rows in ``df_map``.
 
     Returns
     -------
     xr.Dataset
         Green-Ampt parameters (psi, sigma, ks) for each grid cell.
     """
-    ds = _reclassify_hsg(da_hsg, df_map)
+    da_hsg = normalize_hsg_codes(da_hsg, mode=dual_hsg)
+    ds = _reclassify_hsg(
+        da_hsg,
+        df_map,
+        require_dual_hsg=dual_hsg == "native",
+    )
     if da_ksat is not None:
         ds["ks"] = ksat_to_mmhr(da_ksat, factor_ksat=factor_ksat)
     if "ks" not in ds:
@@ -535,7 +557,7 @@ def green_ampt_from_hsg_landuse(
     *,
     da_ksat: xr.DataArray | None = None,
     factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
-    dual_hsg: str | None = "drained",
+    dual_hsg: str = "drained",
 ) -> xr.Dataset:
     """Estimate Green-Ampt parameters from soil classes, Ksat, and land use.
 
@@ -558,7 +580,7 @@ def green_ampt_from_hsg_landuse(
     factor_ksat : float, optional
         Conversion factor to mm/hr, by default
         ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
-    dual_hsg : str or None, optional
+    dual_hsg : {"drained", "native"}, optional
         HSG normalization mode, by default ``"drained"``.
 
     Returns
@@ -566,12 +588,12 @@ def green_ampt_from_hsg_landuse(
     xr.Dataset
         Green-Ampt ``psi``, ``sigma``, and ``ks`` rasters.
     """
-    da_hsg = normalize_hsg_codes(da_hsg, mode=dual_hsg)
     ds = green_ampt_from_hsg(
         da_hsg,
         df_map,
         da_ksat=da_ksat,
         factor_ksat=factor_ksat,
+        dual_hsg=dual_hsg,
     )
     factors = _modifier_layers(da_lulc, df_modifiers)
     storage_factor = factors["storage_factor"]
@@ -587,6 +609,7 @@ def horton_from_hsg(
     *,
     da_ksat: xr.DataArray | None = None,
     factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
+    dual_hsg: str = "drained",
 ) -> xr.Dataset:
     """Estimate Horton parameters from HSG classes and optional Ksat.
 
@@ -605,13 +628,21 @@ def horton_from_hsg(
     factor_ksat : float, optional
         Conversion factor to mm/hr, by default
         ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
+    dual_hsg : {"drained", "native"}, optional
+        HSG normalization mode, by default ``"drained"``. Native dual-HSG
+        classes require corresponding rows in ``df_map``.
 
     Returns
     -------
     xr.Dataset
         Horton ``f0``, ``fc``, and ``kd`` rasters.
     """
-    ds = _reclassify_hsg(da_hsg, df_map)
+    da_hsg = normalize_hsg_codes(da_hsg, mode=dual_hsg)
+    ds = _reclassify_hsg(
+        da_hsg,
+        df_map,
+        require_dual_hsg=dual_hsg == "native",
+    )
     if da_ksat is not None:
         da_fc = ksat_to_mmhr(da_ksat, factor_ksat=factor_ksat)
         if "fc_scale" in ds:
@@ -636,7 +667,7 @@ def horton_from_hsg_landuse(
     *,
     da_ksat: xr.DataArray | None = None,
     factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
-    dual_hsg: str | None = "drained",
+    dual_hsg: str = "drained",
 ) -> xr.Dataset:
     """Estimate Horton parameters from soil classes, Ksat, and land use.
 
@@ -659,7 +690,7 @@ def horton_from_hsg_landuse(
     factor_ksat : float, optional
         Conversion factor to mm/hr, by default
         ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
-    dual_hsg : str or None, optional
+    dual_hsg : {"drained", "native"}, optional
         HSG normalization mode, by default ``"drained"``.
 
     Returns
@@ -667,12 +698,12 @@ def horton_from_hsg_landuse(
     xr.Dataset
         Horton ``f0``, ``fc``, and ``kd`` rasters.
     """
-    da_hsg = normalize_hsg_codes(da_hsg, mode=dual_hsg)
     ds = horton_from_hsg(
         da_hsg,
         df_map,
         da_ksat=da_ksat,
         factor_ksat=factor_ksat,
+        dual_hsg=dual_hsg,
     )
     factors = _modifier_layers(da_lulc, df_modifiers)
     surface_factor = factors["surface_factor"]
@@ -694,6 +725,7 @@ def bucket_from_hsg(
     da_ksat: xr.DataArray | None = None,
     factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
     bucket_loss: float | None = None,
+    dual_hsg: str = "drained",
 ) -> xr.Dataset:
     """Estimate bucket parameters from HSG classes and optional Ksat.
 
@@ -715,13 +747,21 @@ def bucket_from_hsg(
         ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
     bucket_loss : float, optional
         Loss fraction used when the table has no ``bucket_loss`` column.
+    dual_hsg : {"drained", "native"}, optional
+        HSG normalization mode, by default ``"drained"``. Native dual-HSG
+        classes require corresponding rows in ``df_map``.
 
     Returns
     -------
     xr.Dataset
         Bucket ``bucket_smax``, ``bucket_k``, and ``bucket_loss`` rasters.
     """
-    ds = _reclassify_hsg(da_hsg, df_map)
+    da_hsg = normalize_hsg_codes(da_hsg, mode=dual_hsg)
+    ds = _reclassify_hsg(
+        da_hsg,
+        df_map,
+        require_dual_hsg=dual_hsg == "native",
+    )
     if "bucket_smax" not in ds:
         if not {"storage_depth_mm", "effective_fraction"}.issubset(ds.data_vars):
             raise ValueError(
@@ -766,7 +806,7 @@ def bucket_from_hsg_landuse(
     *,
     da_ksat: xr.DataArray | None = None,
     factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
-    dual_hsg: str | None = "drained",
+    dual_hsg: str = "drained",
     bucket_loss: float | None = 0.10,
 ) -> xr.Dataset:
     """Estimate bucket parameters from soil classes, Ksat, and land use.
@@ -790,7 +830,7 @@ def bucket_from_hsg_landuse(
     factor_ksat : float, optional
         Conversion factor to mm/hr, by default
         ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
-    dual_hsg : str or None, optional
+    dual_hsg : {"drained", "native"}, optional
         HSG normalization mode, by default ``"drained"``.
     bucket_loss : float or None, optional
         Loss fraction, by default 0.10. ``None`` also selects 0.10.
@@ -800,13 +840,13 @@ def bucket_from_hsg_landuse(
     xr.Dataset
         Bucket ``bucket_smax``, ``bucket_k``, and ``bucket_loss`` rasters.
     """
-    da_hsg = normalize_hsg_codes(da_hsg, mode=dual_hsg)
     ds = bucket_from_hsg(
         da_hsg,
         df_map,
         da_ksat=da_ksat,
         factor_ksat=factor_ksat,
         bucket_loss=bucket_loss,
+        dual_hsg=dual_hsg,
     )
     factors = _modifier_layers(da_lulc, df_modifiers)
     storage_factor = factors["storage_factor"]

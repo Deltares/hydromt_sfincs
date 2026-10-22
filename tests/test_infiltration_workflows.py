@@ -111,6 +111,10 @@ def test_normalize_hsg_codes_native_and_invalid():
     )
     with pytest.raises(ValueError, match="dual_hsg"):
         workflows.normalize_hsg_codes(da_hsg, mode="bogus")
+    with pytest.raises(ValueError, match="dual_hsg"):
+        workflows.normalize_hsg_codes(da_hsg, mode=None)
+    with pytest.raises(ValueError, match="dual_hsg"):
+        workflows.normalize_hsg_codes(da_hsg, mode="none")
 
 
 def test_ksat_to_mmhr_converts_and_fills_nodata():
@@ -368,6 +372,72 @@ def test_green_ampt_horton_bucket_landuse_modifiers():
         ds_bucket["bucket_loss"].values[np.isfinite(ds_bucket["bucket_loss"].values)],
         0.10,
     )
+
+
+@pytest.mark.parametrize(
+    ("from_hsg", "from_hsg_landuse", "df_map", "extra_kwargs"),
+    [
+        (
+            workflows.green_ampt_from_hsg,
+            workflows.green_ampt_from_hsg_landuse,
+            pd.DataFrame(
+                {"psi": [120.0, 240.0], "sigma": [0.25, 0.40]},
+                index=[2, 6],
+            ),
+            {},
+        ),
+        (
+            workflows.horton_from_hsg,
+            workflows.horton_from_hsg_landuse,
+            pd.DataFrame(
+                {
+                    "fc_scale": [0.5, 0.8],
+                    "f0_scale": [4.0, 6.0],
+                    "kd": [2.0, 3.0],
+                },
+                index=[2, 6],
+            ),
+            {},
+        ),
+        (
+            workflows.bucket_from_hsg,
+            workflows.bucket_from_hsg_landuse,
+            pd.DataFrame(
+                {
+                    "storage_depth_mm": [200.0, 300.0],
+                    "effective_fraction": [0.4, 0.5],
+                    "drain_factor": [1.5, 2.0],
+                },
+                index=[2, 6],
+            ),
+            {"bucket_loss": 0.1},
+        ),
+    ],
+)
+@pytest.mark.parametrize("dual_hsg", ["drained", "native"])
+def test_dual_hsg_modes_are_consistent_with_and_without_landuse(
+    from_hsg, from_hsg_landuse, df_map, extra_kwargs, dual_hsg
+):
+    da_hsg = _raster(np.full((2, 2), 6), "hsg", dtype=np.int16)
+    da_ksat = _raster(np.ones((2, 2)), "ksat")
+    da_lulc = _raster(np.full((2, 2), 10), "lulc", dtype=np.int16)
+    modifiers = pd.DataFrame(
+        {
+            "surface_factor": [1.0],
+            "storage_factor": [1.0],
+            "drainage_factor": [1.0],
+        },
+        index=[10],
+    )
+    kwargs = {"da_ksat": da_ksat, "dual_hsg": dual_hsg, **extra_kwargs}
+
+    ds_hsg = from_hsg(da_hsg, df_map, **kwargs)
+    ds_landuse = from_hsg_landuse(da_hsg, da_lulc, df_map, modifiers, **kwargs)
+    xr.testing.assert_allclose(ds_hsg, ds_landuse)
+
+    if dual_hsg == "native":
+        with pytest.raises(ValueError, match="Native dual-HSG values.*missing"):
+            from_hsg(da_hsg, df_map.loc[[2]], **kwargs)
 
 
 def test_modifier_table_supports_non_nlcd_landcover():

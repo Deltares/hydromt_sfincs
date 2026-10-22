@@ -457,8 +457,9 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         lulc_modifier_table : str, Path, or DataFrame, optional
             Required with ``lulc``. Table of modifier factors keyed by the
             land-cover class codes in the supplied dataset.
-        dual_hsg : {None, 'native', 'drained'}, optional
-            How to handle dual HSG classes, by default 'drained'.
+        dual_hsg : {'native', 'drained'}, optional
+            How to handle dual HSG classes, by default 'drained'. Native dual
+            classes must be present in the reclassification table.
         factor_ksat : float, optional
             Factor used to convert Ksat units to mm/hr, by default 3.6.
         reproj_method : str, optional
@@ -514,6 +515,7 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
                 df_map,
                 da_ksat=da_ksat,
                 factor_ksat=factor_ksat,
+                dual_hsg=dual_hsg,
             )
 
         layers = {}
@@ -602,8 +604,9 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         lulc_modifier_table : str, Path, or DataFrame, optional
             Required with ``lulc``. Table of modifier factors keyed by the
             land-cover class codes in the supplied dataset.
-        dual_hsg : {None, 'native', 'drained'}, optional
-            How to handle dual HSG classes, by default 'drained'.
+        dual_hsg : {'native', 'drained'}, optional
+            How to handle dual HSG classes, by default 'drained'. Native dual
+            classes must be present in the reclassification table.
         factor_ksat : float, optional
             Factor used to convert Ksat units to mm/hr, by default 3.6.
         reproj_method : str, optional
@@ -659,6 +662,7 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
                 df_map,
                 da_ksat=da_ksat,
                 factor_ksat=factor_ksat,
+                dual_hsg=dual_hsg,
             )
 
         layers = {}
