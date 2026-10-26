@@ -744,7 +744,7 @@ class SfincsGrid(GridComponent):
         filename: Union[str, Path],
         elevation_list: List[dict],
         resolution: float = 10.0,
-        river_list: Optional[List[dict]] = None,
+        river_list: Optional[List[dict]] = [],
         buffer_cells: int = 0,
         z_minimum: float = -20000.0,
         nrmax: int = 2000,
