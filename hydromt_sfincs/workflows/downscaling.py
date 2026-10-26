@@ -6,6 +6,7 @@ SFINCS quadtree/regular subgrid outputs.
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union
+import warnings
 
 import geopandas as gpd
 import numpy as np
@@ -26,6 +27,7 @@ from hydromt_sfincs.readers import read_xy
 
 __all__ = [
     # ordered by pipeline step (see MODULE MAP below)
+    "make_index_cog",  # step 0 — index builder
     "adjust_zsmax_dilation",  # Step 1a — pre-step
     "adjust_zsmax_energyhead",  # Step 1b — pre-step
     "downscale_floodmap",  # Step 2  — downscale
@@ -78,6 +80,27 @@ def _reduce_extra_dims(da):
     if extra:
         da = da.max(dim=extra)
     return da
+
+
+def make_index_cog(*args, **kwargs) -> None:
+    """Deprecated. Import from ``hydromt_sfincs.workflows.cog`` instead.
+
+    .. deprecated::
+        ``make_index_cog`` has moved to
+        :func:`hydromt_sfincs.workflows.cog.create_index_cog`.
+        This shim will be removed in a future release.
+    """
+    from hydromt_sfincs.workflows.cog import create_index_cog
+
+    msg = (
+        "make_index_cog has moved to hydromt_sfincs.workflows.cog. "
+        "Update your import to: from hydromt_sfincs.workflows.cog import create_index_cog. "
+        "The old location will be removed in a future release."
+    )
+
+    warnings.warn(msg, FutureWarning, stacklevel=2)
+    logger.warning(msg)
+    return create_index_cog(*args, **kwargs)
 
 
 # ---- 1a. adjust_zsmax_dilation : cell-space WSE dilation --------------------
