@@ -20,10 +20,6 @@ from hydromt.model.processes.grid import create_grid_from_region
 
 from hydromt_sfincs import writers
 from hydromt_sfincs.workflows.cog import create_index_cog, create_topobathy_cog
-from hydromt_sfincs.workflows.tiling import (
-    create_topobathy_tiles,
-    create_index_tiles,
-)
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -620,124 +616,6 @@ class SfincsGrid(GridComponent):
 
     # %% DDB GUI focused additional functions:
     # map_overlay
-
-    def create_index_tiles(
-        self,
-        root: Union[str, Path],
-        zoom_range: Union[int, List[int]] = [0, 13],
-        fmt: str = "bin",
-        write_html_viewer: bool = True,
-        max_workers: Optional[int] = None,
-    ) -> None:
-        """Create webmercator index tiles for this regular grid.
-        Index tiles are used to quickly map webmercator tiles to the corresponding SFINCS cell.
-
-        Thin wrapper around
-        :py:func:`hydromt_sfincs.workflows.tiling.create_index_tiles`.
-
-        Parameters
-        ----------
-        root : Union[str, Path]
-            Directory where index tiles are stored
-        zoom_range : Union[int, List[int]], optional
-            Range of zoom levels for which tiles are created, by default [0,13]
-        fmt : str, optional
-            Format of index tiles, either "bin" (binary, default) or "png"
-        write_html_viewer : bool, optional
-            If True (default), also write an ``index.html`` Leaflet viewer
-            alongside the tiles so they can be previewed in a browser.
-        max_workers : int, optional
-            Number of worker threads used to render tiles concurrently.
-            Defaults to ``os.cpu_count()``. Pass ``1`` to disable
-            parallelism.
-        """
-
-        # if root is None, use the model root directory
-        if root is None:
-            root = os.path.join(self.model.root.path, "indices")
-
-        create_index_tiles(
-            model=self.model,
-            root=root,
-            zoom_range=zoom_range,
-            fmt=fmt,
-            write_html_viewer=write_html_viewer,
-            max_workers=max_workers,
-        )
-
-    def create_topobathy_tiles(
-        self,
-        elevation_list: List[dict],
-        root: Union[str, Path] = None,
-        index_path: Optional[Union[str, Path]] = None,
-        zoom_range: Union[int, List[int]] = [0, 13],
-        z_range: List[float] = [-20000.0, 20000.0],
-        fmt: str = "bin",
-        write_html_viewer: bool = True,
-        max_workers: Optional[int] = None,
-    ) -> None:
-        """Create webmercator topobathy tiles for this regular grid.
-
-        Thin wrapper around
-        :py:func:`hydromt_sfincs.workflows.tiling.create_topobathy_tiles`.
-
-        Parameters
-        ----------
-        root : Union[str, Path]
-            Parent directory; tiles land in ``<root>/topobathy``.
-        elevation_list : List[dict], optional
-            Topobathy datasets. Entries may be in DDB name-only format
-            (``{"name": ..., "zmin": ..., "zmax": ...}``) or hydromt format
-            (with a ``"da"`` DataArray). DDB entries are auto-resolved via
-            the model's data catalog. If ``None``, all sources in the
-            model's data catalog are used instead.
-        index_path : Union[str, Path], optional
-            Directory containing index tiles; if given, topobathy tiles
-            are only written where index tiles exist.
-        zoom_range : Union[int, List[int]], optional
-            Range of zoom levels, by default ``[0, 13]``.
-        z_range : List[float], optional
-            Valid elevation range; tiles entirely outside are skipped.
-        fmt : str, optional
-            ``"bin"`` (default), ``"png"``, or ``"tif"``.
-        write_html_viewer : bool, optional
-            If True (default) and ``fmt == "png"``, also write an
-            ``index.html`` Leaflet viewer alongside the tiles.
-        max_workers : int, optional
-            Number of worker threads used to render tiles concurrently.
-            Defaults to ``os.cpu_count()``. Pass ``1`` to disable
-            parallelism.
-        """
-
-        if root is None:
-            root = os.path.join(self.model.root.path, "topobathy")
-
-        if isinstance(zoom_range, int):
-            zr = [0, zoom_range]
-        else:
-            zr = zoom_range
-
-        # Parse elevation_list and determine the resolution of the topobathy tiles.
-        res = 40075016.686 / 256 / 2 ** zr[1]
-        elevation_list = self.model._parse_datasets_elevation(elevation_list, res=res)
-
-        # FIXME
-        # When no elevation_list is given, the workflow falls back to the
-        # model's data catalog (if populated).
-        data_catalog = self.model.data_catalog if elevation_list is None else None
-
-        create_topobathy_tiles(
-            root=root,
-            region=self.model.region,
-            elevation_list=elevation_list,
-            data_catalog=data_catalog,
-            index_path=index_path,
-            zoom_range=zr,
-            z_range=z_range,
-            fmt=fmt,
-            write_html_viewer=write_html_viewer,
-            max_workers=max_workers,
-        )
 
     def create_topobathy_cog(
         self,

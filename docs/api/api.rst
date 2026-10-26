@@ -237,9 +237,6 @@ Flood map downscaling
    workflows.downscaling.adjust_zsmax_dilation
    workflows.downscaling.adjust_zsmax_energyhead
    workflows.downscaling.remove_disconnected_flooding
-   workflows.tiling.downscale_floodmap_webmercator
-   workflows.tiling.create_index_tiles
-   workflows.tiling.create_topobathy_tiles
    workflows.cog.create_index_cog
    workflows.cog.create_topobathy_cog
 
