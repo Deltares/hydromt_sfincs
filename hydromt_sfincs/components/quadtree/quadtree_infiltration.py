@@ -61,6 +61,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         flavor: str,
     ) -> None:
         self.clear()
+        grid = self.mask.grid
         for name, layer in layers.items():
             values = (
                 layer.values
@@ -71,9 +72,9 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
                 fill_nan_in_mask(
                     values, self.mask.values, name, VARIABLES[name].fill_value
                 ),
-                dims=[self.data.grid.face_dimension],
+                dims=[grid.face_dimension],
             )
-            uda = xu.UgridDataArray(da, self.data.grid)
+            uda = xu.UgridDataArray(da, grid)
             uda = uda.astype(np.float32)
             uda.name = name
             uda.attrs.update(get_attrs(name))
@@ -218,7 +219,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         # set nodata to nan before reprojecting/interpolating
         da_qinf = da_qinf.raster.mask_nodata()
 
-        n_cells = self.data.grid.n_face
+        n_cells = self.mask.grid.n_face
         qinf = np.full(n_cells, np.nan)
 
         def compute_constant_infiltration(da_like, ilev=None):
@@ -298,7 +299,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             raise ValueError("Either runoff or lulc must be provided.")
 
         da_runoff = da_runoff.raster.mask_nodata()
-        runoff = np.full(self.data.grid.n_face, np.nan)
+        runoff = np.full(self.mask.grid.n_face, np.nan)
 
         def compute_runoff(da_like, ilev=None):
             return da_runoff.raster.reproject_like(da_like, method=reproj_method)
@@ -358,7 +359,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         elif isinstance(da_org, xr.Dataset):
             raise ValueError(f"Could not find variable {v} in {cn}")
 
-        n_cells = self.data.grid.n_face
+        n_cells = self.mask.grid.n_face
         scs = np.full(n_cells, np.nan)
 
         def compute_cn_infiltration(da_like, ilev=None):
@@ -484,7 +485,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         )
 
         outputs = {
-            name: np.full(self.data.grid.n_face, np.nan)
+            name: np.full(self.mask.grid.n_face, np.nan)
             for name in ("smax", "seff", "ks")
         }
 
@@ -600,7 +601,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             )
 
         outputs = {
-            name: np.full(self.data.grid.n_face, np.nan)
+            name: np.full(self.mask.grid.n_face, np.nan)
             for name in ("psi", "sigma", "ks")
         }
 
@@ -648,7 +649,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
 
         if raster_sources:
             outputs = {
-                name: np.full(self.data.grid.n_face, np.nan) for name in raster_sources
+                name: np.full(self.mask.grid.n_face, np.nan) for name in raster_sources
             }
 
             def compute_block(da_like, ilev=None):
@@ -760,7 +761,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             )
 
         outputs = {
-            name: np.full(self.data.grid.n_face, np.nan) for name in ("f0", "fc", "kd")
+            name: np.full(self.mask.grid.n_face, np.nan) for name in ("f0", "fc", "kd")
         }
 
         def compute_block(da_like, ilev=None):
@@ -810,7 +811,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
 
         if raster_sources:
             outputs = {
-                name: np.full(self.data.grid.n_face, np.nan) for name in raster_sources
+                name: np.full(self.mask.grid.n_face, np.nan) for name in raster_sources
             }
 
             def compute_block(da_like, ilev=None):
@@ -929,7 +930,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
             )
 
         outputs = {
-            name: np.full(self.data.grid.n_face, np.nan)
+            name: np.full(self.mask.grid.n_face, np.nan)
             for name in flavor_variables("bkt")
         }
 
@@ -983,7 +984,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
 
         if bucket_loss is None or np.isscalar(bucket_loss):
             layers["bucket_loss"] = np.full(
-                self.data.grid.n_face,
+                self.mask.grid.n_face,
                 np.float32(0.0 if bucket_loss is None else bucket_loss),
             )
         else:
@@ -994,7 +995,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
 
         if raster_sources:
             outputs = {
-                name: np.full(self.data.grid.n_face, np.nan) for name in raster_sources
+                name: np.full(self.mask.grid.n_face, np.nan) for name in raster_sources
             }
 
             def compute_block(da_like, ilev=None):

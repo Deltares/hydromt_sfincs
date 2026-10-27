@@ -85,7 +85,7 @@ class SfincsQuadtreeRoughness(SfincsQuadtreeMixin, ModelComponent):
             Maximum number of points to interpolate in a single chunk, by default 2000.
         """
 
-        n_cells = self.data.grid.n_face
+        n_cells = self.mask.grid.n_face
         manning = np.full(n_cells, np.nan)
 
         # Parse roughness list and prepare for interpolation
@@ -126,9 +126,10 @@ class SfincsQuadtreeRoughness(SfincsQuadtreeMixin, ModelComponent):
             )
             manning = np.where(np.isnan(manning), manning_sea, manning)
 
-        # Convert manning to ugrid-dataarray and set in self.data
-        da = xr.DataArray(manning, dims=[self.data.grid.face_dimension])
-        uda = xu.UgridDataArray(da, self.data.grid)
+        # Convert manning to ugrid-dataarray and set in parent grid.
+        grid = self.mask.grid
+        da = xr.DataArray(manning, dims=[grid.face_dimension])
+        uda = xu.UgridDataArray(da, grid)
         self.model.quadtree_grid.set(uda, name="manning")
 
         # Set netcdf manning to config

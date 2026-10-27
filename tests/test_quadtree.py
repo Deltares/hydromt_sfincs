@@ -98,6 +98,38 @@ def test_quadtree_mask_active_updates_parent_grid(quadtree_model_config):
     )
 
 
+def test_snapwave_quadtree_mask_active_uses_parent_mesh(quadtree_model_config):
+    model = quadtree_model_config
+    model.quadtree_grid.read()
+    elevation = model.quadtree_grid.data["z"]
+
+    model.quadtree_mask.create_active(zmin=0.0)
+    model.quadtree_snapwave_mask.create_active(zmin=0.0)
+
+    np.testing.assert_array_equal(
+        model.quadtree_grid.data["snapwave_mask"].values > 0,
+        elevation.values >= 0.0,
+    )
+
+
+def test_snapwave_quadtree_mask_active_after_cut(quadtree_model_config):
+    from hydromt_sfincs.components.quadtree.quadtree_builder import cut_inactive_cells
+
+    model = quadtree_model_config
+    model.quadtree_grid.read()
+
+    model.quadtree_mask.create_active(zmin=0.0)
+    model.quadtree_grid._data = cut_inactive_cells(model.quadtree_grid.data)
+
+    elevation = model.quadtree_grid.data["z"]
+    model.quadtree_snapwave_mask.create_active(zmin=0.0)
+
+    np.testing.assert_array_equal(
+        model.quadtree_grid.data["snapwave_mask"].values > 0,
+        elevation.values >= 0.0,
+    )
+
+
 def test_quadtree_write_excludes_component_layers(quadtree_model):
     # manning is owned by the roughness component, so it must not end up in sfincs.nc
     mask = quadtree_model.quadtree_grid.data["mask"]

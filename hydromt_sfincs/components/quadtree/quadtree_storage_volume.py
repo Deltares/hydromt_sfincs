@@ -108,6 +108,8 @@ class SfincsQuadtreeStorageVolume(ModelComponent):
         # set grid
         mname = "vol"
         da_vol.attrs.update(**_ATTRS.get(mname, {}))
+        grid = self.model.quadtree_grid.data.grid
+        da_vol = xu.UgridDataArray(da_vol.obj, grid)
         self.model.quadtree_grid.set(da_vol, name=mname)
         # update config
         self.model.config.set(f"{mname}file", f"sfincs.{mname[:3]}")

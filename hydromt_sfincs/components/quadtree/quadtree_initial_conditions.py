@@ -126,10 +126,10 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
         # uda_ini..set_nodata(np.nan)
 
         # set grid
+        grid = self.mask.grid
+        da_ini = xu.UgridDataArray(uda_ini[mname].obj, grid)
         da_ini.attrs.update(**_ATTRS.get(mname, {}))
-        self.model.quadtree_grid.data[mname] = uda_ini[mname]
-        # FIXME: ideally we would use the set method, but that's not working here properly
-        # self.model.quadtree_grid.set(da_ini, name=mname)
+        self.model.quadtree_grid.set(da_ini, name=mname)
 
         # update config: remove default zsini and set inifile
         self.model.config.set(f"inifile", f"sfincs_ini.nc")
@@ -220,13 +220,14 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
             # start with existing ini layer
             da_zsini = self.data[mname]
 
+        grid_data = self.model.quadtree_grid.data
         # loop over polygons and rasterize initial water level values
         for _, gdf in gdf_zsini.iterrows():
             # Parse wanted value within polygon:
             inival = float(gdf["zsini"])
             # Burn the polygon into the raster: pixels inside polygon get 1, others get 0
             burned = xu.burn_vector_geometry(
-                gdf["geometry"], self.data, fill=0, all_touched=True
+                gdf["geometry"], grid_data, fill=0, all_touched=True
             )
             da_zsini = xr.where(burned > 0, inival, da_zsini)
 
@@ -240,9 +241,9 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
 
         # set grid
         da_zsini.attrs.update(**_ATTRS.get(mname, {}))
-        self.model.quadtree_grid.data[mname] = da_zsini
-        # FIXME: ideally we would use the set method, but that's not working here properly
-        # self.model.quadtree_grid.set(da_ini, name=mname)
+        grid = self.mask.grid
+        da_zsini = xu.UgridDataArray(da_zsini.obj, grid)
+        self.model.quadtree_grid.set(da_zsini, name=mname)
 
         # update config: remove default zsini and set inifile
         self.model.config.set(f"inifile", f"sfincs_ini.nc")

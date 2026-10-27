@@ -434,12 +434,11 @@ class SfincsQuadtreeMask(ModelComponent):
             else:
                 logger.warning("No mask cells found within exclude polygon!")
         # add mask to grid
+        grid = self.model.quadtree_grid.data.grid
         self.model.quadtree_grid.set(
             xu.UgridDataArray(
-                xr.DataArray(
-                    data=uda_mask.values, dims=[self.data.grid.face_dimension]
-                ),
-                self.data.grid,
+                xr.DataArray(data=uda_mask.values, dims=[grid.face_dimension]),
+                grid,
             ),
             name=varname,
         )
@@ -613,13 +612,14 @@ class SfincsQuadtreeMask(ModelComponent):
                 and gdf_include is None
                 and gdf_exclude is None
             ):
+                grid = self.model.quadtree_grid.data.grid
                 self.model.quadtree_grid.set(
                     xu.UgridDataArray(
                         xr.DataArray(
                             data=uda_mask.values,
-                            dims=[self.data.grid.face_dimension],
+                            dims=[grid.face_dimension],
                         ),
-                        self.data.grid,
+                        grid,
                     ),
                     name=varname,
                 )
@@ -698,12 +698,11 @@ class SfincsQuadtreeMask(ModelComponent):
                 uda_mask = uda_mask.where(~bounds_msk2, np.uint8(bvalue))
 
         # add mask to grid
+        grid = self.model.quadtree_grid.data.grid
         self.model.quadtree_grid.set(
             xu.UgridDataArray(
-                xr.DataArray(
-                    data=uda_mask.values, dims=[self.data.grid.face_dimension]
-                ),
-                self.data.grid,
+                xr.DataArray(data=uda_mask.values, dims=[grid.face_dimension]),
+                grid,
             ),
             name=varname,
         )

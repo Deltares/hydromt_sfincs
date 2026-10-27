@@ -97,7 +97,7 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
         """
 
         nlev = self.data.attrs["nr_levels"]
-        n_cells = self.data.grid.n_face
+        n_cells = self.mask.grid.n_face
         zz = np.full(n_cells, np.nan)
         dx = self.data.attrs["dx"]
         dy = self.data.attrs["dy"]
@@ -139,29 +139,31 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
             clip=(zmin, zmax),
         )
 
-        # Convert elevation to ugrid-dataarray and set in self.data
-        da = xr.DataArray(zz, dims=[self.data.grid.face_dimension])
-        uda = xu.UgridDataArray(da, self.data.grid)
+        # Convert elevation to ugrid-dataarray and set in parent grid.
+        grid = self.mask.grid
+        da = xr.DataArray(zz, dims=[grid.face_dimension])
+        uda = xu.UgridDataArray(da, grid)
         self.model.quadtree_grid.set(uda, name="z")
 
     @hydromt_step
     def create_uniform(self, zb):
+        grid = self.mask.grid
         self.model.quadtree_grid.set(
             xu.UgridDataArray(
-                xr.full_like(self.model.quadtree_grid.data["z"].obj, zb),
-                self.model.quadtree_grid.data.grid,
+                xr.DataArray(np.full(grid.n_face, zb), dims=[grid.face_dimension]),
+                grid,
             ),
             name="z",
         )
 
     def interpolate_bathymetry(self, x, y, z, method="linear"):
         """x, y, and z are numpy arrays with coordinates and bathymetry values"""
-        xy = self.data.grid.face_coordinates
+        xy = self.mask.grid.face_coordinates
         # zz = np.full(self.nr_cells, np.nan)
         xz = xy[:, 0]
         yz = xy[:, 1]
         zz = interp2(x, y, z, xz, yz, method=method)
-        ugrid2d = self.data.grid
+        ugrid2d = self.mask.grid
         self.model.quadtree_grid.set(
             xu.UgridDataArray(
                 xr.DataArray(data=zz, dims=[ugrid2d.face_dimension]), ugrid2d
@@ -196,7 +198,7 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
         if self.data is None or "z" not in self.data:
             return False
         return self._overlay.render(
-            face_xy=self.data.grid.face_coordinates,
+            face_xy=self.mask.grid.face_coordinates,
             z=self.data["z"].values[:],
             level=self.model.quadtree_grid.data["level"].values[:],
             dx0=self.data.attrs["dx"],

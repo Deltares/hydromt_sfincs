@@ -278,9 +278,9 @@ class SfincsQuadtreeGrid(MeshComponent):
     def _validate_layer_grid(self, sidecar_grid: xu.Ugrid2d, grid: xu.Ugrid2d) -> None:
         """Verify that sidecar face values correspond to the main grid's faces.
 
-        Checks CRS, face count, connectivity, and node coordinates before the
-        values are attached to the main grid. ``MeshComponent.set`` applies a
-        stricter full-grid equality check, including UGRID representation details.
+        Checks CRS, face count, connectivity, and node coordinates before values are
+        attached to the main grid. These are also the topology criteria used by this
+        component when ``MeshComponent.set`` checks for an existing grid.
         """
         if sidecar_grid.crs is None:
             sidecar_grid.set_crs(grid.crs)
@@ -303,6 +303,13 @@ class SfincsQuadtreeGrid(MeshComponent):
             raise ValueError(
                 "Quadtree layer file topology does not match the main grid."
             )
+
+    def _grid_is_equal(self, grid_name: str, data: xu.UgridDataset) -> bool:
+        try:
+            self._validate_layer_grid(data.grid, self.mesh_grids[grid_name])
+        except ValueError:
+            return False
+        return True
 
     def read(
         self,
