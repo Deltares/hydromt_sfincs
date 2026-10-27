@@ -19,12 +19,14 @@ Added
 - re-introduced snap_to_grid of relevant geometries for regular grids (#400)
 - Added infiltration workflows to estimate Curve Number, Green-Ampt, Horton, and bucket parameters from HSG data, with optional land-use modifiers, plus constant infiltration from Ksat and land-use data (#419).
 - Added infiltration component methods to populate regular-grid and quadtree SFINCS models with derived or supplied infiltration layers: ``create_cn_from_landuse_hsg``, ``create_green_ampt``, ``create_horton``, their map-based variants, and ``create_uniform_constant``. Quadtree models also support ``create_runoff_coefficient``, ``create_bucket`` and ``create_bucket_from_maps`` (#419).
+- ``plot_basemap`` now adds a persistent HydroMT-SFINCS/Deltares credit inside the map, positioned to avoid overlapping provider attribution. (#427)
 
 Fixed
 -----
 - Fixed plot_basemap() for very flat and/or below-sea-level Models (#394)
 - Always write ``manning_land``, ``manning_sea`` and ``rgh_lev_land`` to config when they are set by the user (#398)
 - Fixed writing of infiltration layers in Quadtree models (#397)
+- Respect explicit ``reproj_method`` values in ``merge_multi_dataarrays`` for first and subsequent datasets (#425)
 
 Changed
 -------
