@@ -232,13 +232,15 @@ outputformat         = net
     test_keys = set(_keys(test_inp_str))
 
     # fields flagged 'always' (with a non-None default) are force-written even
-    # though absent from this legacy file
+    # though absent from this legacy file, except those with a min_version, since
+    # the SFINCS version of an unversioned file is unknown
     model_fields = SfincsConfigVariables.model_fields
     expected_extras = {
         key
         for key, field in model_fields.items()
         if key not in original_fields
         and (field.json_schema_extra or {}).get("always")
+        and "min_version" not in (field.json_schema_extra or {})
         and field.default is not None
     }
 
@@ -415,7 +417,7 @@ def test_config_read_migration_prefers_new_name_by_version(tmp_path):
     assert "epsg" in output_text
 
 
-def test_config_read_warns_and_removes_unsupported_fields(tmp_path):
+def test_config_read_warns_and_removes_unsupported_fields(tmp_path, caplog):
     inpfile = tmp_path / "sfincs.inp"
     inpfile.write_text(
         "sfincs_version       = 2.0.0\n"
@@ -424,8 +426,9 @@ def test_config_read_warns_and_removes_unsupported_fields(tmp_path):
         "custom_key           = keep\n"
     )
 
-    with pytest.warns(UserWarning, match="below the minimum supported"):
+    with caplog.at_level(logging.WARNING):
         data = SfincsConfigVariables.read(inpfile)
+    assert "below the minimum supported" in caplog.text
 
     assert data.urbfile is None
     assert data.storetzsmax == 0
@@ -514,7 +517,6 @@ def test_config_unversioned_keeps_legacy_keywords(tmp_path, caplog):
         ("2.3.3", "waveforces_ratio", "snapwave_waveforces_factor"),
         ("2.4.1", "snapwave_waveforces_factor", "snapwave_waveforces_ratio"),
         ("2.4.1", "waveforces_ratio", "snapwave_waveforces_ratio"),
-        ("2.4.1", "prcpfile", "prcfile"),
         ("2.4.1", "precipfile", "precipfile"),
     ],
 )
@@ -536,7 +538,7 @@ def test_config_multiple_aliases_written_as_read(
 @pytest.mark.parametrize(
     ("used", "ignored"),
     [
-        ("prcpfile", "precipfile"),
+        ("prcfile", "precipfile"),
         ("infiltrationfile", "infiltration_file"),
         ("infiltrationtype", "infiltration_type"),
         ("snapwave_waveforces_factor", "waveforces_ratio"),
@@ -556,12 +558,14 @@ def test_config_duplicate_aliases_follow_kernel_order(tmp_path, caplog, used, ig
     assert float(getattr(data, key)) == 0.5
 
 
-def test_config_read_warns_deprecated_field_unversioned(tmp_path):
+def test_config_read_keeps_deprecated_field_unversioned(tmp_path, caplog):
     inpfile = tmp_path / "sfincs.inp"
     inpfile.write_text("storeqdrain = 1\n")
 
-    with pytest.warns(DeprecationWarning, match="'storeqdrain' is deprecated since"):
+    # the targeted SFINCS version is unknown: kept without a warning
+    with caplog.at_level(logging.WARNING):
         data = SfincsConfigVariables.read(inpfile)
+    assert "storeqdrain" not in caplog.text
 
     output = tmp_path / "out.inp"
     data.write(output, explicit_only=True)
@@ -589,8 +593,7 @@ def test_config_write_update_to_latest(tmp_path):
         "global               = 1\n"
         "storeqdrain          = 1\n"
     )
-    with pytest.warns(DeprecationWarning):
-        data = SfincsConfigVariables.read(inpfile)
+    data = SfincsConfigVariables.read(inpfile)
 
     output = tmp_path / "latest.inp"
     data.write(output, write_comments=True, explicit_only=True, update_to_latest=True)

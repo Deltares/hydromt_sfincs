@@ -59,11 +59,26 @@ only changed, always with a warning, when:
 * the file has no ``sfincs_version`` and the keyword is older than the minimum supported
   SFINCS version (for example ``crs``, which is replaced by ``epsg``).
 
-To update a model to the latest SFINCS version, use
-``model.config.write(update_to_latest=True)``. This writes the current keywords, leaves out
-deprecated settings and writes ``sfincs_version``. New models always get the latest
-``sfincs_version``. A model that was read without ``sfincs_version`` only gets one when it is
-written with ``update_to_latest=True``.
+Without ``sfincs_version`` the targeted SFINCS version is unknown, so settings that are
+deprecated in newer versions (for example ``storeqdrain``) are kept without a warning. With
+``sfincs_version``, settings that version does not support are removed with a warning.
+
+Writing does not update a model to a newer SFINCS version: ``update_to_latest`` is ``False``
+by default, also when the model is written with ``model.write()``. To update a model to the
+latest SFINCS version, write the config with ``update_to_latest=True``:
+
+.. code-block:: python
+
+    model = SfincsModel(root="old_model", mode="r")
+    model.read()
+    model.root.set("updated_model", mode="w+")
+    model.write()
+    model.config.write(update_to_latest=True)
+
+This writes the current keywords, leaves out deprecated settings and writes
+``sfincs_version``. The configuration in memory is not changed. New models always get the
+latest ``sfincs_version``. A model that was read without ``sfincs_version`` only gets one when
+it is written with ``update_to_latest=True``.
 
 .. mermaid::
 

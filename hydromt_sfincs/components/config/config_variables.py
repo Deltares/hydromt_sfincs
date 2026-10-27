@@ -34,7 +34,6 @@ keywords for ``LATEST_SFINCS_VERSION``.
 import functools
 import logging
 import math
-import warnings
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -161,14 +160,17 @@ def _version_status(
     user_sfincs_version: str | None,
     min_supported_version: str = MIN_SUPPORTED_SFINCS_VERSION,
 ) -> str:
-    """Classify a field as compatible, unsupported, deprecated, or unknown."""
+    """Classify a field as "ok", "too_old", "deprecated" or "unknown".
+
+    Without a ``sfincs_version`` the targeted SFINCS version is not known, so a
+    field with a ``min_version`` or ``max_version`` is "unknown".
+    """
     min_version = extra.get("min_version")
     max_version = extra.get("max_version")
     if not min_version and not max_version:
         return "ok"
-    # An unversioned file targets the latest SFINCS release
     if user_sfincs_version is None:
-        user_sfincs_version = LATEST_SFINCS_VERSION
+        return "unknown"
     try:
         current = _parse_version(str(user_sfincs_version))
         if min_version is not None and current < _parse_version(min_version):
@@ -1632,13 +1634,17 @@ class SfincsConfigVariables(BaseSettings):
                 f"sfincs_version {sfincs_version} is not an 'X.Y.Z' version; "
                 "keywords are kept as read."
             )
+        if sfincs_version is None:
+            logger.info(
+                f"No sfincs_version in {filename}; keywords are kept as read and "
+                "written as such. Use config.write(update_to_latest=True) to write "
+                f"them for SFINCS version {LATEST_SFINCS_VERSION}."
+            )
         if _is_below_min_supported(sfincs_version):
-            message = (
+            logger.warning(
                 f"sfincs_version {sfincs_version} is below the minimum supported "
                 f"SFINCS version {MIN_SUPPORTED_SFINCS_VERSION}."
             )
-            warnings.warn(message, UserWarning, stacklevel=2)
-            logger.warning(message)
 
         # Read legacy keywords into their current field, remembering the keyword
         # they were read with so that write() can write them back as such.
@@ -1660,25 +1666,21 @@ class SfincsConfigVariables(BaseSettings):
             logger.debug(f"Legacy keyword '{legacy}' is read as '{key}'.")
 
         # Check the keywords against the targeted sfincs_version: deprecated fields
-        # are dropped (kept for an unversioned file) and keywords the version does
-        # not read are replaced or dropped.
+        # and fields the version does not know are dropped, and keywords the version
+        # does not read are replaced. An unversioned file keeps all fields.
         for key in list(inp_dict):
             field_info = model_fields.get(key)
             if field_info is None:
                 continue
             extra = field_info.json_schema_extra or {}
             if _version_status(extra, sfincs_version) == "deprecated":
-                if sfincs_version is not None:
-                    inp_dict.pop(key)
-                    comments.pop(key, None)
-                    keywords.pop(key, None)
-                    logger.warning(
-                        f"'{key}' is not supported for sfincs_version {sfincs_version}; removed."
-                    )
-                    continue
-                message = f"'{key}' is deprecated since SFINCS version {extra['max_version']}."
-                warnings.warn(message, DeprecationWarning, stacklevel=2)
-                logger.warning(message)
+                inp_dict.pop(key)
+                comments.pop(key, None)
+                keywords.pop(key, None)
+                logger.warning(
+                    f"'{key}' is not supported for sfincs_version {sfincs_version}; removed."
+                )
+                continue
 
             keyword = cls._check_keyword(key, keywords.get(key, key), sfincs_version)
             if keyword is None:
@@ -1839,7 +1841,7 @@ class SfincsConfigVariables(BaseSettings):
             # Decide always vs skip-if-default
             # A deprecated field is never force-written via "always"; it is only
             # kept when it was explicitly read/set (round-trip fidelity). A field
-            # with an unconfirmed min_version (unparsable sfincs_version) is
+            # with an unconfirmed min_version (missing or unparsable sfincs_version) is
             # treated the same way, since we can't confirm the kernel supports it.
             suppress_always = version_status == "deprecated" or (
                 version_status == "unknown" and "min_version" in extra
