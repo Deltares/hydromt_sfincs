@@ -760,7 +760,7 @@ class SfincsQuadtreeGrid(MeshComponent):
         filename: Union[str, Path],
         elevation_list: List[dict],
         resolution: float = 10.0,
-        river_list: Optional[List[dict]] = [],
+        river_list: Optional[List[dict]] = None,
         buffer_cells: int = 0,
         z_minimum: float = -20000.0,
         nrmax: int = 2000,
@@ -770,7 +770,8 @@ class SfincsQuadtreeGrid(MeshComponent):
         Parameters
         ----------
         filename : str or Path
-            Output COG file path, with the merged elevation datasets.
+            Output COG file path (north-up raster in the model CRS, nodata NaN)
+            with the merged elevation datasets.
         elevation_list : List[dict]
             List of dictionaries with datasets and merge arguments to use for depth.
         resolution : float, optional
@@ -811,9 +812,10 @@ class SfincsQuadtreeGrid(MeshComponent):
         Parameters
         ----------
         filename : str or Path
-            Output COG file path. This raster contains the quadtree cell index for each pixel,
-            or -999 for pixels outside the active grid. Note that this index file only works in
-            combination with the topobathy COG used for creation.
+            Output COG file path. This uint32 raster contains the quadtree cell index for
+            each pixel, or the nodata value 2147483647 for pixels outside the active grid.
+            Note that this index file only works in combination with the topobathy COG
+            used for creation.
         filename_topobathy : str or Path
             Reference topobathy COG whose grid / CRS define the output.
         nrmax : int, optional

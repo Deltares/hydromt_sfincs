@@ -26,24 +26,25 @@ def create_topobathy_cog(
     elevation_list: List[dict],
     filename: Union[str, Path],
     res: float,
-    river_list: List[dict] = [],
+    river_list: Optional[List[dict]] = None,
     bounds: Optional[List[float]] = None,
     buffer_cells: int = 0,
     nrmax: int = 2000,  # blocksize
-    z_minimum: float = -99999.0,
+    z_minimum: float = -20000.0,
 ):
-    """Create method for subgrid tables based on a list of
-    elevation and Manning's roughness datasets.
+    """Write a Cloud Optimized GeoTIFF (COG) with merged topobathy data.
 
-    These datasets are used to derive relations between the water level
-    and the volume in a cell to do the continuity update,
-    and a representative water depth used to calculate momentum fluxes.
-
-    This allows that one can compute on a coarser computational grid,
-    while still accounting for the local topography and roughness.
+    The elevation datasets (and optional river burn-in) are merged onto a
+    regular, north-up raster in the model CRS that covers the model bounds
+    (or ``bounds``) at resolution ``res``. The raster is processed in blocks
+    of at most ``nrmax`` x ``nrmax`` pixels to limit memory use. Missing
+    values are interpolated/extrapolated, so the output contains no nodata
+    pixels in practice; the nodata value is NaN.
 
     Parameters
     ----------
+    model : SfincsModel
+        The SfincsModel instance providing the CRS, bounds and data catalog.
     elevation_list : List[dict]
         List of dictionaries with topobathy data.
         Each should minimally contain a data catalog source name, data file path,
@@ -59,6 +60,10 @@ def create_topobathy_cog(
                 {'elevation': 'gebco', 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}
             ]
 
+    filename : str or Path
+        Output COG file path.
+    res : float
+        Raster resolution in model CRS units.
     river_list : List[dict], optional
         List of dictionaries with river datasets. Each dictionary should at least
         contain a river centerline data and optionally a river mask:
@@ -81,15 +86,20 @@ def create_topobathy_cog(
 
             [{'centerlines': 'river_lines', 'mask': 'river_mask', 'manning': 0.035}]
 
+    bounds : List[float], optional
+        Raster extent ``[xmin, ymin, xmax, ymax]`` in model CRS units, by default
+        the model bounds. The extent is rounded outwards to a multiple of ``res``.
     buffer_cells : int, optional
         Number of cells between datasets to ensure smooth transition of bed levels,
         by default 0
     nrmax : int, optional
-        Maximum number of cells per subgrid-block, by default 2000
+        Maximum number of pixels per block side, by default 2000.
         These blocks are used to prevent memory issues while working with large datasets
     z_minimum : float, optional
-        Minimum depth in the subgrid tables, by default -99999.0
+        Minimum elevation in the output raster, by default -20000.0
     """
+
+    river_list = river_list or []
 
     elevation_list = model._parse_datasets_elevation(elevation_list, res=res)
 
@@ -107,23 +117,26 @@ def create_topobathy_cog(
     y0 = y0 - (y0 % res)
     y1 = y1 + (res - y1 % res)
 
-    xx = np.arange(x0, x1, res) + 0.5 * res
-    yy = np.arange(y1, y0, -res) - 0.5 * res
-    xx, yy = np.meshgrid(xx, yy)
+    mmax = int(round((x1 - x0) / res))  # nr of columns
+    nmax = int(round((y1 - y0) / res))  # nr of rows
 
     da_grid = utils.make_regular_grid(
         x0=x0,
         y0=y0,
         dx=res,
         dy=res,
-        mmax=len(xx),
-        nmax=len(yy),
+        mmax=mmax,
+        nmax=nmax,
         rotation=0.0,
         crs=model.crs,
     )
+    x_dim, y_dim = da_grid.raster.x_dim, da_grid.raster.y_dim
+
+    # make_regular_grid returns a south-up grid (origin in the lower-left corner);
+    # flip it so that the COG is north-up, as expected by most GIS tools and viewers
+    da_grid = da_grid.isel({y_dim: slice(None, None, -1)})
 
     grid_dim = da_grid.raster.shape
-    x_dim, y_dim = da_grid.raster.x_dim, da_grid.raster.y_dim
 
     # create COGs for topobathy/manning
     profile = dict(
@@ -254,7 +267,7 @@ def create_index_cog(
     nrmax: int = 2000,
     nodata: int = 2147483647,
 ):
-    """Make a Cloud Optimzied Geotiff (COG) file with the correspodning indices of the SFINCS
+    """Make a Cloud Optimized GeoTIFF (COG) file with the corresponding indices of the SFINCS
     grid cells to the high-resolution DEM COG.
 
     Parameters
@@ -269,8 +282,8 @@ def create_index_cog(
     nrmax : int, optional
         The maximum number of cells in a block, by default 2000.
     nodata : int, optional
-        The nodata value to use in the output COG file, by default 2147483647
-        (which is the maximum value for a 32-bit unsigned integer).
+        The nodata value for pixels outside the active grid, by default 2147483647
+        (the maximum value of a signed 32-bit integer). The output dtype is uint32.
 
     See also:
     ----------

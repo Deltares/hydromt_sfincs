@@ -24,6 +24,9 @@ from hydromt.gis.gis_utils import zoom_to_overview_level
 from hydromt_sfincs.workflows.cog import build_overviews
 from hydromt_sfincs.readers import read_xy
 
+if TYPE_CHECKING:
+    from hydromt_sfincs import SfincsModel
+
 
 __all__ = [
     # ordered by pipeline step (see MODULE MAP below)
@@ -82,8 +85,17 @@ def _reduce_extra_dims(da):
     return da
 
 
-def make_index_cog(*args, **kwargs) -> None:
-    """Deprecated. Import from ``hydromt_sfincs.workflows.cog`` instead.
+def make_index_cog(
+    model: "SfincsModel",
+    indices_fn: Union[str, Path],
+    topobathy_fn: Union[str, Path],
+    nrmax: int = 2000,
+    nodata: int = 2147483647,
+) -> None:
+    """Deprecated. Use :func:`hydromt_sfincs.workflows.cog.create_index_cog` instead.
+
+    Keeps the old signature (``indices_fn``, ``topobathy_fn``) and forwards to
+    ``create_index_cog`` (``filename``, ``filename_topobathy``).
 
     .. deprecated::
         ``make_index_cog`` has moved to
@@ -94,13 +106,20 @@ def make_index_cog(*args, **kwargs) -> None:
 
     msg = (
         "make_index_cog has moved to hydromt_sfincs.workflows.cog. "
-        "Update your import to: from hydromt_sfincs.workflows.cog import create_index_cog. "
-        "The old location will be removed in a future release."
+        "Update your import to: from hydromt_sfincs.workflows.cog import create_index_cog "
+        "(arguments indices_fn and topobathy_fn are now called filename and "
+        "filename_topobathy). The old location will be removed in a future release."
     )
 
     warnings.warn(msg, FutureWarning, stacklevel=2)
     logger.warning(msg)
-    return create_index_cog(*args, **kwargs)
+    return create_index_cog(
+        model=model,
+        filename=indices_fn,
+        filename_topobathy=topobathy_fn,
+        nrmax=nrmax,
+        nodata=nodata,
+    )
 
 
 # ---- 1a. adjust_zsmax_dilation : cell-space WSE dilation --------------------
