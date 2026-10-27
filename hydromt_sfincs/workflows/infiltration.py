@@ -180,7 +180,21 @@ def normalize_hsg_codes(
     if mode != "drained":
         raise ValueError("dual_hsg must be either 'native' or 'drained'.")
 
-    present_values = np.unique(da_hsg.values)
+    nodata = da_hsg.raster.nodata
+    present_values = [value.item() for value in np.unique(da_hsg.values)]
+    unmapped_values = [
+        value
+        for value in present_values
+        if np.isfinite(value)
+        and value not in DUAL_HSG_DRAINED_MAPPING
+        and (nodata is None or value != nodata)
+    ]
+    if unmapped_values:
+        logger.warning(
+            "Unsupported HSG codes [1-8] not recognized by the HSG mapping "
+            f"{unmapped_values}. These values will be treated as missing."
+        )
+
     da_norm = xr.full_like(da_hsg, np.nan, dtype=np.float32)
     for source_value, target_value in DUAL_HSG_DRAINED_MAPPING.items():
         if source_value in present_values:
@@ -234,7 +248,10 @@ def _reclassify_hsg(
             f"the reclassification table: {unmapped_dual_hsg}."
         )
     if unmapped_values:
-        logger.warning(f"Unmapped HSG values found: {unmapped_values}")
+        logger.warning(
+            "Recognized HSG codes missing from the reclassification table: "
+            f"{unmapped_values}."
+        )
     return da_hsg.raster.reclassify(df_map).astype(np.float32)
 
 

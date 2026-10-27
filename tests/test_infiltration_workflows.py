@@ -90,6 +90,22 @@ def test_normalize_hsg_codes_drained():
     )
 
 
+def test_normalize_hsg_codes_warns_on_unsupported_values(caplog):
+    da_hsg = _raster([[1, 99]], "hsg", dtype=np.int16)
+
+    with caplog.at_level(
+        logging.WARNING, logger="hydromt_sfincs.workflows.infiltration"
+    ):
+        da_norm = workflows.normalize_hsg_codes(da_hsg, mode="drained")
+
+    assert da_norm.values[0, 0] == 1.0
+    assert np.isnan(da_norm.values[0, 1])
+    assert len(caplog.records) == 1
+    assert "Unsupported HSG codes [1-8] not recognized by the HSG mapping [99]" in (
+        caplog.text
+    )
+
+
 def test_normalize_hsg_codes_logs_present_mappings(caplog):
     da_hsg = _raster([[5, 8]], "hsg", dtype=np.int16)
 
@@ -196,17 +212,23 @@ def test_horton_from_hsg_derives_fc_and_f0():
         workflows.horton_from_hsg(da_hsg, df_map.drop(columns=["kd"]), da_ksat=da_ksat)
 
 
-def test_reclassify_hsg_warns_on_unmapped_values(caplog):
-    da_hsg = _raster([[1, 99]], "hsg", dtype=np.int16)
+def test_reclassify_hsg_warns_when_recognized_code_missing_from_table(caplog):
+    # Drained normalization maps 5 -> 1 and 6 -> 2; only class 1 is in this table.
+    da_hsg = _raster([[5, 6]], "hsg", dtype=np.int16)
     df_map = pd.DataFrame({"psi": [90.0], "sigma": [0.2], "ks": [5.0]}, index=[1])
 
     with caplog.at_level(
         logging.WARNING, logger="hydromt_sfincs.workflows.infiltration"
     ):
-        workflows.green_ampt_from_hsg(da_hsg, df_map)
+        ds = workflows.green_ampt_from_hsg(da_hsg, df_map)
 
     assert len(caplog.records) == 1
-    assert "Unmapped HSG values found: [99]" in caplog.text
+    assert (
+        "Recognized HSG codes missing from the reclassification table: [2.0]."
+        in caplog.text
+    )
+    assert ds["psi"].values[0, 0] == 90.0
+    assert np.isnan(ds["psi"].values[0, 1])
 
 
 def test_soil_reclassification_accepts_declared_nodata(caplog):
