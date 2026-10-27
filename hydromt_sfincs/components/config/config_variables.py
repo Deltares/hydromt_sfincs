@@ -1240,9 +1240,7 @@ class SfincsConfigVariables(BaseSettings):
     prcfile: str | None = Field(
         None,
         description="Spatially uniform precipitation file",
-        json_schema_extra={
-            "legacy_alias": [("prcpfile", None), ("precipfile", "2.4.1")]
-        },
+        json_schema_extra={"legacy_alias": [("precipfile", "2.4.1")]},
     )
     amufile: str | None = Field(None, description="Wind u-component file")
     amvfile: str | None = Field(None, description="Wind v-component file")
