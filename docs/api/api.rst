@@ -365,7 +365,7 @@ infiltration components.
 .. autosummary::
    :toctree: ../_generated/
 
-   workflows.ksat_to_mmhr
+   workflows.mask_invalid_ksat
    workflows.normalize_hsg_codes
    workflows.cn_to_s
    workflows.curve_number_from_landuse_hsg

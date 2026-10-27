@@ -133,10 +133,72 @@ def test_normalize_hsg_codes_native_and_invalid():
         workflows.normalize_hsg_codes(da_hsg, mode="none")
 
 
-def test_ksat_to_mmhr_converts_and_fills_nodata():
-    da_ksat = _raster([[1.0, 2.5, np.nan]], "ksat")
-    da_ks = workflows.ksat_to_mmhr(da_ksat, factor_ksat=3.6)
-    np.testing.assert_allclose(da_ks.values, [[3.6, 9.0, 0.0]], rtol=1e-6)
+def test_mask_invalid_ksat_keeps_values_and_masks_nodata():
+    da_ksat = _raster([[1.0, 2.5, np.nan, -9999.0]], "ksat")
+    da_ks = workflows.mask_invalid_ksat(da_ksat)
+    np.testing.assert_allclose(
+        da_ks.values, [[1.0, 2.5, np.nan, np.nan]], rtol=1e-6, equal_nan=True
+    )
+    assert np.isnan(da_ks.raster.nodata)
+
+
+def _projected(values, res, dtype=np.float32, nodata=None):
+    """North-up raster in UTM with square cells of size ``res``."""
+    values = np.asarray(values, dtype=dtype)
+    ny, nx = values.shape
+    da = xr.DataArray(
+        values,
+        dims=("y", "x"),
+        coords={
+            "y": 1000.0 - res * (np.arange(ny) + 0.5),
+            "x": 500.0 + res * (np.arange(nx) + 0.5),
+        },
+    )
+    da.raster.set_crs(32617)
+    if nodata is not None:
+        da.raster.set_nodata(nodata)
+    return da
+
+
+def test_curve_number_open_water_area_weighted():
+    # 4x4-pixel model cells: a quarter water, all water, all land, and half
+    # land / half an unmapped class; land-use nodata is 255 as in NLCD
+    lulc = np.full((8, 8), 41, dtype=np.uint8)
+    lulc[:2, :2] = 11
+    lulc[:4, 4:] = 11
+    lulc[4:, 6:] = 99
+    da_lulc = _projected(lulc, 1.0, dtype=np.uint8, nodata=255)
+    da_hsg = _projected(np.full((8, 8), 2), 1.0, dtype=np.uint8, nodata=0)
+    df_map = pd.DataFrame({"2": [0.0, 70.0]}, index=[11, 41])
+
+    da_cn = workflows.curve_number_from_landuse_hsg(da_lulc, da_hsg, df_map)
+    assert np.isnan(da_cn.raster.nodata)
+    # the same steps as the CN-A components: S per pixel, then area average
+    da_s = workflows.cn_to_s(da_cn, nodata=np.nan, fill_cn=None)
+    da_like = _projected(np.ones((2, 2)), 4.0)
+    da_scs = da_s.raster.reproject_like(da_like, method="average")
+
+    s_land = round(1000.0 / 70.0 - 10.0, 3)
+    expected = [[0.75 * s_land, 0.0], [s_land, s_land]]
+    np.testing.assert_allclose(da_scs.values, expected, rtol=1e-4)
+
+
+def test_curve_number_with_recovery_ksat_cap_and_nodata():
+    da_lulc = _projected(np.full((8, 8), 41), 1.0, dtype=np.uint8, nodata=255)
+    da_hsg = _projected(np.full((8, 8), 1), 1.0, dtype=np.uint8, nodata=0)
+    df_map = pd.DataFrame({"1": [70.0]}, index=[41])
+    ksat = np.full((8, 8), 180.0)  # mm/hr
+    ksat[:, 4:] = 1440.0  # mm/hr, above the default cap
+    ksat[0, 0] = -9999.0  # undeclared nodata must not pull the average down
+    da_ksat = _projected(ksat, 1.0)
+    da_like = _projected(np.ones((2, 2)), 4.0)
+
+    ds = workflows.curve_number_with_recovery(
+        da_lulc, da_hsg, da_ksat, df_map, effective=0.5, da_mask=da_like
+    )
+    np.testing.assert_allclose(
+        ds["ks"].values, [[180.0, 360.0], [180.0, 360.0]], rtol=1e-5
+    )
 
 
 def test_cn_to_s_units_and_invalid():
@@ -165,6 +227,19 @@ def test_curve_number_from_landuse_hsg_expected_values():
     assert np.isnan(da_cn.values[0, 2])
 
 
+def test_curve_number_from_landuse_hsg_water_and_missing_values():
+    # CN 0 marks open water (impervious, CN 100); -9999 means no value
+    df_map = pd.DataFrame({1: [0.0, 70.0], 2: [0.0, -9999.0]}, index=[11, 41])
+    da_landuse = _raster([[11, 41], [11, 41]], "lulc", dtype=np.int16)
+    da_hsg = _raster([[1, 1], [2, 2]], "hsg", dtype=np.int16)
+
+    da_cn = workflows.curve_number_from_landuse_hsg(da_landuse, da_hsg, df_map)
+
+    np.testing.assert_allclose(
+        da_cn.values, [[100.0, 70.0], [100.0, np.nan]], equal_nan=True
+    )
+
+
 def test_adjust_curve_number_dry_wet_avg():
     da_cn = _raster([[70.0]], "cn")
 
@@ -190,7 +265,7 @@ def test_green_ampt_from_hsg_requires_ks_or_ksat():
     da_ksat = _raster([[1.0, 2.0]], "ksat")
     ds = workflows.green_ampt_from_hsg(da_hsg, df_map, da_ksat=da_ksat)
     np.testing.assert_allclose(ds["psi"].values, [[90.0, 120.0]], rtol=1e-6)
-    np.testing.assert_allclose(ds["ks"].values, [[3.6, 7.2]], rtol=1e-6)
+    np.testing.assert_allclose(ds["ks"].values, [[1.0, 2.0]], rtol=1e-6)
 
 
 def test_horton_from_hsg_derives_fc_and_f0():
@@ -203,9 +278,9 @@ def test_horton_from_hsg_derives_fc_and_f0():
 
     ds = workflows.horton_from_hsg(da_hsg, df_map, da_ksat=da_ksat)
 
-    # fc = ksat * factor * fc_scale, f0 = fc * f0_scale
-    np.testing.assert_allclose(ds["fc"].values, [[1.44, 1.8]], rtol=1e-5)
-    np.testing.assert_allclose(ds["f0"].values, [[5.76, 9.0]], rtol=1e-5)
+    # fc = ksat * fc_scale (ksat in mm/hr), f0 = fc * f0_scale
+    np.testing.assert_allclose(ds["fc"].values, [[0.4, 0.5]], rtol=1e-5)
+    np.testing.assert_allclose(ds["f0"].values, [[1.6, 2.5]], rtol=1e-5)
     np.testing.assert_allclose(ds["kd"].values, [[1.0, 2.0]], rtol=1e-6)
 
     with pytest.raises(ValueError, match="kd"):
@@ -266,9 +341,9 @@ def test_bucket_from_hsg_derives_storage_and_drainage():
 
     ds = workflows.bucket_from_hsg(da_hsg, df_map, da_ksat=da_ksat, bucket_loss=0.1)
 
-    # smax = 120 * 0.4 = 48 mm; residence = 48 / 3.6 h, so k is its reciprocal
+    # smax = 120 * 0.4 = 48 mm; residence = 48 / 1.0 h, so k is its reciprocal
     np.testing.assert_allclose(ds["bucket_smax"].values, [[48.0]], rtol=1e-6)
-    np.testing.assert_allclose(ds["bucket_k"].values, [[3.6 / 48.0]], rtol=1e-5)
+    np.testing.assert_allclose(ds["bucket_k"].values, [[1.0 / 48.0]], rtol=1e-5)
     np.testing.assert_allclose(ds["bucket_loss"].values, [[0.1]], rtol=1e-6)
 
 
@@ -309,7 +384,6 @@ def test_constant_infiltration_from_ksat_lulc_spread():
         da_lulc,
         _modifier_table(),
         da_mask=da_mask,
-        factor_ksat=3.6,
     )
 
     values = da_qinf.values
@@ -569,3 +643,34 @@ def test_bucket_loss_defaults_with_and_without_landuse(model):
     assert np.isclose(
         float(ds["bucket_loss"].where(model.grid.mask > 0).mean()), 0.10, atol=1e-5
     )
+
+
+def test_estimator_outputs_declare_nan_nodata_and_keep_missing_ksat():
+    # older xarray drops attrs in arithmetic; outputs must still declare NaN
+    # nodata so the final average skips cells without Ksat
+    da_hsg = _raster([[2, 2], [2, 2]], "hsg", dtype=np.int16)
+    da_lulc = _raster([[41, 41], [41, 41]], "lulc", dtype=np.int16)
+    da_ksat = _raster([[1.0, 1.0], [1.0, -9999.0]], "ksat")
+    horton_map = pd.DataFrame(
+        {"fc_scale": [1.0, 1.0], "f0_scale": [4.0, 4.0], "kd": [2.0, 2.0]},
+        index=[1, 2],
+    )
+    bucket_map = pd.DataFrame(
+        {
+            "storage_depth_mm": [200.0, 200.0],
+            "effective_fraction": [0.5, 0.5],
+            "drain_factor": [1.0, 1.0],
+        },
+        index=[1, 2],
+    )
+    with xr.set_options(keep_attrs=False):
+        ds_hor = workflows.horton_from_hsg_landuse(
+            da_hsg, da_lulc, horton_map, _modifier_table(), da_ksat=da_ksat
+        )
+        ds_bkt = workflows.bucket_from_hsg(da_hsg, bucket_map, da_ksat=da_ksat)
+    for ds in (ds_hor, ds_bkt):
+        for name in ds.data_vars:
+            assert np.isnan(ds[name].raster.nodata), name
+    assert np.isnan(ds_hor["fc"].values[1, 1])
+    assert np.isnan(ds_bkt["bucket_k"].values[1, 1])
+    assert float(ds_bkt["bucket_k"].values[0, 0]) > 0.0

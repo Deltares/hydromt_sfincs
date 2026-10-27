@@ -243,7 +243,7 @@ def test_infiltration(model):
     )
     assert np.isclose(
         mod1.grid.data["ks"].where(mod1.grid.mask > 0).sum(),
-        331.27203,
+        92.02001,  # 331.27203 / 3.6, Ksat now taken as mm/hr
         atol=1e-3,
     )
 

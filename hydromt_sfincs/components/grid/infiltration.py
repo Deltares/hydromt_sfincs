@@ -276,9 +276,14 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         hsg: Union[str, Path, xr.DataArray, xr.Dataset],
         reclass_table: Union[str, Path, pd.DataFrame],
         antecedent_moisture: str = "avg",
-        reproj_method: str = "med",
+        reproj_method: str = "average",
     ) -> None:
         """Create Curve Number infiltration from land use and HSG.
+
+        S is computed per land-use pixel and area-averaged onto the model cells,
+        as in :py:meth:`create_cn_with_recovery`. Open water (CN 0 in the table)
+        counts as S = 0, so a cell that is 60% water gets 40% of the land S.
+        Unmapped pixels are skipped.
 
         Adds model layers:
 
@@ -296,8 +301,8 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
             Antecedent runoff conditions.
             By default `avg`
         reproj_method : str, optional
-            Resampling method for reprojecting the curve number data to the model grid.
-            By default 'med'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`
+            Resampling method for S to the model grid, by default 'average'
+            (area-weighted).
         """
 
         da_lulc = self.data_catalog.get_rasterdataset(
@@ -315,11 +320,10 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
             da_cn,
             antecedent_moisture=antecedent_moisture,
         )
-        self.create_cn(
-            da_cn,
-            antecedent_moisture=None,
-            reproj_method=reproj_method,
-        )
+        # S per pixel; missing pixels stay NaN nodata so the average skips them
+        da_s = workflows.cn_to_s(da_cn, nodata=np.nan, fill_cn=None)
+        da_scs = da_s.raster.reproject_like(self.mask, method=reproj_method)
+        self._set_layers({"scs": da_scs.round(3)}, flavor="cna")
 
     @hydromt_step
     def create_cn_with_recovery(
@@ -329,7 +333,6 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         ksat: Union[str, Path, xr.DataArray, xr.Dataset],
         reclass_table: Union[str, Path, pd.DataFrame],
         effective: float,
-        factor_ksat: float = 3.6,
         block_size: int = 2000,
     ) -> None:
         """Create Curve Number infiltration with recovery.
@@ -351,14 +354,11 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         hsg : str, Path, or RasterDataset
             Hydrologic soil group map in integers.
         ksat : str, Path, or RasterDataset
-            Saturated hydraulic conductivity, in the units implied by ``factor_ksat``.
+            Saturated hydraulic conductivity [mm/hr].
         reclass_table : str, Path, or DataFrame
             Reclassification table relating land cover and soil type to curve numbers.
         effective : float
             Fraction of ``smax`` that is effective soil retention, e.g. 0.50 for 50%.
-        factor_ksat : float, optional
-            Factor used to convert Ksat units to mm/hr, by default 3.6
-            (micrometer per second to mm/hr).
         block_size : int, optional
             Maximum block size in model cells. Larger values hold more data in
             memory but can be faster, by default 2000.
@@ -405,7 +405,6 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
                 da_Ksat,
                 df_map,
                 effective=effective,
-                factor_ksat=factor_ksat,
                 da_mask=da_like,
             )
             return {name: ds[name] for name in ("smax", "seff", "ks")}
@@ -427,7 +426,6 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         reclass_table: Union[str, Path, pd.DataFrame, None] = None,
         lulc_modifier_table: Union[str, Path, pd.DataFrame, None] = None,
         dual_hsg: str = "drained",
-        factor_ksat: float = 3.6,
         reproj_method: str = "average",
     ) -> None:
         """Estimate Green-Ampt infiltration from HSG and optional landuse.
@@ -445,7 +443,7 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
             the bundled ``hsg_green_ampt.csv`` table.
         ksat : str, Path, or RasterDataset, optional
             Saturated hydraulic conductivity map, used to derive ``ks``
-            (``ks = ksat * factor_ksat``). Required unless the reclass table
+            (``ks = ksat``, in mm/hr). Required unless the reclass table
             already provides a ``ks`` column. The bundled ``hsg_green_ampt.csv``
             has only ``psi``/``sigma``, so ksat is required when using it;
             omitting it raises a ValueError.
@@ -460,8 +458,6 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         dual_hsg : {'native', 'drained'}, optional
             How to handle dual HSG classes, by default 'drained'. Native dual
             classes must be present in the reclassification table.
-        factor_ksat : float, optional
-            Factor used to convert Ksat units to mm/hr, by default 3.6.
         reproj_method : str, optional
             Resampling method for reprojecting final parameter maps to the model grid.
             By default 'average'.
@@ -485,7 +481,9 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
             da_ksat = self.data_catalog.get_rasterdataset(
                 ksat, bbox=self.model.bbox, buffer=10
             )
-            da_ksat = da_ksat.raster.reproject_like(da_soil, method="average")
+            da_ksat = workflows.mask_invalid_ksat(da_ksat).raster.reproject_like(
+                da_soil, method="average"
+            )
 
         if lulc is not None:
             da_lulc = self.data_catalog.get_rasterdataset(
@@ -506,7 +504,6 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
                 df_map,
                 df_modifiers,
                 da_ksat=da_ksat,
-                factor_ksat=factor_ksat,
                 dual_hsg=dual_hsg,
             )
         else:
@@ -514,7 +511,6 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
                 da_soil,
                 df_map,
                 da_ksat=da_ksat,
-                factor_ksat=factor_ksat,
                 dual_hsg=dual_hsg,
             )
 
@@ -573,7 +569,6 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         reclass_table: Union[str, Path, pd.DataFrame, None] = None,
         lulc_modifier_table: Union[str, Path, pd.DataFrame, None] = None,
         dual_hsg: str = "drained",
-        factor_ksat: float = 3.6,
         reproj_method: str = "average",
     ) -> None:
         """Estimate Horton infiltration from HSG and optional landuse.
@@ -591,7 +586,7 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
             the bundled ``hsg_horton.csv`` table.
         ksat : str, Path, or RasterDataset, optional
             Saturated hydraulic conductivity map, used to derive ``fc``
-            (``fc = ksat * factor_ksat * fc_scale``). Required unless the reclass
+            (``fc = ksat * fc_scale``, ksat in mm/hr). Required unless the reclass
             table already provides a literal ``fc`` column. The bundled
             ``hsg_horton.csv`` has only ``fc_scale``/``f0_scale``/``kd`` (and
             ``fc_scale`` is applied only when ksat is given), so ksat is required
@@ -607,8 +602,6 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
         dual_hsg : {'native', 'drained'}, optional
             How to handle dual HSG classes, by default 'drained'. Native dual
             classes must be present in the reclassification table.
-        factor_ksat : float, optional
-            Factor used to convert Ksat units to mm/hr, by default 3.6.
         reproj_method : str, optional
             Resampling method for reprojecting final parameter maps to the model grid.
             By default 'average'.
@@ -632,7 +625,9 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
             da_ksat = self.data_catalog.get_rasterdataset(
                 ksat, bbox=self.model.bbox, buffer=10
             )
-            da_ksat = da_ksat.raster.reproject_like(da_soil, method="average")
+            da_ksat = workflows.mask_invalid_ksat(da_ksat).raster.reproject_like(
+                da_soil, method="average"
+            )
 
         if lulc is not None:
             da_lulc = self.data_catalog.get_rasterdataset(
@@ -653,7 +648,6 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
                 df_map,
                 df_modifiers,
                 da_ksat=da_ksat,
-                factor_ksat=factor_ksat,
                 dual_hsg=dual_hsg,
             )
         else:
@@ -661,7 +655,6 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
                 da_soil,
                 df_map,
                 da_ksat=da_ksat,
-                factor_ksat=factor_ksat,
                 dual_hsg=dual_hsg,
             )
 

@@ -90,7 +90,7 @@ def test_quadtree_infiltration(model, quadtree_model):
     )
     assert np.isclose(
         mod1.quadtree_grid.data["ks"].where(mod1.quadtree_grid.mask > 0).sum(),
-        736.79039946,
+        204.66399985,  # 736.79039946 / 3.6, Ksat now taken as mm/hr
     )
 
 
@@ -283,19 +283,19 @@ def test_infiltration_estimators_from_hsg_quadtree(model, quadtree_model):
     def _max(name):
         return float(grid.data[name].where(grid.mask > 0).max())
 
-    # psi/sigma are reclassified from hsg_green_ampt.csv; ks is ksat * 3.6
+    # psi/sigma are reclassified from hsg_green_ampt.csv; ks is ksat (mm/hr)
     infil.create_green_ampt(hsg=hsg, ksat=ksat)
     assert quadtree_model.config.get("inftype") == "gai"
     assert _max("psi") == pytest.approx(316.3, rel=1e-3)  # HSG 4
     assert _max("sigma") == pytest.approx(0.35, rel=1e-3)  # HSG 1
-    assert _max("ks") == pytest.approx(18.0, rel=1e-3)  # 5.0 * 3.6
+    assert _max("ks") == pytest.approx(5.0, rel=1e-3)
 
     # fc_scale is 1.0 for every HSG so fc == ks; f0 = fc * f0_scale (4.0 for HSG 1)
     infil.create_horton(hsg=hsg, ksat=ksat)
     assert quadtree_model.config.get("inftype") == "hor"
     assert "psi" not in grid.data
-    assert _max("fc") == pytest.approx(18.0, rel=1e-3)
-    assert _max("f0") == pytest.approx(72.0, rel=1e-3)
+    assert _max("fc") == pytest.approx(5.0, rel=1e-3)
+    assert _max("f0") == pytest.approx(20.0, rel=1e-3)
     assert _max("kd") == pytest.approx(4.14, rel=1e-3)  # HSG 1
 
     # bucket_smax = storage_depth_mm * effective_fraction, 250 * 0.35 for HSG 1
@@ -303,7 +303,7 @@ def test_infiltration_estimators_from_hsg_quadtree(model, quadtree_model):
     assert quadtree_model.config.get("inffile") is not None
     assert quadtree_model.config.get("inftype") == "bkt"
     assert _max("bucket_smax") == pytest.approx(87.5, rel=1e-3)
-    assert _max("bucket_k") == pytest.approx(18.0 / 87.5, rel=1e-3)
+    assert _max("bucket_k") == pytest.approx(5.0 / 87.5, rel=1e-3)
     assert _max("bucket_loss") == pytest.approx(0.0, abs=1e-6)
 
 

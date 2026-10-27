@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "INCH_TO_METER",
-    "MICROMETER_PER_SECOND_TO_MM_PER_HOUR",
     "adjust_curve_number",
     "bucket_from_hsg",
     "bucket_from_hsg_landuse",
@@ -28,12 +27,11 @@ __all__ = [
     "green_ampt_from_hsg_landuse",
     "horton_from_hsg",
     "horton_from_hsg_landuse",
-    "ksat_to_mmhr",
+    "mask_invalid_ksat",
     "normalize_hsg_codes",
 ]
 
 INCH_TO_METER = 0.0254
-MICROMETER_PER_SECOND_TO_MM_PER_HOUR = 3.6
 
 
 MODIFIER_COLUMNS = ("surface_factor", "storage_factor", "drainage_factor")
@@ -125,32 +123,46 @@ def _modifier_layers(
     return ds
 
 
-def ksat_to_mmhr(
-    da_ksat: xr.DataArray,
-    factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
-) -> xr.DataArray:
-    """Convert saturated hydraulic conductivity to mm/hr.
+def _nan_nodata(ds: xr.Dataset) -> xr.Dataset:
+    """Declare NaN as nodata on every variable.
 
-    Negative and missing input values are returned as zero.
+    Resampling only skips NaN when it is the declared nodata; arithmetic can drop
+    the attribute (older xarray drops attrs by default), so set it on the output.
+    """
+    for name in ds.data_vars:
+        da = ds[name]
+        da.raster.set_nodata(np.nan)
+        ds[name] = da
+    return ds
+
+
+def mask_invalid_ksat(da_ksat: xr.DataArray) -> xr.DataArray:
+    """Return Ksat as float32 with nodata and negative values set to NaN.
+
+    Ksat is expected in mm/hr, the unit SFINCS reads; convert other units in
+    the data catalog (e.g. ``unit_mult: 3.6`` for um/s). Missing values are
+    kept as NaN nodata so resampling skips them instead of pulling cell
+    averages down; active cells left without data are filled (with a warning)
+    when the layers are set on the model grid.
 
     Parameters
     ----------
     da_ksat : xr.DataArray
-        Saturated hydraulic conductivity raster.
-    factor_ksat : float, optional
-        Multiplier converting input values to mm/hr, by default
-        ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
+        Saturated hydraulic conductivity raster [mm/hr].
 
     Returns
     -------
     xr.DataArray
-        Conductivity in mm/hr.
+        Ksat with NaN as the declared nodata, so resampling skips those pixels.
     """
+    if da_ksat.raster.nodata is not None:
+        da_ksat = da_ksat.raster.mask_nodata()
     # negative Ksat is physically impossible, so it marks undeclared nodata such
     # as a raw -9999 that was never converted to NaN
-    da_ksat = da_ksat.astype(np.float32).where(da_ksat >= 0.0)
-    da_ks = da_ksat * factor_ksat
-    return da_ks.fillna(0.0)
+    da_ksat = da_ksat.astype(np.float32)
+    da_ksat = da_ksat.where(da_ksat >= 0.0)
+    da_ksat.raster.set_nodata(np.nan)
+    return da_ksat
 
 
 def normalize_hsg_codes(
@@ -255,12 +267,12 @@ def _reclassify_hsg(
     return da_hsg.raster.reclassify(df_map).astype(np.float32)
 
 
-def cn_to_s(da_cn, da_mask=None, nodata=-9999, output_unit="inch"):
+def cn_to_s(da_cn, da_mask=None, nodata=-9999, output_unit="inch", fill_cn=100.0):
     """Convert curve numbers to potential maximum soil moisture retention S.
 
-    Nodata curve numbers are treated as 100, and curve numbers are floored at
-    1. Retention is rounded to 0.001 inches before optional conversion to
-    metres.
+    Missing curve numbers are treated as ``fill_cn`` (by default 100, so S = 0),
+    and curve numbers are floored at 1. Retention is rounded to 0.001 inches
+    before optional conversion to metres.
 
     Parameters
     ----------
@@ -272,14 +284,20 @@ def cn_to_s(da_cn, da_mask=None, nodata=-9999, output_unit="inch"):
         Output nodata value, by default -9999.
     output_unit : {"inch", "m"}, optional
         Output unit for S, by default ``"inch"``.
+    fill_cn : float or None, optional
+        Curve number used for missing input, by default 100 (S = 0). None keeps
+        missing input missing, e.g. to skip it in a later area average.
 
     Returns
     -------
     xr.DataArray
         Potential maximum soil moisture retention S in the requested unit.
     """
-    # nodata is mapped to CN 100 (zero infiltration); CN is floored at 1
-    da_cn = np.maximum(1, da_cn.raster.mask_nodata().fillna(100))
+    # missing CN is mapped to fill_cn (default 100, zero infiltration); CN >= 1
+    da_cn = da_cn.raster.mask_nodata()
+    if fill_cn is not None:
+        da_cn = da_cn.fillna(fill_cn)
+    da_cn = np.maximum(1, da_cn)
     da_s = np.maximum(1000 / da_cn - 10, 0).round(3)
     if output_unit == "m":
         da_s = da_s * INCH_TO_METER
@@ -317,8 +335,10 @@ def curve_number_from_landuse_hsg(
     Returns
     -------
     xr.DataArray
-        Curve numbers on the land-use grid; unmapped and nonpositive values
-        are NaN.
+        Curve numbers on the land-use grid. A table value of 0 marks a class
+        without infiltration (open water) and is returned as CN 100 (S = 0);
+        unmapped combinations and negative table values (no value) are NaN,
+        the declared nodata.
     """
     da_cn = xr.full_like(da_lulc, np.nan, dtype=np.float32).rename("cn")
 
@@ -329,7 +349,16 @@ def curve_number_from_landuse_hsg(
         for hsg_value in df_map.columns:
             mask = (da_lulc == landuse_value) & (da_hsg_to_lulc == int(hsg_value))
             da_cn = da_cn.where(~mask, np.float32(row[hsg_value]))
-    return da_cn.where(da_cn > 0.0)
+    # negative table values (e.g. -9999) mean "no value"
+    da_cn = da_cn.where(da_cn >= 0.0)
+    # CN 0 marks open water: no infiltration, so it counts as impervious data
+    # (S = 0) in any later aggregation rather than being skipped as missing
+    da_cn = da_cn.where(da_cn != 0.0, np.float32(100.0))
+    # full_like copies the land-use nodata (e.g. 255), but missing pixels are
+    # NaN; declare NaN as nodata so resampling skips them instead of returning
+    # NaN for a cell depending on where the NaN pixels sit
+    da_cn.raster.set_nodata(np.nan)
+    return da_cn
 
 
 def adjust_curve_number(
@@ -364,7 +393,12 @@ def adjust_curve_number(
         raise ValueError(
             "antecedent_moisture must be one of None, 'avg', 'dry', or 'wet'."
         )
-    return da_adj.clip(min=0.0, max=100.0).where(np.isfinite(da_cn)).astype(np.float32)
+    da_adj = (
+        da_adj.clip(min=0.0, max=100.0).where(np.isfinite(da_cn)).astype(np.float32)
+    )
+    # arithmetic can drop the nodata attribute; restore it so resampling skips NaN
+    da_adj.raster.set_nodata(da_cn.raster.nodata)
+    return da_adj
 
 
 def curve_number_with_recovery(
@@ -374,8 +408,7 @@ def curve_number_with_recovery(
     df_map: pd.DataFrame,
     *,
     effective: float,
-    factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
-    ksat_max: float | None = 100.0,
+    ksat_max: float | None = 360.0,
     da_mask: xr.DataArray | None = None,
 ) -> xr.Dataset:
     """Estimate SCS curve-number-with-recovery parameters.
@@ -391,45 +424,47 @@ def curve_number_with_recovery(
     da_hsg : xr.DataArray
         Hydrologic soil group class raster.
     da_ksat : xr.DataArray
-        Saturated hydraulic conductivity raster.
+        Saturated hydraulic conductivity raster [mm/hr].
     df_map : pd.DataFrame
         Curve-number table indexed by land-use class, with HSG classes as
         columns.
     effective : float
         Fraction of ``smax`` used for effective retention, e.g. 0.5 for 50%.
-    factor_ksat : float, optional
-        Conversion factor to mm/hr, by default
-        ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
     ksat_max : float or None, optional
-        Upper cap for converted Ksat in mm/hr; None disables the cap, by
-        default 100.0.
+        Upper cap for Ksat in mm/hr; None
+        disables the cap. By default 360.0 (100 um/s), high enough to only
+        remove outliers.
 
     Returns
     -------
     xr.Dataset
-        ``smax`` and ``seff`` in metres and ``ks`` in mm/hr.
+        ``smax`` and ``seff`` in metres and ``ks`` in mm/hr. Cells without
+        valid Ksat stay NaN in ``ks``.
     """
     # Derive curve number from land use and HSG
     da_cn = curve_number_from_landuse_hsg(da_lulc, da_hsg, df_map)
     # Convert CN to maximum soil retention (S) model grid and interpolate
-    da_cn = da_cn.where(da_cn > 0.0)
-    # zero retention is a real value, so it must stay out of the nodata mask or
-    # area-weighted resampling would drop those cells and bias smax upward
-    da_smax = cn_to_s(da_cn, output_unit="m", nodata=np.nan).astype(np.float32)
+    # open water arrives as CN 100 (S = 0), a real value that the area average
+    # must include; unmapped pixels stay NaN nodata and are skipped
+    da_smax = cn_to_s(da_cn, output_unit="m", nodata=np.nan, fill_cn=None)
+    da_smax = da_smax.astype(np.float32)
+    da_smax.raster.set_nodata(np.nan)
     da_smax.name = "smax"
+    # invalid Ksat pixels become NaN nodata on the source grid
+    # so the average below skips them instead of counting them as zero
+    da_ks = mask_invalid_ksat(da_ksat)
     # Reproject to mask if provided
     if da_mask is not None:
         da_smax = da_smax.raster.reproject_like(da_mask, method="average").fillna(0.0)
-        da_ksat = da_ksat.raster.reproject_like(da_mask, method="average").fillna(0.0)
-    # Convert Ksat to mm/hr and apply maximum cap if provided
-    da_ks = ksat_to_mmhr(da_ksat, factor_ksat=factor_ksat).astype(np.float32)
+        da_ks = da_ks.raster.reproject_like(da_mask, method="average")
+    da_ks = da_ks.astype(np.float32)
     da_ks.name = "ks"
-    if ksat_max is not None:  # not higher than ksat_max (default=100)
+    if ksat_max is not None:  # cap in mm/hr
         da_ks = np.minimum(da_ks, ksat_max)
     # Compute effective soil retention based on the maximum soil retention and the effective fraction
     da_seff = (da_smax * effective).astype(np.float32)
     da_seff.name = "seff"
-    return xr.Dataset({"smax": da_smax, "seff": da_seff, "ks": da_ks})
+    return _nan_nodata(xr.Dataset({"smax": da_smax, "seff": da_seff, "ks": da_ks}))
 
 
 def constant_infiltration_from_ksat_lulc(
@@ -438,7 +473,6 @@ def constant_infiltration_from_ksat_lulc(
     df_modifiers: pd.DataFrame,
     *,
     da_mask: xr.DataArray | None = None,
-    factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
     qinf_min: float = 0.01,
     qinf_max: float = 19.9,
     base_min: float = 0.1,
@@ -446,23 +480,22 @@ def constant_infiltration_from_ksat_lulc(
 ) -> xr.DataArray:
     """Estimate spatially varying constant infiltration from Ksat and land use.
 
-    Ksat is converted to mm/hr and normalized between active-domain 5th and
-    95th percentiles. The normalized value is scaled by the land-use surface
-    modifier. Inputs must already be-read xarray objects and a DataFrame.
+    Ksat [mm/hr] is normalized between its 5th and 95th
+    percentiles, taken over ``da_mask`` cells when given and otherwise over all
+    valid pixels. The normalized value is scaled by the land-use surface
+    modifier. ``da_ksat``, ``da_lulc`` and ``da_mask`` must share one grid.
+    Inputs must already be-read xarray objects and a DataFrame.
 
     Parameters
     ----------
     da_ksat : xr.DataArray
-        Saturated hydraulic conductivity raster.
+        Saturated hydraulic conductivity raster [mm/hr].
     da_lulc : xr.DataArray
         Land-use or land-cover class raster.
     df_modifiers : pd.DataFrame
         Modifier table indexed by land-use class.
     da_mask : xr.DataArray, optional
         Active-cell mask used to determine Ksat percentiles.
-    factor_ksat : float, optional
-        Conversion factor to mm/hr, by default
-        ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
     qinf_min, qinf_max : float, optional
         Minimum and maximum output infiltration rates, by default 0.01 and
         19.9.
@@ -478,7 +511,8 @@ def constant_infiltration_from_ksat_lulc(
     df_modifiers = _ensure_modifier_dataframe(df_modifiers)
     surface_factor = _modifier_layers(da_lulc, df_modifiers)["surface_factor"]
 
-    ks_values = np.asarray(da_ksat.values).astype(np.float32) * factor_ksat
+    # nodata and negative Ksat stay NaN; only valid values are floored for the log
+    ks_values = mask_invalid_ksat(da_ksat).values
     ks_values = np.where(np.isfinite(ks_values), np.maximum(ks_values, 0.01), np.nan)
     log_values = np.where(np.isfinite(ks_values), np.log10(ks_values), np.nan).astype(
         np.float32
@@ -510,6 +544,7 @@ def constant_infiltration_from_ksat_lulc(
         np.nan,
     ).astype(np.float32)
     da_qinf = surface_factor.copy(data=qinf_values).rename("qinf")
+    da_qinf.raster.set_nodata(np.nan)
     return da_qinf
 
 
@@ -518,7 +553,6 @@ def green_ampt_from_hsg(
     df_map: pd.DataFrame,
     *,
     da_ksat: xr.DataArray | None = None,
-    factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
     dual_hsg: str = "drained",
 ) -> xr.Dataset:
     """Estimate Green-Ampt parameters from HSG classes and optional Ksat.
@@ -535,9 +569,7 @@ def green_ampt_from_hsg(
         Mapping from HSG classes to Green-Ampt parameters psi, sigma (and optionally ks).
     da_ksat : xr.DataArray, optional
         Saturated hydraulic conductivity; when supplied it overrides table
-        ``ks`` and is converted to mm/hr, by default None.
-    factor_ksat : float, optional
-        Conversion factor for Ksat, by default MICROMETER_PER_SECOND_TO_MM_PER_HOUR.
+        ``ks`` [mm/hr], by default None.
     dual_hsg : {"drained", "native"}, optional
         HSG normalization mode, by default ``"drained"``. Native dual-HSG
         classes require corresponding rows in ``df_map``.
@@ -554,7 +586,7 @@ def green_ampt_from_hsg(
         require_dual_hsg=dual_hsg == "native",
     )
     if da_ksat is not None:
-        ds["ks"] = ksat_to_mmhr(da_ksat, factor_ksat=factor_ksat)
+        ds["ks"] = mask_invalid_ksat(da_ksat)
     if "ks" not in ds:
         raise ValueError(
             "Green-Ampt estimation requires either hydraulic conductivity (ks)."
@@ -563,7 +595,7 @@ def green_ampt_from_hsg(
     missing = required.difference(ds.data_vars)
     if missing:
         raise ValueError(f"Missing Green-Ampt parameter columns: {sorted(missing)}")
-    return ds[list(sorted(required, key=("psi", "sigma", "ks").index))]
+    return _nan_nodata(ds[list(sorted(required, key=("psi", "sigma", "ks").index))])
 
 
 def green_ampt_from_hsg_landuse(
@@ -573,7 +605,6 @@ def green_ampt_from_hsg_landuse(
     df_modifiers: pd.DataFrame,
     *,
     da_ksat: xr.DataArray | None = None,
-    factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
     dual_hsg: str = "drained",
 ) -> xr.Dataset:
     """Estimate Green-Ampt parameters from soil classes, Ksat, and land use.
@@ -593,10 +624,7 @@ def green_ampt_from_hsg_landuse(
     df_modifiers : pd.DataFrame
         Land-use modifier table indexed by class.
     da_ksat : xr.DataArray, optional
-        Saturated hydraulic conductivity raster; overrides table ``ks``.
-    factor_ksat : float, optional
-        Conversion factor to mm/hr, by default
-        ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
+        Saturated hydraulic conductivity raster [mm/hr]; overrides table ``ks``.
     dual_hsg : {"drained", "native"}, optional
         HSG normalization mode, by default ``"drained"``.
 
@@ -609,7 +637,6 @@ def green_ampt_from_hsg_landuse(
         da_hsg,
         df_map,
         da_ksat=da_ksat,
-        factor_ksat=factor_ksat,
         dual_hsg=dual_hsg,
     )
     factors = _modifier_layers(da_lulc, df_modifiers)
@@ -617,7 +644,7 @@ def green_ampt_from_hsg_landuse(
     surface_factor = factors["surface_factor"]
     ds["sigma"] = (ds["sigma"] * storage_factor).astype(np.float32)
     ds["ks"] = (ds["ks"] * surface_factor).astype(np.float32)
-    return ds[["psi", "sigma", "ks"]]
+    return _nan_nodata(ds[["psi", "sigma", "ks"]])
 
 
 def horton_from_hsg(
@@ -625,7 +652,6 @@ def horton_from_hsg(
     df_map: pd.DataFrame,
     *,
     da_ksat: xr.DataArray | None = None,
-    factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
     dual_hsg: str = "drained",
 ) -> xr.Dataset:
     """Estimate Horton parameters from HSG classes and optional Ksat.
@@ -641,10 +667,7 @@ def horton_from_hsg(
     df_map : pd.DataFrame
         Horton parameter table indexed by HSG class.
     da_ksat : xr.DataArray, optional
-        Saturated hydraulic conductivity raster used to derive ``fc``.
-    factor_ksat : float, optional
-        Conversion factor to mm/hr, by default
-        ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
+        Saturated hydraulic conductivity raster [mm/hr] used to derive ``fc``.
     dual_hsg : {"drained", "native"}, optional
         HSG normalization mode, by default ``"drained"``. Native dual-HSG
         classes require corresponding rows in ``df_map``.
@@ -661,7 +684,7 @@ def horton_from_hsg(
         require_dual_hsg=dual_hsg == "native",
     )
     if da_ksat is not None:
-        da_fc = ksat_to_mmhr(da_ksat, factor_ksat=factor_ksat)
+        da_fc = mask_invalid_ksat(da_ksat)
         if "fc_scale" in ds:
             da_fc = da_fc * ds["fc_scale"]
         ds["fc"] = da_fc.astype(np.float32)
@@ -673,7 +696,7 @@ def horton_from_hsg(
         ds["f0"] = (ds["fc"] * ds["f0_scale"]).astype(np.float32)
     if "kd" not in ds:
         raise ValueError("Horton estimation requires kd values.")
-    return ds[["f0", "fc", "kd"]]
+    return _nan_nodata(ds[["f0", "fc", "kd"]])
 
 
 def horton_from_hsg_landuse(
@@ -683,7 +706,6 @@ def horton_from_hsg_landuse(
     df_modifiers: pd.DataFrame,
     *,
     da_ksat: xr.DataArray | None = None,
-    factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
     dual_hsg: str = "drained",
 ) -> xr.Dataset:
     """Estimate Horton parameters from soil classes, Ksat, and land use.
@@ -703,10 +725,7 @@ def horton_from_hsg_landuse(
     df_modifiers : pd.DataFrame
         Land-use modifier table indexed by class.
     da_ksat : xr.DataArray, optional
-        Saturated hydraulic conductivity raster used to derive ``fc``.
-    factor_ksat : float, optional
-        Conversion factor to mm/hr, by default
-        ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
+        Saturated hydraulic conductivity raster [mm/hr] used to derive ``fc``.
     dual_hsg : {"drained", "native"}, optional
         HSG normalization mode, by default ``"drained"``.
 
@@ -719,7 +738,6 @@ def horton_from_hsg_landuse(
         da_hsg,
         df_map,
         da_ksat=da_ksat,
-        factor_ksat=factor_ksat,
         dual_hsg=dual_hsg,
     )
     factors = _modifier_layers(da_lulc, df_modifiers)
@@ -732,7 +750,7 @@ def horton_from_hsg_landuse(
     ds["fc"] = (ds["fc"] * surface_factor).astype(np.float32)
     ds["f0"] = (ds["f0"] * f0_factor).astype(np.float32)
     ds["kd"] = (ds["kd"] * drainage_factor).astype(np.float32)
-    return ds[["f0", "fc", "kd"]]
+    return _nan_nodata(ds[["f0", "fc", "kd"]])
 
 
 def bucket_from_hsg(
@@ -740,7 +758,6 @@ def bucket_from_hsg(
     df_map: pd.DataFrame,
     *,
     da_ksat: xr.DataArray | None = None,
-    factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
     bucket_loss: float | None = None,
     dual_hsg: str = "drained",
 ) -> xr.Dataset:
@@ -758,10 +775,7 @@ def bucket_from_hsg(
     df_map : pd.DataFrame
         Bucket parameter table indexed by HSG class.
     da_ksat : xr.DataArray, optional
-        Saturated hydraulic conductivity raster used to derive ``bucket_k``.
-    factor_ksat : float, optional
-        Conversion factor to mm/hr, by default
-        ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
+        Saturated hydraulic conductivity raster [mm/hr] used to derive ``bucket_k``.
     bucket_loss : float, optional
         Loss fraction used when the table has no ``bucket_loss`` column.
     dual_hsg : {"drained", "native"}, optional
@@ -799,20 +813,23 @@ def bucket_from_hsg(
                 0.0,
             ).astype(np.float32)
         else:
-            ks_mmhr = ksat_to_mmhr(da_ksat, factor_ksat=factor_ksat)
+            ks_mmhr = mask_invalid_ksat(da_ksat)
             drain_factor = ds["drain_factor"] if "drain_factor" in ds else 1.0
             residence_hours = xr.where(
                 ks_mmhr > 0.0,
                 np.maximum(ds["bucket_smax"] / ks_mmhr * drain_factor, 1.0),
                 np.nan,
             )
+            # zero Ksat means no drainage (k = 0); missing Ksat stays missing
             ds["bucket_k"] = xr.where(
-                np.isfinite(residence_hours), 1.0 / residence_hours, 0.0
+                np.isfinite(residence_hours),
+                1.0 / residence_hours,
+                xr.where(ks_mmhr.isnull(), np.nan, 0.0),
             ).astype(np.float32)
     if "bucket_loss" not in ds:
         loss = 0.0 if bucket_loss is None else bucket_loss
         ds["bucket_loss"] = xr.full_like(da_hsg, np.float32(loss), dtype=np.float32)
-    return ds[["bucket_smax", "bucket_k", "bucket_loss"]]
+    return _nan_nodata(ds[["bucket_smax", "bucket_k", "bucket_loss"]])
 
 
 def bucket_from_hsg_landuse(
@@ -822,7 +839,6 @@ def bucket_from_hsg_landuse(
     df_modifiers: pd.DataFrame,
     *,
     da_ksat: xr.DataArray | None = None,
-    factor_ksat: float = MICROMETER_PER_SECOND_TO_MM_PER_HOUR,
     dual_hsg: str = "drained",
     bucket_loss: float | None = 0.10,
 ) -> xr.Dataset:
@@ -843,10 +859,7 @@ def bucket_from_hsg_landuse(
     df_modifiers : pd.DataFrame
         Land-use modifier table indexed by class.
     da_ksat : xr.DataArray, optional
-        Saturated hydraulic conductivity raster used to derive ``bucket_k``.
-    factor_ksat : float, optional
-        Conversion factor to mm/hr, by default
-        ``MICROMETER_PER_SECOND_TO_MM_PER_HOUR``.
+        Saturated hydraulic conductivity raster [mm/hr] used to derive ``bucket_k``.
     dual_hsg : {"drained", "native"}, optional
         HSG normalization mode, by default ``"drained"``.
     bucket_loss : float or None, optional
@@ -861,7 +874,6 @@ def bucket_from_hsg_landuse(
         da_hsg,
         df_map,
         da_ksat=da_ksat,
-        factor_ksat=factor_ksat,
         bucket_loss=bucket_loss,
         dual_hsg=dual_hsg,
     )
@@ -874,4 +886,4 @@ def bucket_from_hsg_landuse(
     ds["bucket_loss"] = xr.full_like(
         ds["bucket_smax"], np.float32(loss_value), dtype=np.float32
     )
-    return ds[["bucket_smax", "bucket_k", "bucket_loss"]]
+    return _nan_nodata(ds[["bucket_smax", "bucket_k", "bucket_loss"]])
