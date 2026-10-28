@@ -10,8 +10,10 @@ import pytest
 import shutil
 import xarray as xr
 import xugrid as xu
+import shapely
 
 from hydromt_sfincs import SfincsModel
+from hydromt_sfincs.components.quadtree.quadtree import SfincsQuadtreeGrid
 
 TESTDATADIR = join(dirname(abspath(__file__)), "data")
 
@@ -55,6 +57,38 @@ def test_quadtree_io(tmp_dir):
 
     # remove the files, they both get locked because of loading after closure?
     os.remove(mod1.root.path / "sfincs.nc")
+
+
+def test_quadtree_exterior_matches_edge_polygonization():
+    mesh = xu.Ugrid2d(
+        node_x=np.array([0.0, 1.0, 2.0, 0.0, 1.0, 2.0, 0.0, 1.0, 2.0]),
+        node_y=np.array([0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0]),
+        fill_value=-1,
+        face_node_connectivity=np.array(
+            [[0, 1, 4, 3], [1, 2, 5, 4], [3, 4, 7, 6], [4, 5, 8, 7]]
+        ),
+        crs="EPSG:32631",
+    )
+    grid_component = object.__new__(SfincsQuadtreeGrid)
+    grid_component._data = xu.UgridDataset(xr.Dataset(), mesh)
+
+    edge_nodes = mesh.edge_node_connectivity[mesh.exterior_edges, :]
+    x = mesh.node_x[edge_nodes]
+    y = mesh.node_y[edge_nodes]
+    expected_lines = [
+        shapely.LineString(np.column_stack((x[i], y[i]))) for i in range(len(x))
+    ]
+    expected_merged = shapely.ops.linemerge(expected_lines)
+    expected_polygons = list(shapely.ops.polygonize(expected_merged))
+
+    exterior = grid_component.exterior
+
+    assert exterior.crs == grid_component.crs
+    assert len(exterior) == len(expected_polygons)
+    assert shapely.union_all(exterior.geometry.array).equals(
+        shapely.union_all(expected_polygons)
+    )
+    assert grid_component.exterior is exterior
 
 
 def test_quadtree_component_data_contains_only_owned_layers(quadtree_model_config):

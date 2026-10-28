@@ -419,12 +419,26 @@ class SfincsModel(Model):
 
     def clear_spatial_components(self):
         """Clear all spatial components."""
-        # TODO if we want this, all components should have a clear method
-        return
-        # Do something like this
-        for name, comp in self.components.items():
-            if hasattr(comp, "clear"):
-                comp.clear()
+        logger.warning(
+            "clear_spatial_components is deprecated, use clear_spatial_attributes instead."
+        )
+        self.clear_spatial_attributes()
+
+    def clear_spatial_attributes(self) -> None:
+        """Reset spatial components while preserving model configuration.
+
+        Recreates every component except ``config``, clearing grids, masks,
+        geometries, and forcing while retaining settings such as numerics,
+        time frame, and coordinate system. Use this when a change, such as
+        updating the coordinate system, invalidates the existing spatial data.
+        """
+        for name, cls in self._ALL_COMPONENTS.items():
+            if name == "config":
+                continue
+            self.components[name] = cls(self)
+        # Clear the quadtree reference, then refresh grid properties from config.
+        self.config.set("qtrfile", None, skip_validation=True)
+        self.config.update_grid_from_config()
 
     ## Plotting
     def plot_forcing(self, fn_out=None, forcings="all", **kwargs):
