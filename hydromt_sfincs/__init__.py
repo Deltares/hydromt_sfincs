@@ -2,11 +2,13 @@
 
 from os.path import abspath, dirname, join
 
-__version__ = "2.0.0-rc4dev"
+__version__ = "2.0.0-rc4"
 
 DATADIR = join(dirname(abspath(__file__)), "data")
+
+# Minimum supported SFINCS versions
 MIN_SUPPORTED_SFINCS_VERSION = "2.1.0"
-# SFINCS version written to new models and by config.write(update_to_latest=True)
+# Latest supported SFINCS version (new models will use this by default)
 LATEST_SFINCS_VERSION = "2.5.0"
 
 from .sfincs import *

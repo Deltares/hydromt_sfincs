@@ -112,7 +112,7 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
         # Precompute elevation sets per level
         # Add try statement here for compatibility with cht_bathymetry approach
         elevation_list_per_level = [
-            self.model._parse_datasets_elevation(elevation_list, res=res / (2**ilev))
+            self.model._parse_elevation_list(elevation_list, res=res / (2**ilev))
             for ilev in range(nlev)
         ]
 

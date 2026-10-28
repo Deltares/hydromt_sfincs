@@ -625,15 +625,11 @@ class SfincsModel(Model):
             "thin_dams": "thd",
             "drainage_structures": "drn",
             "rivers": "rivers",
+            "runup_gauges": "rug",
         }  # parsed to dict of geopandas.GeoDataFrame
 
         if model == "snapwave":
-            _GEOMS.update(
-                {
-                    "snapwave_boundary_conditions": "snapwave_bnd",
-                    "runup_gauges": "rug",
-                }
-            )
+            _GEOMS.update({"snapwave_boundary_conditions": "snapwave_bnd"})
         else:
             _GEOMS.update(
                 {
@@ -725,7 +721,7 @@ class SfincsModel(Model):
     # Helper Methods
     # ---------------
 
-    def _parse_datasets_elevation(self, elevation_list, res):
+    def _parse_elevation_list(self, elevation_list, res):
         """Parse filenames or paths of Datasets in list of dictionaries elevation_list
         into xr.DataArray and gdf.GeoDataFrames:
 

@@ -101,7 +101,7 @@ def create_topobathy_cog(
 
     river_list = river_list or []
 
-    elevation_list = model._parse_datasets_elevation(elevation_list, res=res)
+    elevation_list = model._parse_elevation_list(elevation_list, res=res)
 
     if len(river_list) > 0:
         river_list = model._parse_river_list(river_list)
