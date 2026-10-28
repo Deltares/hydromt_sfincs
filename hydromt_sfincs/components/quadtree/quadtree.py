@@ -40,7 +40,7 @@ _QT_MAPS = {
     "manning": None,
     "vol": None,
     "zs": "inifile",
-    "infiltration": "infiltration_file",
+    "infiltration": "inffile",
 }
 
 
@@ -278,7 +278,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             data_vars = list(data_vars)
         variables = []
         for var in data_vars:
-            # infiltration uses a non-standard config key ("infiltration_file");
+            # infiltration uses a non-standard config key ("inffile");
             # other variables follow the default "{var}file" pattern.
             key = _QT_MAPS.get(var) or f"{var}file"
             abs_file_path = self.model.config.get(key, abs_path=True)
@@ -290,7 +290,7 @@ class SfincsQuadtreeGrid(MeshComponent):
             for var in variables:
                 if var["variable"] == "infiltration":
                     # determine which infiltration variables to write based on the infiltration type
-                    inftype = self.model.config.get("infiltration_type")
+                    inftype = self.model.config.get("inftype")
                     (
                         write_vars,
                         remove_vars,
