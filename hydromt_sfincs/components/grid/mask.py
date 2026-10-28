@@ -406,7 +406,7 @@ class SfincsMask(ModelComponent):
 
         Parameters
         ----------
-        btype: {'waterlevel', 'outflow'}
+        btype: {'waterlevel', 'outflow', 'downstream'}
             Boundary type
         zmin, zmax : float, optional
             Minimum and maximum elevation thresholds for boundary cells.

@@ -561,6 +561,7 @@ class SfincsModel(Model):
         geom_kwargs: Dict = {},
         grid_kwargs: Dict = {},
         legend_kwargs: Dict = {},
+        model: str = "sfincs",
         **kwargs,
     ):
         """Create basemap plot.
@@ -571,14 +572,17 @@ class SfincsModel(Model):
             Path to output figure file, by default None.
             If a basename is given it is saved to <model_root>/figs/<fn_out>
             If None, no file is saved.
+        model : str, optional
+            Model setup to plot, either ``"sfincs"`` (default) or ``"snapwave"``.
         variable : str, xr.DataArray, optional
             Map of variable in ds to plot, by default 'dep'
-            Alternatively, provide a xr.DataArray
+            Alternatively, provide an xr.DataArray or use ``"output.<name>"``
+            to plot a gridded model output variable.
         shaded : bool, optional
             Add shade to variable (only for variable = 'dep' and non-rotated grids),
             by default False
         plot_bounds : bool, optional
-            Add waterlevel (mask=2) and open (mask=3) boundary conditions to plot.
+            Plot boundary cells from the selected model mask.
         plot_region : bool, optional
             If True, plot region outline.
         plot_geoms : bool, optional
@@ -609,18 +613,35 @@ class SfincsModel(Model):
         """
         import matplotlib.pyplot as plt
 
+        if model not in ("sfincs", "snapwave"):
+            raise ValueError("model must be either 'sfincs' or 'snapwave'.")
+        if model == "snapwave" and self.grid_type != "quadtree":
+            raise ValueError("SnapWave plotting is only supported for quadtree models.")
+
         _GEOMS = {
             "observation_points": "obs",
             "cross_sections": "crs",
-            "runup_gauges": "rug",
             "weirs": "weir",
             "thin_dams": "thd",
             "drainage_structures": "drn",
             "rivers": "rivers",
-            "river_boundary_points": "bdr",
-            "discharge_points": "src",
-            "water_level": "bnd",
         }  # parsed to dict of geopandas.GeoDataFrame
+
+        if model == "snapwave":
+            _GEOMS.update(
+                {
+                    "snapwave_boundary_conditions": "snapwave_bnd",
+                    "runup_gauges": "rug",
+                }
+            )
+        else:
+            _GEOMS.update(
+                {
+                    "river_boundary_points": "bdr",
+                    "discharge_points": "src",
+                    "water_level": "bnd",
+                }
+            )
 
         # combine geoms and forcing locations
         sg = {}
@@ -643,7 +664,6 @@ class SfincsModel(Model):
         if plot_region:  # and "region" not in self.geoms:
             sg.update({"region": self.region})
 
-        # make sure grid are set
         if isinstance(variable, xr.DataArray):
             ds = variable.to_dataset()
             variable = variable.name
@@ -656,20 +676,20 @@ class SfincsModel(Model):
         else:
             if self.grid_type == "regular":
                 ds = self.grid.data.copy()
-                if "mask" not in ds:
-                    ds["mask"] = self.grid.mask
                 if variable == "elevation" and "elevation" not in ds:
                     variable = "dep"
             elif self.grid_type == "quadtree":
                 ds = self.quadtree_grid.data.copy()
-                if "mask" not in ds:
-                    ds["mask"] = self.quadtree_grid.mask
                 if variable == "elevation" and "elevation" not in ds:
                     variable = "z"
+
+        if model == "snapwave" and isinstance(variable, str) and variable == "mask":
+            variable = "snapwave_mask"
 
         fig, ax = plots.plot_basemap(
             ds,
             sg,
+            model=model,
             variable=variable,
             shaded=shaded,
             plot_bounds=plot_bounds,

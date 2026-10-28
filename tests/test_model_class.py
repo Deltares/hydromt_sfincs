@@ -10,14 +10,14 @@ import math
 import geopandas as gpd
 import pandas as pd
 import pytest
-from shapely.geometry import Polygon, Point
+from shapely.geometry import LineString, Point, Polygon
 import xarray as xr
 from geopandas.testing import assert_geodataframe_equal
 from hydromt.readers import read_workflow_yaml
 
 # from hydromt.log import setuplog
 
-from hydromt_sfincs import readers
+from hydromt_sfincs import plots, readers
 from hydromt_sfincs.sfincs import SfincsModel
 
 from .conftest import TESTDATADIR, TESTMODELDIR
@@ -802,6 +802,60 @@ def test_plots(case, tmpdir):
     )
     assert credit.get_position() == (0.01, 0.01)
     assert isfile(fn_out)
+
+
+def test_plot_basemap_snapwave_uses_snapwave_mask(monkeypatch):
+    root = join(TESTDATADIR, _cases["test1"]["example"])
+    mod = SfincsModel(root=root, mode="r")
+    mod.read()
+    ds = mod.grid.data.copy()
+    snapwave_mask = xr.ones_like(ds["mask"])
+    snapwave_mask.values[0, 0] = 2
+    ds["snapwave_mask"] = snapwave_mask
+    ds["mask"] = snapwave_mask.copy()
+    captured = {}
+
+    def get_bounds_vector(mask):
+        captured["mask"] = mask
+        return gpd.GeoDataFrame(
+            {"value": [2, 3, 4, 5, 6]},
+            geometry=[LineString([(0, 0), (1, 1)])] * 5,
+            crs=ds.raster.crs,
+        )
+
+    labels = []
+
+    def plot_boundary(gdf, ax, **kwargs):
+        labels.append(kwargs["label"])
+        ax.plot([], [], label=kwargs["label"])
+
+    monkeypatch.setattr(plots, "get_bounds_vector", get_bounds_vector)
+    monkeypatch.setattr(gpd.GeoDataFrame, "plot", plot_boundary)
+    fig, ax = plots.plot_basemap(
+        ds,
+        {},
+        model="snapwave",
+        variable="base",
+        plot_geoms=False,
+    )
+
+    assert captured["mask"].identical(ds["snapwave_mask"])
+    assert ax.get_title() == "SnapWave base map"
+    assert labels == ["waves bnd", "Neumann bnd"]
+    import matplotlib.pyplot as plt
+
+    plt.close(fig)
+
+    labels.clear()
+    fig, ax = plots.plot_basemap(ds, {}, variable="base", plot_geoms=False)
+    assert labels == [
+        "waterlevel bnd",
+        "outflow bnd",
+        "wavemaker bnd",
+        "downstream bnd",
+        "Neumann bnd",
+    ]
+    plt.close(fig)
 
 
 def test_contextily_attribution_moves_project_credit_to_top_left(monkeypatch):

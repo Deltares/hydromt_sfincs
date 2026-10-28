@@ -75,8 +75,8 @@ class SfincsOutput(ModelComponent):
         # Check that read mode is on
         self.root._assert_read_mode()
 
-        # Read the config file to determine the grid type
-        self.model.config.read()
+        # Initialize before loading so set() does not trigger a nested read.
+        self._initialize(skip_read=True)
 
         if not isabs(fn_map):
             fn_map = self.model.root.path / fn_map
@@ -130,10 +130,8 @@ class SfincsOutput(ModelComponent):
     ) -> xr.Dataset:
         """Read the sfincs_map.nc file and return it as an xarray Dataset."""
 
-        if self.model.grid_type is None:
-            logger.warning("Grid type not known, trying to read from config file. ")
-            self.model.config.read()
-        if self.model.grid_type == "regular":
+        grid_type = self.model.grid_type
+        if grid_type == "regular":
             ds_face, ds_edge = readers.read_sfincs_map_results(
                 fn_map,
                 ds_like=self.model.grid.mask,
@@ -144,7 +142,7 @@ class SfincsOutput(ModelComponent):
             # save as dict of DataArray
             self.set(ds_face, split_dataset=True)
             self.set(ds_edge, split_dataset=True)
-        elif self.model.grid_type == "quadtree":
+        elif grid_type == "quadtree":
             with xu.load_dataset(fn_map) as ds:
                 # set coords
                 ds = ds.set_coords(["mesh2d_node_x", "mesh2d_node_y"])
