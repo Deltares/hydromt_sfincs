@@ -170,7 +170,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             res_subgrid = res_level / nr_subgrid_pixels
             # parse datasets closest to subgrid resolution
             elevation_list_per_level.append(
-                self.model._parse_datasets_elevation(elevation_list, res=res_subgrid)
+                self.model._parse_elevation_list(elevation_list, res=res_subgrid)
             )
         elevation_list = elevation_list_per_level
 

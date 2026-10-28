@@ -516,7 +516,7 @@ class SfincsQuadtreeGrid(MeshComponent):
                 # compute resolution at level
                 res_level = res / (2**lev)
                 elevation_list_per_level.append(
-                    self.model._parse_datasets_elevation(elevation_list, res=res_level)
+                    self.model._parse_elevation_list(elevation_list, res=res_level)
                 )
             elevation_list = elevation_list_per_level
 

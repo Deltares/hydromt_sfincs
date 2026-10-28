@@ -104,7 +104,7 @@ class SfincsElevation(ModelComponent):
         else:
             res = np.abs(self.mask.raster.res[0]) * 111111.0
 
-        elevation_list = self.model._parse_datasets_elevation(elevation_list, res=res)
+        elevation_list = self.model._parse_elevation_list(elevation_list, res=res)
 
         da_dep = workflows.merge_multi_dataarrays(
             da_list=elevation_list,
