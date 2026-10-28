@@ -1,0 +1,1915 @@
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" data-theme="light">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>hydromt_sfincs.components.quadtree.quadtree_mask &#8212; HydroMT SFINCS  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/autodoc_pydantic.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/theme-deltares.css?v=a3fd7a5a" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../../_static/scripts/fontawesome.js?digest=18bd87630a240e9c25be"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
+
+    <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+let _lazyObserver = null;
+let _renderQueue = Promise.resolve();
+let closeModal = () => {};
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal?.classList.contains('active')) {
+        closeModal();
+    }
+});
+
+// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
+// so this is safe to call both for the initial batch and for diagrams that
+// render lazily once they become visible.
+const addZoomToSvgs = (svgs) => {
+    svgs.each(function() {
+        if (this.getAttribute('data-zoom-applied') === 'true') return;
+        var svg = d3.select(this);
+        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+        var inner = svg.select("g");
+        var zoom = d3.zoom().on("zoom", function(event) {
+            inner.attr("transform", event.transform);
+        });
+        svg.call(zoom);
+        this.setAttribute('data-zoom-applied', 'true');
+    });
+};
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        // Disconnect any previous lazy rendering observer
+        if (_lazyObserver) {
+            _lazyObserver.disconnect();
+            _lazyObserver = null;
+        }
+
+        all_mermaids.forEach((el) => {
+            el.removeAttribute('data-mermaid-deferred');
+            el.removeAttribute('data-mermaid-render-failed');
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+
+        // Separate visible and hidden elements. Mermaid's layout engine measures
+        // text dimensions via the DOM, which fails for elements hidden by a parent
+        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
+        // producing broken SVGs. Render visible elements now, defer hidden ones.
+        const visible = [];
+        const hidden = [];
+        all_mermaids.forEach((el) => {
+            // offsetParent is null for display:none ancestors.
+            // getClientRects().length > 0 catches position:fixed elements
+            // (which also have null offsetParent but are still visible).
+            if (el.offsetParent !== null || el.getClientRects().length > 0) {
+                visible.push(el);
+            } else {
+                hidden.push(el);
+                el.setAttribute('data-mermaid-deferred', 'true');
+            }
+        });
+
+        if (visible.length > 0) {
+            try {
+                await mermaid.run({ nodes: visible });
+            } catch (e) {
+                console.error("Mermaid rendering failed:", e);
+            }
+        }
+
+        // Lazily render hidden elements when they become visible.
+        // Uses a promise chain (_renderQueue) to serialize rendering,
+        // since IntersectionObserver may report multiple entries at once
+        // and mermaid.run() is not safe to call concurrently.
+        if (hidden.length > 0) {
+            if (typeof IntersectionObserver === 'undefined') {
+                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
+            } else {
+                _renderQueue = Promise.resolve();
+                _lazyObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
+                            _lazyObserver.unobserve(entry.target);
+                            const el = entry.target;
+                            _renderQueue = _renderQueue.then(async () => {
+                                try {
+                                    await mermaid.run({ nodes: [el] });
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    // Apply zoom to the now-rendered diagram, matching
+                                    // the decoration visible diagrams receive.
+                                    if (false) {
+                                        addZoomToSvgs(d3.selectAll("").select(function() {
+                                            return this.querySelector("svg");
+                                        }));
+                                    }
+                                } catch (e) {
+                                    console.error("Mermaid deferred rendering failed:", e);
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    el.setAttribute('data-mermaid-render-failed', 'true');
+                                }
+                            });
+                        }
+                    }
+                });
+                hidden.forEach((el) => _lazyObserver.observe(el));
+            }
+        }
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    // Exclude deferred (hidden) and render-failed elements from completion checks
+    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
+    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
+
+    if (false) {
+        const mermaids_to_add_zoom = 0 === -1 ? mermaids_active.length : 0;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("").select(function() {
+                return this.querySelector("svg");
+            });
+            // Wait until every active (visible) diagram has rendered. Deferred
+            // diagrams are excluded, so a fixed d3_node_count that counts a
+            // hidden diagram no longer loops forever waiting for its SVG.
+            if(mermaids_active.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            }
+            addZoomToSvgs(svgs);
+        }
+    } else if(mermaids_active.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if (!true) return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = "\u26f6";
+        fullscreenBtn.style.opacity = "50%";
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scrollX, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.display = 'block';
+
+                if (false) {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+
+
+const load = async () => {
+    initStyles();
+
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...{"startOnLoad": false},
+                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...{"startOnLoad": false},
+    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/hydromt_sfincs/components/quadtree/quadtree_mask';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.23.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0-r';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="icon" href="../../../../_static/hydromt-icon.svg"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="2.0.0-rc4" />
+  
+    
+    <script src="../../../../_static/searchtools.js"></script>
+    <script src="../../../../_static/language_data.js"></script>
+    <script src="../../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="light">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+    
+    <img src="../../../../_static/hydromt-icon.svg" class="logo__image only-light" alt=""/>
+    <img src="../../../../_static/hydromt-icon.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">HydroMT SFINCS</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../getting_started/intro.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../user_guide/intro.html">
+    User guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../api/api.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../dev_guide/intro.html">
+    Developments
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/latest/index.html">
+    HydroMT core
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../../../_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../../../_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../getting_started/intro.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../user_guide/intro.html">
+    User guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../api/api.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../dev_guide/intro.html">
+    Developments
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/latest/index.html">
+    HydroMT core
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../../../_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../../../_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">hydromt_sfincs.components.quadtree.quadtree_mask</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for hydromt_sfincs.components.quadtree.quadtree_mask</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shapely</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xugrid</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xu</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt</span><span class="w"> </span><span class="kn">import</span> <span class="n">hydromt_step</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelComponent</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">readers</span><span class="p">,</span> <span class="n">utils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.workflows.map_overlay</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaskOverlay</span>
+
+<span class="n">np</span><span class="o">.</span><span class="n">warnings</span> <span class="o">=</span> <span class="n">warnings</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
+
+<span class="c1"># TODO actually use the logger instead of print statements</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SfincsQuadtreeMask">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.quadtree.SfincsQuadtreeMask.html#hydromt_sfincs.components.quadtree.SfincsQuadtreeMask">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SfincsQuadtreeMask</span><span class="p">(</span><span class="n">ModelComponent</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Mask stored in the shared quadtree grid.</span>
+
+<span class="sd">    ``data`` exposes only this component's mask, retaining the mesh and grid</span>
+<span class="sd">    attributes. The parent grid reads and writes the mask in ``qtrfile``.</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># Variable name (in model.quadtree_grid.data) that the overlay renderer</span>
+    <span class="c1"># samples. Subclasses (e.g. SnapWaveQuadtreeMask) override this.</span>
+    <span class="n">_mask_variable</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mask"</span>
+
+<div class="viewcode-block" id="SfincsQuadtreeMask.__init__">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.quadtree.SfincsQuadtreeMask.html#hydromt_sfincs.components.quadtree.SfincsQuadtreeMask.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="s2">"SfincsModel"</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="c1"># The data for the mask is stored in the model.quadtree_grid.data["mask"] array</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Lazy mask-overlay renderer (holds the only internal state; all</span>
+        <span class="c1"># mask data itself lives on model.quadtree_grid.data["mask"]).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_overlay</span> <span class="o">=</span> <span class="n">MaskOverlay</span><span class="p">()</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Return only this mask, retaining the parent mesh."""</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">return</span> <span class="n">data</span><span class="p">[[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mask_variable</span><span class="p">,)</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">empty_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Get an empty mask with the same shape as the model grid."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">empty_mask</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">face_coordinates</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">face_coordinates</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_open_boundaries</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Returns True if mask contains open boundaries (mask = 2)"""</span>
+        <span class="k">if</span> <span class="s2">"mask"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"mask"</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">mask</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+<div class="viewcode-block" id="SfincsQuadtreeMask.read">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.quadtree.SfincsQuadtreeMask.read.html#hydromt_sfincs.components.quadtree.SfincsQuadtreeMask.read">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Ensure the parent grid is loaded, including masks in ``qtrfile``.</span>
+
+<span class="sd">        An already loaded grid is not reread.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">read_components</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SfincsQuadtreeMask.write">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.quadtree.SfincsQuadtreeMask.write.html#hydromt_sfincs.components.quadtree.SfincsQuadtreeMask.write">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Leave mask persistence in ``qtrfile`` to the parent grid.</span>
+
+<span class="sd">        Call ``model.quadtree_grid.write()`` to persist it; this method does</span>
+<span class="sd">        not write a separate file or rewrite the shared grid.</span>
+<span class="sd">        """</span>
+        <span class="k">pass</span></div>
+
+
+    <span class="nd">@hydromt_step</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"sfincs"</span><span class="p">,</span>
+        <span class="n">zmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">zmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">include_polygon</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">include_zmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">include_zmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">exclude_polygon</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">exclude_zmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">exclude_zmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">open_boundary_polygon</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">open_boundary_zmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">open_boundary_zmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">outflow_boundary_polygon</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">outflow_boundary_zmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">outflow_boundary_zmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">neumann_boundary_polygon</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">neumann_boundary_zmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">neumann_boundary_zmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">downstream_boundary_polygon</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">downstream_boundary_zmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">downstream_boundary_zmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">all_touched</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Setup active model mask and add boundaries. Note that boundary types can only be set when polygons are provided.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        model : str, optional</span>
+<span class="sd">            Model type, either 'sfincs' (default) or 'snapwave', for which the mask will be created.</span>
+<span class="sd">        zmin, zmax : float, optional</span>
+<span class="sd">            Minimum and maximum elevation thresholds for active model cells.</span>
+<span class="sd">        include_polygon, exclude_polygon: str, Path, gpd.GeoDataFrame, optional</span>
+<span class="sd">            Path or data source name of polygons to include/exclude from the active model domain.</span>
+<span class="sd">            Note that include (second last) and exclude (last) areas are processed after other critera,</span>
+<span class="sd">            i.e. `zmin`, `zmax` and thus overrule these criteria for active model cells.</span>
+<span class="sd">        include_zmin, include_zmax: float, optional</span>
+<span class="sd">            Minimum and maximum elevation thresholds for included model cells.</span>
+<span class="sd">        exclude_zmin, exclude_zmax: float, optional</span>
+<span class="sd">            Minimum and maximum elevation thresholds for excluded model cells.</span>
+<span class="sd">        open_boundary_polygon, outflow_boundary_polygon, neumann_boundary_polygon, downstream_boundary_polygon: str, Path, gpd.GeoDataFrame, optional</span>
+<span class="sd">            Path or data source name for geometries with areas to include as open boundary, outflow boundary, neumann boundary, or downstream boundary.</span>
+<span class="sd">            For each polygon, also the minimum and maximum elevation thresholds can be specified using the corresponding `*_zmin` and `*_zmax` arguments.</span>
+
+<span class="sd">        See also:</span>
+<span class="sd">        ---------</span>
+<span class="sd">        * `create_active` method to setup active model cells</span>
+<span class="sd">        * `create_boundary` method to setup boundary cells of a specific type</span>
+
+<span class="sd">        """</span>
+
+        <span class="c1"># We first make sure that any polygons that are a geodataframe but are empty, are set to None</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">include_polygon</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">)</span> <span class="ow">and</span> <span class="n">include_polygon</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="n">include_polygon</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exclude_polygon</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">)</span> <span class="ow">and</span> <span class="n">exclude_polygon</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="n">exclude_polygon</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">open_boundary_polygon</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">open_boundary_polygon</span><span class="o">.</span><span class="n">empty</span>
+        <span class="p">):</span>
+            <span class="n">open_boundary_polygon</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">outflow_boundary_polygon</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">outflow_boundary_polygon</span><span class="o">.</span><span class="n">empty</span>
+        <span class="p">):</span>
+            <span class="n">outflow_boundary_polygon</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">neumann_boundary_polygon</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">neumann_boundary_polygon</span><span class="o">.</span><span class="n">empty</span>
+        <span class="p">):</span>
+            <span class="n">neumann_boundary_polygon</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">downstream_boundary_polygon</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">downstream_boundary_polygon</span><span class="o">.</span><span class="n">empty</span>
+        <span class="p">):</span>
+            <span class="n">downstream_boundary_polygon</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">"sfincs"</span><span class="p">:</span>
+            <span class="n">open_btype</span> <span class="o">=</span> <span class="s2">"waterlevel"</span>
+        <span class="k">elif</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">"snapwave"</span><span class="p">:</span>
+            <span class="n">open_btype</span> <span class="o">=</span> <span class="s2">"waves"</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Model must be either 'sfincs' or 'snapwave'!"</span><span class="p">)</span>
+
+        <span class="c1"># Create active model cells</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_active</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">zmin</span><span class="o">=</span><span class="n">zmin</span><span class="p">,</span>
+            <span class="n">zmax</span><span class="o">=</span><span class="n">zmax</span><span class="p">,</span>
+            <span class="n">include_polygon</span><span class="o">=</span><span class="n">include_polygon</span><span class="p">,</span>
+            <span class="n">include_zmin</span><span class="o">=</span><span class="n">include_zmin</span><span class="p">,</span>
+            <span class="n">include_zmax</span><span class="o">=</span><span class="n">include_zmax</span><span class="p">,</span>
+            <span class="n">exclude_polygon</span><span class="o">=</span><span class="n">exclude_polygon</span><span class="p">,</span>
+            <span class="n">exclude_zmin</span><span class="o">=</span><span class="n">exclude_zmin</span><span class="p">,</span>
+            <span class="n">exclude_zmax</span><span class="o">=</span><span class="n">exclude_zmax</span><span class="p">,</span>
+            <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Add boundary cels</span>
+        <span class="k">if</span> <span class="n">open_boundary_polygon</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_boundary</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">btype</span><span class="o">=</span><span class="n">open_btype</span><span class="p">,</span>
+                <span class="n">include_polygon</span><span class="o">=</span><span class="n">open_boundary_polygon</span><span class="p">,</span>
+                <span class="n">include_zmin</span><span class="o">=</span><span class="n">open_boundary_zmin</span><span class="p">,</span>
+                <span class="n">include_zmax</span><span class="o">=</span><span class="n">open_boundary_zmax</span><span class="p">,</span>
+                <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">outflow_boundary_polygon</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_boundary</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">btype</span><span class="o">=</span><span class="s2">"outflow"</span><span class="p">,</span>
+                <span class="n">include_polygon</span><span class="o">=</span><span class="n">outflow_boundary_polygon</span><span class="p">,</span>
+                <span class="n">include_zmin</span><span class="o">=</span><span class="n">outflow_boundary_zmin</span><span class="p">,</span>
+                <span class="n">include_zmax</span><span class="o">=</span><span class="n">outflow_boundary_zmax</span><span class="p">,</span>
+                <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">downstream_boundary_polygon</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_boundary</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">btype</span><span class="o">=</span><span class="s2">"downstream"</span><span class="p">,</span>
+                <span class="n">include_polygon</span><span class="o">=</span><span class="n">downstream_boundary_polygon</span><span class="p">,</span>
+                <span class="n">include_zmin</span><span class="o">=</span><span class="n">downstream_boundary_zmin</span><span class="p">,</span>
+                <span class="n">include_zmax</span><span class="o">=</span><span class="n">downstream_boundary_zmax</span><span class="p">,</span>
+                <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">neumann_boundary_polygon</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_boundary</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">btype</span><span class="o">=</span><span class="s2">"neumann"</span><span class="p">,</span>
+                <span class="n">include_polygon</span><span class="o">=</span><span class="n">neumann_boundary_polygon</span><span class="p">,</span>
+                <span class="n">include_zmin</span><span class="o">=</span><span class="n">neumann_boundary_zmin</span><span class="p">,</span>
+                <span class="n">include_zmax</span><span class="o">=</span><span class="n">neumann_boundary_zmax</span><span class="p">,</span>
+                <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_overlay</span><span class="o">.</span><span class="n">invalidate</span><span class="p">()</span>
+
+<div class="viewcode-block" id="SfincsQuadtreeMask.create_active">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.quadtree.SfincsQuadtreeMask.create_active.html#hydromt_sfincs.components.quadtree.SfincsQuadtreeMask.create_active">[docs]</a>
+    <span class="nd">@hydromt_step</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_active</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"sfincs"</span><span class="p">,</span>
+        <span class="n">zmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">zmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">include_polygon</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">include_zmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">include_zmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">exclude_polygon</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">exclude_zmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">exclude_zmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">all_touched</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">reset_mask</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">copy_sfincsmask</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Setup active model cells.</span>
+
+<span class="sd">        The SFINCS model mask defines inactive (msk=0), active (msk=1), and waterlevel boundary (msk=2)</span>
+<span class="sd">        and outflow boundary (msk=3) cells. This method sets the active and inactive cells.</span>
+
+<span class="sd">        Active model cells are based on a region and cells with valid elevation (i.e. not nodata),</span>
+<span class="sd">        optionally bounded by areas inside the include geomtries, outside the exclude geomtries,</span>
+<span class="sd">        larger or equal than a minimum elevation threshhold and smaller or equal than a</span>
+<span class="sd">        maximum elevation threshhold.</span>
+<span class="sd">        All conditions are combined using a logical AND operation.</span>
+
+<span class="sd">        Adds mask layer to quadtree grid:</span>
+
+<span class="sd">        * **mask** map: model mask [-]</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        model : str, optional</span>
+<span class="sd">            Model type, either 'sfincs' (default) or 'snapwave', for which the mask will be created.</span>
+<span class="sd">        zmin, zmax : float, optional</span>
+<span class="sd">            Minimum and maximum elevation thresholds for active model cells.</span>
+<span class="sd">        include_polygon, exclude_polygon: str, Path, gpd.GeoDataFrame, optional</span>
+<span class="sd">            Path or data source name of polygons to include/exclude from the active model domain.</span>
+<span class="sd">            Note that include (second last) and exclude (last) areas are processed after other critera,</span>
+<span class="sd">            i.e. `zmin`, `zmax` and thus overrule these criteria for active model cells.</span>
+<span class="sd">        all_touched: bool, optional</span>
+<span class="sd">            if True (default) include (or exclude) a cell in the mask if it touches any of the</span>
+<span class="sd">            include (or exclude) geometries. If False, include a cell only if its center is</span>
+<span class="sd">            within one of the shapes, or if it is selected by Bresenham's line algorithm.</span>
+<span class="sd">        reset_mask: bool, optional</span>
+<span class="sd">            If True, reset existing mask before creating new active model cells.</span>
+<span class="sd">        copy_sfincsmask: bool, optional</span>
+<span class="sd">            If True and model is 'snapwave', copy the SFINCS mask to the SnapWave mask.</span>
+<span class="sd">        """</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Building mask ..."</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="n">model</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="s2">"sfincs"</span><span class="p">,</span>
+            <span class="s2">"snapwave"</span><span class="p">,</span>
+        <span class="p">],</span> <span class="s2">"Model must be either 'sfincs' or 'snapwave'!"</span>
+
+        <span class="k">if</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">"sfincs"</span><span class="p">:</span>
+            <span class="n">varname</span> <span class="o">=</span> <span class="s2">"mask"</span>
+        <span class="k">elif</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">"snapwave"</span><span class="p">:</span>
+            <span class="n">varname</span> <span class="o">=</span> <span class="s2">"snapwave_mask"</span>
+
+        <span class="k">if</span> <span class="n">copy_sfincsmask</span> <span class="ow">and</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">"snapwave"</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="s2">"mask"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">"SFINCS mask not found!"</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Using SFINCS mask for SnapWave mask ..."</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+                <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"mask"</span><span class="p">]</span><span class="o">.</span><span class="n">obj</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">grid</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">varname</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Build new mask for: "</span> <span class="o">+</span> <span class="n">model</span> <span class="o">+</span> <span class="s2">" ..."</span><span class="p">)</span>
+
+        <span class="c1"># read geometries from file, data catalog or use provided geodataframe</span>
+        <span class="n">gdf_include</span><span class="p">,</span> <span class="n">gdf_exclude</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="n">bbox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">region</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span><span class="o">.</span><span class="n">total_bounds</span>
+
+        <span class="c1"># FIXME do we still want to support .pol files? MvO: No!</span>
+        <span class="k">if</span> <span class="n">include_polygon</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">include_polygon</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span>
+                <span class="n">include_polygon</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".pol"</span><span class="p">):</span>
+                <span class="c1"># NOTE polygons should be in same CRS as model</span>
+                <span class="n">gdf_include</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">polygon2gdf</span><span class="p">(</span>
+                    <span class="n">feats</span><span class="o">=</span><span class="n">readers</span><span class="o">.</span><span class="n">read_geoms</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">include_polygon</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">gdf_include</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span><span class="n">include_polygon</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">index_parts</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="c1"># check if input is polygon or multipolygon</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf_include</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">geom_type</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">"Polygon"</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">"Include polygon should contain only Polygon geometries."</span>
+                    <span class="p">)</span>
+        <span class="k">if</span> <span class="n">exclude_polygon</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exclude_polygon</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span>
+                <span class="n">exclude_polygon</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".pol"</span><span class="p">):</span>
+                <span class="n">gdf_exclude</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">polygon2gdf</span><span class="p">(</span>
+                    <span class="n">feats</span><span class="o">=</span><span class="n">readers</span><span class="o">.</span><span class="n">read_geoms</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">exclude_polygon</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">gdf_exclude</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span><span class="n">exclude_polygon</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">index_parts</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="c1"># check if input is polygon or multipolygon</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf_exclude</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">geom_type</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">"Polygon"</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">"Exclude polygon should contain only Polygon geometries."</span>
+                    <span class="p">)</span>
+
+        <span class="c1"># get mask and dep data</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">uda_mask</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">varname</span><span class="p">]</span> <span class="k">if</span> <span class="n">varname</span> <span class="ow">in</span> <span class="n">data</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="n">uda_mask0</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">reset_mask</span> <span class="ow">and</span> <span class="n">uda_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># use current active mask</span>
+            <span class="n">uda_mask0</span> <span class="o">=</span> <span class="n">uda_mask</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+        <span class="c1"># always initialize an inactive mask, note this resets any existing mask</span>
+        <span class="n">uda_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">empty_mask</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+        <span class="k">if</span> <span class="n">zmin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">zmax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">"z"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"z required in combination with zmin / zmax"</span><span class="p">)</span>
+            <span class="n">uda_dep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"z"</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">zmin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">zmax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">_msk</span> <span class="o">=</span> <span class="n">uda_dep</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+                <span class="k">if</span> <span class="n">zmin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">_msk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">_msk</span><span class="p">,</span> <span class="n">uda_dep</span> <span class="o">&gt;=</span> <span class="n">zmin</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">zmax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">_msk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">_msk</span><span class="p">,</span> <span class="n">uda_dep</span> <span class="o">&lt;=</span> <span class="n">zmax</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">uda_mask0</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># if mask was provided; keep active mask only within valid elevations</span>
+                <span class="n">uda_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">uda_mask0</span><span class="p">,</span> <span class="n">_msk</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># no mask provided; set mask to valid elevations</span>
+                <span class="n">uda_mask</span> <span class="o">=</span> <span class="n">_msk</span>
+        <span class="k">elif</span> <span class="n">zmin</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">zmax</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">uda_mask0</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># in case a mask/region was provided, but you didn't want to update the mask based on elevation</span>
+            <span class="c1"># just continue with the provided mask</span>
+            <span class="n">uda_mask</span> <span class="o">=</span> <span class="n">uda_mask0</span>
+
+        <span class="c1"># TODO add fill and drop area?</span>
+
+        <span class="c1"># apply include / exclude masks, first include (within zmin/zmax), then exclude (within zmin/zmax)</span>
+        <span class="k">if</span> <span class="n">gdf_include</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_msk</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">xu</span><span class="o">.</span><span class="n">burn_vector_geometry</span><span class="p">(</span>
+                    <span class="n">gdf_include</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span>
+                <span class="p">)</span>
+                <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">)</span>
+            <span class="c1"># check if any cells are included</span>
+            <span class="k">if</span> <span class="n">_msk</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">include_zmin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">include_zmax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="s2">"z"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                            <span class="s2">"z required in combination with include_zmin / include_zmax"</span>
+                        <span class="p">)</span>
+                    <span class="n">uda_dep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"z"</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">include_zmin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">_msk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">_msk</span><span class="p">,</span> <span class="n">uda_dep</span> <span class="o">&gt;=</span> <span class="n">include_zmin</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">include_zmax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">_msk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">_msk</span><span class="p">,</span> <span class="n">uda_dep</span> <span class="o">&lt;=</span> <span class="n">include_zmax</span><span class="p">)</span>
+                <span class="n">uda_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="n">uda_mask</span><span class="p">,</span> <span class="n">_msk</span><span class="p">)</span>  <span class="c1"># NOTE logical OR statement</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"No mask cells found within include polygon!"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">gdf_exclude</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_msk</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">xu</span><span class="o">.</span><span class="n">burn_vector_geometry</span><span class="p">(</span>
+                    <span class="n">gdf_exclude</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span>
+                <span class="p">)</span>
+                <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">_msk</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">exclude_zmin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">exclude_zmax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="s2">"z"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                            <span class="s2">"z required in combination with exclude_zmin / exclude_zmax"</span>
+                        <span class="p">)</span>
+                    <span class="n">uda_dep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"z"</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">exclude_zmin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">_msk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">_msk</span><span class="p">,</span> <span class="n">uda_dep</span> <span class="o">&gt;=</span> <span class="n">exclude_zmin</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">exclude_zmax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">_msk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">_msk</span><span class="p">,</span> <span class="n">uda_dep</span> <span class="o">&lt;=</span> <span class="n">exclude_zmax</span><span class="p">)</span>
+                <span class="n">uda_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">uda_mask</span><span class="p">,</span> <span class="o">~</span><span class="n">_msk</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"No mask cells found within exclude polygon!"</span><span class="p">)</span>
+        <span class="c1"># add mask to grid</span>
+        <span class="n">grid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">grid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+            <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">(</span>
+                <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">uda_mask</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="n">grid</span><span class="o">.</span><span class="n">face_dimension</span><span class="p">]),</span>
+                <span class="n">grid</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">varname</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SfincsQuadtreeMask.create_boundary">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.quadtree.SfincsQuadtreeMask.create_boundary.html#hydromt_sfincs.components.quadtree.SfincsQuadtreeMask.create_boundary">[docs]</a>
+    <span class="nd">@hydromt_step</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_boundary</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"sfincs"</span><span class="p">,</span>
+        <span class="n">btype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"waterlevel"</span><span class="p">,</span>
+        <span class="n">zmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">zmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">include_polygon</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">include_zmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">include_zmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">include_polygon_buffer</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">exclude_polygon</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">exclude_zmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">exclude_zmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">all_touched</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">reset_bounds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">copy_sfincsmask</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">connectivity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Set boundary cells in the model mask.</span>
+
+<span class="sd">        The SFINCS model mask defines inactive (mask=0), active (mask=1), and waterlevel boundary (mask=2)</span>
+<span class="sd">        and outflow boundary (mask=3), downstream (mask=5) or neumann (mask=6) cells.</span>
+<span class="sd">        Active cells set using the `create_active` method,</span>
+<span class="sd">        while this method sets the different types of boundary cells, see `btype` argument.</span>
+
+<span class="sd">        Boundary cells at the edge of the active model domain,</span>
+<span class="sd">        optionally bounded by areas inside the include geomtries, outside the exclude geomtries,</span>
+<span class="sd">        larger or equal than a minimum elevation threshhold and smaller or equal than a</span>
+<span class="sd">        maximum elevation threshhold. All conditions are combined using a logical AND operation.</span>
+
+<span class="sd">        Updates mask layer in quadtree grid:</span>
+
+<span class="sd">        * **mask** map: model mask [-]</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        model : str, optional</span>
+<span class="sd">            Model type, either 'sfincs' (default) or 'snapwave', for which the mask will be created.</span>
+<span class="sd">        btype: str, optional</span>
+<span class="sd">            Boundary type {'waterlevel', 'outflow', 'downstream', 'neumann'} for model='sfincs',</span>
+<span class="sd">                {'waves', 'neumann'} for model='snapwave'</span>
+<span class="sd">        zmin, zmax : float, optional</span>
+<span class="sd">            Minimum and maximum elevation thresholds for all boundary cells.</span>
+<span class="sd">        include_polygon, exclude_polygon: str, Path, gpd.GeoDataFrame, optional</span>
+<span class="sd">            Path or data source name for geometries with areas to include/exclude from</span>
+<span class="sd">            the model boundary. These can be combined with `include_zmin` and `include_zmax` to</span>
+<span class="sd">            further refine the selection of cells within the polygons.</span>
+<span class="sd">        reset_bounds: bool, optional</span>
+<span class="sd">            If True, reset existing boundary cells of the selected boundary</span>
+<span class="sd">            type (`btype`) before setting new boundary cells, by default False.</span>
+<span class="sd">        all_touched: bool, optional</span>
+<span class="sd">            if True (default) include (or exclude) a cell in the mask if it touches any of the</span>
+<span class="sd">            include (or exclude) geometries. If False, include a cell only if its center is</span>
+<span class="sd">            within one of the shapes, or if it is selected by Bresenham's line algorithm.</span>
+<span class="sd">        connectivity, {4, 8}:</span>
+<span class="sd">            The connectivity used to detect the model edge, if 4 only horizontal and vertical</span>
+<span class="sd">            connections are used, if 8 (default) also diagonal connections.</span>
+<span class="sd">        """</span>
+
+        <span class="k">assert</span> <span class="n">model</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="s2">"sfincs"</span><span class="p">,</span>
+            <span class="s2">"snapwave"</span><span class="p">,</span>
+        <span class="p">],</span> <span class="s2">"Model must be either 'sfincs' or 'snapwave'!"</span>
+
+        <span class="c1"># specify mask variable name based on model</span>
+        <span class="k">if</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">"sfincs"</span><span class="p">:</span>
+            <span class="n">varname</span> <span class="o">=</span> <span class="s2">"mask"</span>
+        <span class="k">elif</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">"snapwave"</span><span class="p">:</span>
+            <span class="n">varname</span> <span class="o">=</span> <span class="s2">"snapwave_mask"</span>
+
+        <span class="c1"># copy SFINCS mask to SnapWave mask when requested</span>
+        <span class="k">if</span> <span class="n">copy_sfincsmask</span> <span class="ow">and</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">"snapwave"</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="s2">"mask"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">"SFINCS mask not found!"</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Using SFINCS mask for SnapWave mask ..."</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+                <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"mask"</span><span class="p">]</span><span class="o">.</span><span class="n">obj</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">grid</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">varname</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># check if mask already exists</span>
+        <span class="k">if</span> <span class="n">varname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"First setup active mask for model: "</span> <span class="o">+</span> <span class="n">model</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">uda_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">varname</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="s2">"z"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="n">zmin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">zmax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"z required in combination with zmin / zmax"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">uda_dep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"z"</span><span class="p">]</span>
+
+        <span class="c1"># check boundary type</span>
+        <span class="n">btype</span> <span class="o">=</span> <span class="n">btype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">"sfincs"</span><span class="p">:</span>
+            <span class="n">bvalues</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"waterlevel"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"outflow"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">"downstream"</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">"neumann"</span><span class="p">:</span> <span class="mi">6</span><span class="p">}</span>
+            <span class="k">if</span> <span class="n">btype</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bvalues</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s1">'btype must be one of "waterlevel", "outflow", "downstream", "neumann"'</span>
+                <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">"snapwave"</span><span class="p">:</span>
+            <span class="n">bvalues</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"waves"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"neumann"</span><span class="p">:</span> <span class="mi">3</span><span class="p">}</span>
+            <span class="k">if</span> <span class="n">btype</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bvalues</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'btype must be one of "waves", "neumann"'</span><span class="p">)</span>
+
+        <span class="c1"># get include / exclude geometries</span>
+        <span class="n">gdf_include</span><span class="p">,</span> <span class="n">gdf_exclude</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="n">bbox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span>
+        <span class="k">if</span> <span class="n">include_polygon</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">include_polygon</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span>
+                <span class="n">include_polygon</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".pol"</span><span class="p">):</span>
+                <span class="c1"># NOTE polygons should be in same CRS as model</span>
+                <span class="n">gdf_include</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">polygon2gdf</span><span class="p">(</span>
+                    <span class="n">feats</span><span class="o">=</span><span class="n">readers</span><span class="o">.</span><span class="n">read_geoms</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">include_polygon</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">gdf_include</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span><span class="n">include_polygon</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">index_parts</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">include_polygon_buffer</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span><span class="p">:</span>
+                    <span class="n">include_polygon_buffer</span> <span class="o">=</span> <span class="n">include_polygon_buffer</span> <span class="o">/</span> <span class="mf">111111.0</span>
+                <span class="n">gdf_include</span><span class="p">[</span><span class="s2">"geometry"</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdf_include</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span>
+                    <span class="n">include_polygon_buffer</span>
+                <span class="p">)</span>
+            <span class="c1"># check if include_polygon is of type Polygon</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf_include</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">geom_type</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">"Polygon"</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"Include polygon should contain only Polygon geometries."</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="n">exclude_polygon</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exclude_polygon</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span>
+                <span class="n">exclude_polygon</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".pol"</span><span class="p">):</span>
+                <span class="n">gdf_exclude</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">polygon2gdf</span><span class="p">(</span>
+                    <span class="n">feats</span><span class="o">=</span><span class="n">readers</span><span class="o">.</span><span class="n">read_geoms</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">exclude_polygon</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">gdf_exclude</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span><span class="n">exclude_polygon</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">index_parts</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">gdf_exclude</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">geom_type</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">"Polygon"</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">"Exclude polygon should contain only Polygon geometries."</span>
+                    <span class="p">)</span>
+
+        <span class="n">bvalue</span> <span class="o">=</span> <span class="n">bvalues</span><span class="p">[</span><span class="n">btype</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">reset_bounds</span><span class="p">:</span>  <span class="c1"># reset existing boundary cells</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">btype</span><span class="si">}</span><span class="s2"> (mask=</span><span class="si">{</span><span class="n">bvalue</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2">) boundary cells reset."</span><span class="p">)</span>
+            <span class="n">uda_mask</span> <span class="o">=</span> <span class="n">uda_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">uda_mask</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">(</span><span class="n">bvalue</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">zmin</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="n">zmax</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="n">gdf_include</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="n">gdf_exclude</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="p">):</span>
+                <span class="n">grid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">grid</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+                    <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">(</span>
+                        <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">uda_mask</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                            <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="n">grid</span><span class="o">.</span><span class="n">face_dimension</span><span class="p">],</span>
+                        <span class="p">),</span>
+                        <span class="n">grid</span><span class="p">,</span>
+                    <span class="p">),</span>
+                    <span class="n">name</span><span class="o">=</span><span class="n">varname</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">return</span>
+
+        <span class="c1"># find all boundary cells of the active mask</span>
+        <span class="n">bounds0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_boundary_cells</span><span class="p">(</span><span class="n">varname</span><span class="p">)</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds0</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># check general zmin and zmax</span>
+        <span class="k">if</span> <span class="n">zmin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">uda_dep</span> <span class="o">&gt;=</span> <span class="n">zmin</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">zmax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">uda_dep</span> <span class="o">&lt;=</span> <span class="n">zmax</span><span class="p">)</span>
+
+        <span class="c1"># apply include / exclude masks, first include (within zmin/zmax), then exclude (within zmin/zmax)</span>
+        <span class="k">if</span> <span class="n">gdf_include</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">uda_include</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">xu</span><span class="o">.</span><span class="n">burn_vector_geometry</span><span class="p">(</span>
+                    <span class="n">gdf_include</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span>
+                <span class="p">)</span>
+                <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">include_zmin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">include_zmax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s2">"z"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">"z required in combination with include_zmin / include_zmax"</span>
+                    <span class="p">)</span>
+                <span class="n">uda_dep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"z"</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">include_zmin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">uda_include</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">uda_include</span><span class="p">,</span> <span class="n">uda_dep</span> <span class="o">&gt;=</span> <span class="n">include_zmin</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">include_zmax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">uda_include</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">uda_include</span><span class="p">,</span> <span class="n">uda_dep</span> <span class="o">&lt;=</span> <span class="n">include_zmax</span><span class="p">)</span>
+            <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">uda_include</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">bounds</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="c1"># This should not be an error. Better to just give a warning.</span>
+                <span class="c1"># raise ValueError("No mask boundary cells found within include polygon!")</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"No mask boundary cells found within polygon!"</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">gdf_exclude</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">uda_exclude</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">xu</span><span class="o">.</span><span class="n">burn_vector_geometry</span><span class="p">(</span>
+                    <span class="n">gdf_exclude</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">all_touched</span><span class="o">=</span><span class="n">all_touched</span>
+                <span class="p">)</span>
+                <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">exclude_zmin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">exclude_zmax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s2">"z"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">"z required in combination with exclude_zmin / exclude_zmax"</span>
+                    <span class="p">)</span>
+                <span class="n">uda_dep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"z"</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">exclude_zmin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">uda_exclude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">uda_exclude</span><span class="p">,</span> <span class="n">uda_dep</span> <span class="o">&gt;=</span> <span class="n">exclude_zmin</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">exclude_zmax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">uda_exclude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">uda_exclude</span><span class="p">,</span> <span class="n">uda_dep</span> <span class="o">&lt;=</span> <span class="n">exclude_zmax</span><span class="p">)</span>
+            <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="o">~</span><span class="n">uda_exclude</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">bounds</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"No mask boundary cells found within exclude polygon!"</span><span class="p">)</span>
+
+        <span class="c1"># set new boundary cells, keep same mask value for existing boundary cells</span>
+        <span class="n">ncells</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">bounds</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ncells</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">uda_mask</span> <span class="o">=</span> <span class="n">uda_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">bounds</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">(</span><span class="n">bvalue</span><span class="p">))</span>
+
+        <span class="c1"># TODO avoid any msk3 cells neighboring msk2 cells</span>
+        <span class="c1"># TODO try to include 'diagonally connected msk=2 neighbouring cells'</span>
+        <span class="k">if</span> <span class="n">connectivity</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bounds_msk2</span> <span class="o">=</span> <span class="n">uda_mask</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">bounds_msk2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_boundary_cells_msk2</span><span class="p">()</span>  <span class="c1"># uda_mask)</span>
+
+            <span class="n">ncells</span> <span class="o">=</span> <span class="n">bounds_msk2</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>  <span class="c1"># np.count_nonzero(bounds_msk2.sum())</span>
+            <span class="k">if</span> <span class="n">ncells</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">uda_mask</span> <span class="o">=</span> <span class="n">uda_mask</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">bounds_msk2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">(</span><span class="n">bvalue</span><span class="p">))</span>
+
+        <span class="c1"># add mask to grid</span>
+        <span class="n">grid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">grid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+            <span class="n">xu</span><span class="o">.</span><span class="n">UgridDataArray</span><span class="p">(</span>
+                <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">uda_mask</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="n">grid</span><span class="o">.</span><span class="n">face_dimension</span><span class="p">]),</span>
+                <span class="n">grid</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">varname</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_gdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">option</span><span class="o">=</span><span class="s2">"all"</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Returns a geodataframe with points for each cell in the mask"""</span>
+
+        <span class="n">nr_cells</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="s2">"mesh2d_nFaces"</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">nr_cells</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Return empty geodataframe</span>
+            <span class="k">return</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">()</span>
+        <span class="n">xz</span><span class="p">,</span> <span class="n">yz</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">face_coordinates</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_mask_variable</span><span class="p">]</span>
+        <span class="n">gdf_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">okay</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s2">"all"</span><span class="p">:</span>
+            <span class="n">iok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">mask</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">option</span> <span class="o">==</span> <span class="s2">"include"</span><span class="p">:</span>
+            <span class="n">iok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">mask</span> <span class="o">==</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">option</span> <span class="o">==</span> <span class="s2">"open"</span><span class="p">:</span>
+            <span class="n">iok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">mask</span> <span class="o">==</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">option</span> <span class="o">==</span> <span class="s2">"outflow"</span><span class="p">:</span>
+            <span class="n">iok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">mask</span> <span class="o">==</span> <span class="mi">3</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">option</span> <span class="o">==</span> <span class="s2">"downstream"</span><span class="p">:</span>
+            <span class="n">iok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">mask</span> <span class="o">==</span> <span class="mi">5</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">option</span> <span class="o">==</span> <span class="s2">"neumann"</span><span class="p">:</span>
+            <span class="n">iok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">mask</span> <span class="o">==</span> <span class="mi">6</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">iok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">mask</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">999</span><span class="p">))</span>
+        <span class="n">okay</span><span class="p">[</span><span class="n">iok</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">icel</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nr_cells</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">okay</span><span class="p">[</span><span class="n">icel</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">point</span> <span class="o">=</span> <span class="n">shapely</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">xz</span><span class="p">[</span><span class="n">icel</span><span class="p">],</span> <span class="n">yz</span><span class="p">[</span><span class="n">icel</span><span class="p">])</span>
+                <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"geometry"</span><span class="p">:</span> <span class="n">point</span><span class="p">}</span>
+                <span class="n">gdf_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">gdf_list</span><span class="p">:</span>
+            <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">gdf_list</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Cannot set crs of gdf with empty list</span>
+            <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">gdf_list</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">gdf</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear_overlay</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Invalidate the cached mask-overlay dataframe.</span>
+
+<span class="sd">        Call this whenever the grid or mask is rebuilt so the next</span>
+<span class="sd">        :py:meth:`map_overlay` render picks up fresh values.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_overlay</span><span class="o">.</span><span class="n">invalidate</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">map_overlay</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">file_name</span><span class="p">,</span>
+        <span class="n">xlim</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">ylim</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">colors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">px</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">800</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Render a PNG mask overlay.</span>
+
+<span class="sd">        One-line wrapper around</span>
+<span class="sd">        :py:class:`hydromt_sfincs.workflows.map_overlay.MaskOverlay`.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">data_vars</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="c1"># Skip when the mask variable this subclass renders isn't built</span>
+        <span class="c1"># yet (e.g. SnapWave mask before ``create`` has run).</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_variable</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_overlay</span><span class="o">.</span><span class="n">render</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">face_coordinates</span><span class="p">[</span><span class="mi">0</span><span class="p">][:],</span>
+            <span class="n">y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">face_coordinates</span><span class="p">[</span><span class="mi">1</span><span class="p">][:],</span>
+            <span class="n">mask</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_mask_variable</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:],</span>
+            <span class="n">source_crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span>
+            <span class="n">file_name</span><span class="o">=</span><span class="n">file_name</span><span class="p">,</span>
+            <span class="n">xlim</span><span class="o">=</span><span class="n">xlim</span><span class="p">,</span>
+            <span class="n">ylim</span><span class="o">=</span><span class="n">ylim</span><span class="p">,</span>
+            <span class="n">colors</span><span class="o">=</span><span class="n">colors</span><span class="p">,</span>
+            <span class="n">px</span><span class="o">=</span><span class="n">px</span><span class="p">,</span>
+            <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_find_boundary_cells</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">varname</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"mu"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+        <span class="n">mu1</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"mu1"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">mu2</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"mu2"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">nu</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"nu"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+        <span class="n">nu1</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"nu1"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">nu2</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"nu2"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">md</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"md"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+        <span class="n">md1</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"md1"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">md2</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"md2"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">nd</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"nd"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+        <span class="n">nd1</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"nd1"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">nd2</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"nd2"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="o">-</span> <span class="mi">1</span>
+
+        <span class="c1"># mask = self.data["msk"].values[:]</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">varname</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>  <span class="c1"># TL: can be both sfincs or snapwave msk</span>
+
+        <span class="n">nr_cells</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="s2">"mesh2d_nFaces"</span><span class="p">]</span>
+
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nr_cells</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+        <span class="c1"># Check left neighbors</span>
+        <span class="n">left_coarser</span> <span class="o">=</span> <span class="n">md</span> <span class="o">&lt;=</span> <span class="mi">0</span>  <span class="c1"># Coarser or equal to the left</span>
+        <span class="n">left_finer1</span> <span class="o">=</span> <span class="p">(</span><span class="n">md1</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">mask</span><span class="p">[</span><span class="n">md1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># Cell to the left and inactive</span>
+        <span class="n">left_finer2</span> <span class="o">=</span> <span class="p">(</span><span class="n">md2</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
+            <span class="n">mask</span><span class="p">[</span><span class="n">md2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="p">)</span>  <span class="c1"># (Finer) cell to the left and inactive</span>
+        <span class="n">bounds</span> <span class="o">|=</span> <span class="p">(</span><span class="n">left_coarser</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">left_finer1</span><span class="p">))</span> <span class="o">|</span> <span class="p">(</span>  <span class="c1"># cell to the left is inactive</span>
+            <span class="o">~</span><span class="n">left_coarser</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">left_finer1</span> <span class="o">|</span> <span class="n">left_finer2</span><span class="p">)</span>
+        <span class="p">)</span>  <span class="c1"># one of the finer cells to the left is inactive</span>
+
+        <span class="c1"># Check right neighbors</span>
+        <span class="n">right_coarser</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+        <span class="n">right_finer1</span> <span class="o">=</span> <span class="p">(</span><span class="n">mu1</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">mask</span><span class="p">[</span><span class="n">mu1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">right_finer2</span> <span class="o">=</span> <span class="p">(</span><span class="n">mu2</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">mask</span><span class="p">[</span><span class="n">mu2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">bounds</span> <span class="o">|=</span> <span class="p">(</span><span class="n">right_coarser</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">right_finer1</span> <span class="o">|</span> <span class="n">right_finer2</span><span class="p">))</span> <span class="o">|</span> <span class="p">(</span>
+            <span class="o">~</span><span class="n">right_coarser</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">right_finer1</span> <span class="o">|</span> <span class="n">right_finer2</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Check bottom neighbors</span>
+        <span class="n">below_coarser</span> <span class="o">=</span> <span class="n">nd</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+        <span class="n">below_finer1</span> <span class="o">=</span> <span class="p">(</span><span class="n">nd1</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">mask</span><span class="p">[</span><span class="n">nd1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">below_finer2</span> <span class="o">=</span> <span class="p">(</span><span class="n">nd2</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">mask</span><span class="p">[</span><span class="n">nd2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">bounds</span> <span class="o">|=</span> <span class="p">(</span><span class="n">below_coarser</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">below_finer1</span> <span class="o">|</span> <span class="n">below_finer2</span><span class="p">))</span> <span class="o">|</span> <span class="p">(</span>
+            <span class="o">~</span><span class="n">below_coarser</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">below_finer1</span> <span class="o">|</span> <span class="n">below_finer2</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Check top neighbors</span>
+        <span class="n">above_coarser</span> <span class="o">=</span> <span class="n">nu</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+        <span class="n">above_finer1</span> <span class="o">=</span> <span class="p">(</span><span class="n">nu1</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">mask</span><span class="p">[</span><span class="n">nu1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">above_finer2</span> <span class="o">=</span> <span class="p">(</span><span class="n">nu2</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">mask</span><span class="p">[</span><span class="n">nu2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">bounds</span> <span class="o">|=</span> <span class="p">(</span><span class="n">above_coarser</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">above_finer1</span> <span class="o">|</span> <span class="n">above_finer2</span><span class="p">))</span> <span class="o">|</span> <span class="p">(</span>
+            <span class="o">~</span><span class="n">above_coarser</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">above_finer1</span> <span class="o">|</span> <span class="n">above_finer2</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Handling boundary cells</span>
+        <span class="n">bounds</span><span class="p">[</span><span class="n">md1</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># Left boundary</span>
+        <span class="n">bounds</span><span class="p">[</span><span class="n">mu1</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># Right boundary</span>
+        <span class="n">bounds</span><span class="p">[</span><span class="n">nd1</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># Bottom boundary</span>
+        <span class="n">bounds</span><span class="p">[</span><span class="n">nu1</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># Top boundary</span>
+
+        <span class="c1"># Get rid of the inactive boundary cells that were added</span>
+        <span class="c1"># in the previous step</span>
+        <span class="n">bounds</span><span class="p">[</span><span class="n">mask</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="n">bounds</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_find_boundary_cells_msk2</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># NOTE: this function would become abundant when boundary cells are correctly found in snapwave</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"mu"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+        <span class="n">mu1</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"mu1"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">mu2</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"mu2"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">nu</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"nu"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+        <span class="n">nu1</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"nu1"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">nu2</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"nu2"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">md</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"md"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+        <span class="n">md1</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"md1"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">md2</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"md2"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">nd</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"nd"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+        <span class="n">nd1</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"nd1"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">nd2</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"nd2"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="o">-</span> <span class="mi">1</span>
+
+        <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds_msk2</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+
+        <span class="n">nr_cells</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="s2">"mesh2d_nFaces"</span><span class="p">]</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nr_cells</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+        <span class="c1"># When upper and right are msk=2</span>
+        <span class="n">above_coarser</span> <span class="o">=</span> <span class="n">nu</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+        <span class="n">right_coarser</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+        <span class="n">above_finer1</span> <span class="o">=</span> <span class="p">(</span><span class="n">nu1</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">mask</span><span class="p">[</span><span class="n">nu1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">right_finer1</span> <span class="o">=</span> <span class="p">(</span><span class="n">mu1</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">mask</span><span class="p">[</span><span class="n">mu1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">bounds</span> <span class="o">|=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">mask</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">above_coarser</span> <span class="o">&amp;</span> <span class="n">right_coarser</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">above_finer1</span> <span class="o">&amp;</span> <span class="n">right_finer1</span><span class="p">)</span>  <span class="c1"># |</span>
+            <span class="c1"># (~below_coarser &amp; (below_finer1 | below_finer2))</span>
+        <span class="p">)</span>
+
+        <span class="c1"># When upper and left are msk=2</span>
+        <span class="n">above_coarser</span> <span class="o">=</span> <span class="n">nu</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+        <span class="n">left_coarser</span> <span class="o">=</span> <span class="n">md</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+        <span class="n">above_finer1</span> <span class="o">=</span> <span class="p">(</span><span class="n">nu1</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">mask</span><span class="p">[</span><span class="n">nu1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">left_finer1</span> <span class="o">=</span> <span class="p">(</span><span class="n">md1</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">mask</span><span class="p">[</span><span class="n">md1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">bounds</span> <span class="o">|=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">mask</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">above_coarser</span> <span class="o">&amp;</span> <span class="n">left_coarser</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">above_finer1</span> <span class="o">&amp;</span> <span class="n">left_finer1</span><span class="p">)</span>  <span class="c1"># |</span>
+            <span class="c1"># (~below_coarser &amp; (below_finer1 | below_finer2))</span>
+        <span class="p">)</span>
+
+        <span class="c1"># When lower and left are msk=2</span>
+        <span class="n">lower_coarser</span> <span class="o">=</span> <span class="n">nd</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+        <span class="n">left_coarser</span> <span class="o">=</span> <span class="n">md</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+        <span class="n">below_finer1</span> <span class="o">=</span> <span class="p">(</span><span class="n">nd1</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">mask</span><span class="p">[</span><span class="n">nd1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">left_finer1</span> <span class="o">=</span> <span class="p">(</span><span class="n">md1</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">mask</span><span class="p">[</span><span class="n">md1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">bounds</span> <span class="o">|=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">mask</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">lower_coarser</span> <span class="o">&amp;</span> <span class="n">left_coarser</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">below_finer1</span> <span class="o">&amp;</span> <span class="n">left_finer1</span><span class="p">)</span>  <span class="c1"># |</span>
+            <span class="c1"># (~below_coarser &amp; (below_finer1 | below_finer2))</span>
+        <span class="p">)</span>
+
+        <span class="c1"># When lower and right are msk=2</span>
+        <span class="n">lower_coarser</span> <span class="o">=</span> <span class="n">nd</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+        <span class="n">right_coarser</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+        <span class="n">below_finer1</span> <span class="o">=</span> <span class="p">(</span><span class="n">nd1</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">mask</span><span class="p">[</span><span class="n">nd1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">right_finer1</span> <span class="o">=</span> <span class="p">(</span><span class="n">mu1</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">mask</span><span class="p">[</span><span class="n">mu1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">bounds</span> <span class="o">|=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">mask</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">lower_coarser</span> <span class="o">&amp;</span> <span class="n">right_coarser</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">below_finer1</span> <span class="o">&amp;</span> <span class="n">right_finer1</span><span class="p">)</span>  <span class="c1"># |</span>
+            <span class="c1"># (~below_coarser &amp; (below_finer1 | below_finer2))</span>
+        <span class="p">)</span>
+
+        <span class="c1"># # Handling boundary cells</span>
+        <span class="c1"># bounds[md1 == -1] = True  # Left boundary</span>
+        <span class="c1"># bounds[mu1 == -1] = True  # Right boundary</span>
+        <span class="c1"># bounds[nd1 == -1] = True  # Bottom boundary</span>
+        <span class="c1"># bounds[nu1 == -1] = True  # Top boundary</span>
+
+        <span class="c1"># # Get rid of the inactive boundary cells that were added</span>
+        <span class="c1"># # in the previous step</span>
+        <span class="c1"># bounds[mask == 0] = False</span>
+
+        <span class="k">return</span> <span class="n">bounds</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_neighbors_in_larger_cell</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">m</span><span class="p">):</span>
+    <span class="n">nnbr</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">mnbr</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">odd</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">odd</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+        <span class="c1"># lower left</span>
+        <span class="n">nnbr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">mnbr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span>
+        <span class="n">nnbr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span>
+        <span class="n">mnbr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">nnbr</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">mnbr</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">odd</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="ow">and</span> <span class="n">odd</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+        <span class="c1"># lower right</span>
+        <span class="n">nnbr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span>
+        <span class="n">mnbr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">nnbr</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">mnbr</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">nnbr</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">mnbr</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span>
+    <span class="k">elif</span> <span class="n">odd</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">odd</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+        <span class="c1"># upper left</span>
+        <span class="n">nnbr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">mnbr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span>
+        <span class="n">nnbr</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">mnbr</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">nnbr</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span>
+        <span class="n">mnbr</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># upper right</span>
+        <span class="n">nnbr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">mnbr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">nnbr</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">mnbr</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span>
+        <span class="n">nnbr</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span>
+        <span class="n">mnbr</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">nnbr</span><span class="p">,</span> <span class="n">mnbr</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">odd</span><span class="p">(</span><span class="n">num</span><span class="p">):</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">num</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">even</span><span class="p">(</span><span class="n">num</span><span class="p">):</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">num</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">inpolygon</span><span class="p">(</span><span class="n">xq</span><span class="p">,</span> <span class="n">yq</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="n">shape</span> <span class="o">=</span> <span class="n">xq</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">xq</span> <span class="o">=</span> <span class="n">xq</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">yq</span> <span class="o">=</span> <span class="n">yq</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="p">[(</span><span class="n">xq</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">yq</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">xq</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">Path</span><span class="p">([(</span><span class="n">crds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">crds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">crds</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="p">)])</span>
+    <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">contains_points</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">binary_search</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+    <span class="n">indx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">indx</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">vals</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">vals</span><span class="p">[</span><span class="n">indx</span><span class="p">]</span> <span class="o">==</span> <span class="n">val</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">indx</span>
+    <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright Deltares.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.23.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

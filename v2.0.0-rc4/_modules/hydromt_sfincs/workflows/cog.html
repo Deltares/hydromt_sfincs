@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" data-theme="light">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>hydromt_sfincs.workflows.cog &#8212; HydroMT SFINCS  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/autodoc_pydantic.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/theme-deltares.css?v=a3fd7a5a" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=18bd87630a240e9c25be"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
+
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+let _lazyObserver = null;
+let _renderQueue = Promise.resolve();
+let closeModal = () => {};
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal?.classList.contains('active')) {
+        closeModal();
+    }
+});
+
+// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
+// so this is safe to call both for the initial batch and for diagrams that
+// render lazily once they become visible.
+const addZoomToSvgs = (svgs) => {
+    svgs.each(function() {
+        if (this.getAttribute('data-zoom-applied') === 'true') return;
+        var svg = d3.select(this);
+        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+        var inner = svg.select("g");
+        var zoom = d3.zoom().on("zoom", function(event) {
+            inner.attr("transform", event.transform);
+        });
+        svg.call(zoom);
+        this.setAttribute('data-zoom-applied', 'true');
+    });
+};
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        // Disconnect any previous lazy rendering observer
+        if (_lazyObserver) {
+            _lazyObserver.disconnect();
+            _lazyObserver = null;
+        }
+
+        all_mermaids.forEach((el) => {
+            el.removeAttribute('data-mermaid-deferred');
+            el.removeAttribute('data-mermaid-render-failed');
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+
+        // Separate visible and hidden elements. Mermaid's layout engine measures
+        // text dimensions via the DOM, which fails for elements hidden by a parent
+        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
+        // producing broken SVGs. Render visible elements now, defer hidden ones.
+        const visible = [];
+        const hidden = [];
+        all_mermaids.forEach((el) => {
+            // offsetParent is null for display:none ancestors.
+            // getClientRects().length > 0 catches position:fixed elements
+            // (which also have null offsetParent but are still visible).
+            if (el.offsetParent !== null || el.getClientRects().length > 0) {
+                visible.push(el);
+            } else {
+                hidden.push(el);
+                el.setAttribute('data-mermaid-deferred', 'true');
+            }
+        });
+
+        if (visible.length > 0) {
+            try {
+                await mermaid.run({ nodes: visible });
+            } catch (e) {
+                console.error("Mermaid rendering failed:", e);
+            }
+        }
+
+        // Lazily render hidden elements when they become visible.
+        // Uses a promise chain (_renderQueue) to serialize rendering,
+        // since IntersectionObserver may report multiple entries at once
+        // and mermaid.run() is not safe to call concurrently.
+        if (hidden.length > 0) {
+            if (typeof IntersectionObserver === 'undefined') {
+                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
+            } else {
+                _renderQueue = Promise.resolve();
+                _lazyObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
+                            _lazyObserver.unobserve(entry.target);
+                            const el = entry.target;
+                            _renderQueue = _renderQueue.then(async () => {
+                                try {
+                                    await mermaid.run({ nodes: [el] });
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    // Apply zoom to the now-rendered diagram, matching
+                                    // the decoration visible diagrams receive.
+                                    if (false) {
+                                        addZoomToSvgs(d3.selectAll("").select(function() {
+                                            return this.querySelector("svg");
+                                        }));
+                                    }
+                                } catch (e) {
+                                    console.error("Mermaid deferred rendering failed:", e);
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    el.setAttribute('data-mermaid-render-failed', 'true');
+                                }
+                            });
+                        }
+                    }
+                });
+                hidden.forEach((el) => _lazyObserver.observe(el));
+            }
+        }
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    // Exclude deferred (hidden) and render-failed elements from completion checks
+    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
+    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
+
+    if (false) {
+        const mermaids_to_add_zoom = 0 === -1 ? mermaids_active.length : 0;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("").select(function() {
+                return this.querySelector("svg");
+            });
+            // Wait until every active (visible) diagram has rendered. Deferred
+            // diagrams are excluded, so a fixed d3_node_count that counts a
+            // hidden diagram no longer loops forever waiting for its SVG.
+            if(mermaids_active.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            }
+            addZoomToSvgs(svgs);
+        }
+    } else if(mermaids_active.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if (!true) return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = "\u26f6";
+        fullscreenBtn.style.opacity = "50%";
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scrollX, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.display = 'block';
+
+                if (false) {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+
+
+const load = async () => {
+    initStyles();
+
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...{"startOnLoad": false},
+                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...{"startOnLoad": false},
+    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/hydromt_sfincs/workflows/cog';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.23.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0-r';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="icon" href="../../../_static/hydromt-icon.svg"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="2.0.0-rc4" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="light">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+    
+    <img src="../../../_static/hydromt-icon.svg" class="logo__image only-light" alt=""/>
+    <img src="../../../_static/hydromt-icon.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">HydroMT SFINCS</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/intro.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user_guide/intro.html">
+    User guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api/api.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../dev_guide/intro.html">
+    Developments
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/latest/index.html">
+    HydroMT core
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../../_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../../_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/intro.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user_guide/intro.html">
+    User guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api/api.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../dev_guide/intro.html">
+    Developments
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://deltares.github.io/hydromt/latest/index.html">
+    HydroMT core
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Deltares/hydromt_sfincs" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" class="icon-link-image" alt="GitHub"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://sfincs.readthedocs.io/" title="SFINCS" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../../_static/sfincs_logo_mHv_icon.ico" class="icon-link-image" alt="SFINCS"/></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.deltares.nl/en/" title="Deltares" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../../_static/deltares-blue.svg" class="icon-link-image" alt="Deltares"/></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">hydromt_sfincs.workflows.cog</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for hydromt_sfincs.workflows.cog</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Cloud-Optimized GeoTIFF (COG) outputs for SFINCS quadtree grids."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyproj</span><span class="w"> </span><span class="kn">import</span> <span class="n">Transformer</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">rasterio</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rasterio.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">Resampling</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rasterio.windows</span><span class="w"> </span><span class="kn">import</span> <span class="n">Window</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rasterio.rio.overview</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_maximum_overview_level</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span><span class="p">,</span> <span class="n">workflows</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"create_index_cog"</span><span class="p">,</span> <span class="s2">"create_topobathy_cog"</span><span class="p">,</span> <span class="s2">"build_overviews"</span><span class="p">]</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="create_topobathy_cog">
+<a class="viewcode-back" href="../../../_generated/hydromt_sfincs.workflows.cog.create_topobathy_cog.html#hydromt_sfincs.workflows.cog.create_topobathy_cog">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_topobathy_cog</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="s2">"SfincsModel"</span><span class="p">,</span>
+    <span class="n">elevation_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
+    <span class="n">filename</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+    <span class="n">res</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">river_list</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">nrmax</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">,</span>  <span class="c1"># blocksize</span>
+    <span class="n">z_minimum</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">20000.0</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Write a Cloud Optimized GeoTIFF (COG) with merged topobathy data.</span>
+
+<span class="sd">    The elevation datasets (and optional river burn-in) are merged onto a</span>
+<span class="sd">    regular, north-up raster in the model CRS that covers the model bounds</span>
+<span class="sd">    (or ``bounds``) at resolution ``res``. The raster is processed in blocks</span>
+<span class="sd">    of at most ``nrmax`` x ``nrmax`` pixels to limit memory use. Missing</span>
+<span class="sd">    values are interpolated/extrapolated, so the output contains no nodata</span>
+<span class="sd">    pixels in practice; the nodata value is NaN.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    model : SfincsModel</span>
+<span class="sd">        The SfincsModel instance providing the CRS, bounds and data catalog.</span>
+<span class="sd">    elevation_list : List[dict]</span>
+<span class="sd">        List of dictionaries with topobathy data.</span>
+<span class="sd">        Each should minimally contain a data catalog source name, data file path,</span>
+<span class="sd">        or xarray raster object ('elevation').</span>
+<span class="sd">        Optional merge arguments include: 'zmin', 'zmax', 'mask', 'offset', 'reproj_method',</span>
+<span class="sd">        and 'merge_method', see example below. For a complete overview of all merge options,</span>
+<span class="sd">        see :py:func:`hydromt.workflows.merge_multi_dataarrays`</span>
+
+<span class="sd">        ::</span>
+
+<span class="sd">            [</span>
+<span class="sd">                {'elevation': 'merit_hydro', 'zmin': 0.01},</span>
+<span class="sd">                {'elevation': 'gebco', 'offset': 0, 'merge_method': 'first', reproj_method: 'bilinear'}</span>
+<span class="sd">            ]</span>
+
+<span class="sd">    filename : str or Path</span>
+<span class="sd">        Output COG file path.</span>
+<span class="sd">    res : float</span>
+<span class="sd">        Raster resolution in model CRS units.</span>
+<span class="sd">    river_list : List[dict], optional</span>
+<span class="sd">        List of dictionaries with river datasets. Each dictionary should at least</span>
+<span class="sd">        contain a river centerline data and optionally a river mask:</span>
+
+<span class="sd">        * centerlines: filename (or Path) of river centerline with attributes</span>
+<span class="sd">            rivwth (river width [m]; required if not river mask provided),</span>
+<span class="sd">            rivdph or rivbed (river depth [m]; river bedlevel [m+REF]),</span>
+<span class="sd">            manning (Manning's n [s/m^(1/3)]; optional)</span>
+<span class="sd">        * mask (optional): filename (or Path) of river mask</span>
+<span class="sd">        * point_zb (optional): filename (or Path) of river points with bed (z) values</span>
+<span class="sd">        * river attributes (optional): "rivdph", "rivbed", "rivwth", "manning"</span>
+<span class="sd">            to fill missing values</span>
+<span class="sd">        * arguments to the river burn method (optional):</span>
+<span class="sd">            segment_length [m] (default 500m) and riv_bank_q [0-1] (default 0.5)</span>
+<span class="sd">            which used to estimate the river bank height in case river depth is provided.</span>
+
+<span class="sd">        For more info see :py:func:`hydromt.workflows.bathymetry.burn_river_rect`</span>
+
+<span class="sd">        ::</span>
+
+<span class="sd">            [{'centerlines': 'river_lines', 'mask': 'river_mask', 'manning': 0.035}]</span>
+
+<span class="sd">    bounds : List[float], optional</span>
+<span class="sd">        Raster extent ``[xmin, ymin, xmax, ymax]`` in model CRS units, by default</span>
+<span class="sd">        the model bounds. The extent is rounded outwards to a multiple of ``res``.</span>
+<span class="sd">    buffer_cells : int, optional</span>
+<span class="sd">        Number of cells between datasets to ensure smooth transition of bed levels,</span>
+<span class="sd">        by default 0</span>
+<span class="sd">    nrmax : int, optional</span>
+<span class="sd">        Maximum number of pixels per block side, by default 2000.</span>
+<span class="sd">        These blocks are used to prevent memory issues while working with large datasets</span>
+<span class="sd">    z_minimum : float, optional</span>
+<span class="sd">        Minimum elevation in the output raster, by default -20000.0</span>
+<span class="sd">    """</span>
+
+    <span class="n">river_list</span> <span class="o">=</span> <span class="n">river_list</span> <span class="ow">or</span> <span class="p">[]</span>
+
+    <span class="n">elevation_list</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_parse_elevation_list</span><span class="p">(</span><span class="n">elevation_list</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="n">res</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">river_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">river_list</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_parse_river_list</span><span class="p">(</span><span class="n">river_list</span><span class="p">)</span>
+
+    <span class="c1"># create a grid that covers the desired region at the desired resolution</span>
+    <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">bounds</span>
+    <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+
+    <span class="c1"># Round out to nearest dx</span>
+    <span class="n">x0</span> <span class="o">=</span> <span class="n">x0</span> <span class="o">-</span> <span class="p">(</span><span class="n">x0</span> <span class="o">%</span> <span class="n">res</span><span class="p">)</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">x1</span> <span class="o">+</span> <span class="p">(</span><span class="n">res</span> <span class="o">-</span> <span class="n">x1</span> <span class="o">%</span> <span class="n">res</span><span class="p">)</span>
+    <span class="n">y0</span> <span class="o">=</span> <span class="n">y0</span> <span class="o">-</span> <span class="p">(</span><span class="n">y0</span> <span class="o">%</span> <span class="n">res</span><span class="p">)</span>
+    <span class="n">y1</span> <span class="o">=</span> <span class="n">y1</span> <span class="o">+</span> <span class="p">(</span><span class="n">res</span> <span class="o">-</span> <span class="n">y1</span> <span class="o">%</span> <span class="n">res</span><span class="p">)</span>
+
+    <span class="n">mmax</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">((</span><span class="n">x1</span> <span class="o">-</span> <span class="n">x0</span><span class="p">)</span> <span class="o">/</span> <span class="n">res</span><span class="p">))</span>  <span class="c1"># nr of columns</span>
+    <span class="n">nmax</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">((</span><span class="n">y1</span> <span class="o">-</span> <span class="n">y0</span><span class="p">)</span> <span class="o">/</span> <span class="n">res</span><span class="p">))</span>  <span class="c1"># nr of rows</span>
+
+    <span class="n">da_grid</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">make_regular_grid</span><span class="p">(</span>
+        <span class="n">x0</span><span class="o">=</span><span class="n">x0</span><span class="p">,</span>
+        <span class="n">y0</span><span class="o">=</span><span class="n">y0</span><span class="p">,</span>
+        <span class="n">dx</span><span class="o">=</span><span class="n">res</span><span class="p">,</span>
+        <span class="n">dy</span><span class="o">=</span><span class="n">res</span><span class="p">,</span>
+        <span class="n">mmax</span><span class="o">=</span><span class="n">mmax</span><span class="p">,</span>
+        <span class="n">nmax</span><span class="o">=</span><span class="n">nmax</span><span class="p">,</span>
+        <span class="n">rotation</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">crs</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">x_dim</span><span class="p">,</span> <span class="n">y_dim</span> <span class="o">=</span> <span class="n">da_grid</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">x_dim</span><span class="p">,</span> <span class="n">da_grid</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">y_dim</span>
+
+    <span class="c1"># make_regular_grid returns a south-up grid (origin in the lower-left corner);</span>
+    <span class="c1"># flip it so that the COG is north-up, as expected by most GIS tools and viewers</span>
+    <span class="n">da_grid</span> <span class="o">=</span> <span class="n">da_grid</span><span class="o">.</span><span class="n">isel</span><span class="p">({</span><span class="n">y_dim</span><span class="p">:</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)})</span>
+
+    <span class="n">grid_dim</span> <span class="o">=</span> <span class="n">da_grid</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="c1"># create COGs for topobathy/manning</span>
+    <span class="n">profile</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">driver</span><span class="o">=</span><span class="s2">"GTiff"</span><span class="p">,</span>
+        <span class="n">width</span><span class="o">=</span><span class="n">da_grid</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="n">x_dim</span><span class="p">],</span>
+        <span class="n">height</span><span class="o">=</span><span class="n">da_grid</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="n">y_dim</span><span class="p">],</span>
+        <span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+        <span class="n">crs</span><span class="o">=</span><span class="n">da_grid</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span>
+        <span class="n">transform</span><span class="o">=</span><span class="n">da_grid</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span>
+        <span class="n">tiled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blockxsize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+        <span class="n">blockysize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+        <span class="n">compress</span><span class="o">=</span><span class="s2">"deflate"</span><span class="p">,</span>
+        <span class="n">predictor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">profile</span><span class="o">=</span><span class="s2">"COG"</span><span class="p">,</span>
+        <span class="n">nodata</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+        <span class="n">BIGTIFF</span><span class="o">=</span><span class="s2">"YES"</span><span class="p">,</span>  <span class="c1"># Add the BIGTIFF option here</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Create the output directory if it doesn't exist and create an empty COG file</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">filename</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="o">**</span><span class="n">profile</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="c1"># Determine the number of blocks in each direction</span>
+    <span class="n">n1</span><span class="p">,</span> <span class="n">m1</span> <span class="o">=</span> <span class="n">grid_dim</span>
+    <span class="n">nrcb</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">nrmax</span><span class="p">))</span>  <span class="c1"># nr of regular cells in a block</span>
+    <span class="n">nrbn</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">n1</span> <span class="o">/</span> <span class="n">nrcb</span><span class="p">))</span>  <span class="c1"># nr of blocks in n direction</span>
+    <span class="n">nrbm</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">m1</span> <span class="o">/</span> <span class="n">nrcb</span><span class="p">))</span>  <span class="c1"># nr of blocks in m direction</span>
+
+    <span class="c1"># avoid blocks with width or height of 1</span>
+    <span class="n">merge_last_col</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">merge_last_row</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">m1</span> <span class="o">%</span> <span class="n">nrcb</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">nrbm</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="n">merge_last_col</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="n">n1</span> <span class="o">%</span> <span class="n">nrcb</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">nrbn</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="n">merge_last_row</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Number of regular cells in a block : "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">nrcb</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Number of blocks in n direction    : "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">nrbn</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Number of blocks in m direction    : "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">nrbm</span><span class="p">))</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Grid size            : dx=</span><span class="si">{</span><span class="n">res</span><span class="si">}</span><span class="s2">, dy=</span><span class="si">{</span><span class="n">res</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1">## Loop through blocks</span>
+    <span class="n">ib</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nrbm</span><span class="p">):</span>
+        <span class="n">bm0</span> <span class="o">=</span> <span class="n">ii</span> <span class="o">*</span> <span class="n">nrcb</span>  <span class="c1"># Index of first m in block</span>
+        <span class="n">bm1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">bm0</span> <span class="o">+</span> <span class="n">nrcb</span><span class="p">,</span> <span class="n">m1</span><span class="p">)</span>  <span class="c1"># last m in block</span>
+        <span class="k">if</span> <span class="n">merge_last_col</span> <span class="ow">and</span> <span class="n">ii</span> <span class="o">==</span> <span class="p">(</span><span class="n">nrbm</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">bm1</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nrbn</span><span class="p">):</span>
+            <span class="n">bn0</span> <span class="o">=</span> <span class="n">jj</span> <span class="o">*</span> <span class="n">nrcb</span>  <span class="c1"># Index of first n in block</span>
+            <span class="n">bn1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">bn0</span> <span class="o">+</span> <span class="n">nrcb</span><span class="p">,</span> <span class="n">n1</span><span class="p">)</span>  <span class="c1"># last n in block</span>
+            <span class="k">if</span> <span class="n">merge_last_row</span> <span class="ow">and</span> <span class="n">jj</span> <span class="o">==</span> <span class="p">(</span><span class="n">nrbn</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">bn1</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="c1"># Count</span>
+            <span class="n">ib</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"block </span><span class="si">{</span><span class="n">ib</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">nrbn</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nrbm</span><span class="si">}</span><span class="s2"> -- "</span>
+                <span class="sa">f</span><span class="s2">"col </span><span class="si">{</span><span class="n">bm0</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">bm1</span><span class="o">-</span><span class="mi">1</span><span class="si">}</span><span class="s2"> | row </span><span class="si">{</span><span class="n">bn0</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">bn1</span><span class="o">-</span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+
+            <span class="c1"># calculate transform and shape of block at cell and subgrid level</span>
+            <span class="c1"># copy da_mask block to avoid accidently changing da_mask</span>
+            <span class="n">slice_block</span> <span class="o">=</span> <span class="p">{</span><span class="n">x_dim</span><span class="p">:</span> <span class="nb">slice</span><span class="p">(</span><span class="n">bm0</span><span class="p">,</span> <span class="n">bm1</span><span class="p">),</span> <span class="n">y_dim</span><span class="p">:</span> <span class="nb">slice</span><span class="p">(</span><span class="n">bn0</span><span class="p">,</span> <span class="n">bn1</span><span class="p">)}</span>
+            <span class="n">da_grid_block</span> <span class="o">=</span> <span class="n">da_grid</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">slice_block</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+
+            <span class="c1"># get subgrid bathymetry tile</span>
+            <span class="n">da_dep</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">merge_multi_dataarrays</span><span class="p">(</span>
+                <span class="n">da_list</span><span class="o">=</span><span class="n">elevation_list</span><span class="p">,</span>
+                <span class="n">da_like</span><span class="o">=</span><span class="n">da_grid_block</span><span class="p">,</span>
+                <span class="n">interp_method</span><span class="o">=</span><span class="s2">"linear"</span><span class="p">,</span>
+                <span class="n">buffer_cells</span><span class="o">=</span><span class="n">buffer_cells</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># set minimum depth</span>
+            <span class="n">da_dep</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">da_dep</span><span class="p">,</span> <span class="n">z_minimum</span><span class="p">)</span>
+
+            <span class="c1"># NOTE: this is still open for discussion, but for now we interpolate</span>
+            <span class="c1"># raise warning if NaN values in active cells</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_dep</span><span class="o">.</span><span class="n">values</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">npx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_dep</span><span class="o">.</span><span class="n">values</span><span class="p">)))</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Interpolate elevation data at </span><span class="si">{</span><span class="n">npx</span><span class="si">}</span><span class="s2"> subgrid pixels"</span><span class="p">)</span>
+            <span class="c1"># always interpolate/extrapolate to avoid NaN values</span>
+            <span class="n">da_dep</span> <span class="o">=</span> <span class="n">da_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">interpolate_na</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">"rio_idw"</span><span class="p">,</span> <span class="n">extrapolate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># burn rivers in bathymetry and manning</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">river_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Burn rivers in bathymetry and manning data"</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">riv_kwargs</span> <span class="ow">in</span> <span class="n">river_list</span><span class="p">:</span>
+                    <span class="n">da_dep</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">bathymetry</span><span class="o">.</span><span class="n">burn_river_rect</span><span class="p">(</span>
+                        <span class="n">da_elv</span><span class="o">=</span><span class="n">da_dep</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span> <span class="o">**</span><span class="n">riv_kwargs</span>
+                    <span class="p">)</span>
+
+            <span class="n">x_dim_dep</span><span class="p">,</span> <span class="n">y_dim_dep</span> <span class="o">=</span> <span class="n">da_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">x_dim</span><span class="p">,</span> <span class="n">da_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">y_dim</span>
+            <span class="n">window</span> <span class="o">=</span> <span class="n">Window</span><span class="p">(</span>
+                <span class="n">bm0</span><span class="p">,</span>
+                <span class="n">bn0</span><span class="p">,</span>
+                <span class="n">da_dep</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="n">x_dim_dep</span><span class="p">],</span>
+                <span class="n">da_dep</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="n">y_dim_dep</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="c1"># write the block to the output COG</span>
+            <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">"r+"</span><span class="p">)</span> <span class="k">as</span> <span class="n">dep_tif</span><span class="p">:</span>
+                <span class="n">dep_tif</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                    <span class="n">da_dep</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                    <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span>
+                    <span class="n">indexes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span>
+
+    <span class="c1"># Create COG overviews for faster visualization</span>
+    <span class="n">build_overviews</span><span class="p">(</span>
+        <span class="n">fn</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
+        <span class="n">resample_method</span><span class="o">=</span><span class="s2">"average"</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="create_index_cog">
+<a class="viewcode-back" href="../../../_generated/hydromt_sfincs.workflows.cog.create_index_cog.html#hydromt_sfincs.workflows.cog.create_index_cog">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_index_cog</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="s2">"SfincsModel"</span><span class="p">,</span>
+    <span class="n">filename</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+    <span class="n">filename_topobathy</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+    <span class="n">nrmax</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">,</span>
+    <span class="n">nodata</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2147483647</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Make a Cloud Optimized GeoTIFF (COG) file with the corresponding indices of the SFINCS</span>
+<span class="sd">    grid cells to the high-resolution DEM COG.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    model : SfincsModel</span>
+<span class="sd">        The SfincsModel instance containing the grid information.</span>
+<span class="sd">    filename : Union[str, Path]</span>
+<span class="sd">        The filename for the output COG file containing the indices. Note that this file only works</span>
+<span class="sd">        for this SFINCS model and the topobathy file provided.</span>
+<span class="sd">    filename_topobathy : Union[str, Path],</span>
+<span class="sd">        The filename of the topobathy file from which to read the coordinates.</span>
+<span class="sd">    nrmax : int, optional</span>
+<span class="sd">        The maximum number of cells in a block, by default 2000.</span>
+<span class="sd">    nodata : int, optional</span>
+<span class="sd">        The nodata value for pixels outside the active grid, by default 2147483647</span>
+<span class="sd">        (the maximum value of a signed 32-bit integer). The output dtype is uint32.</span>
+
+<span class="sd">    See also:</span>
+<span class="sd">    ----------</span>
+<span class="sd">    hydromt_sfincs.workflows.cog.build_overviews : Function to build overviews for the COG file.</span>
+<span class="sd">    hydromt_sfincs.workflows.downscaling.downscale_floodmap : Workflow to downscale flood maps</span>
+<span class="sd">    """</span>
+
+    <span class="n">grid</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">grid_component</span>
+
+    <span class="c1"># Read coordinates from topobathy file</span>
+    <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename_topobathy</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
+        <span class="n">dem_crs</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">crs</span>
+        <span class="n">dem_transform</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">transform</span>
+        <span class="n">width</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">width</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">height</span>
+
+        <span class="n">n1</span><span class="p">,</span> <span class="n">m1</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="n">nrcb</span> <span class="o">=</span> <span class="n">nrmax</span>
+        <span class="n">nrbn</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">n1</span> <span class="o">/</span> <span class="n">nrcb</span><span class="p">))</span>
+        <span class="n">nrbm</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">m1</span> <span class="o">/</span> <span class="n">nrcb</span><span class="p">))</span>
+
+        <span class="c1"># avoid blocks with width or height of 1</span>
+        <span class="n">merge_last_col</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">merge_last_row</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">m1</span> <span class="o">%</span> <span class="n">nrcb</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">nrbm</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="n">merge_last_col</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="n">n1</span> <span class="o">%</span> <span class="n">nrcb</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">nrbn</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="n">merge_last_row</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="n">profile</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">driver</span><span class="o">=</span><span class="s2">"GTiff"</span><span class="p">,</span>
+            <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">,</span>
+            <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span>
+            <span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">,</span>
+            <span class="n">crs</span><span class="o">=</span><span class="n">dem_crs</span><span class="p">,</span>
+            <span class="n">tiled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">blockxsize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+            <span class="n">blockysize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+            <span class="n">compress</span><span class="o">=</span><span class="s2">"deflate"</span><span class="p">,</span>
+            <span class="n">transform</span><span class="o">=</span><span class="n">dem_transform</span><span class="p">,</span>
+            <span class="n">nodata</span><span class="o">=</span><span class="n">nodata</span><span class="p">,</span>
+            <span class="n">predictor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">profile</span><span class="o">=</span><span class="s2">"COG"</span><span class="p">,</span>
+            <span class="n">BIGTIFF</span><span class="o">=</span><span class="s2">"YES"</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="o">**</span><span class="n">profile</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="c1"># Create transformer once</span>
+    <span class="n">proj</span> <span class="o">=</span> <span class="n">Transformer</span><span class="o">.</span><span class="n">from_crs</span><span class="p">(</span>
+        <span class="n">dem_crs</span><span class="p">,</span>
+        <span class="n">grid</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span>
+        <span class="n">always_xy</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Loop through blocks</span>
+    <span class="k">for</span> <span class="n">ibm</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nrbm</span><span class="p">):</span>
+        <span class="n">bm0</span> <span class="o">=</span> <span class="n">ibm</span> <span class="o">*</span> <span class="n">nrcb</span>
+        <span class="n">bm1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">bm0</span> <span class="o">+</span> <span class="n">nrcb</span><span class="p">,</span> <span class="n">m1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">merge_last_col</span> <span class="ow">and</span> <span class="n">ibm</span> <span class="o">==</span> <span class="n">nrbm</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">bm1</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">for</span> <span class="n">ibn</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nrbn</span><span class="p">):</span>
+            <span class="n">bn0</span> <span class="o">=</span> <span class="n">ibn</span> <span class="o">*</span> <span class="n">nrcb</span>
+            <span class="n">bn1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">bn0</span> <span class="o">+</span> <span class="n">nrcb</span><span class="p">,</span> <span class="n">n1</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">merge_last_row</span> <span class="ow">and</span> <span class="n">ibn</span> <span class="o">==</span> <span class="n">nrbn</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">bn1</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="c1"># Define a window to read a block of data</span>
+            <span class="n">window</span> <span class="o">=</span> <span class="n">Window</span><span class="p">(</span><span class="n">bm0</span><span class="p">,</span> <span class="n">bn0</span><span class="p">,</span> <span class="n">bm1</span> <span class="o">-</span> <span class="n">bm0</span><span class="p">,</span> <span class="n">bn1</span> <span class="o">-</span> <span class="n">bn0</span><span class="p">)</span>
+
+            <span class="c1"># Calculate the coordinates of the center of each pixel in the block</span>
+            <span class="n">x_coords</span> <span class="o">=</span> <span class="n">dem_transform</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">bm0</span><span class="p">,</span> <span class="n">bm1</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">dem_transform</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">y_coords</span> <span class="o">=</span> <span class="n">dem_transform</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">bn0</span><span class="p">,</span> <span class="n">bn1</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">dem_transform</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+            <span class="n">xx</span><span class="p">,</span> <span class="n">yy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x_coords</span><span class="p">,</span> <span class="n">y_coords</span><span class="p">)</span>
+
+            <span class="c1"># Convert DEM coordinates to SFINCS grid CRS</span>
+            <span class="n">xx</span><span class="p">,</span> <span class="n">yy</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">xx</span><span class="p">,</span> <span class="n">yy</span><span class="p">)</span>
+
+            <span class="c1"># Get SFINCS indices</span>
+            <span class="n">indices</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">get_indices_at_points</span><span class="p">(</span><span class="n">xx</span><span class="p">,</span> <span class="n">yy</span><span class="p">)</span>
+            <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+            <span class="n">indices</span><span class="p">[</span><span class="n">indices</span> <span class="o">==</span> <span class="o">-</span><span class="mi">999</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodata</span>
+
+            <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">bn1</span> <span class="o">-</span> <span class="n">bn0</span><span class="p">,</span> <span class="n">bm1</span> <span class="o">-</span> <span class="n">bm0</span><span class="p">),</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">out</span><span class="p">[:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">indices</span>
+
+            <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">"r+"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fm_tif</span><span class="p">:</span>
+                <span class="n">fm_tif</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                    <span class="n">out</span><span class="p">,</span>
+                    <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span>
+                    <span class="n">indexes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span>
+
+    <span class="n">build_overviews</span><span class="p">(</span>
+        <span class="n">fn</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
+        <span class="n">resample_method</span><span class="o">=</span><span class="s2">"nearest"</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">build_overviews</span><span class="p">(</span>
+    <span class="n">fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+    <span class="n">resample_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"average"</span><span class="p">,</span>
+    <span class="n">overviews</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"auto"</span><span class="p">,</span>
+    <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Build overviews for GeoTIFF file.</span>
+
+<span class="sd">    Overviews are reduced resolution versions of your dataset that can speed up</span>
+<span class="sd">    rendering when you don’t need full resolution. By precomputing the upsampled</span>
+<span class="sd">    pixels, rendering can be significantly faster when zoomed out.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fn : str, Path</span>
+<span class="sd">        Path to GeoTIFF file.</span>
+<span class="sd">    method: str</span>
+<span class="sd">        Resampling method, by default "average". Other option is "nearest".</span>
+<span class="sd">    overviews: list of int, optional</span>
+<span class="sd">        List of overview levels, by default "auto". When set to "auto" the</span>
+<span class="sd">        overview levels are determined based on the size of the dataset.</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># Endswith is not a method of Path so convert to str</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">Path</span><span class="p">):</span>
+        <span class="n">fn</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+
+    <span class="c1"># check if fn is a geotiff file</span>
+    <span class="n">extensions</span> <span class="o">=</span> <span class="p">[</span><span class="s2">".tif"</span><span class="p">,</span> <span class="s2">".tiff"</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="nb">any</span><span class="p">(</span>
+        <span class="n">fn</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span> <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">extensions</span>
+    <span class="p">),</span> <span class="sa">f</span><span class="s2">"File </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2"> is not a GeoTIFF file."</span>
+
+    <span class="c1"># open rasterio dataset</span>
+    <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">"r+"</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
+        <span class="c1"># determine overviews when not provided</span>
+        <span class="k">if</span> <span class="n">overviews</span> <span class="o">==</span> <span class="s2">"auto"</span><span class="p">:</span>
+            <span class="n">bs</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"blockxsize"</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span>
+            <span class="n">max_level</span> <span class="o">=</span> <span class="n">get_maximum_overview_level</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">src</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="n">bs</span><span class="p">)</span>
+            <span class="n">overviews</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="o">**</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">overviews</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"overviews should be a list of integers or 'auto'."</span><span class="p">)</span>
+
+        <span class="n">resampling</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Resampling</span><span class="p">,</span> <span class="n">resample_method</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resampling</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Resampling method unknown: </span><span class="si">{</span><span class="n">resample_method</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="n">no</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">overviews</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Building </span><span class="si">{</span><span class="n">no</span><span class="si">}</span><span class="s2"> overviews with </span><span class="si">{</span><span class="n">resample_method</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="c1"># create new overviews, resampling with average method</span>
+        <span class="n">src</span><span class="o">.</span><span class="n">build_overviews</span><span class="p">(</span><span class="n">overviews</span><span class="p">,</span> <span class="n">resampling</span><span class="p">)</span>
+
+        <span class="c1"># update dataset tags</span>
+        <span class="n">src</span><span class="o">.</span><span class="n">update_tags</span><span class="p">(</span><span class="n">ns</span><span class="o">=</span><span class="s2">"rio_overview"</span><span class="p">,</span> <span class="n">resampling</span><span class="o">=</span><span class="n">resample_method</span><span class="p">)</span>
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright Deltares.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.23.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
