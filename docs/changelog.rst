@@ -31,6 +31,16 @@ Changed
 - Moved the downscaling utilities from ``hydromt_sfincs.utils`` to a dedicated ``hydromt_sfincs.workflows.downscaling`` submodule (re-exported via ``hydromt_sfincs.workflows``).
 - ``downscale_floodmap`` is now parameterised by ``reproj_method`` (``nearest`` or ``bilinear``) and a ``subtract_dem`` flag (flood depth vs. raw water level), and works on both regular and quadtree grids.
 - Moved readers and writers from ``utils.py`` to dedicated ``readers.py`` and ``writers.py`` modules (#390)
+- Moved the COG utilities to ``hydromt_sfincs.workflows.cog``: ``create_topobathy_cog``, ``create_index_cog`` (formerly ``make_index_cog``) and ``build_overviews`` (#403)
+- ``create_topobathy_cog`` (workflow and the regular/quadtree grid components) now merges an ``elevation_list`` from the data catalog in blocks; the component arguments ``bathymetry_sets``, ``bathymetry_database`` and ``dx`` are replaced by ``elevation_list``, ``river_list`` and ``resolution``. The output is a north-up raster in the model CRS with nodata NaN (previously -999) (#403)
+
+Deprecated
+----------
+- ``hydromt_sfincs.workflows.downscaling.make_index_cog``; use ``hydromt_sfincs.workflows.cog.create_index_cog`` (arguments ``indices_fn`` and ``topobathy_fn`` are renamed to ``filename`` and ``filename_topobathy``) (#403)
+
+Removed
+-------
+- ``hydromt_sfincs.workflows.tiling`` and the ``create_index_tiles`` / ``create_topobathy_tiles`` grid component methods; use the COG workflows instead (#403)
 
 v2.0.0-rc3 (22-5-2026)
 =============================
