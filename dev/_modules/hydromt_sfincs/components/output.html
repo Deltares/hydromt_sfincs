@@ -866,8 +866,8 @@ window.runMermaid = runMermaid;</script>
         <span class="c1"># Check that read mode is on</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_assert_read_mode</span><span class="p">()</span>
 
-        <span class="c1"># Read the config file to determine the grid type</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="c1"># Initialize before loading so set() does not trigger a nested read.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialize</span><span class="p">(</span><span class="n">skip_read</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">isabs</span><span class="p">(</span><span class="n">fn_map</span><span class="p">):</span>
             <span class="n">fn_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span> <span class="o">/</span> <span class="n">fn_map</span>
@@ -921,10 +921,8 @@ window.runMermaid = runMermaid;</script>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Read the sfincs_map.nc file and return it as an xarray Dataset."""</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"Grid type not known, trying to read from config file. "</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"regular"</span><span class="p">:</span>
+        <span class="n">grid_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span>
+        <span class="k">if</span> <span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"regular"</span><span class="p">:</span>
             <span class="n">ds_face</span><span class="p">,</span> <span class="n">ds_edge</span> <span class="o">=</span> <span class="n">readers</span><span class="o">.</span><span class="n">read_sfincs_map_results</span><span class="p">(</span>
                 <span class="n">fn_map</span><span class="p">,</span>
                 <span class="n">ds_like</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span>
@@ -935,7 +933,7 @@ window.runMermaid = runMermaid;</script>
             <span class="c1"># save as dict of DataArray</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">ds_face</span><span class="p">,</span> <span class="n">split_dataset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">ds_edge</span><span class="p">,</span> <span class="n">split_dataset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"quadtree"</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"quadtree"</span><span class="p">:</span>
             <span class="k">with</span> <span class="n">xu</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">fn_map</span><span class="p">)</span> <span class="k">as</span> <span class="n">ds</span><span class="p">:</span>
                 <span class="c1"># set coords</span>
                 <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">set_coords</span><span class="p">([</span><span class="s2">"mesh2d_node_x"</span><span class="p">,</span> <span class="s2">"mesh2d_node_y"</span><span class="p">])</span>
