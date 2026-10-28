@@ -55,6 +55,7 @@ doc = [
 	"sphinx_autosummary_accessors", # doc layout
 	"sphinx>=8.0.0,<9.0.0",         # build docs
 	"sphinx_design",                # doc layout
+	"sphinxcontrib-mermaid",        # mermaid diagrams
 	"autodoc_pydantic",             # pydantic autodoc
 ]
 

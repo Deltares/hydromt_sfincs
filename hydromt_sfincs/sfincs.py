@@ -317,7 +317,7 @@ class SfincsModel(Model):
                 logger.warning(f"Could not read component {name}: {e}")
                 continue
 
-    def write(self, write_batch_file: bool = False):
+    def write(self, write_batch_file: bool = False, update_to_latest: bool = False):
         """Write SfincsModel to disk.
 
         This methods writes all components that actually contain data to the specified
@@ -330,6 +330,10 @@ class SfincsModel(Model):
             (``run.bat`` on Windows, ``run.sh`` elsewhere) via
             :meth:`write_batch_file`. Requires ``self.exe_path`` to be
             set. Default ``False``.
+        update_to_latest : bool, optional
+            If True, update the configuration to the latest SFINCS version before writing.
+            Default ``False``. Note this only affects the configuration file and leaves other
+            components untouched.
 
         For more information, see specific component write methods.
         """
@@ -352,7 +356,7 @@ class SfincsModel(Model):
             comp.write()
 
         # Write config last, since individual write methods might update config settings
-        self.config.write()
+        self.config.write(update_to_latest=update_to_latest)
 
         # Write region geometry
         if self.write_gis:
