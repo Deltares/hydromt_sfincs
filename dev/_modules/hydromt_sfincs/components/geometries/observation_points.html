@@ -971,15 +971,19 @@ window.runMermaid = runMermaid;</script>
 
             <span class="k">if</span> <span class="n">within</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">within</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
+                    <span class="c1"># write away the names of points that are removed</span>
+                    <span class="n">removed</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="o">~</span><span class="n">within</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="s2">"name"</span> <span class="ow">in</span> <span class="n">removed</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                            <span class="s2">"Some of the observation points fall out of model domain. Removing points: "</span>
+                            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">removed</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">"Some of the observation points fall out of model domain. Removing </span><span class="si">{</span><span class="p">(</span><span class="o">~</span><span class="n">within</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> points."</span>
+                        <span class="p">)</span>
                     <span class="c1"># keep points that fall within region</span>
                     <span class="n">gdf</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="n">within</span><span class="p">]</span>
-
-                    <span class="c1"># write away the names of points that are removed</span>
-                    <span class="n">gdf_name</span> <span class="o">=</span> <span class="n">gdf</span><span class="o">.</span><span class="n">name</span><span class="p">[</span><span class="o">~</span><span class="n">within</span><span class="p">]</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                        <span class="s2">"Some of the observation points fall out of model domain. Removing points: "</span>
-                        <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">gdf_name</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
-                    <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"None of observation points fall within model domain."</span><span class="p">)</span>
 

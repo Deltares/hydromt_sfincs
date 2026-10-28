@@ -775,46 +775,49 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.build.html#hydromt_sfincs.SfincsModel.build" title="hydromt_sfincs.SfincsModel.build"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build</span></code></a>(*[, write])</p></td>
 <td><p>Single method to build a model from scratch based on settings in <cite>steps</cite>.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">clear_spatial_components</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">clear_spatial_attributes</span></code>()</p></td>
+<td><p>Reset spatial components while preserving model configuration.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">clear_spatial_components</span></code>()</p></td>
 <td><p>Clear all spatial components.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">close</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">close</span></code>()</p></td>
 <td><p>Close all components by closing their open files.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_dict</span></code>(model_dict)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_dict</span></code>(model_dict)</p></td>
 <td><p>Construct a model with the components and other init arguments in the yaml file located at <cite>path</cite>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_yml</span></code>(path)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_yml</span></code>(path)</p></td>
 <td><p>Construct a model with the components and other init arguments in the yaml file located at <cite>path</cite>.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_component</span></code>(name)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_component</span></code>(name)</p></td>
 <td><p>Get a component from the model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_model_time</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_model_time</span></code>()</p></td>
 <td><p>Return (tstart, tstop) tuple with parsed model start and end time</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.plot_basemap.html#hydromt_sfincs.SfincsModel.plot_basemap" title="hydromt_sfincs.SfincsModel.plot_basemap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_basemap</span></code></a>([fn_out, variable, shaded, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.plot_basemap.html#hydromt_sfincs.SfincsModel.plot_basemap" title="hydromt_sfincs.SfincsModel.plot_basemap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_basemap</span></code></a>([fn_out, variable, shaded, ...])</p></td>
 <td><p>Create basemap plot.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.plot_forcing.html#hydromt_sfincs.SfincsModel.plot_forcing" title="hydromt_sfincs.SfincsModel.plot_forcing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_forcing</span></code></a>([fn_out, forcings])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.plot_forcing.html#hydromt_sfincs.SfincsModel.plot_forcing" title="hydromt_sfincs.SfincsModel.plot_forcing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_forcing</span></code></a>([fn_out, forcings])</p></td>
 <td><p>Plot model timeseries forcing.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.read.html#hydromt_sfincs.SfincsModel.read" title="hydromt_sfincs.SfincsModel.read"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.read.html#hydromt_sfincs.SfincsModel.read" title="hydromt_sfincs.SfincsModel.read"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code></a>()</p></td>
 <td><p>Read SfincsModel from disk.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_equal</span></code>(other)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_equal</span></code>(other)</p></td>
 <td><p>Test if two models are equal, based on their components.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.update.html#hydromt_sfincs.SfincsModel.update" title="hydromt_sfincs.SfincsModel.update"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update</span></code></a>(*[, model_out, write, steps, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.update.html#hydromt_sfincs.SfincsModel.update" title="hydromt_sfincs.SfincsModel.update"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update</span></code></a>(*[, model_out, write, steps, ...])</p></td>
 <td><p>Single method to update a model based the settings in <cite>steps</cite>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.write.html#hydromt_sfincs.SfincsModel.write" title="hydromt_sfincs.SfincsModel.write"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write</span></code></a>([write_batch_file, update_to_latest])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.SfincsModel.write.html#hydromt_sfincs.SfincsModel.write" title="hydromt_sfincs.SfincsModel.write"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write</span></code></a>([write_batch_file, update_to_latest])</p></td>
 <td><p>Write SfincsModel to disk.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_batch_file</span></code>([filename])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_batch_file</span></code>([filename])</p></td>
 <td><p>Write a platform-appropriate launcher script for SFINCS.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_data_catalog</span></code>([root, data_lib_path, ...])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_data_catalog</span></code>([root, data_lib_path, ...])</p></td>
 <td><p>Write the data catalog to data_lib_path.</p></td>
 </tr>
 </tbody>

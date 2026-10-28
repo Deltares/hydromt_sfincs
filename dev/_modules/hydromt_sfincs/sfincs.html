@@ -1216,12 +1216,26 @@ window.runMermaid = runMermaid;</script>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">clear_spatial_components</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Clear all spatial components."""</span>
-        <span class="c1"># TODO if we want this, all components should have a clear method</span>
-        <span class="k">return</span>
-        <span class="c1"># Do something like this</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">comp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span> <span class="s2">"clear"</span><span class="p">):</span>
-                <span class="n">comp</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">"clear_spatial_components is deprecated, use clear_spatial_attributes instead."</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_spatial_attributes</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear_spatial_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Reset spatial components while preserving model configuration.</span>
+
+<span class="sd">        Recreates every component except ``config``, clearing grids, masks,</span>
+<span class="sd">        geometries, and forcing while retaining settings such as numerics,</span>
+<span class="sd">        time frame, and coordinate system. Use this when a change, such as</span>
+<span class="sd">        updating the coordinate system, invalidates the existing spatial data.</span>
+<span class="sd">        """</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ALL_COMPONENTS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"config"</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="c1"># Clear the quadtree reference, then refresh grid properties from config.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"qtrfile"</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">skip_validation</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update_grid_from_config</span><span class="p">()</span>
 
     <span class="c1">## Plotting</span>
 <div class="viewcode-block" id="SfincsModel.plot_forcing">

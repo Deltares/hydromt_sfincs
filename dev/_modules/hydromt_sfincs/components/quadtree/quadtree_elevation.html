@@ -876,6 +876,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">interp_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>
         <span class="n">zmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0e9</span><span class="p">,</span>
         <span class="n">zmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0e9</span><span class="p">,</span>
+        <span class="n">interpolate_na</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Interpolate topobathy (z) data to the model grid.</span>
 
@@ -893,6 +894,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">            Number of cells between datasets to ensure smooth transition of bed levels, by default 0</span>
 <span class="sd">        interp_method : str, optional</span>
 <span class="sd">            Interpolation method used to fill the buffer cells, by default "linear"</span>
+<span class="sd">        interpolate_na : bool, optional</span>
+<span class="sd">            Whether to interpolate (and extrapolate) missing values (NaNs) in the elevation data, by default True</span>
 <span class="sd">        """</span>
 
         <span class="n">nlev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"nr_levels"</span><span class="p">]</span>
@@ -924,10 +927,14 @@ window.runMermaid = runMermaid;</script>
 
             <span class="c1"># check if no nan data is present in the bed levels</span>
             <span class="n">nmissing</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_dep</span><span class="o">.</span><span class="n">values</span><span class="p">)))</span>
-            <span class="k">if</span> <span class="n">nmissing</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">nmissing</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">interpolate_na</span><span class="p">:</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Interpolate elevation at </span><span class="si">{</span><span class="n">nmissing</span><span class="si">}</span><span class="s2"> cells"</span><span class="p">)</span>
                 <span class="n">da_dep</span> <span class="o">=</span> <span class="n">da_dep</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">interpolate_na</span><span class="p">(</span>
                     <span class="n">method</span><span class="o">=</span><span class="s2">"rio_idw"</span><span class="p">,</span> <span class="n">extrapolate</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">nmissing</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Elevation has </span><span class="si">{</span><span class="n">nmissing</span><span class="si">}</span><span class="s2"> missing cells; leaving them as NaN"</span>
                 <span class="p">)</span>
             <span class="k">return</span> <span class="n">da_dep</span>
 
