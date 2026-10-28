@@ -2078,8 +2078,12 @@ window.runMermaid = runMermaid;</script>
     <span class="p">)</span>
 
     <span class="c1"># ================================================================</span>
-    <span class="c1"># Curve Number / Green-Ampt / Horton files</span>
+    <span class="c1"># Legacy Infiltraiton / Curve Number / Green-Ampt / Horton files</span>
     <span class="c1"># ================================================================</span>
+    <span class="n">qinffile</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Name of the spatially-varying, constant in time infiltration file"</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">scsfile</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Curve Number max soil moisture file"</span><span class="p">)</span>
     <span class="n">smaxfile</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Curve Number max storage file"</span><span class="p">)</span>
     <span class="n">sefffile</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Curve Number initial storage file"</span><span class="p">)</span>

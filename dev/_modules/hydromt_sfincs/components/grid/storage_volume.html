@@ -837,24 +837,35 @@ window.runMermaid = runMermaid;</script>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Get the data from the model grid."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span>
+<span class="w">        </span><span class="sd">"""Return only the available storage volume layers from the model grid."""</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">return</span> <span class="n">data</span><span class="p">[[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_variables</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">mask</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Get an empty mask with the same shape as the model grid."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Not implemented, storage volume data is read when the grid is read."""</span>
-        <span class="c1"># TODO discuss what we want to return/read here, pass is not so informative ..</span>
-        <span class="c1"># The mask values are read when the quadtree grid is read</span>
-        <span class="k">pass</span>
+    <span class="n">grid_variables</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"vol"</span><span class="p">,)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Not implemented, storage volume data is written when the grid is written."""</span>
-        <span class="c1"># The mask values are written when the quadtree grid is written</span>
-        <span class="k">pass</span>
+<div class="viewcode-block" id="SfincsStorageVolume.read">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsStorageVolume.read.html#hydromt_sfincs.components.grid.SfincsStorageVolume.read">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Read the storage volume map from its own binary file."""</span>
+        <span class="c1"># TODO discuss what we want to return/read here, pass is not so informative ..</span>
+        <span class="c1"># the grid holds the mask and cell index this map is written against;</span>
+        <span class="c1"># check _data directly, since the data property already triggers a read</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">read_components</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">_read_layers</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_variables</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="SfincsStorageVolume.write">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsStorageVolume.write.html#hydromt_sfincs.components.grid.SfincsStorageVolume.write">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Write the storage volume map to its own binary file."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">_write_layers</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_variables</span><span class="p">))</span></div>
+
 
 <div class="viewcode-block" id="SfincsStorageVolume.create">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsStorageVolume.create.html#hydromt_sfincs.components.grid.SfincsStorageVolume.create">[docs]</a>

@@ -869,6 +869,16 @@ window.runMermaid = runMermaid;</script>
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">_IgnoreMissingRegionComponentWarning</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Filter</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">LogRecord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">record</span><span class="o">.</span><span class="n">getMessage</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">"No region component found in components."</span>
+
+
+<span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"hydromt.model.model"</span><span class="p">)</span><span class="o">.</span><span class="n">addFilter</span><span class="p">(</span>
+    <span class="n">_IgnoreMissingRegionComponentWarning</span><span class="p">()</span>
+<span class="p">)</span>
+
+
 <span class="c1"># %% SfincsModel class - in V1 style:</span>
 <div class="viewcode-block" id="SfincsModel">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.html#hydromt_sfincs.SfincsModel">[docs]</a>
@@ -1057,11 +1067,22 @@ window.runMermaid = runMermaid;</script>
 
     <span class="c1">## I/O</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_ordered_component_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Component names with the active grid first.</span>
+
+<span class="sd">        Other components depend on the grid for the mask, and on the regular</span>
+<span class="sd">        grid also for the cell index file, so it must be read/written first.</span>
+<span class="sd">        """</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">)</span>
+        <span class="n">grid_name</span> <span class="o">=</span> <span class="s2">"grid"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"regular"</span> <span class="k">else</span> <span class="s2">"quadtree_grid"</span>
+        <span class="k">if</span> <span class="n">grid_name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="n">names</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">names</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">grid_name</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">names</span>
+
 <div class="viewcode-block" id="SfincsModel.read">
 <a class="viewcode-back" href="../../_generated/hydromt_sfincs.SfincsModel.read.html#hydromt_sfincs.SfincsModel.read">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Read SfincsModel from disk.</span>
-
 <span class="sd">        This methods determines the grid type from the configuration file (sfincs.inp),</span>
 <span class="sd">        and reads all relevant components that are described in the config accordingly.</span>
 
@@ -1071,7 +1092,10 @@ window.runMermaid = runMermaid;</script>
         <span class="c1"># always read config first</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">comp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="c1"># the grid carries the mask and cell index the other components need,</span>
+        <span class="c1"># so it is read before them regardless of component order</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ordered_component_names</span><span class="p">():</span>
+            <span class="n">comp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"config"</span><span class="p">:</span>
                 <span class="k">continue</span>  <span class="c1"># skip config</span>
             <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"regular"</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_QUADTREE_GRID_NAMES</span><span class="p">:</span>
@@ -1116,7 +1140,9 @@ window.runMermaid = runMermaid;</script>
         <span class="n">grid_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_type</span>
 
         <span class="c1"># TODO make sure that all components are in the config (in their individual write functions?)</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">comp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="c1"># the grid writes the cell index file the other components write against</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ordered_component_names</span><span class="p">():</span>
+            <span class="n">comp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"config"</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="k">elif</span> <span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"regular"</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_QUADTREE_GRID_NAMES</span><span class="p">:</span>

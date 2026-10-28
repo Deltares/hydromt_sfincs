@@ -812,7 +812,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    on regular grids.</span>
 
 <span class="sd">    .. note::</span>
-<span class="sd">        The initial water level data is stored in the model grid's data dataset under the key "ini".</span>
+<span class="sd">        Initial water level is stored in the model grid under the key ``zs``.</span>
+<span class="sd">        ``data`` exposes only this layer; the component reads and writes it</span>
+<span class="sd">        through ``inifile``.</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
@@ -826,7 +828,7 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="s2">"SfincsModel"</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="c1"># The data for the mask is stored in the model.grid.data["ini"]</span>
+        <span class="c1"># The initial water level is stored in the model.grid.data["zs"]</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
         <span class="p">)</span></div>
@@ -834,22 +836,34 @@ window.runMermaid = runMermaid;</script>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Get the data from the model grid."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span>
+<span class="w">        </span><span class="sd">"""Return only the available initial-condition layers from the grid."""</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">return</span> <span class="n">data</span><span class="p">[[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_variables</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">mask</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Get an empty mask with the same shape as the model grid."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># TODO discuss what we want to return/read here, pass is not so informative ..</span>
-        <span class="c1"># The ini file is read when all grid files are read in regulargrid.py</span>
-        <span class="k">pass</span>
+    <span class="n">grid_variables</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"zs"</span><span class="p">,)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># The ini file is written when all grid files are written in regulargrid.py</span>
-        <span class="k">pass</span>
+<div class="viewcode-block" id="SfincsInitialConditions.read">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsInitialConditions.read.html#hydromt_sfincs.components.grid.SfincsInitialConditions.read">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Read the initial water level map from its own binary file."""</span>
+        <span class="c1"># the grid holds the mask and cell index this map is written against;</span>
+        <span class="c1"># check _data directly, since the data property already triggers a read</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">read_components</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">_read_layers</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_variables</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="SfincsInitialConditions.write">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsInitialConditions.write.html#hydromt_sfincs.components.grid.SfincsInitialConditions.write">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Write the initial water level map to its own binary file."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">_write_layers</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_variables</span><span class="p">))</span></div>
+
 
     <span class="c1"># Original HydroMT-SFINCS setup_ functions:</span>
     <span class="c1"># was not yet implemented</span>
@@ -896,9 +910,7 @@ window.runMermaid = runMermaid;</script>
 
         <span class="c1"># get initial water level data</span>
         <span class="n">da_zsini</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
-            <span class="n">zsini</span><span class="p">,</span>
-            <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
-            <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="n">zsini</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">"zs"</span><span class="p">]</span>
         <span class="p">)</span>
 
         <span class="c1"># reproject initial water level data to model grid</span>
@@ -906,11 +918,11 @@ window.runMermaid = runMermaid;</script>
         <span class="n">da_zsini</span> <span class="o">=</span> <span class="n">da_zsini</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">)</span>
 
         <span class="c1"># check on nan values</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_zsini</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="n">nmissing</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_zsini</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">values</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">nmissing</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="s2">"NaN values found in initial water level data; filled with fill_value </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                    <span class="n">fill_value</span>
-                <span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">nmissing</span><span class="si">}</span><span class="s2"> active cells have no initial water level data; filled "</span>
+                <span class="sa">f</span><span class="s2">"with </span><span class="si">{</span><span class="n">fill_value</span><span class="si">}</span><span class="s2">."</span>
             <span class="p">)</span>
             <span class="n">da_zsini</span> <span class="o">=</span> <span class="n">da_zsini</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">fill_value</span><span class="p">)</span>
         <span class="n">da_zsini</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
@@ -1006,6 +1018,8 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">fill_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
                 <span class="n">dtype</span><span class="o">=</span><span class="s2">"float32"</span><span class="p">,</span>
             <span class="p">)</span>
+            <span class="c1"># make sure the array has name "zs"</span>
+            <span class="n">da_zsini</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">mname</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># start with existing ini layer</span>
             <span class="n">da_zsini</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">mname</span><span class="p">]</span>
@@ -1016,16 +1030,16 @@ window.runMermaid = runMermaid;</script>
             <span class="n">gdf_zsini_single</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span>
                 <span class="p">[</span><span class="n">row</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="n">gdf_zsini</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">gdf_zsini</span><span class="o">.</span><span class="n">crs</span>
             <span class="p">)</span>
-            <span class="n">da_zsini0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_zsini_single</span><span class="p">)</span>
+            <span class="n">da_zsini0</span> <span class="o">=</span> <span class="n">da_zsini</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">geometry_mask</span><span class="p">(</span><span class="n">gdf_zsini_single</span><span class="p">)</span>
             <span class="c1"># where da_zsini0 is True, set values of da_zsini to zsini_single:</span>
             <span class="n">da_zsini</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">da_zsini0</span><span class="p">,</span> <span class="n">zsini_single</span><span class="p">,</span> <span class="n">da_zsini</span><span class="p">)</span>
 
         <span class="c1"># check on nan values</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_zsini</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="n">nmissing</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_zsini</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">values</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">nmissing</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="s2">"NaN values found in initial water level data; filled with fill_value </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                    <span class="n">fill_value</span>
-                <span class="p">)</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">nmissing</span><span class="si">}</span><span class="s2"> active cells have no initial water level data; filled "</span>
+                <span class="sa">f</span><span class="s2">"with </span><span class="si">{</span><span class="n">fill_value</span><span class="si">}</span><span class="s2">."</span>
             <span class="p">)</span>
             <span class="n">da_zsini</span> <span class="o">=</span> <span class="n">da_zsini</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">fill_value</span><span class="p">)</span>
         <span class="n">da_zsini</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>

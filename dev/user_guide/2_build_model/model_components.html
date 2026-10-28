@@ -847,12 +847,33 @@ window.runMermaid = runMermaid;</script>
                   
   <section id="model-components">
 <span id="id1"></span><h1>Model Components<a class="headerlink" href="#model-components" title="Link to this heading">#</a></h1>
-<p>The <a class="reference internal" href="../../_generated/hydromt_sfincs.SfincsModel.html#hydromt_sfincs.SfincsModel" title="hydromt_sfincs.SfincsModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">SfincsModel</span></code></a> consists of several components that together
-represent the full SFINCS model setup. Each component manages a specific part of the
-model (e.g., configuration, grid definition, forcings, or output) and can be read from or
-written to disk using the corresponding <code class="docutils literal notranslate"><span class="pre">read()</span></code> and <code class="docutils literal notranslate"><span class="pre">write()</span></code> methods. Furhermore,
-each component has its own <code class="docutils literal notranslate"><span class="pre">data</span></code> attribute that stores the relevant data for that component,
-and a <code class="docutils literal notranslate"><span class="pre">create()</span></code> method to generate or update the component data (see also <a class="reference internal" href="model_methods.html#model-methods"><span class="std std-ref">Model Methods</span></a>).</p>
+<p>The <a class="reference internal" href="../../_generated/hydromt_sfincs.SfincsModel.html#hydromt_sfincs.SfincsModel" title="hydromt_sfincs.SfincsModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">SfincsModel</span></code></a> consists of components that together represent
+the SFINCS model setup. Each component manages a specific part of the model and exposes
+its relevant data through a <code class="docutils literal notranslate"><span class="pre">data</span></code> attribute. Grid-layer data is shared through
+<code class="docutils literal notranslate"><span class="pre">model.grid.data</span></code> or <code class="docutils literal notranslate"><span class="pre">model.quadtree_grid.data</span></code>, while other components (e.g. geometries or boundary conditions) keep their own
+data. Components load and persist data with <code class="docutils literal notranslate"><span class="pre">read()</span></code> and <code class="docutils literal notranslate"><span class="pre">write()</span></code>. Each component
+also provides methods to create or update its data, typically named <code class="docutils literal notranslate"><span class="pre">create()</span></code> or
+<code class="docutils literal notranslate"><span class="pre">create_*()</span></code> (see <a class="reference internal" href="model_methods.html#model-methods"><span class="std std-ref">Model Methods</span></a>).</p>
+<p>For grid-layer components, <code class="docutils literal notranslate"><span class="pre">component.data</span></code> is a component-specific view of
+the layers stored on the shared grid; it is not a separate copy or storage
+location. For example, <code class="docutils literal notranslate"><span class="pre">model.elevation.data</span></code> exposes the regular-grid
+<code class="docutils literal notranslate"><span class="pre">dep</span></code> layer, while <code class="docutils literal notranslate"><span class="pre">model.grid.data</span></code> contains <code class="docutils literal notranslate"><span class="pre">dep</span></code> together with the
+other grid layers. Likewise, <code class="docutils literal notranslate"><span class="pre">model.quadtree_elevation.data</span></code> exposes <code class="docutils literal notranslate"><span class="pre">z</span></code>
+from <code class="docutils literal notranslate"><span class="pre">model.quadtree_grid.data</span></code>. Use the parent grid’s <code class="docutils literal notranslate"><span class="pre">set()</span></code> method to
+add or replace a layer; the component’s <code class="docutils literal notranslate"><span class="pre">data</span></code> view is for accessing its
+relevant data.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><strong>Grid read/write behavior has changed.</strong> <code class="docutils literal notranslate"><span class="pre">model.grid.read()</span></code> and
+<code class="docutils literal notranslate"><span class="pre">model.quadtree_grid.read()</span></code> read the grid’s main data files by default
+(mask and elevation for regular grids; the main mesh file including mask and elevation for quadtree grids).
+The normal way to read or write additional gridded variables is through their
+component methods, such as <code class="docutils literal notranslate"><span class="pre">model.roughness.read()</span></code> or
+<code class="docutils literal notranslate"><span class="pre">model.infiltration.write()</span></code>. As a shortcut, pass <code class="docutils literal notranslate"><span class="pre">read_components=True</span></code>
+or <code class="docutils literal notranslate"><span class="pre">write_components=True</span></code> to have the grid call the read/write methods of
+components that manage gridded variables. <code class="docutils literal notranslate"><span class="pre">model.read()</span></code> and
+<code class="docutils literal notranslate"><span class="pre">model.write()</span></code> continue to read or write all active model components.</p>
+</div>
 <p>An overview of all model components is presented in <a class="reference internal" href="#hydromt-sfincs-diagram"><span class="std std-ref">HydroMT-SFINCS workflow diagram</span></a>, and each component
 will be introduced in the following sections. For more details about each component,
 see the <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/">SFINCS documentation</a>.</p>
@@ -1021,9 +1042,58 @@ and it is utilized for the purpose of reading grid variables in binary files.</p
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Please be aware the the <a class="reference internal" href="../../_generated/hydromt_sfincs.components.grid.SfincsSubgridTable.html#hydromt_sfincs.components.grid.SfincsSubgridTable" title="hydromt_sfincs.components.grid.subgrid.SfincsSubgridTable"><code class="xref py py-class docutils literal notranslate"><span class="pre">subgrid</span></code></a>
-component has its own data attribute, whereas all other grid components store their data in the
-<a class="reference internal" href="../../_generated/hydromt_sfincs.components.grid.SfincsGrid.html#hydromt_sfincs.components.grid.SfincsGrid" title="hydromt_sfincs.components.grid.regulargrid.SfincsGrid"><code class="xref py py-class docutils literal notranslate"><span class="pre">grid</span></code></a> component.</p>
+<p>The regular-grid subgrid-table component is an exception: its table data is
+stored in its own <code class="docutils literal notranslate"><span class="pre">data</span></code> attribute. Other regular-grid layer data is
+stored in the shared <a class="reference internal" href="../../_generated/hydromt_sfincs.components.grid.SfincsGrid.html#hydromt_sfincs.components.grid.SfincsGrid" title="hydromt_sfincs.components.grid.regulargrid.SfincsGrid"><code class="xref py py-class docutils literal notranslate"><span class="pre">grid</span></code></a>
+dataset and exposed through each layer component’s filtered <code class="docutils literal notranslate"><span class="pre">data</span></code> view.</p>
+</div>
+</section>
+<section id="quadtree-grid-components">
+<h2>Quadtree grid components<a class="headerlink" href="#quadtree-grid-components" title="Link to this heading">#</a></h2>
+<p>These components define the mesh and physical parameters for quadtree SFINCS models.
+The main mesh file stores the mesh, elevation, mask and quadtree-specific variables.
+Additional gridded variables are read and written through their components and stored
+in separate UGRID NetCDF files.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<colgroup>
+<col style="width: 35.0%" />
+<col style="width: 65.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p><strong>Component</strong></p></th>
+<th class="head"><p><strong>Description</strong></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><a class="reference internal" href="../../_generated/hydromt_sfincs.components.quadtree.SfincsQuadtreeGrid.html#hydromt_sfincs.components.quadtree.SfincsQuadtreeGrid" title="hydromt_sfincs.components.quadtree.quadtree.SfincsQuadtreeGrid"><code class="xref py py-class docutils literal notranslate"><span class="pre">quadtree_grid</span></code></a></p></td>
+<td><p>Main quadtree mesh file, including the mask, elevation and quadtree-specific variables not stored in component-specific files (<code class="docutils literal notranslate"><span class="pre">qtrfile</span></code>, default <code class="docutils literal notranslate"><span class="pre">sfincs.nc</span></code>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../_generated/hydromt_sfincs.components.quadtree.SfincsQuadtreeElevation.html#hydromt_sfincs.components.quadtree.SfincsQuadtreeElevation" title="hydromt_sfincs.components.quadtree.quadtree_elevation.SfincsQuadtreeElevation"><code class="xref py py-class docutils literal notranslate"><span class="pre">quadtree_elevation</span></code></a></p></td>
+<td><p>Elevation (bathymetry/topography) on the quadtree mesh.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../_generated/hydromt_sfincs.components.quadtree.SfincsQuadtreeMask.html#hydromt_sfincs.components.quadtree.SfincsQuadtreeMask" title="hydromt_sfincs.components.quadtree.quadtree_mask.SfincsQuadtreeMask"><code class="xref py py-class docutils literal notranslate"><span class="pre">quadtree_mask</span></code></a></p></td>
+<td><p>Active domain and boundary mask on the quadtree mesh.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../_generated/hydromt_sfincs.components.quadtree.SfincsQuadtreeRoughness.html#hydromt_sfincs.components.quadtree.SfincsQuadtreeRoughness" title="hydromt_sfincs.components.quadtree.quadtree_roughness.SfincsQuadtreeRoughness"><code class="xref py py-class docutils literal notranslate"><span class="pre">quadtree_roughness</span></code></a></p></td>
+<td><p>Manning’s n roughness (<code class="docutils literal notranslate"><span class="pre">manningfile</span></code>).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../_generated/hydromt_sfincs.components.quadtree.SfincsQuadtreeInfiltration.html#hydromt_sfincs.components.quadtree.SfincsQuadtreeInfiltration" title="hydromt_sfincs.components.quadtree.quadtree_infiltration.SfincsQuadtreeInfiltration"><code class="xref py py-class docutils literal notranslate"><span class="pre">quadtree_infiltration</span></code></a></p></td>
+<td><p>Infiltration layers, including runoff coefficient and bucket parameters (<code class="docutils literal notranslate"><span class="pre">inffile</span></code>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../_generated/hydromt_sfincs.components.quadtree.SfincsQuadtreeInitialConditions.html#hydromt_sfincs.components.quadtree.SfincsQuadtreeInitialConditions" title="hydromt_sfincs.components.quadtree.quadtree_initial_conditions.SfincsQuadtreeInitialConditions"><code class="xref py py-class docutils literal notranslate"><span class="pre">quadtree_initial_conditions</span></code></a></p></td>
+<td><p>Initial water levels (<code class="docutils literal notranslate"><span class="pre">inifile</span></code>).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../_generated/hydromt_sfincs.components.quadtree.SfincsQuadtreeStorageVolume.html#hydromt_sfincs.components.quadtree.SfincsQuadtreeStorageVolume" title="hydromt_sfincs.components.quadtree.quadtree_storage_volume.SfincsQuadtreeStorageVolume"><code class="xref py py-class docutils literal notranslate"><span class="pre">quadtree_storage_volume</span></code></a></p></td>
+<td><p>Storage volume layer (<code class="docutils literal notranslate"><span class="pre">volfile</span></code>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../_generated/hydromt_sfincs.components.quadtree.SfincsQuadtreeSubgridTable.html#hydromt_sfincs.components.quadtree.SfincsQuadtreeSubgridTable" title="hydromt_sfincs.components.quadtree.quadtree_subgrid.SfincsQuadtreeSubgridTable"><code class="xref py py-class docutils literal notranslate"><span class="pre">quadtree_subgrid</span></code></a></p></td>
+<td><p>Subgrid table (<code class="docutils literal notranslate"><span class="pre">sbgfile</span></code>).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../_generated/hydromt_sfincs.components.quadtree.SnapWaveQuadtreeMask.html#hydromt_sfincs.components.quadtree.SnapWaveQuadtreeMask" title="hydromt_sfincs.components.quadtree.snapwave_quadtree_mask.SnapWaveQuadtreeMask"><code class="xref py py-class docutils literal notranslate"><span class="pre">quadtree_snapwave_mask</span></code></a></p></td>
+<td><p>Optional SnapWave mask on the quadtree mesh.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </section>
 <section id="geometries-and-structures">
@@ -1214,6 +1284,7 @@ but it can be helpful for setting up discharge boundary conditions based on rive
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#regular-grid-components">Regular grid components</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quadtree-grid-components">Quadtree grid components</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#geometries-and-structures">Geometries and structures</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#forcing-components">Forcing components</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-component">Output component</a></li>

@@ -817,7 +817,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    for water level and outflow boundaries.</span>
 
 <span class="sd">    .. note::</span>
-<span class="sd">        The mask data is stored in the model grid's data dataset under the key "mask".</span>
+<span class="sd">        Mask data is stored as ``mask`` in the model grid. ``data`` exposes only</span>
+<span class="sd">        this layer. The grid reads and writes it through ``mskfile``, together</span>
+<span class="sd">        with elevation and the cell index.</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
@@ -840,8 +842,9 @@ window.runMermaid = runMermaid;</script>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Get the data from the model grid."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span>
+<span class="w">        </span><span class="sd">"""Return only the available mask layer from the model grid."""</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">return</span> <span class="n">data</span><span class="p">[[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"mask"</span><span class="p">,)</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">empty_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -853,15 +856,20 @@ window.runMermaid = runMermaid;</script>
 <span class="w">        </span><span class="sd">"""Get the affine transform of the model grid."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">transform</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Not implemented, mask data is read when the grid is read."""</span>
-        <span class="c1"># TODO discuss what we want to return/read here, pass is not so informative ..</span>
-        <span class="c1"># The mask values are read when the quadtree grid is read</span>
-        <span class="k">pass</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Ensure the grid is loaded; it reads the mask from ``mskfile``.</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Not implemented, mask data is written when the grid is written."""</span>
-        <span class="c1"># The mask values are written when the quadtree grid is written</span>
+<span class="sd">        An already loaded grid is not reread.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">read_components</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Leave mask persistence to ``model.grid.write()``.</span>
+
+<span class="sd">        No file is written here: the grid writes ``mskfile`` together with</span>
+<span class="sd">        elevation and the cell index.</span>
+<span class="sd">        """</span>
         <span class="k">pass</span>
 
     <span class="nd">@hydromt_step</span>
@@ -1024,7 +1032,7 @@ window.runMermaid = runMermaid;</script>
 
         <span class="c1"># get mask and dep data</span>
         <span class="n">da_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"mask"</span><span class="p">]</span> <span class="k">if</span> <span class="s2">"mask"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="n">da_dep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"dep"</span><span class="p">]</span> <span class="k">if</span> <span class="s2">"dep"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">da_dep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"dep"</span><span class="p">)</span>
 
         <span class="c1"># check if we are going to apply any z constraints, if so we need dep data</span>
         <span class="n">has_z_constraints</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
@@ -1255,7 +1263,7 @@ window.runMermaid = runMermaid;</script>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">"No mask data found in model, please create a mask first using `SfincsModel.mask.create_active`"</span>
             <span class="p">)</span>
-        <span class="n">da_dep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"dep"</span><span class="p">]</span> <span class="k">if</span> <span class="s2">"dep"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">da_dep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"dep"</span><span class="p">)</span>
 
         <span class="c1"># check if mask and dep data are compatible</span>
         <span class="k">if</span> <span class="n">da_dep</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="n">zmin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">zmax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>

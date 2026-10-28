@@ -938,7 +938,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">struct</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">gdf2linestring</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
 
         <span class="c1"># Write to weirfile</span>
-        <span class="n">writers</span><span class="o">.</span><span class="n">write_geoms</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">struct</span><span class="p">,</span> <span class="n">stype</span><span class="o">=</span><span class="s2">"weir"</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
+        <span class="n">writers</span><span class="o">.</span><span class="n">write_geoms</span><span class="p">(</span><span class="n">abs_file_path</span><span class="p">,</span> <span class="n">struct</span><span class="p">,</span> <span class="n">stype</span><span class="o">=</span><span class="s2">"weir"</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span> <span class="n">fmt_z</span><span class="o">=</span><span class="s2">"</span><span class="si">%.3f</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="c1"># write also as geojson:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">write_gis</span><span class="p">:</span>

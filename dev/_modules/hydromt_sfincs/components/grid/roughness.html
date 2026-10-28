@@ -837,8 +837,9 @@ window.runMermaid = runMermaid;</script>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Get the data from the model grid."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span>
+<span class="w">        </span><span class="sd">"""Return only the available roughness layers from the model grid."""</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">return</span> <span class="n">data</span><span class="p">[[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_variables</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">mask</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -852,18 +853,27 @@ window.runMermaid = runMermaid;</script>
     <span class="c1"># create</span>
     <span class="c1"># clear &gt;TODO ?</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Not implemented, roughness data is read when the grid is read."""</span>
-        <span class="c1"># TODO discuss what we want to return/read here, pass is not so informative ..</span>
-        <span class="c1"># The manning file is read when all grid files are read in regulargrid.py</span>
-        <span class="k">pass</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Not implemented, roughness data is written when the grid is written."""</span>
-        <span class="c1"># The manning file is written when all grid files are written in regulargrid.py</span>
-        <span class="k">pass</span>
-
     <span class="c1"># Roughness</span>
+    <span class="n">grid_variables</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"manning"</span><span class="p">,)</span>
+
+<div class="viewcode-block" id="SfincsRoughness.read">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsRoughness.read.html#hydromt_sfincs.components.grid.SfincsRoughness.read">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Read the manning roughness map from its own binary file."""</span>
+        <span class="c1"># the grid holds the mask and cell index this map is written against;</span>
+        <span class="c1"># check _data directly, since the data property already triggers a read</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">read_components</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">_read_layers</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_variables</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="SfincsRoughness.write">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsRoughness.write.html#hydromt_sfincs.components.grid.SfincsRoughness.write">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Write the manning roughness map to its own binary file."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">_write_layers</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_variables</span><span class="p">))</span></div>
+
+
 <div class="viewcode-block" id="SfincsRoughness.create">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsRoughness.create.html#hydromt_sfincs.components.grid.SfincsRoughness.create">[docs]</a>
     <span class="nd">@hydromt_step</span>
@@ -910,19 +920,23 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">fromdep</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_man</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
-        <span class="k">if</span> <span class="s2">"dep"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="ow">and</span> <span class="n">fromdep</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">"dep"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span> <span class="ow">and</span> <span class="n">fromdep</span><span class="p">:</span>
             <span class="n">da_man0</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"dep"</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">rgh_lev_land</span><span class="p">,</span> <span class="n">manning_land</span><span class="p">,</span> <span class="n">manning_sea</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">"dep"</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">rgh_lev_land</span><span class="p">,</span> <span class="n">manning_land</span><span class="p">,</span> <span class="n">manning_sea</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">fromdep</span><span class="p">:</span>
             <span class="n">da_man0</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">manning_land</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">roughness_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">fromdep</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"nan values in manning roughness array"</span><span class="p">)</span>
+            <span class="n">nmissing</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_man</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">values</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">nmissing</span><span class="si">}</span><span class="s2"> active cells have no manning roughness data; filled "</span>
+                <span class="sa">f</span><span class="s2">"with the land/sea default."</span>
+            <span class="p">)</span>
             <span class="n">da_man</span> <span class="o">=</span> <span class="n">da_man</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_man</span><span class="p">),</span> <span class="n">da_man0</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">fromdep</span><span class="p">:</span>
             <span class="n">da_man</span> <span class="o">=</span> <span class="n">da_man0</span>
-        <span class="n">da_man</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="o">-</span><span class="mf">9999.0</span><span class="p">)</span>
+        <span class="n">da_man</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
 
         <span class="c1"># set grid</span>
         <span class="n">mname</span> <span class="o">=</span> <span class="s2">"manning"</span>

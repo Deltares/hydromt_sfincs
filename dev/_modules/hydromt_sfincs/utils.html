@@ -806,7 +806,10 @@ window.runMermaid = runMermaid;</script>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"active_cells_vector"</span><span class="p">,</span>
     <span class="s2">"downscale_floodmap"</span><span class="p">,</span>
+    <span class="s2">"fill_nan_in_mask"</span><span class="p">,</span>
+    <span class="s2">"vector_to_active_cells"</span><span class="p">,</span>
     <span class="s2">"get_bounds_vector"</span><span class="p">,</span>
     <span class="s2">"create_boundary_points"</span><span class="p">,</span>
     <span class="s2">"mask2gdf"</span><span class="p">,</span>
@@ -821,6 +824,73 @@ window.runMermaid = runMermaid;</script>
 <span class="p">]</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">active_cells_vector</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">msk</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Flatten active cells of a 2D map into the 1D SFINCS ordering.</span>
+
+<span class="sd">    NOTE: the array should be in S-&gt;N and W-&gt;E orientation, with origin in the</span>
+<span class="sd">    SW corner.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">()[</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">msk</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">vector_to_active_cells</span><span class="p">(</span>
+    <span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">ind</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">shape</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">mv</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+    <span class="n">dtype</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"f4"</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Scatter a 1D active-cell vector back onto a full 2D map.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    values : np.ndarray</span>
+<span class="sd">        1D array with one value per active cell, in SFINCS ordering.</span>
+<span class="sd">    ind : np.ndarray</span>
+<span class="sd">        Flat indices of the active cells.</span>
+<span class="sd">    shape : tuple of int</span>
+<span class="sd">        (nrow, ncol) shape of the output map.</span>
+<span class="sd">    mv : float</span>
+<span class="sd">        Value for cells outside the active mask.</span>
+<span class="sd">    """</span>
+    <span class="n">nrow</span><span class="p">,</span> <span class="n">ncol</span> <span class="o">=</span> <span class="n">shape</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">ncol</span><span class="p">,</span> <span class="n">nrow</span><span class="p">),</span> <span class="n">mv</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">flat</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">fill_nan_in_mask</span><span class="p">(</span>
+    <span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">fill</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Fill NaNs inside the active mask and warn how many cells were affected.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    values : np.ndarray</span>
+<span class="sd">        Layer values, may contain NaN.</span>
+<span class="sd">    mask : np.ndarray</span>
+<span class="sd">        Active cell mask; only cells &gt; 0 are checked.</span>
+<span class="sd">    name : str</span>
+<span class="sd">        Variable name, used in the warning message.</span>
+<span class="sd">    fill : float</span>
+<span class="sd">        Value written where an active cell has no data.</span>
+<span class="sd">    """</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">n_missing</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">missing</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">n_missing</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_missing</span><span class="si">}</span><span class="s2"> active cells have no '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' data after resampling; "</span>
+            <span class="sa">f</span><span class="s2">"filled with </span><span class="si">{</span><span class="n">fill</span><span class="si">}</span><span class="s2">. Check that the input data covers the full "</span>
+            <span class="sa">f</span><span class="s2">"model domain."</span>
+        <span class="p">)</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">missing</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="n">fill</span><span class="p">),</span> <span class="n">values</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">values</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">downscale_floodmap</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>

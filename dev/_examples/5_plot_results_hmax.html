@@ -525,7 +525,7 @@
 <section id="Read-model-results">
 <h2>Read model results<a class="headerlink" href="#Read-model-results" title="Link to this heading">#</a></h2>
 <p>The model results in sfincs_map.nc are saved as in a staggered grid format, see <a class="reference external" href="http://sgrid.github.io/sgrid/">SGRID convention</a>. Here we show how to retrieve the face values and translate the dimensions from node indices (m, n) to (x, y) coordinates in order to plot the results on a map.</p>
-<div class="nbinput docutils container">
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
@@ -533,14 +533,6 @@
 <span class="n">mod</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">sfincs_root</span><span class="p">,</span> <span class="n">data_libs</span><span class="o">=</span><span class="p">[</span><span class="s2">"artifact_data"</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"r"</span><span class="p">)</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-No region component found in components.
-</pre></div></div>
 </div>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
@@ -558,10 +550,10 @@ No region component found in components.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/components/grid/regulargrid.py:215: FutureWarning: In a future version of xarray the default value for compat will change from compat=&#39;no_conflicts&#39; to compat=&#39;override&#39;. This is likely to lead to different results when combining overlapping variables with the same name. To opt in to new defaults and get rid of these warnings now use `set_options(use_new_combine_kwarg_defaults=True) or set compat explicitly.
-  ds = xr.merge(da_lst)
-/home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/components/grid/regulargrid.py:215: FutureWarning: In a future version of xarray the default value for compat will change from compat=&#39;no_conflicts&#39; to compat=&#39;override&#39;. This is likely to lead to different results when combining overlapping variables with the same name. To opt in to new defaults and get rid of these warnings now use `set_options(use_new_combine_kwarg_defaults=True) or set compat explicitly.
-  ds = xr.merge(da_lst)
+/home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/components/grid/regulargrid.py:558: FutureWarning: In a future version of xarray the default value for compat will change from compat=&#39;no_conflicts&#39; to compat=&#39;override&#39;. This is likely to lead to different results when combining overlapping variables with the same name. To opt in to new defaults and get rid of these warnings now use `set_options(use_new_combine_kwarg_defaults=True) or set compat explicitly.
+  ds = xr.merge(arrays)
+/home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/components/grid/regulargrid.py:558: FutureWarning: In a future version of xarray the default value for compat will change from compat=&#39;no_conflicts&#39; to compat=&#39;override&#39;. This is likely to lead to different results when combining overlapping variables with the same name. To opt in to new defaults and get rid of these warnings now use `set_options(use_new_combine_kwarg_defaults=True) or set compat explicitly.
+  ds = xr.merge(arrays)
 Replacing result: inp
 Replacing result: msk
 Replacing result: zb
@@ -727,7 +719,7 @@ The process of interpolating the water levels onto the higher-resolution elevati
 <li><p>Write a geotiff of your downscaled floodmap</p></li>
 <li><p>Plot your downscaled floodmap here, or in QGIS</p></li>
 </ol>
-<div class="nbinput docutils container">
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
@@ -736,14 +728,6 @@ The process of interpolating the water levels onto the higher-resolution elevati
 <span class="n">mod</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">sfincs_root</span><span class="p">,</span> <span class="n">data_libs</span><span class="o">=</span><span class="p">[</span><span class="s2">"artifact_data"</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"r"</span><span class="p">)</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-No region component found in components.
-</pre></div></div>
 </div>
 <p>In the example, we used <em>GEBCO</em> (~450m resolution) and <em>MERIT Hydro</em> (~90m resolution) to create a model on 50 meters resolution. In this case, including subgrid tables didn’t add much information to the model. To still illustrate the process of downscaling, we will use the <em>dep.tif</em> (in the gis folder) which has 50m resolution.</p>
 <p>When creating a subgrid with <code class="docutils literal notranslate"><span class="pre">setup_subgrid</span></code>, you can easily create a geotiff on the subgrid resolution in the <code class="docutils literal notranslate"><span class="pre">subgrid</span></code> folder with the argument <code class="docutils literal notranslate"><span class="pre">write_dep_tif=True</span></code>.</p>
@@ -788,10 +772,10 @@ No region component found in components.
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/components/grid/regulargrid.py:215: FutureWarning: In a future version of xarray the default value for compat will change from compat=&#39;no_conflicts&#39; to compat=&#39;override&#39;. This is likely to lead to different results when combining overlapping variables with the same name. To opt in to new defaults and get rid of these warnings now use `set_options(use_new_combine_kwarg_defaults=True) or set compat explicitly.
-  ds = xr.merge(da_lst)
-/home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/components/grid/regulargrid.py:215: FutureWarning: In a future version of xarray the default value for compat will change from compat=&#39;no_conflicts&#39; to compat=&#39;override&#39;. This is likely to lead to different results when combining overlapping variables with the same name. To opt in to new defaults and get rid of these warnings now use `set_options(use_new_combine_kwarg_defaults=True) or set compat explicitly.
-  ds = xr.merge(da_lst)
+/home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/components/grid/regulargrid.py:558: FutureWarning: In a future version of xarray the default value for compat will change from compat=&#39;no_conflicts&#39; to compat=&#39;override&#39;. This is likely to lead to different results when combining overlapping variables with the same name. To opt in to new defaults and get rid of these warnings now use `set_options(use_new_combine_kwarg_defaults=True) or set compat explicitly.
+  ds = xr.merge(arrays)
+/home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/components/grid/regulargrid.py:558: FutureWarning: In a future version of xarray the default value for compat will change from compat=&#39;no_conflicts&#39; to compat=&#39;override&#39;. This is likely to lead to different results when combining overlapping variables with the same name. To opt in to new defaults and get rid of these warnings now use `set_options(use_new_combine_kwarg_defaults=True) or set compat explicitly.
+  ds = xr.merge(arrays)
 Replacing result: inp
 Replacing result: msk
 Replacing result: zb

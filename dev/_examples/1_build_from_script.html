@@ -503,7 +503,7 @@
 <h1>Build a model from Python<a class="headerlink" href="#Build-a-model-from-Python" title="Link to this heading">#</a></h1>
 <p>In this example a simple <strong>SFINCS</strong> compound flood model will be made, using the underlying Python functions of <strong>HydroMT-SFINCS</strong> to build a model.</p>
 <p>The model is situated in <strong>Northern Italy</strong>, where a small selection of topography and bathymetry data has already been made available for you to try the examples.</p>
-<div class="nbinput docutils container">
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
@@ -512,18 +512,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span><span class="p">,</span> <span class="n">DATADIR</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt._utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-/tmp/ipykernel_5093/4146800926.py:6: DeprecationWarning: importing &#39;log&#39; from &#39;hydromt._utils&#39; is deprecated. use &#39;from hydromt import log&#39; instead.
-  from hydromt._utils import log
-</pre></div></div>
 </div>
 <p>This example shows how to build a SFINCS model containing elevation data and spatially varying roughness (together processed into subgrid tables), and add simple water level boundary conditions.</p>
 <p>In case you want to adjust this example to build a SFINCS model anywhere else in the world, you will have to add your own datasets to HydroMT’s data catalog. For more info on that, check-out:</p>
@@ -571,32 +562,15 @@
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-2026-10-28 10:48:47,415 - hydromt - log - INFO - HydroMT version: 1.4.1
-</pre></div></div>
-</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">AttributeError</span>                            Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[2]</span><span class="ansi-green-fg">, line 10</span>
-<span class="ansi-green-fg">      6</span> log.set_log_level(log_level=<span class="ansi-green-fg">20</span>)
-<span class="ansi-green-fg">      7</span>
-<span class="ansi-green-fg">      8</span> <span style="color: rgb(95,135,135)"># Add file handler to log to a file</span>
-<span class="ansi-green-fg">      9</span> log_file = Path(model_root) / <span class="ansi-yellow-fg">&#34;hydromt_sfincs.log&#34;</span>
-<span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">10</span> logger = log._add_filehandler(log_file)
-<span class="ansi-green-fg">     11</span>
-<span class="ansi-green-fg">     12</span> <span style="color: rgb(95,135,135)"># Initialize SfincsModel Python class with the artifact data catalog which contains publically available data for North Italy</span>
-<span class="ansi-green-fg">     13</span> sf = SfincsModel(
-
-<span class="ansi-red-fg">AttributeError</span>: module &#39;hydromt._utils.log&#39; has no attribute &#39;_add_filehandler&#39;
+2026-10-28 11:02:27,335 - hydromt - log - INFO - HydroMT version: 1.4.1
+2026-10-28 11:02:27,429 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
+2026-10-28 11:02:27,430 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
+2026-10-28 11:02:27,985 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0rc4.dev0).
 </pre></div></div>
 </div>
 </section>
@@ -622,15 +596,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[3]</span><span class="ansi-green-fg">, line 1</span>
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">1</span> sf.grid.create_from_region(
-<span class="ansi-green-fg">      2</span>     region={<span class="ansi-yellow-fg">&#34;geom&#34;</span>: <span class="ansi-yellow-fg">&#34;data/region.geojson&#34;</span>},  <span style="color: rgb(95,135,135)"># specify the region geometry</span>
-<span class="ansi-green-fg">      3</span>     res=<span class="ansi-green-fg">50</span>,  <span style="color: rgb(95,135,135)"># specify the resolution</span>
-<span class="ansi-green-fg">      4</span>     rotated=<span class="ansi-bold" style="color: rgb(0,135,0)">True</span>,  <span style="color: rgb(95,135,135)"># specify whether the grid is rotated</span>
-
-<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
+2026-10-28 11:02:27,990 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading region.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
+2026-10-28 11:02:28,002 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 9 attributes in model config.
 </pre></div></div>
 </div>
 <p>The grid that we just created is described in the SFINCS configuration with x0, y0, dx, dy, mmax, nmax, rotation and epsg. In case you would have known these parameters before, you can also create a grid using <code class="docutils literal notranslate"><span class="pre">SfincsModel.grid.create()</span></code>.</p>
@@ -644,17 +611,265 @@
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[4]</span><span class="ansi-green-fg">, line 2</span>
-<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># the input file is automatically updated. See:</span>
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">2</span> sf.config.data.to_dict()
-
-<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
+{&#39;mmax&#39;: 251,
+ &#39;nmax&#39;: 108,
+ &#39;dx&#39;: 50.0,
+ &#39;dy&#39;: 50.0,
+ &#39;x0&#39;: 318650.0,
+ &#39;y0&#39;: 5040000.0,
+ &#39;rotation&#39;: 27.0,
+ &#39;tref&#39;: datetime.datetime(2026, 10, 28, 0, 0),
+ &#39;tstart&#39;: datetime.datetime(2026, 10, 28, 0, 0),
+ &#39;tstop&#39;: datetime.datetime(2026, 10, 29, 0, 0),
+ &#39;tspinup&#39;: 0.0,
+ &#39;t0out&#39;: -999.0,
+ &#39;t1out&#39;: -999.0,
+ &#39;dthisout&#39;: 600.0,
+ &#39;dtmapout&#39;: 3600.0,
+ &#39;dtmaxout&#39;: 86400.0,
+ &#39;dtrstout&#39;: 0.0,
+ &#39;trstout&#39;: -999.0,
+ &#39;dtwave&#39;: 3600.0,
+ &#39;dtwnd&#39;: 1800.0,
+ &#39;alpha&#39;: 0.5,
+ &#39;theta&#39;: 1.0,
+ &#39;hmin_cfl&#39;: 0.1,
+ &#39;dtmax&#39;: 60.0,
+ &#39;huthresh&#39;: 0.01,
+ &#39;huvmin&#39;: 0.0,
+ &#39;advection&#39;: 1,
+ &#39;advlim&#39;: 1.0,
+ &#39;advection_scheme&#39;: &#39;upw1&#39;,
+ &#39;advection_mask&#39;: 1,
+ &#39;coriolis&#39;: 1,
+ &#39;viscosity&#39;: 1,
+ &#39;nuvisc&#39;: 0.01,
+ &#39;nuviscfac&#39;: 100.0,
+ &#39;friction2d&#39;: 1,
+ &#39;uvlim&#39;: 10.0,
+ &#39;uvmax&#39;: 1000.0,
+ &#39;wiggle_suppression&#39;: 1,
+ &#39;wiggle_factor&#39;: 0.1,
+ &#39;wiggle_threshold&#39;: 0.1,
+ &#39;slopelim&#39;: 9999.9,
+ &#39;btrelax&#39;: 3600.0,
+ &#39;stopdepth&#39;: None,
+ &#39;manning&#39;: 0.04,
+ &#39;manning_land&#39;: None,
+ &#39;manning_sea&#39;: None,
+ &#39;rgh_lev_land&#39;: None,
+ &#39;rhoa&#39;: 1.25,
+ &#39;rhow&#39;: 1024.0,
+ &#39;latitude&#39;: 0.0,
+ &#39;baro&#39;: 1,
+ &#39;pavbnd&#39;: 0.0,
+ &#39;gapres&#39;: 101200.0,
+ &#39;zsini&#39;: 0.0,
+ &#39;bndtype&#39;: 1,
+ &#39;btfilter&#39;: 60.0,
+ &#39;use_bcafile&#39;: 1,
+ &#39;qinf&#39;: 0.0,
+ &#39;qinf_zmin&#39;: 0.0,
+ &#39;sfacinf&#39;: 0.2,
+ &#39;horton_kr_kd&#39;: 10.0,
+ &#39;wavemaker_nfreqs_ig&#39;: 100,
+ &#39;wavemaker_freqmin_ig&#39;: 0.0,
+ &#39;wavemaker_freqmax_ig&#39;: 0.1,
+ &#39;wavemaker_filter_time&#39;: 600.0,
+ &#39;wavemaker_filter_fred&#39;: 0.99,
+ &#39;wavemaker_signal&#39;: &#39;spectrum&#39;,
+ &#39;wavemaker_hmin&#39;: 0.1,
+ &#39;wavemaker_nfreqs_inc&#39;: 100,
+ &#39;wavemaker_freqmin_inc&#39;: 0.04,
+ &#39;wavemaker_freqmax_inc&#39;: 1.0,
+ &#39;wavemaker_tinc2ig&#39;: -1.0,
+ &#39;wavemaker_hm0_ig_factor&#39;: 1.0,
+ &#39;wavemaker_hm0_inc_factor&#39;: 1.0,
+ &#39;wavemaker_gammax&#39;: 1.0,
+ &#39;wavemaker_tpmin&#39;: 1.0,
+ &#39;wavemaker_hig&#39;: 1,
+ &#39;wavemaker_hinc&#39;: 0,
+ &#39;amprblock&#39;: 1,
+ &#39;spwmergefrac&#39;: 0.5,
+ &#39;usespwprecip&#39;: 1,
+ &#39;spinup_meteo&#39;: 0,
+ &#39;waveage&#39;: -999.0,
+ &#39;factor_wind&#39;: 1.0,
+ &#39;factor_pres&#39;: 1.0,
+ &#39;factor_prcp&#39;: 1.0,
+ &#39;factor_spw_size&#39;: 1.0,
+ &#39;snapwave&#39;: 0,
+ &#39;snapwave_wind&#39;: 0,
+ &#39;snapwave_use_nearest&#39;: 1,
+ &#39;snapwave_igwaves&#39;: 1,
+ &#39;snapwave_dtheta&#39;: 10.0,
+ &#39;snapwave_crit&#39;: 0.001,
+ &#39;snapwave_hmin&#39;: 0.1,
+ &#39;snapwave_vegetation&#39;: 0,
+ &#39;snapwave_waveforces_ratio&#39;: 1.0,
+ &#39;radstr&#39;: 0,
+ &#39;snapwave_gamma&#39;: 0.7,
+ &#39;snapwave_gammax&#39;: 999.0,
+ &#39;snapwave_alpha&#39;: 1.0,
+ &#39;snapwave_fw&#39;: 0.01,
+ &#39;snapwave_fwig&#39;: 0.015,
+ &#39;snapwave_fw_ratio&#39;: 1.0,
+ &#39;snapwave_fwig_ratio&#39;: 1.0,
+ &#39;snapwave_dt&#39;: 36000.0,
+ &#39;snapwave_tol&#39;: 1000.0,
+ &#39;snapwave_niter&#39;: 10,
+ &#39;snapwave_baldock_ratio&#39;: 0.2,
+ &#39;snapwave_baldock_exponent&#39;: 2,
+ &#39;snapwave_Tpini&#39;: 1.0,
+ &#39;snapwave_mwind&#39;: 2,
+ &#39;snapwave_sigmin&#39;: 0.25132741228718347,
+ &#39;snapwave_sigmax&#39;: 6.283185307179586,
+ &#39;snapwave_jadcgdx&#39;: 1,
+ &#39;snapwave_c_dispT&#39;: 1.0,
+ &#39;snapwave_sector&#39;: 180.0,
+ &#39;snapwave_relax_factor_DoverA&#39;: 0.25,
+ &#39;snapwave_relax_factor_DoverE&#39;: 0.25,
+ &#39;snapwave_alpha_ig&#39;: 1.0,
+ &#39;snapwave_gammaig&#39;: 0.7,
+ &#39;snapwave_gamma_fac_br&#39;: 0.45,
+ &#39;snapwave_shinc2ig&#39;: 1.0,
+ &#39;snapwave_alphaigfac&#39;: 1.0,
+ &#39;snapwave_baldock_ratio_ig&#39;: 0.2,
+ &#39;snapwave_ig_opt&#39;: 1,
+ &#39;snapwave_iterative_srcig&#39;: 0,
+ &#39;snapwave_use_herbers&#39;: 1,
+ &#39;snapwave_tpig_opt&#39;: 1,
+ &#39;snapwave_jonswapgamma&#39;: 3.3,
+ &#39;snapwave_eeinc2ig&#39;: 0.01,
+ &#39;snapwave_Tinc2ig&#39;: 7.0,
+ &#39;wave_enhanced_roughness&#39;: 0,
+ &#39;nonh&#39;: 0,
+ &#39;nh_fnudge&#39;: 0.9,
+ &#39;nh_tstop&#39;: -999.0,
+ &#39;nh_tol&#39;: 0.001,
+ &#39;nh_itermax&#39;: 100,
+ &#39;structure_relax&#39;: 10.0,
+ &#39;bathtub&#39;: 0,
+ &#39;bathtub_fachs&#39;: 0.2,
+ &#39;bathtub_dt&#39;: -999.0,
+ &#39;sfincs_version&#39;: &#39;2.5.0&#39;,
+ &#39;global_model&#39;: 0,
+ &#39;crsgeo&#39;: 0,
+ &#39;epsg&#39;: 32633,
+ &#39;utmzone&#39;: None,
+ &#39;inputformat&#39;: &#39;bin&#39;,
+ &#39;outputformat&#39;: &#39;net&#39;,
+ &#39;outputtype_map&#39;: None,
+ &#39;outputtype_his&#39;: None,
+ &#39;nc_deflate_level&#39;: 2,
+ &#39;rugdepth&#39;: 0.05,
+ &#39;h73table&#39;: 0,
+ &#39;cdnrb&#39;: 3,
+ &#39;cdwnd&#39;: [0.0, 28.0, 50.0],
+ &#39;cdval&#39;: [0.001, 0.0025, 0.0015],
+ &#39;qtrfile&#39;: None,
+ &#39;depfile&#39;: None,
+ &#39;inifile&#39;: None,
+ &#39;rstfile&#39;: None,
+ &#39;mskfile&#39;: None,
+ &#39;indexfile&#39;: None,
+ &#39;sbgfile&#39;: None,
+ &#39;thdfile&#39;: None,
+ &#39;weirfile&#39;: None,
+ &#39;manningfile&#39;: None,
+ &#39;drnfile&#39;: None,
+ &#39;volfile&#39;: None,
+ &#39;dkbfile&#39;: None,
+ &#39;urbfile&#39;: None,
+ &#39;vegfile&#39;: None,
+ &#39;vegtype&#39;: None,
+ &#39;bndfile&#39;: None,
+ &#39;bzsfile&#39;: None,
+ &#39;bcafile&#39;: None,
+ &#39;bzifile&#39;: None,
+ &#39;bdrfile&#39;: None,
+ &#39;wavemaker_wfpfile&#39;: None,
+ &#39;wavemaker_whifile&#39;: None,
+ &#39;wavemaker_wtifile&#39;: None,
+ &#39;wavemaker_wstfile&#39;: None,
+ &#39;srcfile&#39;: None,
+ &#39;disfile&#39;: None,
+ &#39;spwfile&#39;: None,
+ &#39;wndfile&#39;: None,
+ &#39;prcfile&#39;: None,
+ &#39;amufile&#39;: None,
+ &#39;amvfile&#39;: None,
+ &#39;ampfile&#39;: None,
+ &#39;amprfile&#39;: None,
+ &#39;z0lfile&#39;: None,
+ &#39;wavemaker_wvmfile&#39;: None,
+ &#39;wavemaker_timeseries_wvmfile&#39;: None,
+ &#39;qinffile&#39;: None,
+ &#39;inffile&#39;: None,
+ &#39;inftype&#39;: None,
+ &#39;scsfile&#39;: None,
+ &#39;smaxfile&#39;: None,
+ &#39;sefffile&#39;: None,
+ &#39;psifile&#39;: None,
+ &#39;sigmafile&#39;: None,
+ &#39;ksfile&#39;: None,
+ &#39;f0file&#39;: None,
+ &#39;fcfile&#39;: None,
+ &#39;kdfile&#39;: None,
+ &#39;netbndbzsbzifile&#39;: None,
+ &#39;netsrcdisfile&#39;: None,
+ &#39;netamuamvfile&#39;: None,
+ &#39;netamprfile&#39;: None,
+ &#39;netampfile&#39;: None,
+ &#39;netspwfile&#39;: None,
+ &#39;snapwave_bndfile&#39;: None,
+ &#39;snapwave_bhsfile&#39;: None,
+ &#39;snapwave_btpfile&#39;: None,
+ &#39;snapwave_bwdfile&#39;: None,
+ &#39;snapwave_bdsfile&#39;: None,
+ &#39;netsnapwavefile&#39;: None,
+ &#39;snapwave_jonswapfile&#39;: None,
+ &#39;snapwave_encfile&#39;: None,
+ &#39;snapwave_upwfile&#39;: None,
+ &#39;snapwave_mskfile&#39;: None,
+ &#39;snapwave_depfile&#39;: None,
+ &#39;snapwave_ncfile&#39;: None,
+ &#39;obsfile&#39;: None,
+ &#39;crsfile&#39;: None,
+ &#39;rugfile&#39;: None,
+ &#39;storevelmax&#39;: 0,
+ &#39;storefluxmax&#39;: 0,
+ &#39;storevel&#39;: 0,
+ &#39;storecumprcp&#39;: 0,
+ &#39;storetwet&#39;: 0,
+ &#39;storehsubgrid&#39;: 0,
+ &#39;storehmean&#39;: 0,
+ &#39;storemeteo&#39;: 0,
+ &#39;storemaxwind&#39;: 0,
+ &#39;storefw&#39;: 0,
+ &#39;storewavdir&#39;: 0,
+ &#39;storeqdrain&#39;: 1,
+ &#39;storezvolume&#39;: 0,
+ &#39;storestoragevolume&#39;: 0,
+ &#39;store_tsunami_arrival_time&#39;: 0,
+ &#39;store_dynamic_bed_level&#39;: 0,
+ &#39;storetzsmax&#39;: 0,
+ &#39;storezvolmax&#39;: 1,
+ &#39;store_river_discharge&#39;: 0,
+ &#39;store_urban_drainage_discharge&#39;: 0,
+ &#39;store_cumulative_urban_drainage&#39;: 0,
+ &#39;storesnapwavegrid&#39;: 0,
+ &#39;writeruntime&#39;: 0,
+ &#39;output_on_quadtree_mesh&#39;: 0,
+ &#39;twet_threshold&#39;: 0.01,
+ &#39;timestep_analysis&#39;: 0,
+ &#39;debug&#39;: 0,
+ &#39;percentage_done&#39;: 5}
 </pre></div></div>
 </div>
 <p>HydroMT-SFINCS has so very usefull tools to plot your model and all of its components. The main functionality to plot the model can be found in <code class="docutils literal notranslate"><span class="pre">SfincsModel.plot_basemap()</span></code> where you can specify which background map (<code class="docutils literal notranslate"><span class="pre">bmap</span></code>) to use, and which layers to plot. Throughout this notebook, we will explore the different options of this method.</p>
@@ -677,18 +892,8 @@
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[5]</span><span class="ansi-green-fg">, line 2</span>
-<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># show the model grid outline</span>
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">2</span> _ = sf.plot_basemap(
-<span class="ansi-green-fg">      3</span>     variable=<span class="ansi-yellow-fg">&#34;grid&#34;</span>,
-<span class="ansi-green-fg">      4</span>     plot_region=<span class="ansi-bold" style="color: rgb(0,135,0)">True</span>,
-<span class="ansi-green-fg">      5</span>     bmap=<span class="ansi-yellow-fg">&#34;sat&#34;</span>,
-
-<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
-</pre></div></div>
+<img alt="../_images/_examples_1_build_from_script_14_0.png" src="../_images/_examples_1_build_from_script_14_0.png" />
+</div>
 </div>
 </section>
 <section id="3.-Add-elevation-to-the-model">
@@ -711,25 +916,21 @@
 </pre></div>
 </div>
 </div>
-<div class="nboutput nblast docutils container">
+<div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[6]</span><span class="ansi-green-fg">, line 7</span>
-<span class="ansi-green-fg">      3</span> <span style="color: rgb(95,135,135)"># the 2nd elevation dataset (gebco) is used where the 1st dataset returned nodata values</span>
-<span class="ansi-green-fg">      4</span> elevation_list = [{<span class="ansi-yellow-fg">&#34;elevation&#34;</span>: <span class="ansi-yellow-fg">&#34;merit_hydro&#34;</span>, <span class="ansi-yellow-fg">&#34;zmin&#34;</span>: <span class="ansi-green-fg">0.001</span>}, {<span class="ansi-yellow-fg">&#34;elevation&#34;</span>: <span class="ansi-yellow-fg">&#34;gebco&#34;</span>}]
-<span class="ansi-green-fg">      5</span>
-<span class="ansi-green-fg">      6</span> <span style="color: rgb(95,135,135)"># Add depth information to modelgrid based on these chosen datasets</span>
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">7</span> sf.elevation.create(elevation_list=elevation_list, buffer_cells=<span class="ansi-green-fg">1</span>)
-<span class="ansi-green-fg">      8</span>
-<span class="ansi-green-fg">      9</span> <span style="color: rgb(95,135,135)"># Make a plot of the merged topobathy, here colour limits are set between an elevation of -5 to 5 meters</span>
-<span class="ansi-green-fg">     10</span> _ = sf.plot_basemap(variable=<span class="ansi-yellow-fg">&#34;dep&#34;</span>, plot_region=<span class="ansi-bold" style="color: rgb(0,135,0)">True</span>, bmap=<span class="ansi-yellow-fg">&#34;sat&#34;</span>, zoomlevel=<span class="ansi-green-fg">12</span>)
-
-<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
+2026-10-28 11:02:29,439 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
+2026-10-28 11:02:29,456 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
 </pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_examples_1_build_from_script_16_1.png" src="../_images/_examples_1_build_from_script_16_1.png" />
+</div>
 </div>
 </section>
 <section id="4.-Make-mask-of-active-and-inactive-cells:">
@@ -751,23 +952,21 @@
 </pre></div>
 </div>
 </div>
-<div class="nboutput nblast docutils container">
+<div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[7]</span><span class="ansi-green-fg">, line 3</span>
-<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># Defining your active cells can be based on multiple criteria, here we only specify a minimum elevation of -5 meters,</span>
-<span class="ansi-green-fg">      2</span> <span style="color: rgb(95,135,135)"># meaning all cells above -5 are considered to be active. Check-out the method documentation for more options.</span>
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">3</span> sf.mask.create_active(zmin=-<span class="ansi-green-fg">5</span>)
-<span class="ansi-green-fg">      4</span>
-<span class="ansi-green-fg">      5</span> <span style="color: rgb(95,135,135)"># # Make a plot of the mask file</span>
-<span class="ansi-green-fg">      6</span> _ = sf.plot_basemap(
-
-<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
+2026-10-28 11:02:30,557 - hydromt.hydromt_sfincs.components.grid.mask - mask - INFO - 1 gaps outside valid elevation range &lt; 10.0 km2.
+2026-10-28 11:02:30,560 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 2 attributes in model config.
 </pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_examples_1_build_from_script_18_1.png" src="../_images/_examples_1_build_from_script_18_1.png" />
+</div>
 </div>
 <p>NOTE:</p>
 <ul class="simple">
@@ -796,16 +995,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[8]</span><span class="ansi-green-fg">, line 2</span>
-<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># Here we add water level cells along the coastal boundary, for cells up to an elevation of -5 meters</span>
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">2</span> sf.mask.create_boundary(
-<span class="ansi-green-fg">      3</span>     btype=<span class="ansi-yellow-fg">&#34;waterlevel&#34;</span>,
-<span class="ansi-green-fg">      4</span>     zmax=-<span class="ansi-green-fg">5</span>,
-<span class="ansi-green-fg">      5</span>     reset_bounds=<span class="ansi-bold" style="color: rgb(0,135,0)">True</span>,
-
-<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
+2026-10-28 11:02:31,577 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -829,16 +1019,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[9]</span><span class="ansi-green-fg">, line 2</span>
-<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># Here we add outflow cells, only where clicked in shapefile along part of the lateral boundaries</span>
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">2</span> gdf_include = sf.data_catalog.get_geodataframe(
-<span class="ansi-green-fg">      3</span>     <span class="ansi-yellow-fg">&#34;data//compound_example_outflow_boundary_polygon.geojson&#34;</span>
-<span class="ansi-green-fg">      4</span> )
-<span class="ansi-green-fg">      5</span> sf.mask.create_boundary(
-
-<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
+2026-10-28 11:02:31,581 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading compound_example_outflow_boundary_polygon.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_outflow_boundary_polygon.geojson
+2026-10-28 11:02:31,603 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -854,22 +1036,21 @@
 </pre></div>
 </div>
 </div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;GeoAxes: title={&#39;center&#39;: &#39;SFINCS mask map&#39;}, xlabel=&#39;x [m] - WGS 84 / UTM zone 33N&#39;, ylabel=&#39;y [m]&#39;&gt;
+</pre></div></div>
+</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[10]</span><span class="ansi-green-fg">, line 2</span>
-<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># Make a plot of the mask file</span>
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">2</span> fig, ax = sf.plot_basemap(
-<span class="ansi-green-fg">      3</span>     variable=<span class="ansi-yellow-fg">&#34;mask&#34;</span>, plot_region=<span class="ansi-bold" style="color: rgb(0,135,0)">False</span>, plot_bounds=<span class="ansi-bold" style="color: rgb(0,135,0)">False</span>, bmap=<span class="ansi-yellow-fg">&#34;sat&#34;</span>, zoomlevel=<span class="ansi-green-fg">12</span>
-<span class="ansi-green-fg">      4</span> )
-<span class="ansi-green-fg">      5</span> <span style="color: rgb(95,135,135)"># plot the shapefile given by the user as dashed line</span>
-
-<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
-</pre></div></div>
+<img alt="../_images/_examples_1_build_from_script_23_1.png" src="../_images/_examples_1_build_from_script_23_1.png" />
+</div>
 </div>
 <p>NOTE:</p>
 <ul class="simple">
@@ -902,25 +1083,23 @@
 </pre></div>
 </div>
 </div>
-<div class="nboutput nblast docutils container">
+<div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[11]</span><span class="ansi-green-fg">, line 8</span>
-<span class="ansi-green-fg">      4</span>
-<span class="ansi-green-fg">      5</span> <span style="color: rgb(95,135,135)"># use the river manning raster in combination with vito_2015 land to derive the manning roughness file</span>
-<span class="ansi-green-fg">      6</span> roughness_list = [{<span class="ansi-yellow-fg">&#34;lulc&#34;</span>: <span class="ansi-yellow-fg">&#34;vito_2015&#34;</span>, <span class="ansi-yellow-fg">&#34;reclass_table&#34;</span>: reclass_table}]
-<span class="ansi-green-fg">      7</span>
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">8</span> sf.roughness.create(
-<span class="ansi-green-fg">      9</span>     roughness_list=roughness_list,
-<span class="ansi-green-fg">     10</span>     manning_land=<span class="ansi-green-fg">0.04</span>,
-<span class="ansi-green-fg">     11</span>     manning_sea=<span class="ansi-green-fg">0.02</span>,
-
-<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
+2026-10-28 11:02:32,617 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
+2026-10-28 11:02:32,626 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
+2026-10-28 11:02:32,629 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
+2026-10-28 11:02:32,652 - hydromt.hydromt_sfincs.components.grid.roughness - roughness - INFO - Spatially varying manning roughness set. Note that this overrules any earlier defined manning_land and manning_sea in config.
 </pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_examples_1_build_from_script_26_1.png" src="../_images/_examples_1_build_from_script_26_1.png" />
+</div>
 </div>
 </section>
 <section id="7.-Make-subgrid-derived-tables:">
@@ -958,19 +1137,21 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[12]</span><span class="ansi-green-fg">, line 7</span>
-<span class="ansi-green-fg">      3</span>
-<span class="ansi-green-fg">      4</span> <span style="color: rgb(95,135,135)"># Roughness sets</span>
-<span class="ansi-green-fg">      5</span> roughness_list = [{<span class="ansi-yellow-fg">&#34;lulc&#34;</span>: <span class="ansi-yellow-fg">&#34;vito_2015&#34;</span>, <span class="ansi-yellow-fg">&#34;reclass_table&#34;</span>: reclass_table}]
-<span class="ansi-green-fg">      6</span>
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">7</span> sf.subgrid.create(
-<span class="ansi-green-fg">      8</span>     elevation_list=elevation_list,
-<span class="ansi-green-fg">      9</span>     roughness_list=roughness_list,
-<span class="ansi-green-fg">     10</span>     nr_subgrid_pixels=<span class="ansi-green-fg">6</span>,
-
-<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
+2026-10-28 11:02:33,649 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
+2026-10-28 11:02:33,661 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
+2026-10-28 11:02:33,672 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
+2026-10-28 11:02:33,680 - hydromt.data_catalog.data_catalog - data_catalog - WARNING - overwriting data source &#39;vito_mapping.csv&#39; with provider user and version _UNSPECIFIED_.
+2026-10-28 11:02:33,680 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
+2026-10-28 11:02:33,684 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
+2026-10-28 11:02:33,691 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of regular cells in a block : 333
+2026-10-28 11:02:33,692 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in n direction    : 1
+2026-10-28 11:02:33,692 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in m direction    : 1
+2026-10-28 11:02:33,692 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of flux grid            : dx=50.000000000000654, dy=50.00000000000095
+2026-10-28 11:02:33,692 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of subgrid pixels       : dx=8.333333333333442, dy=8.333333333333492
+2026-10-28 11:02:33,693 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - block 1/1 -- col 0:250 | row 0:107
+2026-10-28 11:02:43,896 - hydromt.hydromt_sfincs.components.grid.subgrid - cog - INFO - Building 2 overviews with average
+2026-10-28 11:02:43,923 - hydromt.hydromt_sfincs.components.grid.subgrid - cog - INFO - Building 2 overviews with average
+2026-10-28 11:02:43,937 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Subgrid tables created. Note that the subgrid tables overwrite previously defined information on elevation and roughness.
 </pre></div></div>
 </div>
 <div style="border-left: 4px solid #4CAF50; padding: 0.5em; background-color: #f0fff0;"><p>⚠️ Note: If you have a very large domain with more than a millions cells, and very high-resolution datasets (e.g. 1 m), this step might take minutes to hours!!!</p>
@@ -994,20 +1175,8 @@
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[13]</span><span class="ansi-green-fg">, line 5</span>
-<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># uncomment to see the subgrid table variales</span>
-<span class="ansi-green-fg">      2</span> <span style="color: rgb(95,135,135)"># sf.subgrid.data</span>
-<span class="ansi-green-fg">      3</span>
-<span class="ansi-green-fg">      4</span> <span style="color: rgb(95,135,135)"># we can plot the 2D subgrid variables</span>
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">5</span> _ = sf.plot_basemap(
-<span class="ansi-green-fg">      6</span>     variable=sf.subgrid.data[<span class="ansi-yellow-fg">&#34;u_navg&#34;</span>], plot_bounds=<span class="ansi-bold" style="color: rgb(0,135,0)">False</span>, bmap=<span class="ansi-yellow-fg">&#34;sat&#34;</span>, zoomlevel=<span class="ansi-green-fg">12</span>
-<span class="ansi-green-fg">      7</span> )
-
-<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
-</pre></div></div>
+<img alt="../_images/_examples_1_build_from_script_33_0.png" src="../_images/_examples_1_build_from_script_33_0.png" />
+</div>
 </div>
 </section>
 <section id="8.-Add-water-level-time-series-as-forcing:">
@@ -1042,16 +1211,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[14]</span><span class="ansi-green-fg">, line 2</span>
-<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># Change period of model simulation time, specified in yyyymmdd HHMMSS, to match with the available water level data</span>
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">2</span> sf.config.update(
-<span class="ansi-green-fg">      3</span>     {
-<span class="ansi-green-fg">      4</span>         <span class="ansi-yellow-fg">&#34;tref&#34;</span>: datetime(<span class="ansi-green-fg">2010</span>, <span class="ansi-green-fg">2</span>, <span class="ansi-green-fg">5</span>),
-<span class="ansi-green-fg">      5</span>         <span class="ansi-yellow-fg">&#34;tstart&#34;</span>: datetime(<span class="ansi-green-fg">2010</span>, <span class="ansi-green-fg">2</span>, <span class="ansi-green-fg">5</span>),
-
-<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
+2026-10-28 11:02:45,070 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 3 attributes in model config.
+2026-10-28 11:02:45,110 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gtsmv3_eu_era5 GeoDataset data from /home/runner/.hydromt/artifact_data/latest/gtsmv3_eu_era5.nc
 </pre></div></div>
 </div>
 </section>
@@ -1069,21 +1230,22 @@
 </pre></div>
 </div>
 </div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(&lt;Figure size 600x428.571 with 2 Axes&gt;,
+ &lt;GeoAxes: title={&#39;center&#39;: &#39;SFINCS dep map&#39;}, xlabel=&#39;x [m] - WGS 84 / UTM zone 33N&#39;, ylabel=&#39;y [m]&#39;&gt;)
+</pre></div></div>
+</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[15]</span><span class="ansi-green-fg">, line 2</span>
-<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># plot basemap, in this case boundary points should be added (and plotted because of plot_geoms=True)</span>
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">2</span> sf.plot_basemap(
-<span class="ansi-green-fg">      3</span>     variable=<span class="ansi-yellow-fg">&#34;dep&#34;</span>, plot_geoms=<span class="ansi-bold" style="color: rgb(0,135,0)">True</span>, plot_bounds=<span class="ansi-bold" style="color: rgb(0,135,0)">True</span>, bmap=<span class="ansi-yellow-fg">&#34;sat&#34;</span>, zoomlevel=<span class="ansi-green-fg">12</span>
-<span class="ansi-green-fg">      4</span> )
-
-<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
-</pre></div></div>
+<img alt="../_images/_examples_1_build_from_script_37_1.png" src="../_images/_examples_1_build_from_script_37_1.png" />
+</div>
 </div>
 <p>And the boundary conditions timeseries:</p>
 <div class="nbinput docutils container">
@@ -1094,24 +1256,28 @@
 </pre></div>
 </div>
 </div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(&lt;Figure size 600x300 with 1 Axes&gt;,
+ [&lt;Axes: title={&#39;center&#39;: &#39;SFINCS waterlevel forcing (bzs)&#39;}, ylabel=&#39;waterlevel\n[m+ref]&#39;&gt;])
+</pre></div></div>
+</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[16]</span><span class="ansi-green-fg">, line 1</span>
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">1</span> sf.plot_forcing()
-
-<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
-</pre></div></div>
+<img alt="../_images/_examples_1_build_from_script_39_1.png" src="../_images/_examples_1_build_from_script_39_1.png" />
+</div>
 </div>
 </section>
 <section id="10.-Write-the-model-input-to-disk">
 <h2>10. Write the model input to disk<a class="headerlink" href="#10.-Write-the-model-input-to-disk" title="Link to this heading">#</a></h2>
 <p>By now we have made all basic SFINCS spatial layers and added simple water level boundary conditions. We are ready to write the model to disk, and run the model.</p>
-<div class="nbinput docutils container">
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
@@ -1119,20 +1285,6 @@
 <span class="n">sf</span><span class="o">.</span><span class="n">write</span><span class="p">()</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[17]</span><span class="ansi-green-fg">, line 2</span>
-<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># write all model files to disk</span>
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">2</span> sf.write()
-
-<span class="ansi-red-fg">NameError</span>: name &#39;sf&#39; is not defined
-</pre></div></div>
 </div>
 <p>We always recommend to run the SFINCS model with normal conditions first to check model performance (we don’t expect flooding under normal conditions). To run this basic model, you could progress to the notebook:</p>
 <ul class="simple">

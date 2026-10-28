@@ -864,6 +864,32 @@ new_option → min_dist</p></td>
 <span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">write</span><span class="p">()</span>
 </pre></div>
 </div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><code class="docutils literal notranslate"><span class="pre">model.grid.read()</span></code> / <code class="docutils literal notranslate"><span class="pre">write()</span></code> and <code class="docutils literal notranslate"><span class="pre">model.quadtree_grid.read()</span></code> /
+<code class="docutils literal notranslate"><span class="pre">write()</span></code> read or write the grid’s main data files by default. For regular
+grids, this is the mask and elevation; for quadtree grids, it is the main
+mesh file. Read and write other gridded variables through their components
+(for example <code class="docutils literal notranslate"><span class="pre">model.roughness.read()</span></code> and <code class="docutils literal notranslate"><span class="pre">model.infiltration.write()</span></code>).
+This is the normal component-level workflow:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># read or write the relevant components directly</span>
+<span class="n">model</span><span class="o">.</span><span class="n">roughness</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">infiltration</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">write</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">roughness</span><span class="o">.</span><span class="n">write</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">infiltration</span><span class="o">.</span><span class="n">write</span><span class="p">()</span>
+
+<span class="c1"># alternatively, have the grid call component read/write methods</span>
+<span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">read_components</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">write_components</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">read_components=True</span></code> and <code class="docutils literal notranslate"><span class="pre">write_components=True</span></code> are shortcuts for
+having the grid delegate to components that manage gridded variables. Use
+<code class="docutils literal notranslate"><span class="pre">model.read()</span></code> or <code class="docutils literal notranslate"><span class="pre">model.write()</span></code> to read or write all active components.
+A component read also loads the grid when needed, so there is no need to call
+<code class="docutils literal notranslate"><span class="pre">model.grid.read()</span></code> before <code class="docutils literal notranslate"><span class="pre">model.infiltration.read()</span></code>.</p>
+</div>
 <p>These changes provide a clearer and more modular interface, making it easier to manipulate model components independently.</p>
 </section>
 </section>

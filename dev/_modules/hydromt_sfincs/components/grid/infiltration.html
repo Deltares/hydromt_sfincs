@@ -785,118 +785,144 @@ window.runMermaid = runMermaid;</script>
                   
   <h1>Source code for hydromt_sfincs.components.grid.infiltration</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt</span><span class="w"> </span><span class="kn">import</span> <span class="n">hydromt_step</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelComponent</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">workflows</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">DATADIR</span><span class="p">,</span> <span class="n">workflows</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">fill_nan_in_mask</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.components.grid.regulargrid_mixin</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsRegularGridMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.components.infiltration_common</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ALL_VARS</span><span class="p">,</span>
+    <span class="n">QUADTREE_ONLY_FLAVORS</span><span class="p">,</span>
+    <span class="n">QUADTREE_ONLY_VARS</span><span class="p">,</span>
+    <span class="n">VARIABLES</span><span class="p">,</span>
+    <span class="n">clear_data</span><span class="p">,</span>
+    <span class="n">configure</span><span class="p">,</span>
+    <span class="n">configured_flavor</span><span class="p">,</span>
+    <span class="n">flavor_variables</span><span class="p">,</span>
+    <span class="n">get_attrs</span><span class="p">,</span>
+    <span class="n">reset_config</span><span class="p">,</span>
+    <span class="n">_require_lulc_modifiers</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hydromt.</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-<span class="n">_ATTRS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"qinf"</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">"standard_name"</span><span class="p">:</span> <span class="s2">"infiltration rate"</span><span class="p">,</span>
-        <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"mm.hr-1"</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">"scs"</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">"standard_name"</span><span class="p">:</span> <span class="s2">"potential soil moisture retention"</span><span class="p">,</span>
-        <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"in"</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">"smax"</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">"standard_name"</span><span class="p">:</span> <span class="s2">"potential maximum soil moisture retention"</span><span class="p">,</span>
-        <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"in"</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">"seff"</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">"standard_name"</span><span class="p">:</span> <span class="s2">"effective potential maximum soil moisture retention"</span><span class="p">,</span>
-        <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"in"</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">"ks"</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">"standard_name"</span><span class="p">:</span> <span class="s2">"saturated hydraulic conductivity"</span><span class="p">,</span>
-        <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"mm.hr-1"</span><span class="p">,</span>
-    <span class="p">},</span>
-<span class="p">}</span>
-
 
 <div class="viewcode-block" id="SfincsInfiltration">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsInfiltration.html#hydromt_sfincs.components.grid.SfincsInfiltration">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">SfincsInfiltration</span><span class="p">(</span><span class="n">ModelComponent</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""SFINCS Infiltration Component.</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SfincsInfiltration</span><span class="p">(</span><span class="n">SfincsRegularGridMixin</span><span class="p">,</span> <span class="n">ModelComponent</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""SFINCS infiltration component for regular grids.</span>
 
-<span class="sd">    This component contains methods to add infiltration data to the SFINCS model</span>
-<span class="sd">    on regular grids. Various infiltration parameterizations can be used, including</span>
-<span class="sd">    spatially varying constant infiltration rates and curve number based methods.</span>
-
-<span class="sd">    .. note::</span>
-<span class="sd">        The infiltration data is stored in the model grid's data dataset under the keys "qinf", "scs", "smax", "seff" and "ks".</span>
-
-<span class="sd">    See Also</span>
-<span class="sd">    --------</span>
-<span class="sd">    :py:class:`~hydromt_sfincs.components.grid.regulargrid.SfincsGrid`</span>
-
+<span class="sd">    Unsuffixed ``create_*`` methods estimate parameters from HSG, optional</span>
+<span class="sd">    Ksat, and optional land-use modifiers. Methods with a ``_from_maps`` suffix</span>
+<span class="sd">    use final SFINCS parameter maps directly.</span>
 <span class="sd">    """</span>
 
 <div class="viewcode-block" id="SfincsInfiltration.__init__">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsInfiltration.html#hydromt_sfincs.components.grid.SfincsInfiltration.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">model</span><span class="p">:</span> <span class="s2">"SfincsModel"</span><span class="p">,</span>
-    <span class="p">):</span>
-        <span class="c1"># The data for the mask is stored in the model.grid.data["qinf"]</span>
-        <span class="c1"># (or "scs" or "smax", "seff" &amp; "ks")</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-        <span class="p">)</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="s2">"SfincsModel"</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span></div>
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Get the data from the model grid."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return only the available infiltration layers from the model grid."""</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">return</span> <span class="n">data</span><span class="p">[[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_variables</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">mask</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Get an empty mask with the same shape as the model grid."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">mask</span>
 
-    <span class="c1"># %% core HydroMT-SFINCS functions:</span>
-    <span class="c1"># read</span>
-    <span class="c1"># write</span>
-    <span class="c1"># set &gt; already in grid.set()</span>
-    <span class="c1"># create_constant</span>
-    <span class="c1"># create_cn</span>
-    <span class="c1"># create_cn_with_recovery</span>
-    <span class="c1"># clear &gt;TODO?</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_layers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span> <span class="n">flavor</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">flavor</span> <span class="ow">in</span> <span class="n">QUADTREE_ONLY_FLAVORS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Infiltration flavor '</span><span class="si">{</span><span class="n">flavor</span><span class="si">}</span><span class="s2">' is only supported on quadtree grids"</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">da</span> <span class="ow">in</span> <span class="n">layers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+            <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span>
+                <span class="n">data</span><span class="o">=</span><span class="n">fill_nan_in_mask</span><span class="p">(</span>
+                    <span class="n">da</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">VARIABLES</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">fill_value</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">da</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+            <span class="n">da</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">get_attrs</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+                <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">da</span><span class="p">)</span>
+        <span class="n">configure</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">flavor</span><span class="o">=</span><span class="n">flavor</span><span class="p">,</span> <span class="n">grid_type</span><span class="o">=</span><span class="s2">"regular"</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Not implemented, infiltration data is read when the grid is read."""</span>
-        <span class="c1"># TODO discuss what we want to return/read here, pass is not so informative ..</span>
-        <span class="c1"># The infiltration file(s) are read when all grid files are read in regulargrid.py</span>
-        <span class="k">pass</span>
+    <span class="n">grid_variables</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">ALL_VARS</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">QUADTREE_ONLY_VARS</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Not implemented, infiltration data is written when the grid is written."""</span>
-        <span class="c1"># The infiltration file(s) are written when all grid files are written in regulargrid.py</span>
-        <span class="k">pass</span>
+<div class="viewcode-block" id="SfincsInfiltration.read">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsInfiltration.read.html#hydromt_sfincs.components.grid.SfincsInfiltration.read">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Read the infiltration layers from their own files."""</span>
+        <span class="c1"># the grid holds the mask and cell index these layers are written against;</span>
+        <span class="c1"># check _data directly, since the data property already triggers a read</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">read_components</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">flavor</span> <span class="o">=</span> <span class="n">configured_flavor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">grid_type</span><span class="o">=</span><span class="s2">"regular"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">flavor</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">flavor</span> <span class="o">==</span> <span class="s2">"con"</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">_read_layers</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">flavor_variables</span><span class="p">(</span><span class="n">flavor</span><span class="p">)))</span></div>
 
-    <span class="c1"># Function to create constant spatially varying infiltration</span>
+
+<div class="viewcode-block" id="SfincsInfiltration.write">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsInfiltration.write.html#hydromt_sfincs.components.grid.SfincsInfiltration.write">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Write each regular-grid infiltration layer to its own binary file."""</span>
+        <span class="n">flavor</span> <span class="o">=</span> <span class="n">configured_flavor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">grid_type</span><span class="o">=</span><span class="s2">"regular"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">flavor</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">flavor</span> <span class="o">==</span> <span class="s2">"con"</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">_write_layers</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">flavor_variables</span><span class="p">(</span><span class="n">flavor</span><span class="p">)))</span></div>
+
+
+<div class="viewcode-block" id="SfincsInfiltration.create_uniform_constant">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsInfiltration.create_uniform_constant.html#hydromt_sfincs.components.grid.SfincsInfiltration.create_uniform_constant">[docs]</a>
+    <span class="nd">@hydromt_step</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_uniform_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qinf</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create a uniform constant infiltration rate in model config.</span>
+
+<span class="sd">        Sets the ``qinf`` config entry and clears any existing infiltration</span>
+<span class="sd">        layers; no grid layers are added.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        qinf : float</span>
+<span class="sd">            Uniform infiltration rate [mm/hr].</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"qinf"</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">qinf</span><span class="p">))</span></div>
+
+
 <div class="viewcode-block" id="SfincsInfiltration.create_constant">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsInfiltration.create_constant.html#hydromt_sfincs.components.grid.SfincsInfiltration.create_constant">[docs]</a>
     <span class="nd">@hydromt_step</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">create_constant</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">qinf</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">lulc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">reclass_table</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">reproj_method</span><span class="o">=</span><span class="s2">"average"</span><span class="p">,</span>
-    <span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Create spatially varying constant infiltration rate (qinffile).</span>
+        <span class="n">qinf</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">lulc</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">reclass_table</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"average"</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create spatially varying constant infiltration rate.</span>
 
 <span class="sd">        Adds model layers to SfincsModel.grid.data:</span>
 
@@ -905,11 +931,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        qinf : str, Path, or RasterDataset</span>
-<span class="sd">            Spatially varying infiltration rates [mm/hr]</span>
+<span class="sd">            Spatially varying infiltration rates [mm/hr]. If this is an xr.Dataset,</span>
+<span class="sd">            it must contain a ``qinf`` variable.</span>
 <span class="sd">        lulc: str, Path, or RasterDataset</span>
-<span class="sd">            Landuse/landcover data set</span>
+<span class="sd">            Landuse/landcover dataset. Must be combined with ``reclass_table``.</span>
 <span class="sd">        reclass_table: str, Path, or pd.DataFrame</span>
-<span class="sd">            Reclassification table to convert landuse/landcover to infiltration rates [mm/hr]</span>
+<span class="sd">            Reclassification table with a ``qinf`` column to convert land-use classes</span>
+<span class="sd">            to infiltration rates [mm/hr].</span>
 <span class="sd">        reproj_method : str, optional</span>
 <span class="sd">            Resampling method for reprojecting the infiltration data to the model grid.</span>
 <span class="sd">            By default 'average'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`</span>
@@ -920,11 +948,45 @@ window.runMermaid = runMermaid;</script>
 
         <span class="c1"># get infiltration data</span>
         <span class="k">if</span> <span class="n">qinf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">da_inf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+            <span class="n">da_qinf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
                 <span class="n">qinf</span><span class="p">,</span>
                 <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
                 <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
             <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">da_qinf</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+                <span class="k">if</span> <span class="s2">"qinf"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">da_qinf</span><span class="o">.</span><span class="n">data_vars</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not find variable qinf in </span><span class="si">{</span><span class="n">qinf</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="n">da_qinf</span> <span class="o">=</span> <span class="n">da_qinf</span><span class="p">[</span><span class="s2">"qinf"</span><span class="p">]</span>
+        <span class="c1"># TODO check if this one is really necessary?</span>
+        <span class="c1"># elif lulc is not None and ksat is not None:</span>
+        <span class="c1">#     da_ksat = self.data_catalog.get_rasterdataset(</span>
+        <span class="c1">#         ksat, bbox=self.model.bbox, buffer=10</span>
+        <span class="c1">#     )</span>
+        <span class="c1">#     da_lulc = self.data_catalog.get_rasterdataset(</span>
+        <span class="c1">#         lulc, bbox=self.model.bbox, buffer=10</span>
+        <span class="c1">#     )</span>
+        <span class="c1">#     if lulc_modifier_table is None:</span>
+        <span class="c1">#         lulc_modifier_table = (</span>
+        <span class="c1">#             Path(DATADIR)</span>
+        <span class="c1">#             / "infiltration"</span>
+        <span class="c1">#             / "nlcd_infiltration_modifiers.csv"</span>
+        <span class="c1">#         )</span>
+        <span class="c1">#     if isinstance(lulc_modifier_table, pd.DataFrame):</span>
+        <span class="c1">#         df_modifiers = lulc_modifier_table.copy()</span>
+        <span class="c1">#     else:</span>
+        <span class="c1">#         df_modifiers = self.data_catalog.get_dataframe(</span>
+        <span class="c1">#             lulc_modifier_table,</span>
+        <span class="c1">#             source_kwargs={</span>
+        <span class="c1">#                 "driver": {"name": "pandas", "options": {"index_col": 0}}</span>
+        <span class="c1">#             },</span>
+        <span class="c1">#         )</span>
+        <span class="c1">#     da_qinf = workflows.constant_infiltration_from_ksat_lulc(</span>
+        <span class="c1">#         da_ksat,</span>
+        <span class="c1">#         da_lulc,</span>
+        <span class="c1">#         df_modifiers,</span>
+        <span class="c1">#         da_mask=self.mask,</span>
+        <span class="c1">#         factor_ksat=factor_ksat,</span>
+        <span class="c1">#     )</span>
         <span class="k">elif</span> <span class="n">lulc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># landuse/landcover should always be combined with mapping</span>
             <span class="k">if</span> <span class="n">reclass_table</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -945,69 +1007,48 @@ window.runMermaid = runMermaid;</script>
                 <span class="p">},</span>
             <span class="p">)</span>
             <span class="c1"># reclassify</span>
-            <span class="n">da_inf</span> <span class="o">=</span> <span class="n">da_lulc</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reclassify</span><span class="p">(</span><span class="n">df_map</span><span class="p">)[</span><span class="s2">"qinf"</span><span class="p">]</span>
+            <span class="n">da_qinf</span> <span class="o">=</span> <span class="n">da_lulc</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reclassify</span><span class="p">(</span><span class="n">df_map</span><span class="p">)[</span><span class="s2">"qinf"</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">"Either qinf or lulc must be provided when setting up constant infiltration."</span>
             <span class="p">)</span>
 
         <span class="c1"># reproject infiltration data to model grid</span>
-        <span class="n">da_inf</span> <span class="o">=</span> <span class="n">da_inf</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>  <span class="c1"># set nodata to nan</span>
-        <span class="n">da_inf</span> <span class="o">=</span> <span class="n">da_inf</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">)</span>
-
-        <span class="c1"># check on nan values</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">da_inf</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"NaN values found in infiltration data; filled with 0"</span><span class="p">)</span>
-            <span class="n">da_inf</span> <span class="o">=</span> <span class="n">da_inf</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">da_inf</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="o">-</span><span class="mf">9999.0</span><span class="p">)</span>
+        <span class="n">da_qinf</span> <span class="o">=</span> <span class="n">da_qinf</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>  <span class="c1"># set nodata to nan</span>
+        <span class="n">da_qinf</span> <span class="o">=</span> <span class="n">da_qinf</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">)</span>
 
         <span class="c1"># set grid</span>
-        <span class="n">mname</span> <span class="o">=</span> <span class="s2">"qinf"</span>
-        <span class="n">da_inf</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">_ATTRS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mname</span><span class="p">,</span> <span class="p">{}))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">da_inf</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">mname</span><span class="p">)</span>
-
-        <span class="c1"># update config: remove default inf and set qinf map</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="c1"># set spatially uniform qinf to None in config</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"qinf"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-
-        <span class="c1"># loop over other infiltration methods ATTRS and remove them from config when present</span>
-        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_ATTRS</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">name</span> <span class="o">!=</span> <span class="n">mname</span><span class="p">:</span>
-                <span class="c1"># get from config</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Removing </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file from model config."</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_layers</span><span class="p">({</span><span class="s2">"qinf"</span><span class="p">:</span> <span class="n">da_qinf</span><span class="p">},</span> <span class="n">flavor</span><span class="o">=</span><span class="s2">"c2d"</span><span class="p">)</span></div>
 
 
-    <span class="c1"># Function to create curve number for SFINCS</span>
 <div class="viewcode-block" id="SfincsInfiltration.create_cn">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsInfiltration.create_cn.html#hydromt_sfincs.components.grid.SfincsInfiltration.create_cn">[docs]</a>
     <span class="nd">@hydromt_step</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">create_cn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cn</span><span class="p">,</span> <span class="n">antecedent_moisture</span><span class="o">=</span><span class="s2">"avg"</span><span class="p">,</span> <span class="n">reproj_method</span><span class="o">=</span><span class="s2">"med"</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Create model potential maximum soil moisture retention map (scsfile)</span>
-<span class="sd">        from gridded curve number map.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_cn</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">],</span>
+        <span class="n">antecedent_moisture</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"avg"</span><span class="p">,</span>
+        <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"med"</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create Curve Number infiltration without recovery.</span>
 
 <span class="sd">        Adds model layers:</span>
 
 <span class="sd">        * **scs** map: potential maximum soil moisture retention [inch]</span>
 
 <span class="sd">        Parameters</span>
-<span class="sd">        ---------</span>
-<span class="sd">        cn: str, Path, or RasterDataset</span>
-<span class="sd">            Name of gridded curve number map.</span>
-
-<span class="sd">            * Required layers without antecedent runoff conditions: ['cn']</span>
-<span class="sd">            * Required layers with antecedent runoff conditions: ['cn_dry', 'cn_avg', 'cn_wet']</span>
-<span class="sd">        antecedent_moisture: {'dry', 'avg', 'wet'}, optional</span>
-<span class="sd">            Antecedent runoff conditions.</span>
-<span class="sd">            None if data has no antecedent runoff conditions.</span>
-<span class="sd">            By default `avg`</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cn : str, Path, or RasterDataset</span>
+<span class="sd">            Curve number data. Dataset inputs must contain a ``cn`` variable, or</span>
+<span class="sd">            ``cn_&lt;antecedent_moisture&gt;`` when ``antecedent_moisture`` is set.</span>
+<span class="sd">        antecedent_moisture : {'dry', 'avg', 'wet'}, optional</span>
+<span class="sd">            Antecedent runoff condition used to select the source variable. Set to</span>
+<span class="sd">            None when the input already holds adjusted curve numbers.</span>
+<span class="sd">            By default 'avg'.</span>
 <span class="sd">        reproj_method : str, optional</span>
 <span class="sd">            Resampling method for reprojecting the curve number data to the model grid.</span>
 <span class="sd">            By default 'med'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`</span>
 <span class="sd">        """</span>
-
         <span class="c1"># Add logger info</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"Creating curve number values for SFINCS with antecedent moisture condition: </span><span class="si">{</span><span class="n">antecedent_moisture</span><span class="si">}</span><span class="s2">."</span>
@@ -1031,51 +1072,107 @@ window.runMermaid = runMermaid;</script>
 
         <span class="c1"># convert to potential maximum soil moisture retention S (1000/CN - 10) [inch]</span>
         <span class="n">da_scs</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">cn_to_s</span><span class="p">(</span><span class="n">da_cn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-
-        <span class="c1"># set grid</span>
-        <span class="n">mname</span> <span class="o">=</span> <span class="s2">"scs"</span>
-        <span class="n">da_scs</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">_ATTRS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mname</span><span class="p">,</span> <span class="p">{}))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">da_scs</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">mname</span><span class="p">)</span>
-        <span class="c1"># update config:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">file"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"sfincs.</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="c1"># set spatially unfiform qinf to None in config</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"qinf"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-
-        <span class="c1"># loop over other infiltration methods ATTRS and remove them from config when present</span>
-        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_ATTRS</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">name</span> <span class="o">!=</span> <span class="n">mname</span><span class="p">:</span>
-                <span class="c1"># get from config</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Removing </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file from model config."</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_layers</span><span class="p">({</span><span class="s2">"scs"</span><span class="p">:</span> <span class="n">da_scs</span><span class="p">},</span> <span class="n">flavor</span><span class="o">=</span><span class="s2">"cna"</span><span class="p">)</span></div>
 
 
-    <span class="c1"># Function to create curve number for SFINCS including recovery via saturated hydraulic conductivity [mm/hr]</span>
+<div class="viewcode-block" id="SfincsInfiltration.create_cn_from_landuse_hsg">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsInfiltration.create_cn_from_landuse_hsg.html#hydromt_sfincs.components.grid.SfincsInfiltration.create_cn_from_landuse_hsg">[docs]</a>
+    <span class="nd">@hydromt_step</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_cn_from_landuse_hsg</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">lulc</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">],</span>
+        <span class="n">hsg</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">],</span>
+        <span class="n">reclass_table</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span>
+        <span class="n">antecedent_moisture</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"avg"</span><span class="p">,</span>
+        <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"average"</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create Curve Number infiltration from land use and HSG.</span>
+
+<span class="sd">        S is computed per land-use pixel and area-averaged onto the model cells,</span>
+<span class="sd">        as in :py:meth:`create_cn_with_recovery`. Open water (CN 0 in the table)</span>
+<span class="sd">        counts as S = 0, so a cell that is 60% water gets 40% of the land S.</span>
+<span class="sd">        Unmapped pixels are skipped.</span>
+
+<span class="sd">        Adds model layers:</span>
+
+<span class="sd">        * **scs** map: potential maximum soil moisture retention [inch]</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        lulc : str, Path, or RasterDataset</span>
+<span class="sd">            Name of gridded land use map.</span>
+<span class="sd">        hsg : str, Path, or RasterDataset</span>
+<span class="sd">            Name of gridded hydrologic soil group map.</span>
+<span class="sd">        reclass_table : str, Path, or DataFrame</span>
+<span class="sd">            Reclassification table mapping land use and hydrologic soil groups to curve numbers.</span>
+<span class="sd">        antecedent_moisture : {'dry', 'avg', 'wet'}, optional</span>
+<span class="sd">            Antecedent runoff conditions.</span>
+<span class="sd">            By default `avg`</span>
+<span class="sd">        reproj_method : str, optional</span>
+<span class="sd">            Resampling method for S to the model grid, by default 'average'</span>
+<span class="sd">            (area-weighted).</span>
+<span class="sd">        """</span>
+
+        <span class="n">da_lulc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+            <span class="n">lulc</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">"lulc"</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">da_hsg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+            <span class="n">hsg</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">"hsg"</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">df_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span>
+            <span class="n">reclass_table</span><span class="p">,</span>
+            <span class="n">source_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"driver"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"pandas"</span><span class="p">,</span> <span class="s2">"options"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"index_col"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}}},</span>
+        <span class="p">)</span>
+        <span class="n">da_cn</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">curve_number_from_landuse_hsg</span><span class="p">(</span><span class="n">da_lulc</span><span class="p">,</span> <span class="n">da_hsg</span><span class="p">,</span> <span class="n">df_map</span><span class="p">)</span>
+        <span class="n">da_cn</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">adjust_curve_number</span><span class="p">(</span>
+            <span class="n">da_cn</span><span class="p">,</span>
+            <span class="n">antecedent_moisture</span><span class="o">=</span><span class="n">antecedent_moisture</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># S per pixel; missing pixels stay NaN nodata so the average skips them</span>
+        <span class="n">da_s</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">cn_to_s</span><span class="p">(</span><span class="n">da_cn</span><span class="p">,</span> <span class="n">fill_cn</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">da_scs</span> <span class="o">=</span> <span class="n">da_s</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_layers</span><span class="p">({</span><span class="s2">"scs"</span><span class="p">:</span> <span class="n">da_scs</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)},</span> <span class="n">flavor</span><span class="o">=</span><span class="s2">"cna"</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="SfincsInfiltration.create_cn_with_recovery">
 <a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsInfiltration.create_cn_with_recovery.html#hydromt_sfincs.components.grid.SfincsInfiltration.create_cn_with_recovery">[docs]</a>
     <span class="nd">@hydromt_step</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">create_cn_with_recovery</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">lulc</span><span class="p">,</span> <span class="n">hsg</span><span class="p">,</span> <span class="n">ksat</span><span class="p">,</span> <span class="n">reclass_table</span><span class="p">,</span> <span class="n">effective</span><span class="p">,</span> <span class="n">factor_ksat</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">block_size</span><span class="o">=</span><span class="mi">2000</span>
-    <span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Create model the Soil Conservation Service (SCS) Curve Number (CN) files for SFINCS</span>
-<span class="sd">        including recovery term based on the soil saturation</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">lulc</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">],</span>
+        <span class="n">hsg</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">],</span>
+        <span class="n">ksat</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">],</span>
+        <span class="n">reclass_table</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span>
+        <span class="n">effective</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">block_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create Curve Number infiltration with recovery.</span>
+
+<span class="sd">        Adds model layers:</span>
+
+<span class="sd">        * **smax** map: maximum soil moisture retention [m]</span>
+<span class="sd">        * **seff** map: effective soil moisture retention [m]</span>
+<span class="sd">        * **ks** map: saturated hydraulic conductivity [mm/hr]</span>
+
+<span class="sd">        The block traversal is handled by</span>
+<span class="sd">        :py:meth:`SfincsRegularGridMixin.compute_regular_grid`; each block uses</span>
+<span class="sd">        :py:func:`hydromt_sfincs.workflows.curve_number_with_recovery`.</span>
 
 <span class="sd">        Parameters</span>
-<span class="sd">        ---------</span>
+<span class="sd">        ----------</span>
 <span class="sd">        lulc : str, Path, or RasterDataset</span>
-<span class="sd">            Landuse/landcover data set</span>
+<span class="sd">            Landuse/landcover data set.</span>
 <span class="sd">        hsg : str, Path, or RasterDataset</span>
-<span class="sd">            HSG (Hydrological Similarity Group) in integers</span>
+<span class="sd">            Hydrologic soil group map in integers.</span>
 <span class="sd">        ksat : str, Path, or RasterDataset</span>
-<span class="sd">            Ksat (saturated hydraulic conductivity) [mm/hr]</span>
-<span class="sd">        reclass_table : str, Path, or RasterDataset</span>
-<span class="sd">            reclass table to relate landcover with soiltype</span>
+<span class="sd">            Saturated hydraulic conductivity [mm/hr].</span>
+<span class="sd">        reclass_table : str, Path, or DataFrame</span>
+<span class="sd">            Reclassification table relating land cover and soil type to curve numbers.</span>
 <span class="sd">        effective : float</span>
-<span class="sd">            estimate of percentage effective soil, e.g. 0.50 for 50%</span>
-<span class="sd">        factor_ksat : float</span>
-<span class="sd">            factor to convert units of Ksat, e.g. from micrometer per second to mm/hr</span>
-<span class="sd">        block_size : float</span>
-<span class="sd">            maximum block size - use larger values will get more data in memory but can be faster, default=2000</span>
+<span class="sd">            Fraction of ``smax`` that is effective soil retention, e.g. 0.50 for 50%.</span>
+<span class="sd">        block_size : int, optional</span>
+<span class="sd">            Maximum block size in model cells. Larger values hold more data in</span>
+<span class="sd">            memory but can be faster, by default 2000.</span>
 <span class="sd">        """</span>
 
         <span class="c1"># Add logger info</span>
@@ -1091,11 +1188,17 @@ window.runMermaid = runMermaid;</script>
         <span class="n">da_Ksat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
             <span class="n">ksat</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span>
         <span class="p">)</span>
-        <span class="n">df_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span><span class="n">reclass_table</span><span class="p">)</span>
+        <span class="n">df_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span>
+            <span class="n">reclass_table</span><span class="p">,</span>
+            <span class="n">source_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"driver"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"pandas"</span><span class="p">,</span> <span class="s2">"options"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"index_col"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}}},</span>
+        <span class="p">)</span>
 
         <span class="c1"># Define outputs</span>
-        <span class="n">da_smax</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="o">-</span><span class="mi">9999</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-        <span class="n">da_ks</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="o">-</span><span class="mi">9999</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">layers</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"smax"</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="s2">"seff"</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="s2">"ks"</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+        <span class="p">}</span>
 
         <span class="c1"># Compute resolution land use (we are assuming that is the finest)</span>
         <span class="n">resolution_landuse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
@@ -1106,100 +1209,329 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">resolution_landuse</span> <span class="o">*</span> <span class="mf">111111.0</span>
             <span class="p">)</span>  <span class="c1"># assume 1 degree is 111km</span>
 
-        <span class="c1"># Define the blocks</span>
-        <span class="n">nrmax</span> <span class="o">=</span> <span class="n">block_size</span>
-        <span class="n">nmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">mmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">refi</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"dx"</span><span class="p">)</span> <span class="o">/</span> <span class="n">resolution_landuse</span>
-        <span class="p">)</span>  <span class="c1"># finest resolution of landuse</span>
-        <span class="n">nrcb</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">nrmax</span> <span class="o">/</span> <span class="n">refi</span><span class="p">))</span>  <span class="c1"># nr of regular cells in a block</span>
-        <span class="n">nrbn</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">nmax</span> <span class="o">/</span> <span class="n">nrcb</span><span class="p">))</span>  <span class="c1"># nr of blocks in n direction</span>
-        <span class="n">nrbm</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">mmax</span> <span class="o">/</span> <span class="n">nrcb</span><span class="p">))</span>  <span class="c1"># nr of blocks in m direction</span>
-        <span class="n">x_dim</span><span class="p">,</span> <span class="n">y_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">x_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">y_dim</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">compute_cn_recovery_block</span><span class="p">(</span><span class="n">da_like</span><span class="p">):</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">curve_number_with_recovery</span><span class="p">(</span>
+                <span class="n">da_landuse</span><span class="p">,</span>
+                <span class="n">da_HSG</span><span class="p">,</span>
+                <span class="n">da_Ksat</span><span class="p">,</span>
+                <span class="n">df_map</span><span class="p">,</span>
+                <span class="n">effective</span><span class="o">=</span><span class="n">effective</span><span class="p">,</span>
+                <span class="n">da_mask</span><span class="o">=</span><span class="n">da_like</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">ds</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"smax"</span><span class="p">,</span> <span class="s2">"seff"</span><span class="p">,</span> <span class="s2">"ks"</span><span class="p">)}</span>
 
-        <span class="c1"># avoid blocks with width or height of 1</span>
-        <span class="n">merge_last_col</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="n">merge_last_row</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">if</span> <span class="n">mmax</span> <span class="o">%</span> <span class="n">nrcb</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">nrbm</span> <span class="o">-=</span> <span class="mi">1</span>
-            <span class="n">merge_last_col</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="k">if</span> <span class="n">nmax</span> <span class="o">%</span> <span class="n">nrcb</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">nrbn</span> <span class="o">-=</span> <span class="mi">1</span>
-            <span class="n">merge_last_row</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">layers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_regular_grid</span><span class="p">(</span>
+            <span class="n">compute_cn_recovery_block</span><span class="p">,</span>
+            <span class="n">layers</span><span class="p">,</span>
+            <span class="n">block_size</span><span class="o">=</span><span class="n">block_size</span><span class="p">,</span>
+            <span class="n">source_resolution</span><span class="o">=</span><span class="n">resolution_landuse</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_layers</span><span class="p">(</span><span class="n">layers</span><span class="p">,</span> <span class="n">flavor</span><span class="o">=</span><span class="s2">"cnb"</span><span class="p">)</span></div>
 
-        <span class="c1">## Loop through blocks</span>
-        <span class="n">ib</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nrbm</span><span class="p">):</span>
-            <span class="n">bm0</span> <span class="o">=</span> <span class="n">ii</span> <span class="o">*</span> <span class="n">nrcb</span>  <span class="c1"># Index of first m in block</span>
-            <span class="n">bm1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">bm0</span> <span class="o">+</span> <span class="n">nrcb</span><span class="p">,</span> <span class="n">mmax</span><span class="p">)</span>  <span class="c1"># last m in block</span>
-            <span class="k">if</span> <span class="n">merge_last_col</span> <span class="ow">and</span> <span class="n">ii</span> <span class="o">==</span> <span class="p">(</span><span class="n">nrbm</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
-                <span class="n">bm1</span> <span class="o">+=</span> <span class="mi">1</span>
 
-            <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nrbn</span><span class="p">):</span>
-                <span class="n">bn0</span> <span class="o">=</span> <span class="n">jj</span> <span class="o">*</span> <span class="n">nrcb</span>  <span class="c1"># Index of first n in block</span>
-                <span class="n">bn1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">bn0</span> <span class="o">+</span> <span class="n">nrcb</span><span class="p">,</span> <span class="n">nmax</span><span class="p">)</span>  <span class="c1"># last n in block</span>
-                <span class="k">if</span> <span class="n">merge_last_row</span> <span class="ow">and</span> <span class="n">jj</span> <span class="o">==</span> <span class="p">(</span><span class="n">nrbn</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
-                    <span class="n">bn1</span> <span class="o">+=</span> <span class="mi">1</span>
+<div class="viewcode-block" id="SfincsInfiltration.create_green_ampt">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsInfiltration.create_green_ampt.html#hydromt_sfincs.components.grid.SfincsInfiltration.create_green_ampt">[docs]</a>
+    <span class="nd">@hydromt_step</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_green_ampt</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">hsg</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">],</span>
+        <span class="n">ksat</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">lulc</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">reclass_table</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">lulc_modifier_table</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dual_hsg</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"drained"</span><span class="p">,</span>
+        <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"average"</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Estimate Green-Ampt infiltration from HSG and optional landuse.</span>
 
-                <span class="c1"># Count</span>
-                <span class="n">ib</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">block </span><span class="si">{</span><span class="n">ib</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">nrbn</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nrbm</span><span class="si">}</span><span class="s2"> -- "</span>
-                    <span class="sa">f</span><span class="s2">"col </span><span class="si">{</span><span class="n">bm0</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">bm1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> | row </span><span class="si">{</span><span class="n">bn0</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">bn1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span>
-                <span class="p">)</span>
+<span class="sd">        Adds model layers:</span>
 
-                <span class="c1"># calculate transform and shape of block at cell and subgrid level</span>
-                <span class="n">da_mask_block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span>
-                    <span class="p">{</span><span class="n">x_dim</span><span class="p">:</span> <span class="nb">slice</span><span class="p">(</span><span class="n">bm0</span><span class="p">,</span> <span class="n">bm1</span><span class="p">),</span> <span class="n">y_dim</span><span class="p">:</span> <span class="nb">slice</span><span class="p">(</span><span class="n">bn0</span><span class="p">,</span> <span class="n">bn1</span><span class="p">)}</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<span class="sd">        * **psi** map: wetting front suction head [mm]</span>
+<span class="sd">        * **sigma** map: soil moisture deficit [-]</span>
+<span class="sd">        * **ks** map: saturated hydraulic conductivity [mm/hr]</span>
 
-                <span class="c1"># Call workflow</span>
-                <span class="p">(</span>
-                    <span class="n">da_smax_block</span><span class="p">,</span>
-                    <span class="n">da_ks_block</span><span class="p">,</span>
-                <span class="p">)</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">curvenumber</span><span class="o">.</span><span class="n">scs_recovery_determination</span><span class="p">(</span>
-                    <span class="n">da_landuse</span><span class="p">,</span> <span class="n">da_HSG</span><span class="p">,</span> <span class="n">da_Ksat</span><span class="p">,</span> <span class="n">df_map</span><span class="p">,</span> <span class="n">da_mask_block</span>
-                <span class="p">)</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        hsg : str, Path, or RasterDataset</span>
+<span class="sd">            Hydrologic soil group map. By default, values are reclassified with</span>
+<span class="sd">            the bundled ``hsg_green_ampt.csv`` table.</span>
+<span class="sd">        ksat : str, Path, or RasterDataset, optional</span>
+<span class="sd">            Saturated hydraulic conductivity map, used to derive ``ks``</span>
+<span class="sd">            (``ks = ksat``, in mm/hr). Required unless the reclass table</span>
+<span class="sd">            already provides a ``ks`` column. The bundled ``hsg_green_ampt.csv``</span>
+<span class="sd">            has only ``psi``/``sigma``, so ksat is required when using it;</span>
+<span class="sd">            omitting it raises a ValueError.</span>
+<span class="sd">        lulc : str, Path, or RasterDataset, optional</span>
+<span class="sd">            Land-use map used to apply infiltration modifiers. Its classes must</span>
+<span class="sd">            match the index of ``lulc_modifier_table``.</span>
+<span class="sd">        reclass_table : str, Path, or DataFrame, optional</span>
+<span class="sd">            Table mapping HSG classes to Green-Ampt parameters.</span>
+<span class="sd">        lulc_modifier_table : str, Path, or DataFrame, optional</span>
+<span class="sd">            Required with ``lulc``. Table of modifier factors keyed by the</span>
+<span class="sd">            land-cover class codes in the supplied dataset.</span>
+<span class="sd">        dual_hsg : {'native', 'drained'}, optional</span>
+<span class="sd">            How to handle dual HSG classes, by default 'drained'. Native dual</span>
+<span class="sd">            classes must be present in the reclassification table.</span>
+<span class="sd">        reproj_method : str, optional</span>
+<span class="sd">            Resampling method for reprojecting final parameter maps to the model grid.</span>
+<span class="sd">            By default 'average'.</span>
+<span class="sd">        """</span>
+        <span class="n">_require_lulc_modifiers</span><span class="p">(</span><span class="n">lulc</span><span class="p">,</span> <span class="n">lulc_modifier_table</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">reclass_table</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">reclass_table</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">DATADIR</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"infiltration"</span> <span class="o">/</span> <span class="s2">"hsg_green_ampt.csv"</span>
 
-                <span class="c1"># New place in the overall matrix</span>
-                <span class="n">sn</span><span class="p">,</span> <span class="n">sm</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">bn0</span><span class="p">,</span> <span class="n">bn1</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="n">bm0</span><span class="p">,</span> <span class="n">bm1</span><span class="p">)</span>
-                <span class="n">da_smax</span><span class="p">[</span><span class="n">sn</span><span class="p">,</span> <span class="n">sm</span><span class="p">]</span> <span class="o">=</span> <span class="n">da_smax_block</span>
-                <span class="n">da_ks</span><span class="p">[</span><span class="n">sn</span><span class="p">,</span> <span class="n">sm</span><span class="p">]</span> <span class="o">=</span> <span class="n">da_ks_block</span>
+        <span class="n">da_soil</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+            <span class="n">hsg</span><span class="p">,</span>
+            <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
+            <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">df_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span>
+            <span class="n">reclass_table</span><span class="p">,</span>
+            <span class="n">source_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"driver"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"pandas"</span><span class="p">,</span> <span class="s2">"options"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"index_col"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}}},</span>
+        <span class="p">)</span>
 
-        <span class="c1"># Done</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Done with determination of curve number values (in blocks)."</span><span class="p">)</span>
+        <span class="n">da_ksat</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">ksat</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">da_ksat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+                <span class="n">ksat</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span>
+            <span class="p">)</span>
+            <span class="n">da_ksat</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">mask_invalid_ksat</span><span class="p">(</span><span class="n">da_ksat</span><span class="p">)</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span>
+                <span class="n">da_soil</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"average"</span>
+            <span class="p">)</span>
 
-        <span class="c1"># Convert ks - (e.g. from micrometer per second to mm/hr which is required in SFINCS)</span>
-        <span class="n">da_ks</span> <span class="o">=</span> <span class="n">da_ks</span> <span class="o">*</span> <span class="n">factor_ksat</span>
+        <span class="k">if</span> <span class="n">lulc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">da_lulc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+                <span class="n">lulc</span><span class="p">,</span>
+                <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
+                <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">da_lulc</span> <span class="o">=</span> <span class="n">da_lulc</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">da_soil</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"nearest"</span><span class="p">)</span>
+            <span class="n">df_modifiers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span>
+                <span class="n">lulc_modifier_table</span><span class="p">,</span>
+                <span class="n">source_kwargs</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">"driver"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"pandas"</span><span class="p">,</span> <span class="s2">"options"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"index_col"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}}</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">green_ampt_from_hsg_landuse</span><span class="p">(</span>
+                <span class="n">da_soil</span><span class="p">,</span>
+                <span class="n">da_lulc</span><span class="p">,</span>
+                <span class="n">df_map</span><span class="p">,</span>
+                <span class="n">df_modifiers</span><span class="p">,</span>
+                <span class="n">da_ksat</span><span class="o">=</span><span class="n">da_ksat</span><span class="p">,</span>
+                <span class="n">dual_hsg</span><span class="o">=</span><span class="n">dual_hsg</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">green_ampt_from_hsg</span><span class="p">(</span>
+                <span class="n">da_soil</span><span class="p">,</span>
+                <span class="n">df_map</span><span class="p">,</span>
+                <span class="n">da_ksat</span><span class="o">=</span><span class="n">da_ksat</span><span class="p">,</span>
+                <span class="n">dual_hsg</span><span class="o">=</span><span class="n">dual_hsg</span><span class="p">,</span>
+            <span class="p">)</span>
 
-        <span class="c1"># Specify the effective soil retention (seff)</span>
-        <span class="n">da_seff</span> <span class="o">=</span> <span class="n">da_smax</span>
-        <span class="n">da_seff</span> <span class="o">=</span> <span class="n">da_seff</span> <span class="o">*</span> <span class="n">effective</span>
-        <span class="n">da_seff</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">set_nodata</span><span class="p">(</span><span class="n">da_smax</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">nodata</span><span class="p">)</span>
+        <span class="n">layers</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"psi"</span><span class="p">,</span> <span class="s2">"sigma"</span><span class="p">,</span> <span class="s2">"ks"</span><span class="p">):</span>
+            <span class="n">da</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="n">layers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_layers</span><span class="p">(</span><span class="n">layers</span><span class="p">,</span> <span class="n">flavor</span><span class="o">=</span><span class="s2">"gai"</span><span class="p">)</span></div>
 
-        <span class="c1"># set grids for seff, smax and ks (saturated hydraulic conductivity)</span>
-        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"smax"</span><span class="p">,</span> <span class="s2">"seff"</span><span class="p">,</span> <span class="s2">"ks"</span><span class="p">]</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">da_smax</span><span class="p">,</span> <span class="n">da_seff</span><span class="p">,</span> <span class="n">da_ks</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">da</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-            <span class="c1"># Give metadata to the layer and set grid</span>
-            <span class="n">da</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">_ATTRS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">{}))</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">da</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
 
-            <span class="c1"># update config: set maps</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"sfincs.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>  <span class="c1"># give it to SFINCS</span>
+<div class="viewcode-block" id="SfincsInfiltration.create_green_ampt_from_maps">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsInfiltration.create_green_ampt_from_maps.html#hydromt_sfincs.components.grid.SfincsInfiltration.create_green_ampt_from_maps">[docs]</a>
+    <span class="nd">@hydromt_step</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_green_ampt_from_maps</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">psi</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">],</span>
+        <span class="n">sigma</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">],</span>
+        <span class="n">ks</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">],</span>
+        <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"average"</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create Green-Ampt infiltration from final parameter maps.</span>
 
-        <span class="c1"># set spatially unfiform qinf to None in config</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"qinf"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<span class="sd">        Adds model layers:</span>
 
-        <span class="c1"># loop over other infiltration methods ATTRS and remove them from config when present</span>
-        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_ATTRS</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
-                <span class="c1"># get from config</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Removing </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file from model config."</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">file"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
-</div>
+<span class="sd">        * **psi** map: wetting front suction head [mm]</span>
+<span class="sd">        * **sigma** map: soil moisture deficit [-]</span>
+<span class="sd">        * **ks** map: saturated hydraulic conductivity [mm/hr]</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        psi, sigma, ks : str, Path, xr.DataArray, or xr.Dataset</span>
+<span class="sd">            Raster data with final Green-Ampt parameters. Dataset inputs must</span>
+<span class="sd">            contain variables named ``psi``, ``sigma``, and ``ks`` respectively.</span>
+<span class="sd">        reproj_method : str, optional</span>
+<span class="sd">            Resampling method for reprojecting the parameter maps to the model grid.</span>
+<span class="sd">        """</span>
+        <span class="n">layers</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">source</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"psi"</span><span class="p">:</span> <span class="n">psi</span><span class="p">,</span> <span class="s2">"sigma"</span><span class="p">:</span> <span class="n">sigma</span><span class="p">,</span> <span class="s2">"ks"</span><span class="p">:</span> <span class="n">ks</span><span class="p">}</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">da</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+                <span class="n">source</span><span class="p">,</span>
+                <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
+                <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="n">name</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
+            <span class="n">layers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_layers</span><span class="p">(</span><span class="n">layers</span><span class="p">,</span> <span class="n">flavor</span><span class="o">=</span><span class="s2">"gai"</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SfincsInfiltration.create_horton">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsInfiltration.create_horton.html#hydromt_sfincs.components.grid.SfincsInfiltration.create_horton">[docs]</a>
+    <span class="nd">@hydromt_step</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_horton</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">hsg</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">],</span>
+        <span class="n">ksat</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">lulc</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">reclass_table</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">lulc_modifier_table</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dual_hsg</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"drained"</span><span class="p">,</span>
+        <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"average"</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Estimate Horton infiltration from HSG and optional landuse.</span>
+
+<span class="sd">        Adds model layers:</span>
+
+<span class="sd">        * **f0** map: initial infiltration capacity [mm/hr]</span>
+<span class="sd">        * **fc** map: asymptotic infiltration capacity [mm/hr]</span>
+<span class="sd">        * **kd** map: Horton decay coefficient [hr-1]</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        hsg : str, Path, or RasterDataset</span>
+<span class="sd">            Hydrologic soil group map. By default, values are reclassified with</span>
+<span class="sd">            the bundled ``hsg_horton.csv`` table.</span>
+<span class="sd">        ksat : str, Path, or RasterDataset, optional</span>
+<span class="sd">            Saturated hydraulic conductivity map, used to derive ``fc``</span>
+<span class="sd">            (``fc = ksat * fc_scale``, ksat in mm/hr). Required unless the reclass</span>
+<span class="sd">            table already provides a literal ``fc`` column. The bundled</span>
+<span class="sd">            ``hsg_horton.csv`` has only ``fc_scale``/``f0_scale``/``kd`` (and</span>
+<span class="sd">            ``fc_scale`` is applied only when ksat is given), so ksat is required</span>
+<span class="sd">            when using it; omitting it raises a ValueError.</span>
+<span class="sd">        lulc : str, Path, or RasterDataset, optional</span>
+<span class="sd">            Land-use map used to apply infiltration modifiers. Its classes must</span>
+<span class="sd">            match the index of ``lulc_modifier_table``.</span>
+<span class="sd">        reclass_table : str, Path, or DataFrame, optional</span>
+<span class="sd">            Table mapping HSG classes to Horton parameters.</span>
+<span class="sd">        lulc_modifier_table : str, Path, or DataFrame, optional</span>
+<span class="sd">            Required with ``lulc``. Table of modifier factors keyed by the</span>
+<span class="sd">            land-cover class codes in the supplied dataset.</span>
+<span class="sd">        dual_hsg : {'native', 'drained'}, optional</span>
+<span class="sd">            How to handle dual HSG classes, by default 'drained'. Native dual</span>
+<span class="sd">            classes must be present in the reclassification table.</span>
+<span class="sd">        reproj_method : str, optional</span>
+<span class="sd">            Resampling method for reprojecting final parameter maps to the model grid.</span>
+<span class="sd">            By default 'average'.</span>
+<span class="sd">        """</span>
+        <span class="n">_require_lulc_modifiers</span><span class="p">(</span><span class="n">lulc</span><span class="p">,</span> <span class="n">lulc_modifier_table</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">reclass_table</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">reclass_table</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">DATADIR</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"infiltration"</span> <span class="o">/</span> <span class="s2">"hsg_horton.csv"</span>
+
+        <span class="n">da_soil</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+            <span class="n">hsg</span><span class="p">,</span>
+            <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
+            <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">df_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span>
+            <span class="n">reclass_table</span><span class="p">,</span>
+            <span class="n">source_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"driver"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"pandas"</span><span class="p">,</span> <span class="s2">"options"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"index_col"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}}},</span>
+        <span class="p">)</span>
+
+        <span class="n">da_ksat</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">ksat</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">da_ksat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+                <span class="n">ksat</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span>
+            <span class="p">)</span>
+            <span class="n">da_ksat</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">mask_invalid_ksat</span><span class="p">(</span><span class="n">da_ksat</span><span class="p">)</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span>
+                <span class="n">da_soil</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"average"</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">lulc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">da_lulc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+                <span class="n">lulc</span><span class="p">,</span>
+                <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
+                <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">da_lulc</span> <span class="o">=</span> <span class="n">da_lulc</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="n">da_soil</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"nearest"</span><span class="p">)</span>
+            <span class="n">df_modifiers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span>
+                <span class="n">lulc_modifier_table</span><span class="p">,</span>
+                <span class="n">source_kwargs</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">"driver"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"pandas"</span><span class="p">,</span> <span class="s2">"options"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"index_col"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}}</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">horton_from_hsg_landuse</span><span class="p">(</span>
+                <span class="n">da_soil</span><span class="p">,</span>
+                <span class="n">da_lulc</span><span class="p">,</span>
+                <span class="n">df_map</span><span class="p">,</span>
+                <span class="n">df_modifiers</span><span class="p">,</span>
+                <span class="n">da_ksat</span><span class="o">=</span><span class="n">da_ksat</span><span class="p">,</span>
+                <span class="n">dual_hsg</span><span class="o">=</span><span class="n">dual_hsg</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">horton_from_hsg</span><span class="p">(</span>
+                <span class="n">da_soil</span><span class="p">,</span>
+                <span class="n">df_map</span><span class="p">,</span>
+                <span class="n">da_ksat</span><span class="o">=</span><span class="n">da_ksat</span><span class="p">,</span>
+                <span class="n">dual_hsg</span><span class="o">=</span><span class="n">dual_hsg</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">layers</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"f0"</span><span class="p">,</span> <span class="s2">"fc"</span><span class="p">,</span> <span class="s2">"kd"</span><span class="p">):</span>
+            <span class="n">da</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="n">layers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_layers</span><span class="p">(</span><span class="n">layers</span><span class="p">,</span> <span class="n">flavor</span><span class="o">=</span><span class="s2">"hor"</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SfincsInfiltration.create_horton_from_maps">
+<a class="viewcode-back" href="../../../../_generated/hydromt_sfincs.components.grid.SfincsInfiltration.create_horton_from_maps.html#hydromt_sfincs.components.grid.SfincsInfiltration.create_horton_from_maps">[docs]</a>
+    <span class="nd">@hydromt_step</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_horton_from_maps</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">f0</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">],</span>
+        <span class="n">fc</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">],</span>
+        <span class="n">kd</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">],</span>
+        <span class="n">reproj_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"average"</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create Horton infiltration from final parameter maps.</span>
+
+<span class="sd">        Adds model layers:</span>
+
+<span class="sd">        * **f0** map: initial infiltration capacity [mm/hr]</span>
+<span class="sd">        * **fc** map: asymptotic infiltration capacity [mm/hr]</span>
+<span class="sd">        * **kd** map: Horton decay coefficient [hr-1]</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        f0, fc, kd : str, Path, xr.DataArray, or xr.Dataset</span>
+<span class="sd">            Raster data with final Horton parameters. Dataset inputs must contain</span>
+<span class="sd">            variables named ``f0``, ``fc``, and ``kd`` respectively.</span>
+<span class="sd">        reproj_method : str, optional</span>
+<span class="sd">            Resampling method for reprojecting the parameter maps to the model grid.</span>
+<span class="sd">        """</span>
+        <span class="n">layers</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">source</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"f0"</span><span class="p">:</span> <span class="n">f0</span><span class="p">,</span> <span class="s2">"fc"</span><span class="p">:</span> <span class="n">fc</span><span class="p">,</span> <span class="s2">"kd"</span><span class="p">:</span> <span class="n">kd</span><span class="p">}</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">da</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+                <span class="n">source</span><span class="p">,</span>
+                <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
+                <span class="n">buffer</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="n">name</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">mask_nodata</span><span class="p">()</span>
+            <span class="n">layers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">reproject_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">reproj_method</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_layers</span><span class="p">(</span><span class="n">layers</span><span class="p">,</span> <span class="n">flavor</span><span class="o">=</span><span class="s2">"hor"</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Clear all infiltration layers from the model."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">clear_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="p">())</span>
+        <span class="n">reset_config</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="p">)</span></div>
 
 </pre></div>
 

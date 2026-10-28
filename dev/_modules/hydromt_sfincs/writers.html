@@ -803,7 +803,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.gis.vector</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeoDataset</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.writers</span><span class="w"> </span><span class="kn">import</span> <span class="n">write_xy</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">active_cells_vector</span><span class="p">,</span> <span class="n">parse_datetime</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"write_ascii_map"</span><span class="p">,</span>
@@ -912,7 +912,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    dtype: str, np.dtype, optional</span>
 <span class="sd">        Data type, by default "f4". For sfincs.msk file use dtype="u1".</span>
 <span class="sd">    """</span>
-    <span class="n">data_out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">transpose</span><span class="p">()[</span><span class="n">msk</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">data_out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">active_cells_vector</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">msk</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
     <span class="n">data_out</span><span class="o">.</span><span class="n">tofile</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
 
 
