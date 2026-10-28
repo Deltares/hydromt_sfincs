@@ -520,15 +520,14 @@
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.river_centerline_from_hydrography.html">hydromt_sfincs.workflows.river_centerline_from_hydrography</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.landuse.html">hydromt_sfincs.workflows.landuse</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.cn_to_s.html">hydromt_sfincs.workflows.cn_to_s</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.create_topobathy_tiles.html">hydromt_sfincs.workflows.create_topobathy_tiles</a></li>
 </ul>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscaling.downscale_floodmap.html">hydromt_sfincs.workflows.downscaling.downscale_floodmap</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscaling.adjust_zsmax_dilation.html">hydromt_sfincs.workflows.downscaling.adjust_zsmax_dilation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscaling.adjust_zsmax_energyhead.html">hydromt_sfincs.workflows.downscaling.adjust_zsmax_energyhead</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscaling.remove_disconnected_flooding.html">hydromt_sfincs.workflows.downscaling.remove_disconnected_flooding</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscaling.make_index_cog.html">hydromt_sfincs.workflows.downscaling.make_index_cog</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscale_floodmap_webmercator.html">hydromt_sfincs.workflows.downscale_floodmap_webmercator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.cog.create_index_cog.html">hydromt_sfincs.workflows.cog.create_index_cog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.cog.create_topobathy_cog.html">hydromt_sfincs.workflows.cog.create_topobathy_cog</a></li>
 </ul>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.readers.read_binary_map.html">hydromt_sfincs.readers.read_binary_map</a></li>
@@ -694,55 +693,58 @@ By default “grid/grid_region.geojson”. If None, the region is not written to
 <tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.components.grid.SfincsGrid.create_from_region.html#hydromt_sfincs.components.grid.SfincsGrid.create_from_region" title="hydromt_sfincs.components.grid.SfincsGrid.create_from_region"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_from_region</span></code></a>(region[, res, crs, ...])</p></td>
 <td><p>Create a regular grid for the SfincsModel based on a region.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_index_tiles</span></code>(root, region[, ...])</p></td>
-<td><p>Create index tiles for a region.</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_index_cog</span></code>(filename, filename_topobathy)</p></td>
+<td><p>Write a COG raster mapping each pixel to a grid cell index.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">finish_write</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_topobathy_cog</span></code>(filename, elevation_list)</p></td>
+<td><p>Write a COG raster sampling the model topobathy.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">finish_write</span></code>()</p></td>
 <td><p>Finish the write functionality after cleanup was called for all components in the model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_indices_at_points</span></code>(x, y)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_indices_at_points</span></code>(x, y)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_mask_layer</span></code>(mask, *args)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_mask_layer</span></code>(mask, *args)</p></td>
 <td><p>Get the proper mask layer based on itself or a layer in a Dataset.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ind</span></code>(mask)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ind</span></code>(mask)</p></td>
 <td><p>Return indices of active cells in mask.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.components.grid.SfincsGrid.read.html#hydromt_sfincs.components.grid.SfincsGrid.read" title="hydromt_sfincs.components.grid.SfincsGrid.read"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code></a>([data_vars])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.components.grid.SfincsGrid.read.html#hydromt_sfincs.components.grid.SfincsGrid.read" title="hydromt_sfincs.components.grid.SfincsGrid.read"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read</span></code></a>([data_vars])</p></td>
 <td><p>Read SFINCS binary grid files and save to <cite>data</cite> attribute.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_ind</span></code>([ind_fn])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_ind</span></code>([ind_fn])</p></td>
 <td><p>Read indices of active cells in mask from binary file.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_map</span></code>(map_fn, ind[, dtype, mv, name])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_map</span></code>(map_fn, ind[, dtype, mv, name])</p></td>
 <td><p>Read one of the grid variables of the SFINCS model map from a binary file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code>(data[, name, mask, force_sn])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code>(data[, name, mask, force_sn])</p></td>
 <td><p>Add data to grid.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_equal</span></code>(other)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_equal</span></code>(other)</p></td>
 <td><p>Test if two components are equal.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_gdf</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_gdf</span></code>()</p></td>
 <td><p>Return a GeoDataFrame with a geometry for each grid line.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_config_from_grid</span></code>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_config_from_grid</span></code>()</p></td>
 <td><p>Update <cite>config</cite> (sfincs.inp) attributes based on grid properties</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_grid_from_config</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_grid_from_config</span></code>()</p></td>
 <td><p>Update grid properties based on <cite>config</cite> (sfincs.inp) attributes</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hydromt_sfincs.components.grid.SfincsGrid.write.html#hydromt_sfincs.components.grid.SfincsGrid.write" title="hydromt_sfincs.components.grid.SfincsGrid.write"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write</span></code></a>([data_vars])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hydromt_sfincs.components.grid.SfincsGrid.write.html#hydromt_sfincs.components.grid.SfincsGrid.write" title="hydromt_sfincs.components.grid.SfincsGrid.write"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write</span></code></a>([data_vars])</p></td>
 <td><p>Write SFINCS grid to binary files including map index file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_ind</span></code>(mask[, ind_fn])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_ind</span></code>(mask[, ind_fn])</p></td>
 <td><p>Write indices of active cells in mask to binary file.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_map</span></code>(map_fn, data, mask[, dtype])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_map</span></code>(map_fn, data, mask[, dtype])</p></td>
 <td><p>Write one of the grid variables of the SFINCS model map to a binary file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_region</span></code>([filename, to_wgs84, ...])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_region</span></code>([filename, to_wgs84, ...])</p></td>
 <td><p>Write the model region to file.</p></td>
 </tr>
 </tbody>

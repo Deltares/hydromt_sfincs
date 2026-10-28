@@ -434,6 +434,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -448,7 +449,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.data_catalog.drivers</span><span class="w"> </span><span class="kn">import</span> <span class="n">RasterioDriver</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt.gis.gis_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">zoom_to_overview_level</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_overviews</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.workflows.cog</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_overviews</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.readers</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_xy</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
@@ -457,7 +458,7 @@
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="c1"># ordered by pipeline step (see MODULE MAP below)</span>
-    <span class="s2">"make_index_cog"</span><span class="p">,</span>  <span class="c1"># Step 0  — build the cell-index COG</span>
+    <span class="s2">"make_index_cog"</span><span class="p">,</span>  <span class="c1"># step 0 — index builder</span>
     <span class="s2">"adjust_zsmax_dilation"</span><span class="p">,</span>  <span class="c1"># Step 1a — pre-step</span>
     <span class="s2">"adjust_zsmax_energyhead"</span><span class="p">,</span>  <span class="c1"># Step 1b — pre-step</span>
     <span class="s2">"downscale_floodmap"</span><span class="p">,</span>  <span class="c1"># Step 2  — downscale</span>
@@ -472,8 +473,6 @@
 <span class="c1"># =============================================================================</span>
 <span class="c1">#  MODULE MAP — the downscaling pipeline runs as ordered steps:</span>
 <span class="c1">#</span>
-<span class="c1">#    Step 0  Setup     make_index_cog             build the cell-index COG that</span>
-<span class="c1">#                                                 the constant/raw methods consume</span>
 <span class="c1">#    Step 1  Pre-steps (method-agnostic, optional; adjust zsmax before downscaling)</span>
 <span class="c1">#              1a. adjust_zsmax_dilation          cell-space WSE dilation</span>
 <span class="c1">#              1b. adjust_zsmax_energyhead        per-cell Bernoulli velocity head</span>
@@ -487,137 +486,6 @@
 <span class="c1">#</span>
 <span class="c1">#  Private helpers are prefixed with `_` and grouped under their step.</span>
 <span class="c1"># =============================================================================</span>
-
-
-<span class="c1"># =============================================================================</span>
-<span class="c1">#  STEP 0 — Setup: build the SFINCS cell-index COG (consumed by constant/raw)</span>
-<span class="c1"># =============================================================================</span>
-
-
-<div class="viewcode-block" id="make_index_cog">
-<a class="viewcode-back" href="../../../_generated/hydromt_sfincs.workflows.downscaling.make_index_cog.html#hydromt_sfincs.workflows.downscaling.make_index_cog">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">make_index_cog</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">:</span> <span class="s2">"SfincsModel"</span><span class="p">,</span>
-    <span class="n">indices_fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
-    <span class="n">topobathy_fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
-    <span class="n">nrmax</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">,</span>
-    <span class="n">nodata</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2147483647</span><span class="p">,</span>
-<span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Make a Cloud Optimzied Geotiff (COG) file with the correspodning indices of the SFINCS</span>
-<span class="sd">    grid cells to the high-resolution DEM COG.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    model : SfincsModel</span>
-<span class="sd">        The SfincsModel instance containing the grid information.</span>
-<span class="sd">    indices_fn : Union[str, Path]</span>
-<span class="sd">        The filename for the output COG file containing the indices. Note that this file only works</span>
-<span class="sd">        for this SFINCS model and the topobathy file provided.</span>
-<span class="sd">    topobathy_fn : Union[str, Path]</span>
-<span class="sd">        The filename of the topobathy file from which to read the coordinates.</span>
-<span class="sd">    nrmax : int, optional</span>
-<span class="sd">        The maximum number of cells in a block, by default 2000.</span>
-<span class="sd">    nodata : int, optional</span>
-<span class="sd">        The nodata value to use in the output COG file, by default 2147483647</span>
-<span class="sd">        (which is the maximum value for a 32-bit unsigned integer).</span>
-
-<span class="sd">    See also:</span>
-<span class="sd">    ----------</span>
-<span class="sd">    hydromt_sfincs.utils.build_overviews : Function to build overviews for the COG file.</span>
-<span class="sd">    hydromt_sfincs.workflows.downscaling.downscale_floodmap : Workflow to downscale flood maps</span>
-<span class="sd">    """</span>
-
-    <span class="c1"># Read coordinates from topobathy file</span>
-    <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">topobathy_fn</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
-        <span class="c1"># Get the CRS of the grid</span>
-        <span class="n">dem_crs</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">crs</span>
-        <span class="c1"># Get the transform of the grid</span>
-        <span class="n">dem_transform</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">transform</span>
-        <span class="c1"># Get the width and height of the grid</span>
-        <span class="n">width</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">width</span>
-        <span class="n">height</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">height</span>
-
-        <span class="n">n1</span><span class="p">,</span> <span class="n">m1</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span>
-        <span class="n">nrcb</span> <span class="o">=</span> <span class="n">nrmax</span>  <span class="c1"># nr of cells in a block</span>
-        <span class="n">nrbn</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">n1</span> <span class="o">/</span> <span class="n">nrcb</span><span class="p">))</span>  <span class="c1"># nr of blocks in n direction</span>
-        <span class="n">nrbm</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">m1</span> <span class="o">/</span> <span class="n">nrcb</span><span class="p">))</span>  <span class="c1"># nr of blocks in m direction</span>
-
-        <span class="c1"># avoid blocks with width or height of 1</span>
-        <span class="n">merge_last_col</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="n">merge_last_row</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">if</span> <span class="n">m1</span> <span class="o">%</span> <span class="n">nrcb</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">nrbm</span> <span class="o">-=</span> <span class="mi">1</span>
-            <span class="n">merge_last_col</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="k">if</span> <span class="n">n1</span> <span class="o">%</span> <span class="n">nrcb</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">nrbn</span> <span class="o">-=</span> <span class="mi">1</span>
-            <span class="n">merge_last_row</span> <span class="o">=</span> <span class="kc">True</span>
-
-        <span class="n">profile</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
-            <span class="n">driver</span><span class="o">=</span><span class="s2">"GTiff"</span><span class="p">,</span>
-            <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">,</span>
-            <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span>
-            <span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-            <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">,</span>
-            <span class="n">crs</span><span class="o">=</span><span class="n">dem_crs</span><span class="p">,</span>
-            <span class="n">tiled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">blockxsize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
-            <span class="n">blockysize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
-            <span class="n">compress</span><span class="o">=</span><span class="s2">"deflate"</span><span class="p">,</span>
-            <span class="n">transform</span><span class="o">=</span><span class="n">dem_transform</span><span class="p">,</span>
-            <span class="n">nodata</span><span class="o">=</span><span class="n">nodata</span><span class="p">,</span>
-            <span class="n">predictor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-            <span class="n">profile</span><span class="o">=</span><span class="s2">"COG"</span><span class="p">,</span>
-            <span class="n">BIGTIFF</span><span class="o">=</span><span class="s2">"YES"</span><span class="p">,</span>  <span class="c1"># Add the BIGTIFF option here</span>
-        <span class="p">)</span>
-
-    <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">indices_fn</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="o">**</span><span class="n">profile</span><span class="p">):</span>
-        <span class="k">pass</span>
-
-    <span class="c1"># Get the computational grid component of the model</span>
-    <span class="n">grid_comp</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">quadtree_grid</span> <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">grid_type</span> <span class="o">==</span> <span class="s2">"quadtree"</span> <span class="k">else</span> <span class="n">model</span><span class="o">.</span><span class="n">grid</span>
-
-    <span class="c1">## Loop through blocks</span>
-    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nrbm</span><span class="p">):</span>
-        <span class="n">bm0</span> <span class="o">=</span> <span class="n">ii</span> <span class="o">*</span> <span class="n">nrcb</span>  <span class="c1"># Index of first m in block</span>
-        <span class="n">bm1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">bm0</span> <span class="o">+</span> <span class="n">nrcb</span><span class="p">,</span> <span class="n">m1</span><span class="p">)</span>  <span class="c1"># last m in block</span>
-        <span class="k">if</span> <span class="n">merge_last_col</span> <span class="ow">and</span> <span class="n">ii</span> <span class="o">==</span> <span class="p">(</span><span class="n">nrbm</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="n">bm1</span> <span class="o">+=</span> <span class="mi">1</span>
-
-        <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nrbn</span><span class="p">):</span>
-            <span class="n">bn0</span> <span class="o">=</span> <span class="n">jj</span> <span class="o">*</span> <span class="n">nrcb</span>  <span class="c1"># Index of first n in block</span>
-            <span class="n">bn1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">bn0</span> <span class="o">+</span> <span class="n">nrcb</span><span class="p">,</span> <span class="n">n1</span><span class="p">)</span>  <span class="c1"># last n in block</span>
-
-            <span class="k">if</span> <span class="n">merge_last_row</span> <span class="ow">and</span> <span class="n">jj</span> <span class="o">==</span> <span class="p">(</span><span class="n">nrbn</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
-                <span class="n">bn1</span> <span class="o">+=</span> <span class="mi">1</span>
-
-            <span class="c1"># Define a window to read a block of data</span>
-            <span class="n">window</span> <span class="o">=</span> <span class="n">Window</span><span class="p">(</span><span class="n">bm0</span><span class="p">,</span> <span class="n">bn0</span><span class="p">,</span> <span class="n">bm1</span> <span class="o">-</span> <span class="n">bm0</span><span class="p">,</span> <span class="n">bn1</span> <span class="o">-</span> <span class="n">bn0</span><span class="p">)</span>
-
-            <span class="c1"># Calculate the coordinates of the center of each pixel in the block</span>
-            <span class="n">x_coords</span> <span class="o">=</span> <span class="n">dem_transform</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">bm0</span><span class="p">,</span> <span class="n">bm1</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">dem_transform</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">y_coords</span> <span class="o">=</span> <span class="n">dem_transform</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">bn0</span><span class="p">,</span> <span class="n">bn1</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">dem_transform</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
-            <span class="n">xx</span><span class="p">,</span> <span class="n">yy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x_coords</span><span class="p">,</span> <span class="n">y_coords</span><span class="p">)</span>
-
-            <span class="c1"># Transform the coordinates to the model's CRS and get the corresponding indices</span>
-            <span class="n">proj</span> <span class="o">=</span> <span class="n">Transformer</span><span class="o">.</span><span class="n">from_crs</span><span class="p">(</span><span class="n">dem_crs</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">always_xy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="n">xx</span><span class="p">,</span> <span class="n">yy</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">xx</span><span class="p">,</span> <span class="n">yy</span><span class="p">)</span>
-            <span class="n">indices</span> <span class="o">=</span> <span class="n">grid_comp</span><span class="o">.</span><span class="n">get_indices_at_points</span><span class="p">(</span><span class="n">xx</span><span class="p">,</span> <span class="n">yy</span><span class="p">)</span>
-            <span class="n">indices</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">indices</span> <span class="o">==</span> <span class="o">-</span><span class="mi">999</span><span class="p">)]</span> <span class="o">=</span> <span class="n">nodata</span>
-
-            <span class="c1"># Fill the array with indices</span>
-            <span class="n">ii</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">bn1</span> <span class="o">-</span> <span class="n">bn0</span><span class="p">,</span> <span class="n">bm1</span> <span class="o">-</span> <span class="n">bm0</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span>
-            <span class="n">ii</span><span class="p">[:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">indices</span>
-
-            <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">indices_fn</span><span class="p">,</span> <span class="s2">"r+"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fm_tif</span><span class="p">:</span>
-                <span class="n">fm_tif</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-                    <span class="n">ii</span><span class="p">,</span>
-                    <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span>
-                    <span class="n">indexes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                <span class="p">)</span>
-    <span class="c1"># add overviews</span>
-    <span class="n">build_overviews</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">indices_fn</span><span class="p">,</span> <span class="n">resample_method</span><span class="o">=</span><span class="s2">"nearest"</span><span class="p">)</span></div>
-
-
 
 <span class="c1"># =============================================================================</span>
 <span class="c1">#  STEP 1 — Pre-steps (method-agnostic): adjust zsmax before downscaling</span>
@@ -643,6 +511,43 @@
     <span class="k">if</span> <span class="n">extra</span><span class="p">:</span>
         <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">extra</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">da</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">make_index_cog</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="s2">"SfincsModel"</span><span class="p">,</span>
+    <span class="n">indices_fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+    <span class="n">topobathy_fn</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+    <span class="n">nrmax</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">,</span>
+    <span class="n">nodata</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2147483647</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Deprecated. Use :func:`hydromt_sfincs.workflows.cog.create_index_cog` instead.</span>
+
+<span class="sd">    Keeps the old signature (``indices_fn``, ``topobathy_fn``) and forwards to</span>
+<span class="sd">    ``create_index_cog`` (``filename``, ``filename_topobathy``).</span>
+
+<span class="sd">    .. deprecated::</span>
+<span class="sd">        ``make_index_cog`` has moved to</span>
+<span class="sd">        :func:`hydromt_sfincs.workflows.cog.create_index_cog`.</span>
+<span class="sd">        This shim will be removed in a future release.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs.workflows.cog</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_index_cog</span>
+
+    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"make_index_cog has moved to hydromt_sfincs.workflows.cog. "</span>
+        <span class="s2">"Update your import to: from hydromt_sfincs.workflows.cog import create_index_cog "</span>
+        <span class="s2">"(arguments indices_fn and topobathy_fn are now called filename and "</span>
+        <span class="s2">"filename_topobathy). The old location will be removed in a future release."</span>
+    <span class="p">)</span>
+
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">FutureWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">create_index_cog</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">filename</span><span class="o">=</span><span class="n">indices_fn</span><span class="p">,</span>
+        <span class="n">filename_topobathy</span><span class="o">=</span><span class="n">topobathy_fn</span><span class="p">,</span>
+        <span class="n">nrmax</span><span class="o">=</span><span class="n">nrmax</span><span class="p">,</span>
+        <span class="n">nodata</span><span class="o">=</span><span class="n">nodata</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <span class="c1"># ---- 1a. adjust_zsmax_dilation : cell-space WSE dilation --------------------</span>

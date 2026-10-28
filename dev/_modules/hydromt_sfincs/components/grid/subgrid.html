@@ -1433,14 +1433,14 @@
 
         <span class="c1"># Create COG overviews</span>
         <span class="k">if</span> <span class="n">write_dep_tif</span><span class="p">:</span>
-            <span class="n">utils</span><span class="o">.</span><span class="n">build_overviews</span><span class="p">(</span>
+            <span class="n">workflows</span><span class="o">.</span><span class="n">cog</span><span class="o">.</span><span class="n">build_overviews</span><span class="p">(</span>
                 <span class="n">fn</span><span class="o">=</span><span class="n">fn_dep_tif</span><span class="p">,</span>
                 <span class="n">resample_method</span><span class="o">=</span><span class="s2">"average"</span><span class="p">,</span>
                 <span class="n">overviews</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">,</span>
                 <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">write_man_tif</span><span class="p">:</span>
-            <span class="n">utils</span><span class="o">.</span><span class="n">build_overviews</span><span class="p">(</span>
+            <span class="n">workflows</span><span class="o">.</span><span class="n">cog</span><span class="o">.</span><span class="n">build_overviews</span><span class="p">(</span>
                 <span class="n">fn</span><span class="o">=</span><span class="n">fn_man_tif</span><span class="p">,</span>
                 <span class="n">resample_method</span><span class="o">=</span><span class="s2">"average"</span><span class="p">,</span>
                 <span class="n">overviews</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">,</span>

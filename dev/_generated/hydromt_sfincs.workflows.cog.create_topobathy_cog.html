@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>hydromt_sfincs.workflows.create_topobathy_tiles &#8212; HydroMT SFINCS  documentation</title>
+    <title>hydromt_sfincs.workflows.cog.create_topobathy_cog &#8212; HydroMT SFINCS  documentation</title>
   
   
   
@@ -45,7 +45,7 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.workflows.create_topobathy_tiles';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_generated/hydromt_sfincs.workflows.cog.create_topobathy_cog';</script>
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.23.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
@@ -57,8 +57,8 @@
     <link rel="icon" href="../_static/hydromt-icon.svg"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hydromt_sfincs.workflows.downscaling.downscale_floodmap" href="hydromt_sfincs.workflows.downscaling.downscale_floodmap.html" />
-    <link rel="prev" title="hydromt_sfincs.workflows.cn_to_s" href="hydromt_sfincs.workflows.cn_to_s.html" />
+    <link rel="next" title="hydromt_sfincs.readers.read_binary_map" href="hydromt_sfincs.readers.read_binary_map.html" />
+    <link rel="prev" title="hydromt_sfincs.workflows.cog.create_index_cog" href="hydromt_sfincs.workflows.cog.create_index_cog.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
@@ -511,7 +511,7 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.components.output.SfincsOutput.html">hydromt_sfincs.components.output.SfincsOutput</a></li>
 </ul>
-<ul class="current nav bd-sidenav">
+<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.merge_multi_dataarrays.html">hydromt_sfincs.workflows.merge_multi_dataarrays</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.merge_dataarrays.html">hydromt_sfincs.workflows.merge_dataarrays</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.burn_river_rect.html">hydromt_sfincs.workflows.burn_river_rect</a></li>
@@ -520,15 +520,14 @@
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.river_centerline_from_hydrography.html">hydromt_sfincs.workflows.river_centerline_from_hydrography</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.landuse.html">hydromt_sfincs.workflows.landuse</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.cn_to_s.html">hydromt_sfincs.workflows.cn_to_s</a></li>
-<li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">hydromt_sfincs.workflows.create_topobathy_tiles</a></li>
 </ul>
-<ul class="nav bd-sidenav">
+<ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscaling.downscale_floodmap.html">hydromt_sfincs.workflows.downscaling.downscale_floodmap</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscaling.adjust_zsmax_dilation.html">hydromt_sfincs.workflows.downscaling.adjust_zsmax_dilation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscaling.adjust_zsmax_energyhead.html">hydromt_sfincs.workflows.downscaling.adjust_zsmax_energyhead</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscaling.remove_disconnected_flooding.html">hydromt_sfincs.workflows.downscaling.remove_disconnected_flooding</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscaling.make_index_cog.html">hydromt_sfincs.workflows.downscaling.make_index_cog</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.downscale_floodmap_webmercator.html">hydromt_sfincs.workflows.downscale_floodmap_webmercator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.workflows.cog.create_index_cog.html">hydromt_sfincs.workflows.cog.create_index_cog</a></li>
+<li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">hydromt_sfincs.workflows.cog.create_topobathy_cog</a></li>
 </ul>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="hydromt_sfincs.readers.read_binary_map.html">hydromt_sfincs.readers.read_binary_map</a></li>
@@ -606,7 +605,7 @@
     
     <li class="breadcrumb-item"><a href="../api/api.html" class="nav-link">API</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">hydromt_sfincs.workflows.create_topobathy_tiles</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">hydromt_sfincs.workflows.cog.create_topobathy_cog</span></li>
   </ul>
 </nav>
 </div>
@@ -623,29 +622,73 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="hydromt-sfincs-workflows-create-topobathy-tiles">
-<h1>hydromt_sfincs.workflows.create_topobathy_tiles<a class="headerlink" href="#hydromt-sfincs-workflows-create-topobathy-tiles" title="Link to this heading">#</a></h1>
+  <section id="hydromt-sfincs-workflows-cog-create-topobathy-cog">
+<h1>hydromt_sfincs.workflows.cog.create_topobathy_cog<a class="headerlink" href="#hydromt-sfincs-workflows-cog-create-topobathy-cog" title="Link to this heading">#</a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="hydromt_sfincs.workflows.create_topobathy_tiles">
-<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.workflows.</span></span><span class="sig-name descname"><span class="pre">create_topobathy_tiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">root:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">~pathlib.Path,</span> <span class="pre">region:</span> <span class="pre">~geopandas.geodataframe.GeoDataFrame,</span> <span class="pre">elevation_list:</span> <span class="pre">~typing.List[dict]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">data_catalog=None,</span> <span class="pre">index_path:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">~pathlib.Path</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">zoom_range:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">~typing.List[int]</span> <span class="pre">=</span> <span class="pre">[0,</span> <span class="pre">13],</span> <span class="pre">z_range:</span> <span class="pre">~typing.List[int]</span> <span class="pre">=</span> <span class="pre">[-20000.0,</span> <span class="pre">20000.0],</span> <span class="pre">fmt:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'bin',</span> <span class="pre">write_html_viewer:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True,</span> <span class="pre">max_workers:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">logger:</span> <span class="pre">~logging.Logger</span> <span class="pre">=</span> <span class="pre">&lt;Logger</span> <span class="pre">hydromt_sfincs.workflows.tiling</span> <span class="pre">(WARNING)&gt;</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/hydromt_sfincs/workflows/tiling.html#create_topobathy_tiles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.workflows.create_topobathy_tiles" title="Link to this definition">#</a></dt>
-<dd><p>Create webmercator topobathy tiles for a given region.</p>
+<dt class="sig sig-object py" id="hydromt_sfincs.workflows.cog.create_topobathy_cog">
+<span class="sig-prename descclassname"><span class="pre">hydromt_sfincs.workflows.cog.</span></span><span class="sig-name descname"><span class="pre">create_topobathy_cog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="hydromt_sfincs.SfincsModel.html#hydromt_sfincs.SfincsModel" title="hydromt_sfincs.SfincsModel"><span class="pre">SfincsModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">elevation_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.15)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><span class="pre">dict</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">res</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.15)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><span class="pre">dict</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.15)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_cells</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nrmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_minimum</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-20000.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hydromt_sfincs/workflows/cog.html#create_topobathy_cog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hydromt_sfincs.workflows.cog.create_topobathy_cog" title="Link to this definition">#</a></dt>
+<dd><p>Write a Cloud Optimized GeoTIFF (COG) with merged topobathy data.</p>
+<p>The elevation datasets (and optional river burn-in) are merged onto a
+regular, north-up raster in the model CRS that covers the model bounds
+(or <code class="docutils literal notranslate"><span class="pre">bounds</span></code>) at resolution <code class="docutils literal notranslate"><span class="pre">res</span></code>. The raster is processed in blocks
+of at most <code class="docutils literal notranslate"><span class="pre">nrmax</span></code> x <code class="docutils literal notranslate"><span class="pre">nrmax</span></code> pixels to limit memory use. Missing
+values are interpolated/extrapolated, so the output contains no nodata
+pixels in practice; the nodata value is NaN.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>root</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Path]</span></code>) – Directory where the topobathy tiles will be stored.</p></li>
-<li><p><strong>region</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">gpd.GeoDataFrame</span></code>) – GeoDataFrame defining the region for which the tiles will be created.</p></li>
-<li><p><strong>elevation_list</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List[dict]</span></code>, <em>optional</em>) – List of dictionaries containing the bathymetry dataarrays. If
-<code class="docutils literal notranslate"><span class="pre">None</span></code>, falls back to <code class="docutils literal notranslate"><span class="pre">data_catalog</span></code> (all sources in the
-catalog are treated as elevation datasets).</p></li>
-<li><p><strong>data_catalog</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">hydromt.DataCatalog</span></code>, <em>optional</em>) – Fallback data catalog used to build an elevation_list when
-<code class="docutils literal notranslate"><span class="pre">elevation_list</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>. Explicit <code class="docutils literal notranslate"><span class="pre">elevation_list</span></code>
-entries always win.</p></li>
-<li><p><strong>index_path</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Path]</span></code>, <em>optional</em>) – Directory where index tiles are stored, by default None</p></li>
-<li><p><strong>zoom_range</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List[int]]</span></code>, <em>optional</em>) – Range of zoom levels for which tiles are created, by default [0, 13]</p></li>
-<li><p><strong>z_range</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List[int]</span></code>, <em>optional</em>) – Range of valid elevations, by default [-20000.0, 20000.0]</p></li>
-<li><p><strong>fmt</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <em>optional</em>) – The desired output format of the topobathy tiles, by default “bin”. Also “png” and “tif” are supported.</p></li>
-<li><p><strong>write_html_viewer</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – If True (default), also write an <code class="docutils literal notranslate"><span class="pre">index.html</span></code> Leaflet viewer
-alongside the tiles so they can be previewed in a browser.</p></li>
+<li><p><strong>model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">SfincsModel</span></code>) – The SfincsModel instance providing the CRS, bounds and data catalog.</p></li>
+<li><p><strong>elevation_list</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List[dict]</span></code>) – <p>List of dictionaries with topobathy data.
+Each should minimally contain a data catalog source name, data file path,
+or xarray raster object (‘elevation’).
+Optional merge arguments include: ‘zmin’, ‘zmax’, ‘mask’, ‘offset’, ‘reproj_method’,
+and ‘merge_method’, see example below. For a complete overview of all merge options,
+see <code class="xref py py-func docutils literal notranslate"><span class="pre">hydromt.workflows.merge_multi_dataarrays()</span></code></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>
+    <span class="p">{</span><span class="s1">'elevation'</span><span class="p">:</span> <span class="s1">'merit_hydro'</span><span class="p">,</span> <span class="s1">'zmin'</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">},</span>
+    <span class="p">{</span><span class="s1">'elevation'</span><span class="p">:</span> <span class="s1">'gebco'</span><span class="p">,</span> <span class="s1">'offset'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">'merge_method'</span><span class="p">:</span> <span class="s1">'first'</span><span class="p">,</span> <span class="n">reproj_method</span><span class="p">:</span> <span class="s1">'bilinear'</span><span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</p></li>
+<li><p><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> or <code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code>) – Output COG file path.</p></li>
+<li><p><strong>res</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – Raster resolution in model CRS units.</p></li>
+<li><p><strong>river_list</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List[dict]</span></code>, <em>optional</em>) – <p>List of dictionaries with river datasets. Each dictionary should at least
+contain a river centerline data and optionally a river mask:</p>
+<ul>
+<li><dl class="simple">
+<dt>centerlines: filename (or Path) of river centerline with attributes</dt><dd><p>rivwth (river width [m]; required if not river mask provided),
+rivdph or rivbed (river depth [m]; river bedlevel [m+REF]),
+manning (Manning’s n [s/m^(1/3)]; optional)</p>
+</dd>
+</dl>
+</li>
+<li><p>mask (optional): filename (or Path) of river mask</p></li>
+<li><p>point_zb (optional): filename (or Path) of river points with bed (z) values</p></li>
+<li><dl class="simple">
+<dt>river attributes (optional): “rivdph”, “rivbed”, “rivwth”, “manning”</dt><dd><p>to fill missing values</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>arguments to the river burn method (optional):</dt><dd><p>segment_length [m] (default 500m) and riv_bank_q [0-1] (default 0.5)
+which used to estimate the river bank height in case river depth is provided.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>For more info see <code class="xref py py-func docutils literal notranslate"><span class="pre">hydromt.workflows.bathymetry.burn_river_rect()</span></code></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[{</span><span class="s1">'centerlines'</span><span class="p">:</span> <span class="s1">'river_lines'</span><span class="p">,</span> <span class="s1">'mask'</span><span class="p">:</span> <span class="s1">'river_mask'</span><span class="p">,</span> <span class="s1">'manning'</span><span class="p">:</span> <span class="mf">0.035</span><span class="p">}]</span>
+</pre></div>
+</div>
+</p></li>
+<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List[float]</span></code>, <em>optional</em>) – Raster extent <code class="docutils literal notranslate"><span class="pre">[xmin,</span> <span class="pre">ymin,</span> <span class="pre">xmax,</span> <span class="pre">ymax]</span></code> in model CRS units, by default
+the model bounds. The extent is rounded outwards to a multiple of <code class="docutils literal notranslate"><span class="pre">res</span></code>.</p></li>
+<li><p><strong>buffer_cells</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <em>optional</em>) – Number of cells between datasets to ensure smooth transition of bed levels,
+by default 0</p></li>
+<li><p><strong>nrmax</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <em>optional</em>) – Maximum number of pixels per block side, by default 2000.
+These blocks are used to prevent memory issues while working with large datasets</p></li>
+<li><p><strong>z_minimum</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – Minimum elevation in the output raster, by default -20000.0</p></li>
 </ul>
 </dd>
 </dl>
@@ -664,20 +707,20 @@ alongside the tiles so they can be previewed in a browser.</p></li>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="hydromt_sfincs.workflows.cn_to_s.html"
+       href="hydromt_sfincs.workflows.cog.create_index_cog.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">hydromt_sfincs.workflows.cn_to_s</p>
+        <p class="prev-next-title">hydromt_sfincs.workflows.cog.create_index_cog</p>
       </div>
     </a>
     <a class="right-next"
-       href="hydromt_sfincs.workflows.downscaling.downscale_floodmap.html"
+       href="hydromt_sfincs.readers.read_binary_map.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">hydromt_sfincs.workflows.downscaling.downscale_floodmap</p>
+        <p class="prev-next-title">hydromt_sfincs.readers.read_binary_map</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -720,7 +763,7 @@ alongside the tiles so they can be previewed in a browser.</p></li>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.workflows.create_topobathy_tiles"><code class="docutils literal notranslate"><span class="pre">create_topobathy_tiles()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydromt_sfincs.workflows.cog.create_topobathy_cog"><code class="docutils literal notranslate"><span class="pre">create_topobathy_cog()</span></code></a></li>
 </ul>
   </nav></div>
 
