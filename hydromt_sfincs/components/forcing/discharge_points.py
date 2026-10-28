@@ -10,7 +10,7 @@ import pandas as pd
 from hydromt import hydromt_step
 from hydromt.gis.vector import GeoDataset
 
-from hydromt_sfincs import utils, workflows
+from hydromt_sfincs import readers, workflows, writers
 
 from .boundary_conditions import SfincsBoundaryBase
 
@@ -107,7 +107,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             raise FileNotFoundError(f"Discharge points file not found: {abs_file_path}")
 
         # Read src file
-        gdf = utils.read_xyn(abs_file_path, crs=self.model.crs)
+        gdf = readers.read_xyn(abs_file_path, crs=self.model.crs)
         return gdf
 
     def read_discharge_timeseries(self, filename: str | Path = None):
@@ -133,7 +133,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             )
 
         # Read dis file (this creates one DataFrame with all timeseries)
-        df = utils.read_timeseries(abs_file_path, tref=self.model.config.get("tref"))
+        df = readers.read_timeseries(abs_file_path, tref=self.model.config.get("tref"))
         df.index.name = "time"
         df.columns.name = "index"
         return df
@@ -198,11 +198,10 @@ class SfincsDischargePoints(SfincsBoundaryBase):
             self.write_discharge_conditions_netcdf()
 
         if self.model.write_gis:
-            utils.write_vector(
+            writers.write_vector(
                 self.gdf,
                 name="dis",
                 root=join(self.model.root.path, "gis"),
-                logger=logger,
             )
 
     def write_discharge_points(self, filename: str | Path = None):
@@ -226,7 +225,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         else:
             fmt = "%11.1f"
 
-        utils.write_xyn(abs_file_path, self.gdf, fmt=fmt)
+        writers.write_xyn(abs_file_path, self.gdf, fmt=fmt)
 
     def write_discharge_timeseries(self, filename: str | Path = None):
         """Write SFINCS discharge timeseries (.dis) file"""
@@ -247,7 +246,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         df = da.to_pandas()
 
         # Write to file
-        utils.write_timeseries(abs_file_path, df, self.model.config.get("tref"))
+        writers.write_timeseries(abs_file_path, df, self.model.config.get("tref"))
 
     def write_discharge_conditions_netcdf(self, filename: str | Path = None):
         """Write SFINCS discharge conditions netcdf file"""
@@ -280,7 +279,7 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         ds = ds.rename({"dis": "discharge"}) if "dis" in ds.data_vars else ds
 
         # Write netcdf file safely (might get locked, e..g in other notebooks)
-        final_path = utils.write_netcdf_safely(ds, abs_file_path, encoding=encoding)
+        final_path = writers.write_netcdf_safely(ds, abs_file_path, encoding=encoding)
         if final_path != abs_file_path:
             self.model.config.set("netsrcdisfile", final_path.name)
 

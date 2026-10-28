@@ -1,8 +1,10 @@
 import numpy as np
 from pyproj import CRS
 import pytest
+from unittest.mock import MagicMock, patch
 import os
 
+from xugrid import UgridDataArray
 from hydromt_sfincs.sfincs import SfincsModel
 
 from .conftest import TESTDATADIR, TESTMODELDIR
@@ -13,6 +15,47 @@ def test_ind(reggrid, mask):
     assert ind[0] == 254
     assert ind[-1] == 2939
     assert ind.size == np.sum(mask > 0)
+
+
+def test_grid_read_loads_index_once(model_config):
+    grid = model_config.grid
+    with patch("numpy.fromfile", wraps=np.fromfile) as read_file:
+        grid.read()
+        grid._read_layers(["dep"])
+        grid._read_layers(["dep"])
+    index_path = model_config.config.get("indexfile", abs_path=True)
+    index_reads = [
+        call for call in read_file.call_args_list if call.args[0] == index_path
+    ]
+    assert len(index_reads) == 1
+
+
+def test_read_ind_reads_file(model_init, tmp_path):
+    grid = model_init.grid
+    index_path = tmp_path / "sfincs.ind"
+    np.array([2, 1, 3], dtype="u4").tofile(index_path)
+    with patch("numpy.fromfile", wraps=np.fromfile) as read_file:
+        np.testing.assert_array_equal(grid.read_ind(index_path), [0, 2])
+        np.testing.assert_array_equal(grid.read_ind(index_path), [0, 2])
+        assert read_file.call_count == 2
+
+
+def test_indices_use_file_then_refresh_from_mask(model_config, tmp_path):
+    grid = model_config.grid
+    np.testing.assert_array_equal(
+        grid.indices,
+        grid.read_ind(model_config.config.get("indexfile", abs_path=True)),
+    )
+    grid.read()
+    original_indices = grid.indices.copy()
+    grid.data["mask"].values[:] = 0
+    grid.data["mask"].values[0, 0] = 1
+    np.testing.assert_array_equal(grid.indices, original_indices)
+    grid.data["dep"].values[:] = 0
+    grid.root.set(tmp_path, mode="w+")
+    grid.model.config.write()
+    grid.write()
+    np.testing.assert_array_equal(grid.indices, [0])
 
 
 def test_grid_io(model_config, tmp_path):
@@ -56,6 +99,43 @@ def test_grid_io(model_config, tmp_path):
 
     # assert the grid is the same
     assert model.grid.data.equals(model1.grid.data)
+
+    # check that the quadtree grid was created
+    assert isinstance(model.quadtree_grid.data, UgridDataArray)
+    assert model.quadtree_grid.crs == model.grid.crs
+
+
+def test_grid_component_data_contains_only_owned_layers(model_config):
+    model = model_config
+    grid = model.grid
+    grid.read()
+    components = {
+        "elevation": ("dep",),
+        "mask": ("mask",),
+        "roughness": ("manning",),
+        "storage_volume": ("vol",),
+        "initial_conditions": ("zs",),
+        "infiltration": model.infiltration.grid_variables,
+    }
+    for name in set().union(*map(set, components.values())):
+        grid.set(grid.mask.astype(np.float32), name=name)
+
+    for name, variables in components.items():
+        assert set(model.components[name].data.data_vars) == set(variables)
+
+
+def test_regular_infiltration_clear_preserves_grid_layers(model_config):
+    model = model_config
+    model.grid.read()
+    mask = model.grid.data["mask"].copy(deep=True)
+    dep = model.grid.data["dep"].copy(deep=True)
+    model.grid.set(model.grid.mask.astype(np.float32), name="qinf")
+
+    model.infiltration.clear()
+
+    assert "qinf" not in model.grid.data
+    np.testing.assert_array_equal(model.grid.data["mask"].values, mask.values)
+    np.testing.assert_array_equal(model.grid.data["dep"].values, dep.values)
 
 
 def test_grid_create(model_init):

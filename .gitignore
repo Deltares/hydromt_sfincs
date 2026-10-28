@@ -116,6 +116,9 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+# claude
+.claude/
+
 # dask
 dask-worker-space/
 

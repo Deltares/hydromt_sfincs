@@ -14,7 +14,7 @@ from matplotlib import path
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers, utils
 from hydromt_sfincs.workflows.map_overlay import MaskOverlay
 
 np.warnings = warnings
@@ -27,6 +27,12 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 class SfincsQuadtreeMask(ModelComponent):
+    """Mask stored in the shared quadtree grid.
+
+    ``data`` exposes only this component's mask, retaining the mesh and grid
+    attributes. The parent grid reads and writes the mask in ``qtrfile``.
+    """
+
     # Variable name (in model.quadtree_grid.data) that the overlay renderer
     # samples. Subclasses (e.g. SnapWaveQuadtreeMask) override this.
     _mask_variable: str = "mask"
@@ -45,7 +51,9 @@ class SfincsQuadtreeMask(ModelComponent):
 
     @property
     def data(self):
-        return self.model.quadtree_grid.data
+        """Return only this mask, retaining the parent mesh."""
+        data = self.model.quadtree_grid.data
+        return data[[name for name in (self._mask_variable,) if name in data]]
 
     @property
     def empty_mask(self):
@@ -65,12 +73,20 @@ class SfincsQuadtreeMask(ModelComponent):
         mask = self.data["mask"]
         return (mask == 2).any().item()
 
-    def read(self):
-        # The mask values are read when the quadtree grid is read
-        pass
+    def read(self) -> None:
+        """Ensure the parent grid is loaded, including masks in ``qtrfile``.
 
-    def write(self):
-        # The mask values are written when the quadtree grid is written
+        An already loaded grid is not reread.
+        """
+        if self.model.quadtree_grid._data is None:
+            self.model.quadtree_grid.read(read_components=False)
+
+    def write(self) -> None:
+        """Leave mask persistence in ``qtrfile`` to the parent grid.
+
+        Call ``model.quadtree_grid.write()`` to persist it; this method does
+        not write a separate file or rewrite the shared grid.
+        """
         pass
 
     @hydromt_step
@@ -280,9 +296,15 @@ class SfincsQuadtreeMask(ModelComponent):
             varname = "snapwave_mask"
 
         if copy_sfincsmask and model == "snapwave":
-            assert "mask" in self.data, "SFINCS mask not found!"
+            assert "mask" in self.model.quadtree_grid.data, "SFINCS mask not found!"
             logger.info("Using SFINCS mask for SnapWave mask ...")
-            self.data[varname] = self.data["mask"]
+            self.model.quadtree_grid.set(
+                xu.UgridDataArray(
+                    self.model.quadtree_grid.data["mask"].obj,
+                    self.model.quadtree_grid.data.grid,
+                ),
+                name=varname,
+            )
             return
 
         logger.info("Build new mask for: " + model + " ...")
@@ -298,7 +320,7 @@ class SfincsQuadtreeMask(ModelComponent):
             ).endswith(".pol"):
                 # NOTE polygons should be in same CRS as model
                 gdf_include = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=include_polygon), crs=self.model.crs
+                    feats=readers.read_geoms(fn=include_polygon), crs=self.model.crs
                 )
             else:
                 gdf_include = (
@@ -317,7 +339,7 @@ class SfincsQuadtreeMask(ModelComponent):
                 exclude_polygon
             ).endswith(".pol"):
                 gdf_exclude = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=exclude_polygon), crs=self.model.crs
+                    feats=readers.read_geoms(fn=exclude_polygon), crs=self.model.crs
                 )
             else:
                 gdf_exclude = (
@@ -333,7 +355,8 @@ class SfincsQuadtreeMask(ModelComponent):
                     )
 
         # get mask and dep data
-        uda_mask = self.data["mask"] if "mask" in self.data else None
+        data = self.model.quadtree_grid.data
+        uda_mask = data[varname] if varname in data else None
 
         uda_mask0 = None
         if not reset_mask and uda_mask is not None:
@@ -344,9 +367,9 @@ class SfincsQuadtreeMask(ModelComponent):
         uda_mask = self.empty_mask > 0
 
         if zmin is not None or zmax is not None:
-            if "z" not in self.data:
+            if "z" not in self.model.quadtree_grid.data:
                 raise ValueError("z required in combination with zmin / zmax")
-            uda_dep = self.data["z"]
+            uda_dep = self.model.quadtree_grid.data["z"]
             if zmin is not None or zmax is not None:
                 _msk = uda_dep != np.nan
                 if zmin is not None:
@@ -377,11 +400,11 @@ class SfincsQuadtreeMask(ModelComponent):
             # check if any cells are included
             if _msk.any():
                 if include_zmin is not None or include_zmax is not None:
-                    if "z" not in self.data:
+                    if "z" not in self.model.quadtree_grid.data:
                         raise ValueError(
                             "z required in combination with include_zmin / include_zmax"
                         )
-                    uda_dep = self.data["z"]
+                    uda_dep = self.model.quadtree_grid.data["z"]
                     if include_zmin is not None:
                         _msk = np.logical_and(_msk, uda_dep >= include_zmin)
                     if include_zmax is not None:
@@ -398,11 +421,11 @@ class SfincsQuadtreeMask(ModelComponent):
             )
             if _msk.any():
                 if exclude_zmin is not None or exclude_zmax is not None:
-                    if "z" not in self.data:
+                    if "z" not in self.model.quadtree_grid.data:
                         raise ValueError(
                             "z required in combination with exclude_zmin / exclude_zmax"
                         )
-                    uda_dep = self.data["z"]
+                    uda_dep = self.model.quadtree_grid.data["z"]
                     if exclude_zmin is not None:
                         _msk = np.logical_and(_msk, uda_dep >= exclude_zmin)
                     if exclude_zmax is not None:
@@ -411,9 +434,13 @@ class SfincsQuadtreeMask(ModelComponent):
             else:
                 logger.warning("No mask cells found within exclude polygon!")
         # add mask to grid
-        self.data[varname] = xu.UgridDataArray(
-            xr.DataArray(data=uda_mask, dims=[self.data.grid.face_dimension]),
-            self.data.grid,
+        grid = self.model.quadtree_grid.data.grid
+        self.model.quadtree_grid.set(
+            xu.UgridDataArray(
+                xr.DataArray(data=uda_mask.values, dims=[grid.face_dimension]),
+                grid,
+            ),
+            name=varname,
         )
 
     @hydromt_step
@@ -489,21 +516,29 @@ class SfincsQuadtreeMask(ModelComponent):
 
         # copy SFINCS mask to SnapWave mask when requested
         if copy_sfincsmask and model == "snapwave":
-            assert "mask" in self.data, "SFINCS mask not found!"
+            assert "mask" in self.model.quadtree_grid.data, "SFINCS mask not found!"
             logger.info("Using SFINCS mask for SnapWave mask ...")
-            self.data[varname] = self.data["mask"]
+            self.model.quadtree_grid.set(
+                xu.UgridDataArray(
+                    self.model.quadtree_grid.data["mask"].obj,
+                    self.model.quadtree_grid.data.grid,
+                ),
+                name=varname,
+            )
             return
 
         # check if mask already exists
-        if varname not in self.data:
+        if varname not in self.model.quadtree_grid.data:
             raise ValueError("First setup active mask for model: " + model)
         else:
-            uda_mask = self.data[varname]
+            uda_mask = self.model.quadtree_grid.data[varname]
 
-        if "z" not in self.data and (zmin is not None or zmax is not None):
+        if "z" not in self.model.quadtree_grid.data and (
+            zmin is not None or zmax is not None
+        ):
             raise ValueError("z required in combination with zmin / zmax")
         else:
-            uda_dep = self.data["z"]
+            uda_dep = self.model.quadtree_grid.data["z"]
 
         # check boundary type
         btype = btype.lower()
@@ -527,7 +562,7 @@ class SfincsQuadtreeMask(ModelComponent):
             ).endswith(".pol"):
                 # NOTE polygons should be in same CRS as model
                 gdf_include = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=include_polygon), crs=self.model.crs
+                    feats=readers.read_geoms(fn=include_polygon), crs=self.model.crs
                 )
             else:
                 gdf_include = (
@@ -552,7 +587,7 @@ class SfincsQuadtreeMask(ModelComponent):
                 exclude_polygon
             ).endswith(".pol"):
                 gdf_exclude = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=exclude_polygon), crs=self.model.crs
+                    feats=readers.read_geoms(fn=exclude_polygon), crs=self.model.crs
                 )
             else:
                 gdf_exclude = (
@@ -577,9 +612,16 @@ class SfincsQuadtreeMask(ModelComponent):
                 and gdf_include is None
                 and gdf_exclude is None
             ):
-                self.data[varname] = xu.UgridDataArray(
-                    xr.DataArray(data=uda_mask, dims=[self.data.grid.face_dimension]),
-                    self.data.grid,
+                grid = self.model.quadtree_grid.data.grid
+                self.model.quadtree_grid.set(
+                    xu.UgridDataArray(
+                        xr.DataArray(
+                            data=uda_mask.values,
+                            dims=[grid.face_dimension],
+                        ),
+                        grid,
+                    ),
+                    name=varname,
                 )
                 return
 
@@ -603,11 +645,11 @@ class SfincsQuadtreeMask(ModelComponent):
             )
 
             if include_zmin is not None or include_zmax is not None:
-                if "z" not in self.data:
+                if "z" not in self.model.quadtree_grid.data:
                     raise ValueError(
                         "z required in combination with include_zmin / include_zmax"
                     )
-                uda_dep = self.data["z"]
+                uda_dep = self.model.quadtree_grid.data["z"]
                 if include_zmin is not None:
                     uda_include = np.logical_and(uda_include, uda_dep >= include_zmin)
                 if include_zmax is not None:
@@ -627,11 +669,11 @@ class SfincsQuadtreeMask(ModelComponent):
             )
 
             if exclude_zmin is not None or exclude_zmax is not None:
-                if "z" not in self.data:
+                if "z" not in self.model.quadtree_grid.data:
                     raise ValueError(
                         "z required in combination with exclude_zmin / exclude_zmax"
                     )
-                uda_dep = self.data["z"]
+                uda_dep = self.model.quadtree_grid.data["z"]
                 if exclude_zmin is not None:
                     uda_exclude = np.logical_and(uda_exclude, uda_dep >= exclude_zmin)
                 if exclude_zmax is not None:
@@ -656,9 +698,13 @@ class SfincsQuadtreeMask(ModelComponent):
                 uda_mask = uda_mask.where(~bounds_msk2, np.uint8(bvalue))
 
         # add mask to grid
-        self.data[varname] = xu.UgridDataArray(
-            xr.DataArray(data=uda_mask, dims=[self.data.grid.face_dimension]),
-            self.data.grid,
+        grid = self.model.quadtree_grid.data.grid
+        self.model.quadtree_grid.set(
+            xu.UgridDataArray(
+                xr.DataArray(data=uda_mask.values, dims=[grid.face_dimension]),
+                grid,
+            ),
+            name=varname,
         )
 
     def to_gdf(self, option="all"):
@@ -670,7 +716,7 @@ class SfincsQuadtreeMask(ModelComponent):
             # Return empty geodataframe
             return gpd.GeoDataFrame()
         xz, yz = self.face_coordinates
-        mask = self.data["mask"]
+        mask = self.data[self._mask_variable]
         gdf_list = []
         okay = np.zeros(mask.shape, dtype=int)
         if option == "all":
@@ -747,21 +793,22 @@ class SfincsQuadtreeMask(ModelComponent):
         )
 
     def _find_boundary_cells(self, varname):
-        mu = self.data["mu"].values[:]
-        mu1 = self.data["mu1"].values[:] - 1
-        mu2 = self.data["mu2"].values[:] - 1
-        nu = self.data["nu"].values[:]
-        nu1 = self.data["nu1"].values[:] - 1
-        nu2 = self.data["nu2"].values[:] - 1
-        md = self.data["md"].values[:]
-        md1 = self.data["md1"].values[:] - 1
-        md2 = self.data["md2"].values[:] - 1
-        nd = self.data["nd"].values[:]
-        nd1 = self.data["nd1"].values[:] - 1
-        nd2 = self.data["nd2"].values[:] - 1
+        data = self.model.quadtree_grid.data
+        mu = data["mu"].values[:]
+        mu1 = data["mu1"].values[:] - 1
+        mu2 = data["mu2"].values[:] - 1
+        nu = data["nu"].values[:]
+        nu1 = data["nu1"].values[:] - 1
+        nu2 = data["nu2"].values[:] - 1
+        md = data["md"].values[:]
+        md1 = data["md1"].values[:] - 1
+        md2 = data["md2"].values[:] - 1
+        nd = data["nd"].values[:]
+        nd1 = data["nd1"].values[:] - 1
+        nd2 = data["nd2"].values[:] - 1
 
         # mask = self.data["msk"].values[:]
-        mask = self.data[varname].values[:]  # TL: can be both sfincs or snapwave msk
+        mask = data[varname].values[:]  # TL: can be both sfincs or snapwave msk
 
         nr_cells = self.data.sizes["mesh2d_nFaces"]
 
@@ -816,18 +863,19 @@ class SfincsQuadtreeMask(ModelComponent):
     def _find_boundary_cells_msk2(self):
         # NOTE: this function would become abundant when boundary cells are correctly found in snapwave
 
-        mu = self.data["mu"].values[:]
-        mu1 = self.data["mu1"].values[:] - 1
-        mu2 = self.data["mu2"].values[:] - 1
-        nu = self.data["nu"].values[:]
-        nu1 = self.data["nu1"].values[:] - 1
-        nu2 = self.data["nu2"].values[:] - 1
-        md = self.data["md"].values[:]
-        md1 = self.data["md1"].values[:] - 1
-        md2 = self.data["md2"].values[:] - 1
-        nd = self.data["nd"].values[:]
-        nd1 = self.data["nd1"].values[:] - 1
-        nd2 = self.data["nd2"].values[:] - 1
+        data = self.model.quadtree_grid.data
+        mu = data["mu"].values[:]
+        mu1 = data["mu1"].values[:] - 1
+        mu2 = data["mu2"].values[:] - 1
+        nu = data["nu"].values[:]
+        nu1 = data["nu1"].values[:] - 1
+        nu2 = data["nu2"].values[:] - 1
+        md = data["md"].values[:]
+        md1 = data["md1"].values[:] - 1
+        md2 = data["md2"].values[:] - 1
+        nd = data["nd"].values[:]
+        nd1 = data["nd1"].values[:] - 1
+        nd2 = data["nd2"].values[:] - 1
 
         mask = self.bounds_msk2.values[:]
 

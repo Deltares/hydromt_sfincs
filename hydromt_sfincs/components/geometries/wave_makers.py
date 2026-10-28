@@ -9,7 +9,7 @@ from shapely.geometry import LineString
 
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers, utils, writers
 
 if TYPE_CHECKING:
     from hydromt_sfincs.sfincs import SfincsModel
@@ -89,9 +89,9 @@ class SfincsWaveMakers(ModelComponent):
         # Check that read mode is on
         self.root._assert_read_mode()
 
-        # Get absolute file name and set it in config if wvmfile is not None
+        # Get absolute file name and set it in config if the wave makers file is set
         abs_file_path = self.model.config.get_set_file_variable(
-            "wvmfile", value=filename
+            "wavemaker_wvmfile", value=filename
         )
 
         # check if abs_file_path is None or does not exist
@@ -101,14 +101,14 @@ class SfincsWaveMakers(ModelComponent):
             raise FileNotFoundError(f"Wave makers file not found: {abs_file_path}")
 
         # Read wvm file
-        struct = utils.read_geoms(abs_file_path)
+        struct = readers.read_geoms(abs_file_path)
         gdf = utils.linestring2gdf(struct, crs=self.model.crs)
 
         # Add to self._data
         self.set(gdf, merge=False)
 
     def write(self, filename: str | Path = None):
-        """Write SFINCS wave makers (.wvm) file, and set wvmfile in config (if it was not already set)."""
+        """Write SFINCS wave makers (.wvm) file, and set wavemaker_wvmfile in config (if it was not already set)."""
 
         # Check that data is not empty
         if self.data.empty:
@@ -117,7 +117,7 @@ class SfincsWaveMakers(ModelComponent):
 
         # Set file name and get absolute path
         abs_file_path = self.model.config.get_set_file_variable(
-            "wvmfile",
+            "wavemaker_wvmfile",
             value=filename,
             default="sfincs.wvm",
         )
@@ -135,15 +135,14 @@ class SfincsWaveMakers(ModelComponent):
         struct = utils.gdf2linestring(self.data)
 
         # Write to wvm file
-        utils.write_geoms(abs_file_path, struct, stype="wvm", fmt=fmt)
+        writers.write_geoms(abs_file_path, struct, stype="wvm", fmt=fmt)
 
         # write also as geojson:
         if self.model.write_gis:
-            utils.write_vector(
+            writers.write_vector(
                 self.data,
                 name="wvm",
                 root=join(self.root.path, "gis"),
-                logger=logger,
             )
 
     def set(self, gdf: gpd.GeoDataFrame, merge: bool = True):
@@ -234,7 +233,7 @@ class SfincsWaveMakers(ModelComponent):
         # Set the wave makers data
         self.set(gdf, merge)
         # Set config
-        self.model.config.set("wvmfile", "sfincs.wvm")
+        self.model.config.set("wavemaker_wvmfile", "sfincs.wvm")
 
     def delete(
         self,
@@ -264,24 +263,23 @@ class SfincsWaveMakers(ModelComponent):
         # Check if any wave makers are left
         if self.data.empty:
             logger.warning("All wave makers have been removed!")
-            # Set crsfile to None
-            self.model.config.set("wvmfile", None)
+            # Set wave makers file to None
+            self.model.config.set("wavemaker_wvmfile", None)
 
     def clear(self):
         """Clean GeoDataFrame with wave makers."""
         self._data = gpd.GeoDataFrame()
-        # Set crsfile to None
-        self.model.config.set("wvmfile", None)
+        # Set wave makers file to None
+        self.model.config.set("wavemaker_wvmfile", None)
 
     # %% DDB GUI focused additional functions:
     # snap_to_grid
 
     def snap_to_grid(self):
         """Returns GeoDataFrame with wave makers snapped to model grid."""
-        # FIXME - this probably only works for quadtree grids for now
         if self.model.grid_type != "quadtree":
-            raise NotImplementedError(
-                "Snap to grid is only implemented for quadtree grids."
+            logger.info(
+                "Snapping to grid uses the quadtree representation. Regular grid will be converted to a quadtree grid first."
             )
         snap_gdf = self.model.quadtree_grid.snap_to_grid(self.data)
         return snap_gdf

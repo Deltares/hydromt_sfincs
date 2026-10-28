@@ -8,6 +8,54 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
+v2.0.0-rc4 (28-10-2026)
+=============================
+**This release includes changes to grid I/O, infiltration, and configuration, alongside bug fixes and improvements since v2.0.0-rc3.**
+
+Added
+-----
+- Provide reusable preprocessing (``adjust_zsmax_dilation``, ``adjust_zsmax_energyhead``) and postprocessing (``remove_disconnected_flooding``) helpers as separate functions.
+- Allow ``elevation.create()`` to skip DEM extrapolation (#392).
+- Reintroduce ``snap_to_grid`` for relevant geometries on regular grids (#400).
+- Provide infiltration workflows to estimate Curve Number, Green-Ampt, Horton, and bucket parameters from HSG data, with optional land-use modifiers, plus constant infiltration from Ksat and land-use data (#419).
+- Provide infiltration component methods to populate regular-grid and quadtree SFINCS models with derived or supplied infiltration layers: ``create_cn_from_landuse_hsg``, ``create_green_ampt``, ``create_horton``, their map-based variants, and ``create_uniform_constant``. Quadtree models also support ``create_runoff_coefficient``, ``create_bucket``, and ``create_bucket_from_maps`` (#419).
+- Include a persistent HydroMT-SFINCS/Deltares credit inside ``plot_basemap``, positioned to avoid overlapping provider attribution (#427).
+- Support ``config.write(update_to_latest=True)`` to write a model for ``LATEST_SFINCS_VERSION``; new models write ``sfincs_version`` (#417).
+- Support ``plot_basemap`` for SFINCS models, with optional geometry plotting (#427)
+- Extend ``plot_basemap`` with model-specific SFINCS/SnapWave masks, boundaries, runup gauges, and gridded output variables (#429).
+
+Fixed
+-----
+- Fixed plot_basemap() for very flat and/or below-sea-level Models (#394)
+- Always write ``manning_land``, ``manning_sea`` and ``rgh_lev_land`` to config when they are set by the user (#398)
+- Fixed writing of infiltration layers in Quadtree models (#397)
+- Respect explicit ``reproj_method`` values in ``merge_multi_dataarrays`` for first and subsequent datasets (#425)
+
+Changed
+-------
+- ``downscale_floodmap`` is now parameterised by ``reproj_method`` (``nearest`` or ``bilinear``) and a ``subtract_dem`` flag (flood depth vs. raw water level), and works on both regular and quadtree grids.
+- Moved readers and writers from ``utils.py`` to dedicated ``readers.py`` and ``writers.py`` modules (#390)
+- ``grid.read()`` and ``quadtree_grid.read()`` read only the main grid data files by default. Read or write additional gridded variables through their component methods, or pass ``read_components=True`` / ``write_components=True`` to have the grid delegate to those components. ``model.read()`` / ``model.write()`` handle all components (#419).
+- Moved the Cloud-Optimized-GeoTIFF utilities to ``hydromt_sfincs.workflows.cog``: ``create_topobathy_cog``, ``create_index_cog`` (formerly ``make_index_cog``) and ``build_overviews`` (#403)
+- Synced the config keywords with the SFINCS kernel: added missing keywords, removed keywords the kernel does not use, and set ``min_version`` to the release that introduced each keyword (#417)
+- Renamed keywords are one config field with a ``legacy_alias`` of ``(name, max_version)``: the old name (e.g. ``wvmfile``) is read into the current field (``wavemaker_wvmfile``) and written back as read, unless the ``sfincs_version`` of the file does not read it or, without ``sfincs_version``, it predates ``MIN_SUPPORTED_SFINCS_VERSION`` (#417)
+- A ``sfincs.inp`` without ``sfincs_version`` targets an unknown SFINCS version: deprecated settings are kept without a warning. Config version messages are only logged, no longer also raised as Python warnings (#422)
+- Components use the current keywords: ``wavemaker_wvmfile``, ``inffile``/``inftype`` and ``prcfile`` (#417)
+- Moved the land-use to HSG reclassification tables (``NLCD_HSG.csv``, ``esa_worldcover_HSG.csv``) from ``data/lulc/`` to ``data/infiltration/`` (#419).
+- Ksat input is expected in mm/hr, the unit SFINCS reads, and is no longer converted. The ``factor_ksat`` argument is removed; convert other units in the data catalog (e.g. ``unit_mult: 3.6`` for um/s). On main, ``create_cn_with_recovery`` multiplied Ksat by 3.6 on top of ``factor_ksat`` (#419).
+- ``create_cn_from_landuse_hsg`` and ``create_cn_with_recovery`` compute S per land-use pixel and area-average it onto the model cells. Open water (CN 0 in the reclass table) counts as S = 0, so a cell that is 60% water gets 40% of the land S; unmapped pixels are skipped. ``create_cn`` from a curve-number map keeps the median of CN (#419).
+- The Curve Number with recovery Ksat cap (``ksat_max``) defaults to 360 mm/hr (100 um/s). Ksat nodata and negative values are excluded when resampling; active cells left without valid Ksat are filled with 0 and logged as a warning (#419).
+
+Deprecated
+----------
+- ``hydromt_sfincs.utils.downscale_floodmap``; use ``hydromt_sfincs.workflows.downscaling.downscale_floodmap`` instead (#390)
+- ``hydromt_sfincs.workflows.downscaling.make_index_cog``; use ``hydromt_sfincs.workflows.cog.create_index_cog`` (arguments ``indices_fn`` and ``topobathy_fn`` are renamed to ``filename`` and ``filename_topobathy``) (#403)
+
+Removed
+-------
+- ``hydromt_sfincs.workflows.tiling`` and the ``create_index_tiles`` / ``create_topobathy_tiles`` grid component methods; use the COG workflows instead (#403)
+- ``hydromt_sfincs.workflows.curvenumber`` and ``hydromt_sfincs.workflows.landuse`` modules. ``cn_to_s`` now lives in ``hydromt_sfincs.workflows.infiltration`` (still importable from ``hydromt_sfincs.workflows``) and has a new ``output_unit`` argument; ``scs_recovery_determination`` is replaced by ``curve_number_with_recovery`` (#419).
+
 v2.0.0-rc3 (22-5-2026)
 =============================
 **This release contains minor bugfixes and improvements to the v2.0.0-rc2 release.**

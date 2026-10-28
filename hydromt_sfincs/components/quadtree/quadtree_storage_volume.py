@@ -32,22 +32,30 @@ class SfincsQuadtreeStorageVolume(ModelComponent):
 
     @property
     def data(self):
-        """Get the data from the model grid."""
-        return self.model.quadtree_grid.data
+        """Return only storage volume layers, retaining the parent mesh."""
+        data = self.model.quadtree_grid.data
+        return data[[name for name in self.grid_variables if name in data]]
 
     @property
     def mask(self):
         """Get an empty mask with the same shape as the model grid."""
         return self.model.quadtree_grid.mask
 
+    grid_variables = ("vol",)
+
     def read(self):
-        # TODO discuss what we want to return/read here, pass is not so informative ..
-        # The mask values are read when the quadtree grid is read
-        pass
+        """Read the storage volume layer from its own file."""
+        # the grid defines the mesh this layer lives on, so load it first
+        if self.model.quadtree_grid._data is None:
+            self.model.quadtree_grid.read(read_components=False)
+        filename = self.model.config.get("volfile", abs_path=True)
+        if filename is None or not filename.is_file():
+            return
+        self.model.quadtree_grid._read_layers(filename)
 
     def write(self):
-        # The mask values are written when the quadtree grid is written
-        pass
+        """Write the storage volume layer to its own file."""
+        self.model.quadtree_grid._write_layers(["vol"], "volfile", "vol.nc")
 
     def create(
         self,
@@ -100,6 +108,8 @@ class SfincsQuadtreeStorageVolume(ModelComponent):
         # set grid
         mname = "vol"
         da_vol.attrs.update(**_ATTRS.get(mname, {}))
+        grid = self.model.quadtree_grid.data.grid
+        da_vol = xu.UgridDataArray(da_vol.obj, grid)
         self.model.quadtree_grid.set(da_vol, name=mname)
         # update config
-        self.model.config.set(f"{mname}file", f"sfincs.{mname[:3]}")
+        self.model.config.set(f"{mname}file", f"sfincs_{mname}.nc")

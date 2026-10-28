@@ -46,24 +46,29 @@ class SfincsStorageVolume(ModelComponent):
 
     @property
     def data(self):
-        """Get the data from the model grid."""
-        return self.model.grid.data
+        """Return only the available storage volume layers from the model grid."""
+        data = self.model.grid.data
+        return data[[name for name in self.grid_variables if name in data]]
 
     @property
     def mask(self):
         """Get an empty mask with the same shape as the model grid."""
         return self.model.grid.mask
 
-    def read(self):
-        """Not implemented, storage volume data is read when the grid is read."""
-        # TODO discuss what we want to return/read here, pass is not so informative ..
-        # The mask values are read when the quadtree grid is read
-        pass
+    grid_variables = ("vol",)
 
-    def write(self):
-        """Not implemented, storage volume data is written when the grid is written."""
-        # The mask values are written when the quadtree grid is written
-        pass
+    def read(self) -> None:
+        """Read the storage volume map from its own binary file."""
+        # TODO discuss what we want to return/read here, pass is not so informative ..
+        # the grid holds the mask and cell index this map is written against;
+        # check _data directly, since the data property already triggers a read
+        if self.model.grid._data is None:
+            self.model.grid.read(read_components=False)
+        self.model.grid._read_layers(list(self.grid_variables))
+
+    def write(self) -> None:
+        """Write the storage volume map to its own binary file."""
+        self.model.grid._write_layers(list(self.grid_variables))
 
     @hydromt_step
     def create(

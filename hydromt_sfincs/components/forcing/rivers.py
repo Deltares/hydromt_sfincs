@@ -11,7 +11,7 @@ import xarray as xr
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import utils, workflows
+from hydromt_sfincs import workflows, writers
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -70,11 +70,10 @@ class SfincsRivers(ModelComponent):
 
         # write also as geojson:
         if self.model.write_gis:
-            utils.write_vector(
+            writers.write_vector(
                 self.data,
                 name="river_centerlines",
                 root=join(self.model.root.path, "gis"),
-                logger=logger,
             )
 
     @hydromt_step
@@ -329,7 +328,7 @@ class SfincsRivers(ModelComponent):
                 hydrography,
                 bbox=self.model.bbox,
                 variables=["uparea", "flwdir"],
-                buffer=10000,
+                buffer=10,
             )
             da_uparea = ds["uparea"]  # reused in river_source_points
         # get river centerlines
@@ -368,7 +367,7 @@ class SfincsRivers(ModelComponent):
         )
 
         if gdf_out.empty:
-            self.logger.info("No river outflow points found.")
+            logger.info("No river outflow points found.")
             return
 
         gdf_out_lines = gdf_out.copy()

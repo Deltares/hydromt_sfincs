@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core >=3.12.0,<4"]
+requires = ["flit_core >=3.12.0,<5"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -55,6 +55,7 @@ doc = [
 	"sphinx_autosummary_accessors", # doc layout
 	"sphinx>=8.0.0,<9.0.0",         # build docs
 	"sphinx_design",                # doc layout
+	"sphinxcontrib-mermaid",        # mermaid diagrams
 	"autodoc_pydantic",             # pydantic autodoc
 ]
 
@@ -68,6 +69,7 @@ examples = [
 ]
 quadtree = [
     "datashader",
+    "numba_celltree>=0.4.2",  # xugrid>=0.15 no longer installs this transitively; needed for celltree spatial ops on quadtree meshes
 ]
 
 full = ["hydromt_sfincs[test, doc, examples, quadtree]"]

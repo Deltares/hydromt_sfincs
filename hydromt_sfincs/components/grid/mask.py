@@ -4,14 +4,13 @@ from typing import TYPE_CHECKING, Union
 
 import geopandas as gpd
 import numpy as np
-import pandas as pd
 from pyflwdir.regions import region_area
 from scipy import ndimage
 
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
-from hydromt_sfincs import utils
+from hydromt_sfincs import readers, utils
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -30,7 +29,9 @@ class SfincsMask(ModelComponent):
     for water level and outflow boundaries.
 
     .. note::
-        The mask data is stored in the model grid's data dataset under the key "mask".
+        Mask data is stored as ``mask`` in the model grid. ``data`` exposes only
+        this layer. The grid reads and writes it through ``mskfile``, together
+        with elevation and the cell index.
 
     See Also
     --------
@@ -50,8 +51,9 @@ class SfincsMask(ModelComponent):
 
     @property
     def data(self):
-        """Get the data from the model grid."""
-        return self.model.grid.data
+        """Return only the available mask layer from the model grid."""
+        data = self.model.grid.data
+        return data[[name for name in ("mask",) if name in data]]
 
     @property
     def empty_mask(self):
@@ -63,15 +65,20 @@ class SfincsMask(ModelComponent):
         """Get the affine transform of the model grid."""
         return self.model.grid.transform
 
-    def read(self):
-        """Not implemented, mask data is read when the grid is read."""
-        # TODO discuss what we want to return/read here, pass is not so informative ..
-        # The mask values are read when the quadtree grid is read
-        pass
+    def read(self) -> None:
+        """Ensure the grid is loaded; it reads the mask from ``mskfile``.
 
-    def write(self):
-        """Not implemented, mask data is written when the grid is written."""
-        # The mask values are written when the quadtree grid is written
+        An already loaded grid is not reread.
+        """
+        if self.model.grid._data is None:
+            self.model.grid.read(read_components=False)
+
+    def write(self) -> None:
+        """Leave mask persistence to ``model.grid.write()``.
+
+        No file is written here: the grid writes ``mskfile`` together with
+        elevation and the cell index.
+        """
         pass
 
     @hydromt_step
@@ -212,7 +219,7 @@ class SfincsMask(ModelComponent):
             ).endswith(".pol"):
                 # NOTE polygons should be in same CRS as model
                 gdf_include = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=include_polygon), crs=self.model.crs
+                    feats=readers.read_geoms(fn=include_polygon), crs=self.model.crs
                 )
             else:
                 gdf_include = self.data_catalog.get_geodataframe(
@@ -223,7 +230,7 @@ class SfincsMask(ModelComponent):
                 exclude_polygon
             ).endswith(".pol"):
                 gdf_exclude = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=exclude_polygon), crs=self.model.crs
+                    feats=readers.read_geoms(fn=exclude_polygon), crs=self.model.crs
                 )
             else:
                 gdf_exclude = self.data_catalog.get_geodataframe(
@@ -232,7 +239,20 @@ class SfincsMask(ModelComponent):
 
         # get mask and dep data
         da_mask = self.data["mask"] if "mask" in self.data else None
-        da_dep = self.data["dep"] if "dep" in self.data else None
+        da_dep = self.model.grid.data.get("dep")
+
+        # check if we are going to apply any z constraints, if so we need dep data
+        has_z_constraints = any(
+            x is not None
+            for x in (
+                zmin,
+                zmax,
+                include_zmin,
+                include_zmax,
+                exclude_zmin,
+                exclude_zmax,
+            )
+        )
 
         da_mask0 = None
         if not reset_mask and da_mask is not None:
@@ -246,8 +266,11 @@ class SfincsMask(ModelComponent):
 
         if da_dep is None and (zmin is not None or zmax is not None):
             raise ValueError("dep required in combination with zmin / zmax")
-        elif da_dep is not None and not da_dep.raster.identical_grid(da_mask):
-            raise ValueError("dep does not match regular grid")
+        if da_dep is not None:
+            if not da_dep.raster.identical_grid(da_mask):
+                raise ValueError("dep does not match regular grid")
+            if da_dep.isnull().any() and has_z_constraints:
+                raise ValueError("dep contains NaN values, please fill these first")
 
         # initialize mask based on elevation range
         if zmin is not None or zmax is not None:
@@ -383,7 +406,7 @@ class SfincsMask(ModelComponent):
 
         Parameters
         ----------
-        btype: {'waterlevel', 'outflow'}
+        btype: {'waterlevel', 'outflow', 'downstream'}
             Boundary type
         zmin, zmax : float, optional
             Minimum and maximum elevation thresholds for boundary cells.
@@ -413,7 +436,7 @@ class SfincsMask(ModelComponent):
             ).endswith(".pol"):
                 # NOTE polygons should be in same CRS as model
                 gdf_include = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=include_polygon), crs=self.model.crs
+                    feats=readers.read_geoms(fn=include_polygon), crs=self.model.crs
                 )
             else:
                 gdf_include = self.data_catalog.get_geodataframe(
@@ -430,7 +453,7 @@ class SfincsMask(ModelComponent):
                 exclude_polygon
             ).endswith(".pol"):
                 gdf_exclude = utils.polygon2gdf(
-                    feats=utils.read_geoms(fn=exclude_polygon), crs=self.model.crs
+                    feats=readers.read_geoms(fn=exclude_polygon), crs=self.model.crs
                 )
             else:
                 gdf_exclude = self.data_catalog.get_geodataframe(
@@ -444,7 +467,7 @@ class SfincsMask(ModelComponent):
             raise ValueError(
                 "No mask data found in model, please create a mask first using `SfincsModel.mask.create_active`"
             )
-        da_dep = self.data["dep"] if "dep" in self.data else None
+        da_dep = self.model.grid.data.get("dep")
 
         # check if mask and dep data are compatible
         if da_dep is None and (zmin is not None or zmax is not None):

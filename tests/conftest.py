@@ -1,14 +1,13 @@
 """add global fixtures"""
 
 from os.path import abspath, dirname, join
-import numpy as np
-import tempfile
 from pathlib import Path
 
-import pytest
 import numpy as np
-
+import pytest
 from hydromt import DataCatalog
+
+from hydromt_sfincs.components.grid import SfincsGrid
 from hydromt_sfincs.sfincs import SfincsModel
 
 TESTDATADIR = join(dirname(abspath(__file__)), "data")
@@ -21,6 +20,13 @@ local_data_yaml = join(TESTDATADIR, "local_data.yml")
 @pytest.fixture()
 def tmp_dir(tmp_path_factory):
     return tmp_path_factory.mktemp("data")
+
+
+@pytest.fixture(scope="session")
+def config_path() -> Path:
+    p = Path(TESTMODELDIR, "sfincs.inp")
+    assert p.is_file()
+    return p
 
 
 @pytest.fixture
@@ -37,7 +43,7 @@ def model_init(tmp_path):
 
 # initialize a model instance with configuration read
 @pytest.fixture
-def model_config():
+def model_config() -> SfincsModel:
     root = TESTMODELDIR
     mod = SfincsModel(root=root, mode="r", data_libs=["artifact_data", local_data_yaml])
     mod.config.read()
@@ -45,7 +51,7 @@ def model_config():
 
 
 @pytest.fixture
-def model_config_inland():
+def model_config_inland() -> SfincsModel:
     root = TESTMODELDIR_INLAND
     mod = SfincsModel(root=root, mode="r", data_libs=["artifact_data", local_data_yaml])
     mod.config.read()
@@ -54,7 +60,7 @@ def model_config_inland():
 
 # read full model instance and set to write mode in a temporary directory
 @pytest.fixture
-def model(tmp_dir):
+def model(tmp_dir) -> SfincsModel:
     root = join(TESTDATADIR, "sfincs_test")
     mod = SfincsModel(root=root, mode="r", data_libs=["artifact_data", local_data_yaml])
     mod.read()
@@ -63,7 +69,7 @@ def model(tmp_dir):
 
 
 @pytest.fixture
-def quadtree_model_config():
+def quadtree_model_config() -> SfincsModel:
     root = join(TESTDATADIR, "sfincs_test_quadtree")
     mod = SfincsModel(root=root, mode="r", data_libs=["artifact_data", local_data_yaml])
     mod.config.read()
@@ -71,16 +77,16 @@ def quadtree_model_config():
 
 
 @pytest.fixture
-def quadtree_model(tmp_dir):
+def quadtree_model(tmp_dir) -> SfincsModel:
     root = join(TESTDATADIR, "sfincs_test_quadtree")
-    mod = SfincsModel(root=root, mode="r")
+    mod = SfincsModel(root=root, mode="r", data_libs=["artifact_data", local_data_yaml])
     mod.read()
     mod.root.set(tmp_dir, mode="r+")
     return mod
 
 
 @pytest.fixture
-def model_inland(tmp_dir):
+def model_inland(tmp_dir) -> SfincsModel:
     root = join(TESTDATADIR, "sfincs_test_inland")
     mod = SfincsModel(root=root, mode="r")
     mod.read()
@@ -90,7 +96,7 @@ def model_inland(tmp_dir):
 
 # create a simple regular grid similar to sfincs_test
 @pytest.fixture
-def reggrid(model_config):
+def reggrid(model_config) -> SfincsGrid:
     grid_params = {
         "mmax": 36,
         "nmax": 84,
