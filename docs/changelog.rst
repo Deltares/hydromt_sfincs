@@ -21,6 +21,8 @@ Added
 - Provide infiltration component methods to populate regular-grid and quadtree SFINCS models with derived or supplied infiltration layers: ``create_cn_from_landuse_hsg``, ``create_green_ampt``, ``create_horton``, their map-based variants, and ``create_uniform_constant``. Quadtree models also support ``create_runoff_coefficient``, ``create_bucket``, and ``create_bucket_from_maps`` (#419).
 - Include a persistent HydroMT-SFINCS/Deltares credit inside ``plot_basemap``, positioned to avoid overlapping provider attribution (#427).
 - Support ``config.write(update_to_latest=True)`` to write a model for ``LATEST_SFINCS_VERSION``; new models write ``sfincs_version`` (#417).
+- Support ``plot_basemap`` for SFINCS models, with optional geometry plotting (#427)
+- Extend ``plot_basemap`` with model-specific SFINCS/SnapWave masks, boundaries, runup gauges, and gridded output variables (#429).
 
 Fixed
 -----

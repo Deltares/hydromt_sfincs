@@ -858,50 +858,6 @@ def test_plot_basemap_snapwave_uses_snapwave_mask(monkeypatch):
     plt.close(fig)
 
 
-def test_model_plot_basemap_snapwave_selects_mask(monkeypatch):
-    root = join(TESTDATADIR, _cases["test2"]["example"])
-    mod = SfincsModel(root=root, mode="r")
-    mod.read()
-    grid = mod.quadtree_grid.data
-    grid["snapwave_mask"] = grid["mask"].copy()
-    mod.snapwave_boundary_conditions.set(
-        gdf=gpd.GeoDataFrame(
-            geometry=[Point(0, 0)],
-            crs=mod.crs,
-        ),
-        merge=False,
-    )
-    captured = {}
-
-    def plot_basemap(ds, geoms, **kwargs):
-        captured.update(ds=ds, geoms=geoms, kwargs=kwargs)
-        return None, None
-
-    monkeypatch.setattr(plots, "plot_basemap", plot_basemap)
-    mod.plot_basemap(
-        model="snapwave",
-        variable="mask",
-        plot_bounds=False,
-        plot_geoms=False,
-    )
-
-    assert captured["kwargs"]["model"] == "snapwave"
-    assert captured["kwargs"]["variable"] == "snapwave_mask"
-    assert "snapwave_mask" in captured["ds"]
-    assert "snapwave_bnd" in captured["geoms"]
-    assert not {"bnd", "bdr", "src"}.intersection(captured["geoms"])
-
-    mod.plot_basemap(
-        model="snapwave",
-        variable="output.zs",
-        plot_bounds=False,
-        plot_geoms=False,
-    )
-    assert captured["kwargs"]["variable"] == "zs"
-    assert "zs" in captured["ds"]
-    assert "snapwave_mask" not in captured["ds"]
-
-
 def test_contextily_attribution_moves_project_credit_to_top_left(monkeypatch):
     cx = pytest.importorskip("contextily")
     root = join(TESTDATADIR, _cases["test1"]["example"])
