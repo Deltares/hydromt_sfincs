@@ -62,6 +62,7 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
         interp_method: str = "linear",
         zmin: float = -1.0e9,
         zmax: float = 1.0e9,
+        interpolate_na: bool = True,
     ):
         """Interpolate topobathy (z) data to the model grid.
 
@@ -79,6 +80,8 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
             Number of cells between datasets to ensure smooth transition of bed levels, by default 0
         interp_method : str, optional
             Interpolation method used to fill the buffer cells, by default "linear"
+        interpolate_na : bool, optional
+            Whether to interpolate (and extrapolate) missing values (NaNs) in the elevation data, by default True
         """
 
         nlev = self.data.attrs["nr_levels"]
@@ -110,10 +113,14 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
 
             # check if no nan data is present in the bed levels
             nmissing = int(np.sum(np.isnan(da_dep.values)))
-            if nmissing > 0:
+            if nmissing > 0 and interpolate_na:
                 logger.warning(f"Interpolate elevation at {nmissing} cells")
                 da_dep = da_dep.raster.interpolate_na(
                     method="rio_idw", extrapolate=True
+                )
+            elif nmissing > 0:
+                logger.info(
+                    f"Elevation has {nmissing} missing cells; leaving them as NaN"
                 )
             return da_dep
 
