@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 from hydromt import hydromt_step
 from hydromt.model.components import ModelComponent
 
+from hydromt_sfincs import LATEST_SFINCS_VERSION
 from hydromt_sfincs.components.config.config_variables import SfincsConfigVariables
 
 if TYPE_CHECKING:
@@ -46,6 +47,11 @@ class SfincsConfig(ModelComponent):
             self._data = SfincsConfigVariables()
             if self.root.is_reading_mode():
                 self.read()
+            else:
+                # A new model targets (and writes) the latest SFINCS version
+                self._data = self._data.set_value(
+                    "sfincs_version", LATEST_SFINCS_VERSION
+                )
         return self._data
 
     @property
@@ -75,6 +81,7 @@ class SfincsConfig(ModelComponent):
         write_description: bool = False,
         write_comments: bool = False,
         explicit_only: bool = False,
+        update_to_latest: bool = False,
     ) -> None:
         """Write the SfincsConfigVariables to a text file in the root folder of the model.
 
@@ -91,6 +98,10 @@ class SfincsConfig(ModelComponent):
             write_description for keys that have one. Default is False.
         explicit_only (bool):
             If True, write only fields explicitly read or set. Default is False.
+        update_to_latest (bool):
+            If True, write the configuration for the latest SFINCS version
+            (current keywords, no deprecated fields, ``sfincs_version`` set).
+            Default is False, which writes keywords as read or set.
         """
         self.root._assert_write_mode()
 
@@ -102,6 +113,7 @@ class SfincsConfig(ModelComponent):
             write_description=write_description,
             write_comments=write_comments,
             explicit_only=explicit_only,
+            update_to_latest=update_to_latest,
         )
 
     def get(self, key: str, fallback: Any = None, abs_path: bool = False) -> Any:
@@ -117,6 +129,8 @@ class SfincsConfig(ModelComponent):
             If True and the value is a string or Path, return the absolute path.
         """
 
+        # Legacy keywords (e.g. 'wvmfile') are stored under their current field
+        key = self.data.resolve_key(key)
         value = getattr(self.data, key, fallback)
 
         if value is None and fallback is not None:

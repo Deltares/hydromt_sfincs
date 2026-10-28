@@ -17,18 +17,35 @@ Added
 - Added reusable pre-processing (``adjust_zsmax_dilation``, ``adjust_zsmax_energyhead``) and post-processing (``remove_disconnected_flooding``) helpers as separate functions.
 - Added optional argument to ``elevation.create()`` to skip extrapolation of the DEM (#392)
 - re-introduced snap_to_grid of relevant geometries for regular grids (#400)
+- ``plot_basemap`` now adds a persistent HydroMT-SFINCS/Deltares credit inside the map, positioned to avoid overlapping provider attribution. (#427)
 
 Fixed
 -----
 - Fixed plot_basemap() for very flat and/or below-sea-level Models (#394)
 - Always write ``manning_land``, ``manning_sea`` and ``rgh_lev_land`` to config when they are set by the user (#398)
 - Fixed writing of infiltration layers in Quadtree models (#397)
+- Respect explicit ``reproj_method`` values in ``merge_multi_dataarrays`` for first and subsequent datasets (#425)
 
 Changed
 -------
+- Synced the config keywords with the SFINCS kernel: added missing keywords, removed keywords the kernel does not use, and set ``min_version`` to the release that introduced each keyword (#417)
+- Renamed keywords are one config field with a ``legacy_alias`` of ``(name, max_version)``: the old name (e.g. ``wvmfile``) is read into the current field (``wavemaker_wvmfile``) and written back as read, unless the ``sfincs_version`` of the file does not read it or, without ``sfincs_version``, it predates ``MIN_SUPPORTED_SFINCS_VERSION`` (#417)
+- Added ``config.write(update_to_latest=True)`` to write a model for ``LATEST_SFINCS_VERSION``; new models write ``sfincs_version`` (#417)
+- A ``sfincs.inp`` without ``sfincs_version`` targets an unknown SFINCS version: deprecated settings are kept without a warning. Config version messages are only logged, no longer also raised as Python warnings (#422)
+- Components use the current keywords: ``wavemaker_wvmfile``, ``inffile``/``inftype`` and ``prcfile`` (#417)
 - Moved the downscaling utilities from ``hydromt_sfincs.utils`` to a dedicated ``hydromt_sfincs.workflows.downscaling`` submodule (re-exported via ``hydromt_sfincs.workflows``).
 - ``downscale_floodmap`` is now parameterised by ``reproj_method`` (``nearest`` or ``bilinear``) and a ``subtract_dem`` flag (flood depth vs. raw water level), and works on both regular and quadtree grids.
 - Moved readers and writers from ``utils.py`` to dedicated ``readers.py`` and ``writers.py`` modules (#390)
+- Moved the COG utilities to ``hydromt_sfincs.workflows.cog``: ``create_topobathy_cog``, ``create_index_cog`` (formerly ``make_index_cog``) and ``build_overviews`` (#403)
+- ``create_topobathy_cog`` (workflow and the regular/quadtree grid components) now merges an ``elevation_list`` from the data catalog in blocks; the component arguments ``bathymetry_sets``, ``bathymetry_database`` and ``dx`` are replaced by ``elevation_list``, ``river_list`` and ``resolution``. The output is a north-up raster in the model CRS with nodata NaN (previously -999) (#403)
+
+Deprecated
+----------
+- ``hydromt_sfincs.workflows.downscaling.make_index_cog``; use ``hydromt_sfincs.workflows.cog.create_index_cog`` (arguments ``indices_fn`` and ``topobathy_fn`` are renamed to ``filename`` and ``filename_topobathy``) (#403)
+
+Removed
+-------
+- ``hydromt_sfincs.workflows.tiling`` and the ``create_index_tiles`` / ``create_topobathy_tiles`` grid component methods; use the COG workflows instead (#403)
 
 v2.0.0-rc3 (22-5-2026)
 =============================
