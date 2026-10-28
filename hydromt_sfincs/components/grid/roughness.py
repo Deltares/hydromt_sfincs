@@ -46,8 +46,9 @@ class SfincsRoughness(ModelComponent):
 
     @property
     def data(self):
-        """Get the data from the model grid."""
-        return self.model.grid.data
+        """Return only the available roughness layers from the model grid."""
+        data = self.model.grid.data
+        return data[[name for name in self.grid_variables if name in data]]
 
     @property
     def mask(self):
@@ -61,18 +62,21 @@ class SfincsRoughness(ModelComponent):
     # create
     # clear >TODO ?
 
-    def read(self):
-        """Not implemented, roughness data is read when the grid is read."""
-        # TODO discuss what we want to return/read here, pass is not so informative ..
-        # The manning file is read when all grid files are read in regulargrid.py
-        pass
-
-    def write(self):
-        """Not implemented, roughness data is written when the grid is written."""
-        # The manning file is written when all grid files are written in regulargrid.py
-        pass
-
     # Roughness
+    grid_variables = ("manning",)
+
+    def read(self) -> None:
+        """Read the manning roughness map from its own binary file."""
+        # the grid holds the mask and cell index this map is written against;
+        # check _data directly, since the data property already triggers a read
+        if self.model.grid._data is None:
+            self.model.grid.read(read_components=False)
+        self.model.grid._read_layers(list(self.grid_variables))
+
+    def write(self) -> None:
+        """Write the manning roughness map to its own binary file."""
+        self.model.grid._write_layers(list(self.grid_variables))
+
     @hydromt_step
     def create(
         self,
@@ -117,19 +121,23 @@ class SfincsRoughness(ModelComponent):
                 logger=logger,
             )
             fromdep = np.isnan(da_man).where(self.mask > 0, False).any()
-        if "dep" in self.data and fromdep:
+        if "dep" in self.model.grid.data and fromdep:
             da_man0 = xr.where(
-                self.data["dep"] >= rgh_lev_land, manning_land, manning_sea
+                self.model.grid.data["dep"] >= rgh_lev_land, manning_land, manning_sea
             )
         elif fromdep:
             da_man0 = xr.full_like(self.mask, manning_land, dtype=np.float32)
 
         if len(roughness_list) > 0 and fromdep:
-            logger.warning("nan values in manning roughness array")
+            nmissing = int(np.sum(np.isnan(da_man.values) & (self.mask.values > 0)))
+            logger.warning(
+                f"{nmissing} active cells have no manning roughness data; filled "
+                f"with the land/sea default."
+            )
             da_man = da_man.where(~np.isnan(da_man), da_man0)
         elif fromdep:
             da_man = da_man0
-        da_man.raster.set_nodata(-9999.0)
+        da_man.raster.set_nodata(np.nan)
 
         # set grid
         mname = "manning"

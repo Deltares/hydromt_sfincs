@@ -1290,8 +1290,12 @@ class SfincsConfigVariables(BaseSettings):
     )
 
     # ================================================================
-    # Curve Number / Green-Ampt / Horton files
+    # Legacy Infiltraiton / Curve Number / Green-Ampt / Horton files
     # ================================================================
+    qinffile: str | None = Field(
+        None,
+        description="Name of the spatially-varying, constant in time infiltration file",
+    )
     scsfile: str | None = Field(None, description="Curve Number max soil moisture file")
     smaxfile: str | None = Field(None, description="Curve Number max storage file")
     sefffile: str | None = Field(None, description="Curve Number initial storage file")
