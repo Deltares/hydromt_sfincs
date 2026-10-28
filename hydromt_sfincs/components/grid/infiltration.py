@@ -321,7 +321,7 @@ class SfincsInfiltration(SfincsRegularGridMixin, ModelComponent):
             antecedent_moisture=antecedent_moisture,
         )
         # S per pixel; missing pixels stay NaN nodata so the average skips them
-        da_s = workflows.cn_to_s(da_cn, nodata=np.nan, fill_cn=None)
+        da_s = workflows.cn_to_s(da_cn, fill_cn=None)
         da_scs = da_s.raster.reproject_like(self.mask, method=reproj_method)
         self._set_layers({"scs": da_scs.round(3)}, flavor="cna")
 

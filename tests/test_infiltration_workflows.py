@@ -174,7 +174,7 @@ def test_curve_number_open_water_area_weighted():
     da_cn = workflows.curve_number_from_landuse_hsg(da_lulc, da_hsg, df_map)
     assert np.isnan(da_cn.raster.nodata)
     # the same steps as the CN-A components: S per pixel, then area average
-    da_s = workflows.cn_to_s(da_cn, nodata=np.nan, fill_cn=None)
+    da_s = workflows.cn_to_s(da_cn, fill_cn=None)
     da_like = _projected(np.ones((2, 2)), 4.0)
     da_scs = da_s.raster.reproject_like(da_like, method="average")
 
@@ -202,11 +202,13 @@ def test_curve_number_with_recovery_ksat_cap_and_nodata():
 
 
 def test_cn_to_s_units_and_invalid():
-    da_cn = _raster([[80.0, 100.0]], "cn")
-    np.testing.assert_allclose(workflows.cn_to_s(da_cn).values, [[2.5, 0.0]], rtol=1e-6)
+    da_cn = _raster([[0.0, 1.0, 80.0, 100.0]], "cn")
+    da_s = workflows.cn_to_s(da_cn)
+    np.testing.assert_allclose(da_s.values, [[990.0, 990.0, 2.5, 0.0]], rtol=1e-6)
+    assert np.isnan(da_s.raster.nodata)
     np.testing.assert_allclose(
         workflows.cn_to_s(da_cn, output_unit="m").values,
-        [[2.5 * 0.0254, 0.0]],
+        [[990.0 * 0.0254, 990.0 * 0.0254, 2.5 * 0.0254, 0.0]],
         rtol=1e-6,
     )
     with pytest.raises(ValueError, match="output_unit"):

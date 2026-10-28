@@ -267,12 +267,13 @@ def _reclassify_hsg(
     return da_hsg.raster.reclassify(df_map).astype(np.float32)
 
 
-def cn_to_s(da_cn, da_mask=None, nodata=-9999, output_unit="inch", fill_cn=100.0):
+def cn_to_s(da_cn, da_mask=None, nodata=np.nan, output_unit="inch", fill_cn=100.0):
     """Convert curve numbers to potential maximum soil moisture retention S.
 
     Missing curve numbers are treated as ``fill_cn`` (by default 100, so S = 0),
-    and curve numbers are floored at 1. Retention is rounded to 0.001 inches
-    before optional conversion to metres.
+    and curve numbers are floored at 1. Thus, a raw CN of 0 passed directly to
+    this function is treated as CN 1 and gives S = 990 inches. Retention is
+    rounded to 0.001 inches before optional conversion to metres.
 
     Parameters
     ----------
@@ -281,7 +282,7 @@ def cn_to_s(da_cn, da_mask=None, nodata=-9999, output_unit="inch", fill_cn=100.0
     da_mask : xr.DataArray, optional
         Boolean or binary mask; cells outside the mask are set to ``nodata``.
     nodata : float, optional
-        Output nodata value, by default -9999.
+        Output nodata value, by default np.nan.
     output_unit : {"inch", "m"}, optional
         Output unit for S, by default ``"inch"``.
     fill_cn : float or None, optional
@@ -293,7 +294,7 @@ def cn_to_s(da_cn, da_mask=None, nodata=-9999, output_unit="inch", fill_cn=100.0
     xr.DataArray
         Potential maximum soil moisture retention S in the requested unit.
     """
-    # missing CN is mapped to fill_cn (default 100, zero infiltration); CN >= 1
+    # Missing CN is mapped to fill_cn (default 100); CN is floored at 1.
     da_cn = da_cn.raster.mask_nodata()
     if fill_cn is not None:
         da_cn = da_cn.fillna(fill_cn)
@@ -446,7 +447,7 @@ def curve_number_with_recovery(
     # Convert CN to maximum soil retention (S) model grid and interpolate
     # open water arrives as CN 100 (S = 0), a real value that the area average
     # must include; unmapped pixels stay NaN nodata and are skipped
-    da_smax = cn_to_s(da_cn, output_unit="m", nodata=np.nan, fill_cn=None)
+    da_smax = cn_to_s(da_cn, output_unit="m", fill_cn=None)
     da_smax = da_smax.astype(np.float32)
     da_smax.raster.set_nodata(np.nan)
     da_smax.name = "smax"

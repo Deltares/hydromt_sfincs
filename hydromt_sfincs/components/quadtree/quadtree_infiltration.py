@@ -432,7 +432,7 @@ class SfincsQuadtreeInfiltration(SfincsQuadtreeMixin, ModelComponent):
         )
 
         # S per pixel; missing pixels stay NaN nodata so the average skips them
-        da_s = workflows.cn_to_s(da_cn, nodata=np.nan, fill_cn=None)
+        da_s = workflows.cn_to_s(da_cn, fill_cn=None)
         scs = np.full(self.mask.grid.n_face, np.nan)
 
         def compute_cn_infiltration(da_like, ilev=None):
