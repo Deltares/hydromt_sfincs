@@ -29,21 +29,30 @@ class SfincsQuadtreeRoughness(SfincsQuadtreeMixin, ModelComponent):
 
     @property
     def data(self):
-        """Get the data from the quadtree grid."""
-        return self.model.quadtree_grid.data
+        """Return only roughness layers, retaining the parent mesh."""
+        data = self.model.quadtree_grid.data
+        return data[[name for name in self.grid_variables if name in data]]
 
     @property
     def mask(self):
         """Get the mask from the quadtree grid."""
         return self.model.quadtree_mask.data["mask"]
 
+    grid_variables = ("manning",)
+
     def read(self):
-        # The mask elevation are read when the quadtree grid is read
-        pass
+        """Read the manning roughness layer from its own file."""
+        # the grid defines the mesh this layer lives on, so load it first
+        if self.model.quadtree_grid._data is None:
+            self.model.quadtree_grid.read(read_components=False)
+        filename = self.model.config.get("manningfile", abs_path=True)
+        if filename is None or not filename.is_file():
+            return
+        self.model.quadtree_grid._read_layers(filename)
 
     def write(self):
-        # The mask elevation are written when the quadtree grid is written
-        pass
+        """Write the manning roughness layer to its own file."""
+        self.model.quadtree_grid._write_layers(["manning"], "manningfile", "manning.nc")
 
     @hydromt_step
     def create(
@@ -76,7 +85,7 @@ class SfincsQuadtreeRoughness(SfincsQuadtreeMixin, ModelComponent):
             Maximum number of points to interpolate in a single chunk, by default 2000.
         """
 
-        n_cells = self.data.grid.n_face
+        n_cells = self.mask.grid.n_face
         manning = np.full(n_cells, np.nan)
 
         # Parse roughness list and prepare for interpolation
@@ -100,12 +109,14 @@ class SfincsQuadtreeRoughness(SfincsQuadtreeMixin, ModelComponent):
 
         # Now fill any remaining nans with depth-based manning
         nr_nan = np.isnan(manning).sum()
-        if "z" in self.data:
+        if "z" in self.model.quadtree_grid.data:
             logger.info(
                 f"Filled {nr_nan} remaining cells in manning with depth-based roughness."
             )
             manning0 = xr.where(
-                self.data["z"] >= rgh_lev_land, manning_land, manning_sea
+                self.model.quadtree_grid.data["z"] >= rgh_lev_land,
+                manning_land,
+                manning_sea,
             )
             manning = np.where(np.isnan(manning), manning0, manning)
         else:
@@ -115,9 +126,10 @@ class SfincsQuadtreeRoughness(SfincsQuadtreeMixin, ModelComponent):
             )
             manning = np.where(np.isnan(manning), manning_sea, manning)
 
-        # Convert manning to ugrid-dataarray and set in self.data
-        da = xr.DataArray(manning, dims=[self.data.grid.face_dimension])
-        uda = xu.UgridDataArray(da, self.data.grid)
+        # Convert manning to ugrid-dataarray and set in parent grid.
+        grid = self.mask.grid
+        da = xr.DataArray(manning, dims=[grid.face_dimension])
+        uda = xu.UgridDataArray(da, grid)
         self.model.quadtree_grid.set(uda, name="manning")
 
         # Set netcdf manning to config
