@@ -15,10 +15,9 @@ Write policy (controls which fields appear in sfincs.inp):
   model-field values **and** the value differs from the field default.
 * ``json_schema_extra={"min_version": "<X.Y.Z>"}`` — the keyword was introduced in
   this SFINCS kernel version; not written when ``sfincs_version`` is older.
-* ``json_schema_extra={"legacy_alias": [("<name>", "<X.Y.Z>" | None), ...]}`` —
+* ``json_schema_extra={"legacy_alias": [("<name>", "<X.Y.Z>"), ...]}`` —
   earlier names of the keyword, with the last SFINCS version in which ``<name>``
-  was the kernel keyword (``None`` for a spelling variant that only the latest
-  kernel accepts). They are read into this field. The list follows the kernel's
+  was the kernel keyword. They are read into this field. The list follows the kernel's
   lookup order: when several aliases are in a file, the first one listed is used.
 * ``json_schema_extra={"max_version": "<X.Y.Z>"}`` — field is deprecated as of
   this kernel version; when ``sfincs_version`` is newer it is only kept if
