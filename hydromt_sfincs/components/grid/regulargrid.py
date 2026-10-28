@@ -1,17 +1,15 @@
 """RegularGrid class for SFINCS."""
 
 import logging
-import math
-import os
 from os.path import isfile, join
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, List, Union, Optional
 
 import geopandas as gpd
 import numpy as np
 import xarray as xr
 from affine import Affine
-from pyproj import CRS, Transformer
+from pyproj import CRS
 from shapely.geometry import LineString
 
 from hydromt import hydromt_step
@@ -20,8 +18,7 @@ from hydromt.model.processes.grid import create_grid_from_region
 
 from hydromt_sfincs import writers
 from hydromt_sfincs.readers import read_binary_map
-from hydromt_sfincs.utils import active_cells_vector, vector_to_active_cells
-from hydromt_sfincs.workflows.tiling import int2png, tile_window, write_html
+from hydromt_sfincs.workflows.cog import create_index_cog, create_topobathy_cog
 
 if TYPE_CHECKING:
     from hydromt_sfincs import SfincsModel
@@ -709,135 +706,81 @@ class SfincsGrid(GridComponent):
         return gpd.GeoDataFrame(geometry=lines, crs=self.model.crs)
 
     # %% DDB GUI focused additional functions:
-    # create_index_tiles > FIXME - TL: still needed?
     # map_overlay
-    # snap_to_grid
 
-    # TODO - missing as in cht_sfincs:
-    # Many...
-
-    def create_index_tiles(
+    def create_topobathy_cog(
         self,
-        root: Union[str, Path],
-        region: gpd.GeoDataFrame,
-        zoom_range: Union[int, List[int]] = [0, 13],
-        fmt: str = "bin",
-        write_html_viewer: bool = True,
-        logger: logging.Logger = logger,
-    ):
-        """Create index tiles for a region. Index tiles are used to quickly map webmercator tiles to the corresponding SFINCS cell.
+        filename: Union[str, Path],
+        elevation_list: List[dict],
+        resolution: float = 10.0,
+        river_list: Optional[List[dict]] = None,
+        buffer_cells: int = 0,
+        z_minimum: float = -20000.0,
+        nrmax: int = 2000,
+    ) -> None:
+        """Write a COG raster sampling the model topobathy.
 
         Parameters
         ----------
-        region : gpd.GeoDataFrame
-            GeoDataFrame containing the region of interest
-        root : Union[str, Path]
-            Directory where index tiles are stored
-        zoom_range : Union[int, List[int]], optional
-            Range of zoom levels for which tiles are created, by default [0,13]
-        fmt : str, optional
-            Format of index tiles, either "bin" (binary, default) or "png"
-        write_html_viewer : bool, optional
-            If True (default), also write an ``index.html`` Leaflet viewer
-            alongside the tiles so they can be previewed in a browser.
+        filename : str or Path
+            Output COG file path (north-up raster in the model CRS, nodata NaN)
+            with the merged elevation datasets.
+        elevation_list : List[dict]
+            List of dictionaries with datasets and merge arguments to use for depth.
+        resolution : float, optional
+            Desired resolution in model CRS units, by default 10.0.
+        river_list : List[dict], optional
+            List of dictionaries with variable names and dataset names to use for river depth.
+        buffer_cells : int, optional
+            Number of buffer cells for interpolation between datasets, by default 0.
+        z_minimum : float, optional
+            Minimum elevation value to use for the output raster, by default -20000.0.
+        nrmax : int, optional
+            Maximum number of cells per block, by default 2000
+            These blocks are used to prevent memory issues while working with large datasets
         """
 
-        index_path = os.path.join(root, "indices")
-        npix = 256
+        create_topobathy_cog(
+            model=self.model,
+            elevation_list=elevation_list,
+            river_list=river_list,
+            filename=filename,
+            res=resolution,
+            buffer_cells=buffer_cells,
+            z_minimum=z_minimum,
+            nrmax=nrmax,
+        )
 
-        # for binary format, use .dat extension
-        if fmt == "bin":
-            extension = "dat"
-        # for net, tif and png extension and format are the same
-        else:
-            extension = fmt
+    def create_index_cog(
+        self,
+        filename: Union[str, Path],
+        filename_topobathy: Union[str, Path],
+        nrmax: int = 2000,
+    ) -> None:
+        """Write a COG raster mapping each pixel to a grid cell index.
 
-        # if only one zoom level is specified, create tiles up to that zoom level (inclusive)
-        if isinstance(zoom_range, int):
-            zoom_range = [0, zoom_range]
+        Thin wrapper around
+        :py:func:`hydromt_sfincs.workflows.cog.create_index_cog`.
 
-        # get bounding box of sfincs model
-        minx, miny, maxx, maxy = region.total_bounds
-        transformer = Transformer.from_crs(region.crs.to_epsg(), 3857)
-
-        # rotation of the model
-        cosrot = math.cos(-self.rotation * math.pi / 180)
-        sinrot = math.sin(-self.rotation * math.pi / 180)
-
-        # axis order is different for geographic and projected CRS
-        if region.crs.is_geographic:
-            minx, miny = map(
-                max, zip(transformer.transform(miny, minx), [-20037508.34] * 2)
-            )
-            maxx, maxy = map(
-                min, zip(transformer.transform(maxy, maxx), [20037508.34] * 2)
-            )
-        else:
-            minx, miny = map(
-                max, zip(transformer.transform(minx, miny), [-20037508.34] * 2)
-            )
-            maxx, maxy = map(
-                min, zip(transformer.transform(maxx, maxy), [20037508.34] * 2)
-            )
-
-        for izoom in range(zoom_range[0], zoom_range[1] + 1):
-            logger.debug("Processing zoom level " + str(izoom))
-
-            zoom_path = os.path.join(index_path, str(izoom))
-
-            for transform, col, row in tile_window(izoom, minx, miny, maxx, maxy):
-                # transform is a rasterio Affine object
-                # col, row are the tile indices
-                file_name = os.path.join(
-                    zoom_path, str(col), str(row) + "." + extension
-                )
-
-                # get the coordinates of the tile in webmercator projection
-                x = np.arange(0, npix) + 0.5
-                y = np.arange(0, npix) + 0.5
-                x3857, y3857 = transform * (x, y)
-                x3857, y3857 = np.meshgrid(x3857, y3857)
-
-                # convert to SFINCS coordinates
-                x, y = transformer.transform(x3857, y3857, direction="INVERSE")
-
-                # Now rotate around origin of SFINCS model
-                x00 = x - self.x0
-                y00 = y - self.y0
-                xg = x00 * cosrot - y00 * sinrot
-                yg = x00 * sinrot + y00 * cosrot
-
-                # determine the SFINCS cell indices
-                iind = np.floor(xg / self.dx).astype(int)
-                jind = np.floor(yg / self.dy).astype(int)
-                ind = iind * self.nmax + jind
-                ind[iind < 0] = -999
-                ind[jind < 0] = -999
-                ind[iind >= self.mmax] = -999
-                ind[jind >= self.nmax] = -999
-
-                # only write tiles that link to at least one SFINCS cell
-                if np.any(ind >= 0):
-                    if not os.path.exists(os.path.join(zoom_path, str(col))):
-                        os.makedirs(os.path.join(zoom_path, str(col)))
-                    # And write indices to file
-                    if fmt == "bin":
-                        fid = open(file_name, "wb")
-                        fid.write(ind)
-                        fid.close()
-                    elif fmt == "png":
-                        # for png, change nodata -999 nodata into 0
-                        ind[ind == -999] = 0
-                        int2png(ind, file_name)
-
-        if write_html_viewer and fmt == "png":
-            os.makedirs(index_path, exist_ok=True)
-            write_html(
-                os.path.join(index_path, "index.html"),
-                title="Index tiles",
-                legend_title="Cell indices",
-                max_native_zoom=zoom_range[1],
-            )
+        Parameters
+        ----------
+        filename : str or Path
+            Output COG file path. This uint32 raster contains the grid cell index for
+            each pixel, or the nodata value 2147483647 for pixels outside the active grid.
+            Note that this index file only works in combination with the topobathy COG
+            used for creation.
+        filename_topobathy : str or Path
+            Reference topobathy COG whose grid / CRS define the output.
+        nrmax : int, optional
+            Maximum number of cells per block, by default 2000
+            These blocks are used to prevent memory issues while working with large datasets
+        """
+        create_index_cog(
+            model=self.model,
+            filename=filename,
+            filename_topobathy=filename_topobathy,
+            nrmax=nrmax,
+        )
 
     def get_indices_at_points(self, x, y):
         # x and y are 2D arrays of coordinates (x, y) in the same projection as the model

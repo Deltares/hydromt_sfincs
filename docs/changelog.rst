@@ -30,15 +30,24 @@ Fixed
 
 Changed
 -------
-- Moved the downscaling utilities from ``hydromt_sfincs.utils`` to a dedicated ``hydromt_sfincs.workflows.downscaling`` submodule (re-exported via ``hydromt_sfincs.workflows``).
 - ``downscale_floodmap`` is now parameterised by ``reproj_method`` (``nearest`` or ``bilinear``) and a ``subtract_dem`` flag (flood depth vs. raw water level), and works on both regular and quadtree grids.
 - Moved readers and writers from ``utils.py`` to dedicated ``readers.py`` and ``writers.py`` modules (#390)
 - ``grid.read()`` and ``quadtree_grid.read()`` read only the main grid data files by default. Read or write additional gridded variables through their component methods, or pass ``read_components=True`` / ``write_components=True`` to have the grid delegate to those components. ``model.read()`` / ``model.write()`` handle all components (#419).
-- Breaking: removed the ``hydromt_sfincs.workflows.curvenumber`` and ``hydromt_sfincs.workflows.landuse`` modules. ``cn_to_s`` now lives in ``hydromt_sfincs.workflows.infiltration`` (still importable from ``hydromt_sfincs.workflows``) and has a new ``output_unit`` argument; ``scs_recovery_determination`` is replaced by ``curve_number_with_recovery`` (#419).
-- Breaking: the land-use to HSG reclassification tables (``NLCD_HSG.csv``, ``esa_worldcover_HSG.csv``) moved from ``data/lulc/`` to ``data/infiltration/`` (#419).
-- Breaking: Ksat input is expected in mm/hr, the unit SFINCS reads, and is no longer converted. The ``factor_ksat`` argument is removed; convert other units in the data catalog (e.g. ``unit_mult: 3.6`` for um/s). On main, ``create_cn_with_recovery`` multiplied Ksat by 3.6 on top of ``factor_ksat`` (#419).
+- Moved the Cloud-Optimized-GeoTIFF utilities to ``hydromt_sfincs.workflows.cog``: ``create_topobathy_cog``, ``create_index_cog`` (formerly ``make_index_cog``) and ``build_overviews`` (#403)
+- Moved the land-use to HSG reclassification tables (``NLCD_HSG.csv``, ``esa_worldcover_HSG.csv``) from ``data/lulc/`` to ``data/infiltration/`` (#419).
+- Ksat input is expected in mm/hr, the unit SFINCS reads, and is no longer converted. The ``factor_ksat`` argument is removed; convert other units in the data catalog (e.g. ``unit_mult: 3.6`` for um/s). On main, ``create_cn_with_recovery`` multiplied Ksat by 3.6 on top of ``factor_ksat`` (#419).
 - ``create_cn_from_landuse_hsg`` and ``create_cn_with_recovery`` compute S per land-use pixel and area-average it onto the model cells. Open water (CN 0 in the reclass table) counts as S = 0, so a cell that is 60% water gets 40% of the land S; unmapped pixels are skipped. ``create_cn`` from a curve-number map keeps the median of CN (#419).
 - The Curve Number with recovery Ksat cap (``ksat_max``) defaults to 360 mm/hr (100 um/s). Ksat nodata and negative values are excluded when resampling; active cells left without valid Ksat are filled with 0 and logged as a warning (#419).
+
+Deprecated
+----------
+- ``hydromt_sfincs.utils.downscale_floodmap``; use ``hydromt_sfincs.workflows.downscaling.downscale_floodmap`` instead (#390)
+- ``hydromt_sfincs.workflows.downscaling.make_index_cog``; use ``hydromt_sfincs.workflows.cog.create_index_cog`` (arguments ``indices_fn`` and ``topobathy_fn`` are renamed to ``filename`` and ``filename_topobathy``) (#403)
+
+Removed
+-------
+- ``hydromt_sfincs.workflows.tiling`` and the ``create_index_tiles`` / ``create_topobathy_tiles`` grid component methods; use the COG workflows instead (#403)
+- ``hydromt_sfincs.workflows.curvenumber`` and ``hydromt_sfincs.workflows.landuse`` modules. ``cn_to_s`` now lives in ``hydromt_sfincs.workflows.infiltration`` (still importable from ``hydromt_sfincs.workflows``) and has a new ``output_unit`` argument; ``scs_recovery_determination`` is replaced by ``curve_number_with_recovery`` (#419).
 
 v2.0.0-rc3 (22-5-2026)
 =============================

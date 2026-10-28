@@ -353,7 +353,6 @@ SFINCS workflows
    workflows.snap_discharge
    workflows.river_source_points
    workflows.river_centerline_from_hydrography
-   workflows.create_topobathy_tiles
 
 Infiltration
 ------------
@@ -389,8 +388,8 @@ Flood map downscaling
    workflows.downscaling.adjust_zsmax_dilation
    workflows.downscaling.adjust_zsmax_energyhead
    workflows.downscaling.remove_disconnected_flooding
-   workflows.downscaling.make_index_cog
-   workflows.downscale_floodmap_webmercator
+   workflows.cog.create_index_cog
+   workflows.cog.create_topobathy_cog
 
 .. _methods:
 
