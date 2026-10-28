@@ -74,6 +74,7 @@ class SfincsMeteo(ModelComponent):
                 f"Variable {variable} not supported. Supported variables are 'precip', 'wind', 'press'."
             )
 
+        self._initialize(skip_read=True)
         filtered_dict = {key: value for key, value in _METEO.items() if variable in key}
 
         # Check which type of meteo for this variable is present in the model
