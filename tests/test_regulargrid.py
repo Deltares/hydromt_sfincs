@@ -52,7 +52,7 @@ def test_indices_use_file_then_refresh_from_mask(model_config, tmp_path):
     grid.data["mask"].values[0, 0] = 1
     np.testing.assert_array_equal(grid.indices, original_indices)
     grid.data["dep"].values[:] = 0
-    grid.root.set(tmp_path, mode="w+")
+    grid.root.set(tmp_path, mode="w")
     grid.model.config.write()
     grid.write()
     np.testing.assert_array_equal(grid.indices, [0])
@@ -88,7 +88,7 @@ def test_grid_io(model_config, tmp_path):
     assert len(model.grid.data.data_vars) == 2
 
     # now write the model grid
-    model.root.set(tmp_path, mode="w+")
+    model.root.set(tmp_path, mode="w")
     model.config.write()
     model.grid.write()
 

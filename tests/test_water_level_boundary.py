@@ -18,7 +18,7 @@ def test_water_level_boundary_io(model_config, tmp_dir):
     assert len(model_config.water_level.data.index) == 2
 
     # write water level to file
-    model_config.root.set(tmp_dir, mode="w+")
+    model_config.root.set(tmp_dir, mode="w")
     model_config.water_level.write()
     model_config.config.write()
     assert isfile(tmp_dir / "sfincs.bnd")
@@ -47,7 +47,7 @@ def test_water_level_boundary_io(model_config, tmp_dir):
         if isfile(file_path):
             Path(file_path).unlink()
     # write to netcdf file
-    mod.root.set(tmp_dir, mode="w+")
+    mod.root.set(tmp_dir, mode="w")
     mod.water_level.write()
     mod.config.write()
     assert isfile(tmp_dir / "sfincs_netbndbzsbzifile.nc")
@@ -119,7 +119,7 @@ def test_drop_duplicates(model_config, tmp_dir):
     model_config.config.set("bcafile", None)
 
     # write water level to file
-    model_config.root.set(tmp_dir, mode="w+")
+    model_config.root.set(tmp_dir, mode="w")
 
     model_config.water_level.write()
     model_config.config.write()

@@ -18,7 +18,7 @@ def test_discharge_points_io(model_config, tmp_dir):
     assert len(model_config.discharge_points.data.index) == 3
 
     # write discharge points to file
-    model_config.root.set(tmp_dir, mode="w+")
+    model_config.root.set(tmp_dir, mode="w")
     model_config.discharge_points.write()
     model_config.config.write()
     assert isfile(tmp_dir / "sfincs.src")
@@ -42,7 +42,7 @@ def test_discharge_points_io(model_config, tmp_dir):
         if isfile(file_path):
             Path(file_path).unlink()
     # write to netcdf file
-    mod.root.set(tmp_dir, mode="w+")
+    mod.root.set(tmp_dir, mode="w")
     mod.discharge_points.write()
     mod.config.write()
     assert isfile(tmp_dir / "sfincs_netsrcdisfile.nc")
@@ -111,7 +111,7 @@ def test_drop_duplicates(model_config, tmp_dir):
     assert model_config.discharge_points.nr_points == nr_points + 2
 
     # write water level to file
-    model_config.root.set(tmp_dir, mode="w+")
+    model_config.root.set(tmp_dir, mode="w")
 
     model_config.discharge_points.write()
     model_config.config.write()
