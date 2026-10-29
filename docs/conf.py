@@ -114,10 +114,11 @@ version = hydromt_sfincs.__version__
 
 # -- Copy notebooks to include in docs -------
 SKIP_DOC_EXAMPLES = bool(os.environ.get("SKIP_DOC_EXAMPLES", False))
-if os.path.isdir("_examples") and SKIP_DOC_EXAMPLES:
-    remove_dir_content("_examples")
-elif not os.path.isdir("_examples") and not SKIP_DOC_EXAMPLES:
-    os.makedirs("_examples")
+if SKIP_DOC_EXAMPLES:
+    if os.path.isdir("_examples"):
+        remove_dir_content("_examples")
+else:
+    os.makedirs("_examples", exist_ok=True)
     shutil.copytree("../examples", "_examples", dirs_exist_ok=True)
 
 # replace all links of https://deltares.github.io/hydromt/.*/.*.rst.* with ../*.html.*

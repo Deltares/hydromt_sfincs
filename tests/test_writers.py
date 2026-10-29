@@ -4,6 +4,10 @@ from pathlib import Path
 import geopandas as gpd
 import numpy as np
 import pytest
+import xarray as xr
+import dask.array as da
+import rasterio
+
 from shapely.geometry import Point
 
 from hydromt_sfincs.readers import (
@@ -16,6 +20,7 @@ from hydromt_sfincs.writers import (
     write_binary_map,
     write_binary_map_index,
     write_geoms,
+    write_raster,
     write_xyn,
 )
 
@@ -81,3 +86,63 @@ def test_write_xyn_drops_z_of_3d_points(tmp_dir):
         [gdf_rt.geometry.x.tolist(), gdf_rt.geometry.y.tolist()],
         [[1.0, 3.0], [2.0, 4.0]],
     )
+
+
+def test_write_raster_dataarray_without_mask_writes_full_data(tmp_path):
+    values = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32)
+    data = xr.DataArray(
+        da.from_array(values, chunks=(2, 2)),
+        dims=("y", "x"),
+        coords={"y": [1.0, 0.0], "x": [0.0, 1.0]},
+        name="hmax",
+    )
+    data.raster.set_crs(32633)
+
+    write_raster(data, tmp_path)
+
+    with rasterio.open(tmp_path / "hmax.tif") as written:
+        np.testing.assert_array_equal(written.read(1), values)
+
+
+def test_write_raster_dataarray_with_explicit_mask(tmp_path):
+    coords = {"y": [1.0, 0.0], "x": [0.0, 1.0]}
+    data = xr.DataArray(
+        np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32),
+        dims=("y", "x"),
+        coords=coords,
+        name="hmax",
+    )
+    mask = xr.DataArray(
+        np.array([[1, 1], [1, 0]], dtype=np.uint8),
+        dims=("y", "x"),
+        coords=coords,
+        name="mask",
+    )
+    data.raster.set_crs(32633)
+    mask.raster.set_crs(32633)
+
+    write_raster(data, tmp_path, mask=mask, compress="LZW")
+
+    assert (tmp_path / "hmax.tif").is_file()
+
+
+def test_write_raster_dataset_uses_mask_variable(tmp_path):
+    coords = {"y": [1.0, 0.0], "x": [0.0, 1.0]}
+    hmax = xr.DataArray(
+        np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32),
+        dims=("y", "x"),
+        coords=coords,
+        name="hmax",
+    )
+    mask = xr.DataArray(
+        np.array([[1, 1], [1, 0]], dtype=np.uint8),
+        dims=("y", "x"),
+        coords=coords,
+        name="mask",
+    )
+    hmax.raster.set_crs(32633)
+    mask.raster.set_crs(32633)
+
+    write_raster(xr.Dataset({"hmax": hmax, "mask": mask}), tmp_path)
+
+    assert (tmp_path / "hmax.tif").is_file()

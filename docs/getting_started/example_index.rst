@@ -13,11 +13,12 @@ For a static (non-interactive) view of the examples follow one of the links belo
 
 **Build and update a model (simple) using Command Line Interface (CLI)**
 
-*  `Build from CLI <../_examples/build_from_cli.ipynb>`_
+*  `Build from CLI <../_examples/0_build_from_cli.ipynb>`_
 
 **Build a model (advanced) using Python scripts**
 
-*  `Build from Script <../_examples/1_build_from_script.ipynb>`_
+*  `Build from Script (regular grid) <../_examples/1a_build_from_script.ipynb>`_
+*  `Build from Script (quadtree grid) <../_examples/1b_build_quadtree_from_script.ipynb>`_
 
 **Update a model (advanced) using Python scripts**
 
