@@ -879,7 +879,10 @@ window.runMermaid = runMermaid;</script>
                 <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"File </span><span class="si">{</span><span class="n">fn_map</span><span class="si">}</span><span class="s2"> not found."</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">"SFINCS result file </span><span class="si">%s</span><span class="s2"> is not present yet; run the model to generate it."</span><span class="p">,</span>
+                <span class="n">fn_map</span><span class="p">,</span>
+            <span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">isabs</span><span class="p">(</span><span class="n">fn_his</span><span class="p">):</span>
             <span class="n">fn_his</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span> <span class="o">/</span> <span class="n">fn_his</span>
@@ -891,7 +894,10 @@ window.runMermaid = runMermaid;</script>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">ds_his</span><span class="p">,</span> <span class="n">split_dataset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"File </span><span class="si">{</span><span class="n">fn_his</span><span class="si">}</span><span class="s2"> not found."</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">"SFINCS result file </span><span class="si">%s</span><span class="s2"> is not present yet; run the model to generate it."</span><span class="p">,</span>
+                <span class="n">fn_his</span><span class="p">,</span>
+            <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Writing results to sfincs_map.nc and sfincs_his.nc files is not part of</span>

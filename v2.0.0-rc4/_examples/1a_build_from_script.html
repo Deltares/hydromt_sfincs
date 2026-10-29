@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Build a model from Python &#8212; HydroMT SFINCS  documentation</title>
+    <title>0. Initialize the logger &#8212; HydroMT SFINCS  documentation</title>
   
   
   
@@ -48,7 +48,7 @@
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_examples/1_build_from_script';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_examples/1a_build_from_script';</script>
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.23.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
@@ -60,8 +60,8 @@
     <link rel="icon" href="../_static/hydromt-icon.svg"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Updating a SFINCS Model" href="../user_guide/3_update_model/index.html" />
-    <link rel="prev" title="Build a model from CLI" href="0_build_from_cli.html" />
+    <link rel="next" title="0. Initialize the logger" href="1b_build_quadtree_from_script.html" />
+    <link rel="prev" title="1. Build your first SFINCS model:" href="0_build_from_cli.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
@@ -403,27 +403,73 @@
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/2_build_model/model_components.html">Model Components</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/2_build_model/model_methods.html">Model Methods</a></li>
 <li class="toctree-l2 current active has-children"><a class="reference internal" href="../user_guide/2_build_model/model_build.html">Building a SFINCS model</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="0_build_from_cli.html"> Example: Build from CLI</a></li>
-<li class="toctree-l3 current active"><a aria-current="page" class="current reference internal" href="#"> Example: Build from script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0_build_from_cli.html">1. Build your first SFINCS model:</a></li>
+
+
+
+
+
+
+
+<li class="toctree-l3 current active"><a aria-current="page" class="current reference internal" href="#">0. Initialize the logger</a></li>
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3"><a class="reference internal" href="1b_build_quadtree_from_script.html">0. Initialize the logger</a></li>
+
+
+
+
+
+
+
+
+
+
+
 </ul>
 </details></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/3_update_model/index.html">Updating a SFINCS Model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../user_guide/3_update_model/model_update.html">Updating a SFINCS model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l3"><a class="reference internal" href="2_update_forcing.html">Example: Update Forcing</a></li>
-<li class="toctree-l3"><a class="reference internal" href="3_update_geometries.html">Example: Update Geometries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="2_update_forcing.html">1. Initialize SfincsModel class, set data library, mode and root folder:</a></li>
+
+
+
+
+<li class="toctree-l3"><a class="reference internal" href="3_update_geometries.html">1. Initialize SfincsModel class, set data library, mode and root folder:</a></li>
+
+
+
+
 </ul>
 </details></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/4_run_model/sfincs_run.html">Running a model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="4_run_model.html">Example: Running a model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="4_run_model.html">Settings</a></li>
+
+
+
+
+
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/5_postprocess_model/sfincs_analyse.html">Postprocessing and visualization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="5_plot_results_hmax.html">Example: Determine maximum waterdepth</a></li>
-<li class="toctree-l2"><a class="reference internal" href="6_make_results_animation.html">Example: Create animation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="5_plot_results_hmax.html">1. Determine maximum water depth for a regular model</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="6_make_results_animation.html">Step 1: Read model results</a></li>
+
+
+
 </ul>
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_guide/6_migration_guide/migration_hydromt.html">Migration Guide</a></li>
@@ -476,7 +522,7 @@
     
     <li class="breadcrumb-item"><a href="../user_guide/2_build_model/model_build.html" class="nav-link">Building a SFINCS model</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Build a model from Python</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">0. Initialize the logger</span></li>
   </ul>
 </nav>
 </div>
@@ -497,11 +543,12 @@
 <p class="admonition-title">Tip</p>
 <div>
     For an interactive online version click here:
-    <a href="https://mybinder.org/v2/gh/Deltares/hydromt_sfincs/main?urlpath=lab/tree/examples/1_build_from_script.ipynb" target="_blank" rel="noopener noreferrer"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg"></a>
+    <a href="https://mybinder.org/v2/gh/Deltares/hydromt_sfincs/main?urlpath=lab/tree/examples/1a_build_from_script.ipynb" target="_blank" rel="noopener noreferrer"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg"></a>
 </div></div>
-<section id="Build-a-model-from-Python">
-<h1>Build a model from Python<a class="headerlink" href="#Build-a-model-from-Python" title="Link to this heading">#</a></h1>
-<p>In this example a simple <strong>SFINCS</strong> compound flood model will be made, using the underlying Python functions of <strong>HydroMT-SFINCS</strong> to build a model.</p>
+<div style="padding: 18px 22px; border-radius: 12px; background: linear-gradient(110deg, #12304a, #187b8f); color: white; margin-bottom: 16px;"><div style="font-size: 0.78em; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.85;"><p>HydroMT-SFINCS | Example 01A</p>
+</div><h1 style="color: white; margin: 8px 0 4px;"><p>Build a SFINCS model from Python</p>
+</h1><div style="opacity: 0.95;"><p>Regular-grid workflow: create a model with elevation, boundaries, roughness, subgrid tables and forcing.</p>
+</div></div><p>In this example a simple <strong>SFINCS</strong> compound flood model will be made, using the underlying Python functions of <strong>HydroMT-SFINCS</strong> to build a model.</p>
 <p>The model is situated in <strong>Northern Italy</strong>, where a small selection of topography and bathymetry data has already been made available for you to try the examples.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
@@ -522,21 +569,24 @@
 <li><p><a class="reference external" href="https://deltares.github.io/hydromt/stable/guides/advanced_user/data_prepare_cat.html">Prepare data catalog</a></p></li>
 <li><p><a class="reference external" href="https://deltares.github.io/hydromt/stable/_examples/prep_data_catalog.html">Example: Prepare data catalog</a></p></li>
 </ul>
-<p><strong>Steps followed in this notebook to build your SFINCS model:</strong></p>
-<ol><li><p>Open SfincsModel class, set data library and output folder</p>
-</li><li><p>Specify characteristics of the wanted grid</p>
-</li><li><p>Load in wanted elevation datasets</p>
-</li><li><p>Make mask of active and inactive cells</p>
-</li><li><p>Update mask with water level and outflow boundary cells</p>
-</li><li><p>Add spatially varying roughness data</p>
-</li><li><p>Make subgrid derived tables</p>
-</li><li><p>Add water level time-series as forcing</p>
-</li><li><p>Inspect the model and boundary conditions</p>
-</li><li><p>Write simple model to disk</p>
+<div style="padding: 14px 18px; border-left: 4px solid #187b8f; background: #eaf6f8; border-radius: 6px; margin: 12px 1em 12px 0; width: calc(100% - 1em); box-sizing: border-box; color: #111111; "><p>💡 Note: Before you begin</p>
+<p style="margin: 8px 0 0;"><p>This example uses the bundled Northern Italy data catalog. For another location, configure your own HydroMT data catalog and datasets.</p>
+</p></div><p><strong>Steps followed in this notebook to build your SFINCS model:</strong></p>
+<ol start="0"><li><p>Initialize the logger.</p>
+</li><li><p>Initialize the SfincsModel class, data library and output folder.</p>
+</li><li><p>Specify the grid characteristics and generate the grid.</p>
+</li><li><p>Load the elevation datasets.</p>
+</li><li><p>Create the active and inactive cell mask.</p>
+</li><li><p>Add water-level and outflow boundary cells.</p>
+</li><li><p>Add spatially varying roughness.</p>
+</li><li><p>Create subgrid-derived tables.</p>
+</li><li><p>Add water-level time-series forcing.</p>
+</li><li><p>Inspect the model and boundary conditions.</p>
+</li><li><p>Write the model to disk.</p>
 </li></ol><p>Let’s get started!</p>
-<section id="1.-Initialize-SfincsModel-class,-set-data-library-and-output-folder:">
-<h2>1. Initialize SfincsModel class, set data library and output folder:<a class="headerlink" href="#1.-Initialize-SfincsModel-class,-set-data-library-and-output-folder:" title="Link to this heading">#</a></h2>
-<p>Before we can use all the tools provided by HydroMT-SFINCS, we have to initialize the SfincsModel instance. This creates a shortcut to all the model components and methods to read, write and create these components. Furthermore, when initializing the model, we can specify which data catalog we use and where the model is/will be stored (the root).</p>
+<section id="0.-Initialize-the-logger">
+<h1>0. Initialize the logger<a class="headerlink" href="#0.-Initialize-the-logger" title="Link to this heading">#</a></h1>
+<p>Initialize logging and choose the level of detail for the messages written to the notebook and log file.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
@@ -551,12 +601,30 @@
 <span class="c1"># Add file handler to log to a file</span>
 <span class="n">log_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">model_root</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"hydromt_sfincs.log"</span>
 <span class="n">logger</span> <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">_add_filehandler</span><span class="p">(</span><span class="n">log_file</span><span class="p">)</span>
-
-<span class="c1"># Initialize SfincsModel Python class with the artifact data catalog which contains publically available data for North Italy</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+2026-10-29 16:32:27,079 - hydromt - log - INFO - HydroMT version: 1.4.1
+</pre></div></div>
+</div>
+</section>
+<section id="1.-Initialize-SfincsModel-class,-set-data-library-and-output-folder:">
+<h1>1. Initialize SfincsModel class, set data library and output folder:<a class="headerlink" href="#1.-Initialize-SfincsModel-class,-set-data-library-and-output-folder:" title="Link to this heading">#</a></h1>
+<p>Before we can use all the tools provided by HydroMT-SFINCS, we have to initialize the SfincsModel instance. This creates a shortcut to all the model components and methods to read, write and create these components. Furthermore, when initializing the model, we can specify which data catalog we use and where the model is/will be stored (the root).</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize SfincsModel Python class with the artifact data catalog which contains publically available data for North Italy</span>
 <span class="n">sf</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span>
     <span class="n">data_libs</span><span class="o">=</span><span class="p">[</span><span class="s2">"artifact_data"</span><span class="p">],</span>  <span class="c1"># specify which data libraries to use</span>
     <span class="n">root</span><span class="o">=</span><span class="n">model_root</span><span class="p">,</span>  <span class="c1"># specify the root directory for the model</span>
-    <span class="n">mode</span><span class="o">=</span><span class="s2">"w+"</span><span class="p">,</span>  <span class="c1"># specify the mode for opening the model (r=read only, r+=append, w=write, w+=overwrite</span>
+    <span class="n">mode</span><span class="o">=</span><span class="s2">"w"</span><span class="p">,</span>  <span class="c1"># specify the mode for opening the model (r=read only, r+=append, w=write,</span>
     <span class="n">write_gis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># specify whether to write GIS data</span>
 <span class="p">)</span>
 </pre></div>
@@ -567,19 +635,18 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-10-28 14:42:06,217 - hydromt - log - INFO - HydroMT version: 1.4.1
-2026-10-28 14:42:06,312 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
-2026-10-28 14:42:06,313 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
-2026-10-28 14:42:06,997 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0rc4).
+2026-10-29 16:32:27,170 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
+2026-10-29 16:32:27,170 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
+2026-10-29 16:32:27,733 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0rc4).
 </pre></div></div>
 </div>
 </section>
 <section id="2.-Specify-characteristics-of-the-wanted-grid-and-generate-grid:">
-<h2>2. Specify characteristics of the wanted grid and generate grid:<a class="headerlink" href="#2.-Specify-characteristics-of-the-wanted-grid-and-generate-grid:" title="Link to this heading">#</a></h2>
+<h1>2. Specify characteristics of the wanted grid and generate grid:<a class="headerlink" href="#2.-Specify-characteristics-of-the-wanted-grid-and-generate-grid:" title="Link to this heading">#</a></h1>
 <p>The easiest way in HydroMT-SFINCS to generate a grid is by starting from a region and a resolution. This region can be a bounding box, or a shapefile/geojson that for example describes a watershed or administrative boundary.</p>
 <p>For more info about how to define a grid, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html#grid-characteristics">click here</a>.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sf</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">create_from_region</span><span class="p">(</span>
@@ -596,22 +663,22 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-10-28 14:42:07,003 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading region.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
-2026-10-28 14:42:07,019 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 9 attributes in model config.
+2026-10-29 16:32:27,738 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading region.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
+2026-10-29 16:32:27,751 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 9 attributes in model config.
 </pre></div></div>
 </div>
 <p>The grid that we just created is described in the SFINCS configuration with x0, y0, dx, dy, mmax, nmax, rotation and epsg. In case you would have known these parameters before, you can also create a grid using <code class="docutils literal notranslate"><span class="pre">SfincsModel.grid.create()</span></code>.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># the input file is automatically updated. See:</span>
-<span class="n">sf</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -623,264 +690,41 @@
  &#39;x0&#39;: 318650.0,
  &#39;y0&#39;: 5040000.0,
  &#39;rotation&#39;: 27.0,
- &#39;tref&#39;: datetime.datetime(2026, 10, 28, 0, 0),
- &#39;tstart&#39;: datetime.datetime(2026, 10, 28, 0, 0),
- &#39;tstop&#39;: datetime.datetime(2026, 10, 29, 0, 0),
+ &#39;tref&#39;: &#39;20261029 000000&#39;,
+ &#39;tstart&#39;: &#39;20261029 000000&#39;,
+ &#39;tstop&#39;: &#39;20261030 000000&#39;,
  &#39;tspinup&#39;: 0.0,
- &#39;t0out&#39;: -999.0,
- &#39;t1out&#39;: -999.0,
  &#39;dthisout&#39;: 600.0,
  &#39;dtmapout&#39;: 3600.0,
  &#39;dtmaxout&#39;: 86400.0,
- &#39;dtrstout&#39;: 0.0,
  &#39;trstout&#39;: -999.0,
- &#39;dtwave&#39;: 3600.0,
- &#39;dtwnd&#39;: 1800.0,
  &#39;alpha&#39;: 0.5,
- &#39;theta&#39;: 1.0,
- &#39;hmin_cfl&#39;: 0.1,
- &#39;dtmax&#39;: 60.0,
  &#39;huthresh&#39;: 0.01,
- &#39;huvmin&#39;: 0.0,
  &#39;advection&#39;: 1,
- &#39;advlim&#39;: 1.0,
- &#39;advection_scheme&#39;: &#39;upw1&#39;,
- &#39;advection_mask&#39;: 1,
  &#39;coriolis&#39;: 1,
  &#39;viscosity&#39;: 1,
- &#39;nuvisc&#39;: 0.01,
- &#39;nuviscfac&#39;: 100.0,
- &#39;friction2d&#39;: 1,
- &#39;uvlim&#39;: 10.0,
- &#39;uvmax&#39;: 1000.0,
- &#39;wiggle_suppression&#39;: 1,
- &#39;wiggle_factor&#39;: 0.1,
- &#39;wiggle_threshold&#39;: 0.1,
- &#39;slopelim&#39;: 9999.9,
- &#39;btrelax&#39;: 3600.0,
- &#39;stopdepth&#39;: None,
- &#39;manning&#39;: 0.04,
- &#39;manning_land&#39;: None,
- &#39;manning_sea&#39;: None,
- &#39;rgh_lev_land&#39;: None,
- &#39;rhoa&#39;: 1.25,
- &#39;rhow&#39;: 1024.0,
- &#39;latitude&#39;: 0.0,
- &#39;baro&#39;: 1,
- &#39;pavbnd&#39;: 0.0,
- &#39;gapres&#39;: 101200.0,
  &#39;zsini&#39;: 0.0,
- &#39;bndtype&#39;: 1,
- &#39;btfilter&#39;: 60.0,
- &#39;use_bcafile&#39;: 1,
  &#39;qinf&#39;: 0.0,
- &#39;qinf_zmin&#39;: 0.0,
- &#39;sfacinf&#39;: 0.2,
- &#39;horton_kr_kd&#39;: 10.0,
- &#39;wavemaker_nfreqs_ig&#39;: 100,
- &#39;wavemaker_freqmin_ig&#39;: 0.0,
- &#39;wavemaker_freqmax_ig&#39;: 0.1,
- &#39;wavemaker_filter_time&#39;: 600.0,
- &#39;wavemaker_filter_fred&#39;: 0.99,
- &#39;wavemaker_signal&#39;: &#39;spectrum&#39;,
- &#39;wavemaker_hmin&#39;: 0.1,
- &#39;wavemaker_nfreqs_inc&#39;: 100,
- &#39;wavemaker_freqmin_inc&#39;: 0.04,
- &#39;wavemaker_freqmax_inc&#39;: 1.0,
- &#39;wavemaker_tinc2ig&#39;: -1.0,
- &#39;wavemaker_hm0_ig_factor&#39;: 1.0,
- &#39;wavemaker_hm0_inc_factor&#39;: 1.0,
- &#39;wavemaker_gammax&#39;: 1.0,
- &#39;wavemaker_tpmin&#39;: 1.0,
- &#39;wavemaker_hig&#39;: 1,
- &#39;wavemaker_hinc&#39;: 0,
- &#39;amprblock&#39;: 1,
- &#39;spwmergefrac&#39;: 0.5,
- &#39;usespwprecip&#39;: 1,
- &#39;spinup_meteo&#39;: 0,
- &#39;waveage&#39;: -999.0,
- &#39;factor_wind&#39;: 1.0,
- &#39;factor_pres&#39;: 1.0,
- &#39;factor_prcp&#39;: 1.0,
- &#39;factor_spw_size&#39;: 1.0,
- &#39;snapwave&#39;: 0,
- &#39;snapwave_wind&#39;: 0,
- &#39;snapwave_use_nearest&#39;: 1,
- &#39;snapwave_igwaves&#39;: 1,
- &#39;snapwave_dtheta&#39;: 10.0,
- &#39;snapwave_crit&#39;: 0.001,
- &#39;snapwave_hmin&#39;: 0.1,
- &#39;snapwave_vegetation&#39;: 0,
- &#39;snapwave_waveforces_ratio&#39;: 1.0,
- &#39;radstr&#39;: 0,
- &#39;snapwave_gamma&#39;: 0.7,
- &#39;snapwave_gammax&#39;: 999.0,
- &#39;snapwave_alpha&#39;: 1.0,
- &#39;snapwave_fw&#39;: 0.01,
- &#39;snapwave_fwig&#39;: 0.015,
- &#39;snapwave_fw_ratio&#39;: 1.0,
- &#39;snapwave_fwig_ratio&#39;: 1.0,
- &#39;snapwave_dt&#39;: 36000.0,
- &#39;snapwave_tol&#39;: 1000.0,
- &#39;snapwave_niter&#39;: 10,
- &#39;snapwave_baldock_ratio&#39;: 0.2,
- &#39;snapwave_baldock_exponent&#39;: 2,
- &#39;snapwave_Tpini&#39;: 1.0,
- &#39;snapwave_mwind&#39;: 2,
- &#39;snapwave_sigmin&#39;: 0.25132741228718347,
- &#39;snapwave_sigmax&#39;: 6.283185307179586,
- &#39;snapwave_jadcgdx&#39;: 1,
- &#39;snapwave_c_dispT&#39;: 1.0,
- &#39;snapwave_sector&#39;: 180.0,
- &#39;snapwave_relax_factor_DoverA&#39;: 0.25,
- &#39;snapwave_relax_factor_DoverE&#39;: 0.25,
- &#39;snapwave_alpha_ig&#39;: 1.0,
- &#39;snapwave_gammaig&#39;: 0.7,
- &#39;snapwave_gamma_fac_br&#39;: 0.45,
- &#39;snapwave_shinc2ig&#39;: 1.0,
- &#39;snapwave_alphaigfac&#39;: 1.0,
- &#39;snapwave_baldock_ratio_ig&#39;: 0.2,
- &#39;snapwave_ig_opt&#39;: 1,
- &#39;snapwave_iterative_srcig&#39;: 0,
- &#39;snapwave_use_herbers&#39;: 1,
- &#39;snapwave_tpig_opt&#39;: 1,
- &#39;snapwave_jonswapgamma&#39;: 3.3,
- &#39;snapwave_eeinc2ig&#39;: 0.01,
- &#39;snapwave_Tinc2ig&#39;: 7.0,
- &#39;wave_enhanced_roughness&#39;: 0,
- &#39;nonh&#39;: 0,
- &#39;nh_fnudge&#39;: 0.9,
- &#39;nh_tstop&#39;: -999.0,
- &#39;nh_tol&#39;: 0.001,
- &#39;nh_itermax&#39;: 100,
- &#39;structure_relax&#39;: 10.0,
- &#39;bathtub&#39;: 0,
- &#39;bathtub_fachs&#39;: 0.2,
- &#39;bathtub_dt&#39;: -999.0,
  &#39;sfincs_version&#39;: &#39;2.5.0&#39;,
- &#39;global_model&#39;: 0,
  &#39;crsgeo&#39;: 0,
  &#39;epsg&#39;: 32633,
- &#39;utmzone&#39;: None,
- &#39;inputformat&#39;: &#39;bin&#39;,
- &#39;outputformat&#39;: &#39;net&#39;,
- &#39;outputtype_map&#39;: None,
- &#39;outputtype_his&#39;: None,
- &#39;nc_deflate_level&#39;: 2,
- &#39;rugdepth&#39;: 0.05,
- &#39;h73table&#39;: 0,
- &#39;cdnrb&#39;: 3,
- &#39;cdwnd&#39;: [0.0, 28.0, 50.0],
- &#39;cdval&#39;: [0.001, 0.0025, 0.0015],
- &#39;qtrfile&#39;: None,
- &#39;depfile&#39;: None,
- &#39;inifile&#39;: None,
- &#39;rstfile&#39;: None,
- &#39;mskfile&#39;: None,
- &#39;indexfile&#39;: None,
- &#39;sbgfile&#39;: None,
- &#39;thdfile&#39;: None,
- &#39;weirfile&#39;: None,
- &#39;manningfile&#39;: None,
- &#39;drnfile&#39;: None,
- &#39;volfile&#39;: None,
- &#39;dkbfile&#39;: None,
- &#39;urbfile&#39;: None,
- &#39;vegfile&#39;: None,
- &#39;vegtype&#39;: None,
- &#39;bndfile&#39;: None,
- &#39;bzsfile&#39;: None,
- &#39;bcafile&#39;: None,
- &#39;bzifile&#39;: None,
- &#39;bdrfile&#39;: None,
- &#39;wavemaker_wfpfile&#39;: None,
- &#39;wavemaker_whifile&#39;: None,
- &#39;wavemaker_wtifile&#39;: None,
- &#39;wavemaker_wstfile&#39;: None,
- &#39;srcfile&#39;: None,
- &#39;disfile&#39;: None,
- &#39;spwfile&#39;: None,
- &#39;wndfile&#39;: None,
- &#39;prcfile&#39;: None,
- &#39;amufile&#39;: None,
- &#39;amvfile&#39;: None,
- &#39;ampfile&#39;: None,
- &#39;amprfile&#39;: None,
- &#39;z0lfile&#39;: None,
- &#39;wavemaker_wvmfile&#39;: None,
- &#39;wavemaker_timeseries_wvmfile&#39;: None,
- &#39;qinffile&#39;: None,
- &#39;inffile&#39;: None,
- &#39;inftype&#39;: None,
- &#39;scsfile&#39;: None,
- &#39;smaxfile&#39;: None,
- &#39;sefffile&#39;: None,
- &#39;psifile&#39;: None,
- &#39;sigmafile&#39;: None,
- &#39;ksfile&#39;: None,
- &#39;f0file&#39;: None,
- &#39;fcfile&#39;: None,
- &#39;kdfile&#39;: None,
- &#39;netbndbzsbzifile&#39;: None,
- &#39;netsrcdisfile&#39;: None,
- &#39;netamuamvfile&#39;: None,
- &#39;netamprfile&#39;: None,
- &#39;netampfile&#39;: None,
- &#39;netspwfile&#39;: None,
- &#39;snapwave_bndfile&#39;: None,
- &#39;snapwave_bhsfile&#39;: None,
- &#39;snapwave_btpfile&#39;: None,
- &#39;snapwave_bwdfile&#39;: None,
- &#39;snapwave_bdsfile&#39;: None,
- &#39;netsnapwavefile&#39;: None,
- &#39;snapwave_jonswapfile&#39;: None,
- &#39;snapwave_encfile&#39;: None,
- &#39;snapwave_upwfile&#39;: None,
- &#39;snapwave_mskfile&#39;: None,
- &#39;snapwave_depfile&#39;: None,
- &#39;snapwave_ncfile&#39;: None,
- &#39;obsfile&#39;: None,
- &#39;crsfile&#39;: None,
- &#39;rugfile&#39;: None,
- &#39;storevelmax&#39;: 0,
- &#39;storefluxmax&#39;: 0,
  &#39;storevel&#39;: 0,
  &#39;storecumprcp&#39;: 0,
- &#39;storetwet&#39;: 0,
- &#39;storehsubgrid&#39;: 0,
- &#39;storehmean&#39;: 0,
  &#39;storemeteo&#39;: 0,
- &#39;storemaxwind&#39;: 0,
- &#39;storefw&#39;: 0,
- &#39;storewavdir&#39;: 0,
- &#39;storeqdrain&#39;: 1,
- &#39;storezvolume&#39;: 0,
- &#39;storestoragevolume&#39;: 0,
- &#39;store_tsunami_arrival_time&#39;: 0,
- &#39;store_dynamic_bed_level&#39;: 0,
  &#39;storetzsmax&#39;: 0,
- &#39;storezvolmax&#39;: 1,
- &#39;store_river_discharge&#39;: 0,
- &#39;store_urban_drainage_discharge&#39;: 0,
- &#39;store_cumulative_urban_drainage&#39;: 0,
- &#39;storesnapwavegrid&#39;: 0,
- &#39;writeruntime&#39;: 0,
- &#39;output_on_quadtree_mesh&#39;: 0,
- &#39;twet_threshold&#39;: 0.01,
- &#39;timestep_analysis&#39;: 0,
- &#39;debug&#39;: 0,
- &#39;percentage_done&#39;: 5}
+ &#39;timestep_analysis&#39;: 0}
 </pre></div></div>
 </div>
 <p>HydroMT-SFINCS has so very usefull tools to plot your model and all of its components. The main functionality to plot the model can be found in <code class="docutils literal notranslate"><span class="pre">SfincsModel.plot_basemap()</span></code> where you can specify which background map (<code class="docutils literal notranslate"><span class="pre">bmap</span></code>) to use, and which layers to plot. Throughout this notebook, we will explore the different options of this method.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># show the model grid outline</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span>
     <span class="n">variable</span><span class="o">=</span><span class="s2">"grid"</span><span class="p">,</span>
     <span class="n">plot_region</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">bmap</span><span class="o">=</span><span class="s2">"sat"</span><span class="p">,</span>
     <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
     <span class="n">grid_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"linewidth"</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">},</span>
@@ -888,71 +732,19 @@
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">ValueError</span>                                Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[5]</span><span class="ansi-green-fg">, line 2</span>
-<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># show the model grid outline</span>
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">2</span> _ = sf.plot_basemap(
-<span class="ansi-green-fg">      3</span>     variable=<span class="ansi-yellow-fg">&#34;grid&#34;</span>,
-<span class="ansi-green-fg">      4</span>     plot_region=<span class="ansi-bold" style="color: rgb(0,135,0)">True</span>,
-<span class="ansi-green-fg">      5</span>     bmap=<span class="ansi-yellow-fg">&#34;sat&#34;</span>,
-
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/sfincs.py:685</span>, in <span class="ansi-cyan-fg">SfincsModel.plot_basemap</span><span class="ansi-blue-fg">(self, fn_out, variable, shaded, plot_bounds, plot_region, plot_geoms, bmap, zoomlevel, figsize, geom_names, geom_kwargs, grid_kwargs, legend_kwargs, model, **kwargs)</span>
-<span class="ansi-green-fg">    682</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> model == <span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">snapwave</span><span class="ansi-yellow-fg">&#34;</span> <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span style="color: rgb(0,135,0)">isinstance</span>(variable, <span style="color: rgb(0,135,0)">str</span>) <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> variable == <span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">mask</span><span class="ansi-yellow-fg">&#34;</span>:
-<span class="ansi-green-fg">    683</span>     variable = <span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">snapwave_mask</span><span class="ansi-yellow-fg">&#34;</span>
-<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">685</span> fig, ax = <span class="ansi-black-fg ansi-yellow-bg">plots</span><span class="ansi-black-fg ansi-yellow-bg">.</span><span class="ansi-black-fg ansi-yellow-bg">plot_basemap</span><span class="ansi-black-fg ansi-yellow-bg">(</span>
-<span class="ansi-green-fg">    686</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">ds</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    687</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">sg</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    688</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">model</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">model</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    689</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">variable</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">variable</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    690</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">shaded</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">shaded</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    691</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">plot_bounds</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">plot_bounds</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    692</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">plot_region</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">plot_region</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    693</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">plot_geoms</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">plot_geoms</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    694</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">bmap</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">bmap</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    695</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">zoomlevel</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">zoomlevel</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    696</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">figsize</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">figsize</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    697</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">geom_names</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">geom_names</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    698</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">geom_kwargs</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">geom_kwargs</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    699</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">grid_kwargs</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">grid_kwargs</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    700</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">legend_kwargs</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">legend_kwargs</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    701</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">logger</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">logger</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    702</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">*</span><span class="ansi-black-fg ansi-yellow-bg">*</span><span class="ansi-black-fg ansi-yellow-bg">kwargs</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    703</span> <span class="ansi-black-fg ansi-yellow-bg">)</span>
-<span class="ansi-green-fg">    705</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> fn_out <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
-<span class="ansi-green-fg">    706</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> os.path.isabs(fn_out):
-
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/plots.py:401</span>, in <span class="ansi-cyan-fg">plot_basemap</span><span class="ansi-blue-fg">(ds, geoms, variable, shaded, plot_bounds, plot_region, plot_geoms, bmap, zoomlevel, figsize, geom_names, geom_kwargs, grid_kwargs, legend_kwargs, bmap_kwargs, model, logger, **kwargs)</span>
-<span class="ansi-green-fg">    399</span> <span style="color: rgb(95,135,135)"># plot mask boundaries</span>
-<span class="ansi-green-fg">    400</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> plot_bounds <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> mask_name <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> ds:
-<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">401</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">ValueError</span>(
-<span class="ansi-green-fg">    402</span>         <span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">No </span><span class="ansi-yellow-fg">&#39;</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>mask_name<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg">&#39;</span><span class="ansi-yellow-fg"> found in ds required to plot the model bounds. </span><span class="ansi-yellow-fg">&#34;</span>
-<span class="ansi-green-fg">    403</span>         <span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">Set plot_bounds=False or add the mask to ds.</span><span class="ansi-yellow-fg">&#34;</span>
-<span class="ansi-green-fg">    404</span>     )
-<span class="ansi-green-fg">    405</span> <span class="ansi-bold" style="color: rgb(0,135,0)">elif</span> plot_bounds <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> (ds[mask_name] &gt; <span class="ansi-green-fg">1</span>).any():
-<span class="ansi-green-fg">    406</span>     gdf_msk = get_bounds_vector(ds[mask_name])
-
-<span class="ansi-red-fg">ValueError</span>: No &#39;mask&#39; found in ds required to plot the model bounds. Set plot_bounds=False or add the mask to ds.
-</pre></div></div>
-</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_1_build_from_script_14_1.png" src="../_images/_examples_1_build_from_script_14_1.png" />
+<img alt="../_images/_examples_1a_build_from_script_18_0.png" src="../_images/_examples_1a_build_from_script_18_0.png" />
 </div>
 </div>
 </section>
 <section id="3.-Add-elevation-to-the-model">
-<h2>3. Add elevation to the model<a class="headerlink" href="#3.-Add-elevation-to-the-model" title="Link to this heading">#</a></h2>
+<h1>3. Add elevation to the model<a class="headerlink" href="#3.-Add-elevation-to-the-model" title="Link to this heading">#</a></h1>
 <p>Probably the most important datasets to create a proper SFINCS model are the digital elevation models (DEMs). However, often there are different datasets for describing the elevation on land, topography, and below water, bathymetry. HydroMT-SFINCS provides functionality to merge these different datasets onto the model grid.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># In this example we want to combine 2 elevation datasets, merit_hydro as elevation and gebco as bathymetry, in that order.</span>
@@ -964,94 +756,8 @@
 <span class="n">sf</span><span class="o">.</span><span class="n">elevation</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">elevation_list</span><span class="o">=</span><span class="n">elevation_list</span><span class="p">,</span> <span class="n">buffer_cells</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
 <span class="c1"># Make a plot of the merged topobathy, here colour limits are set between an elevation of -5 to 5 meters</span>
-<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="s2">"dep"</span><span class="p">,</span> <span class="n">plot_region</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">"sat"</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-2026-10-28 14:42:09,079 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
-2026-10-28 14:42:09,101 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">ValueError</span>                                Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[6]</span><span class="ansi-green-fg">, line 10</span>
-<span class="ansi-green-fg">      6</span> <span style="color: rgb(95,135,135)"># Add depth information to modelgrid based on these chosen datasets</span>
-<span class="ansi-green-fg">      7</span> sf.elevation.create(elevation_list=elevation_list, buffer_cells=<span class="ansi-green-fg">1</span>)
-<span class="ansi-green-fg">      8</span>
-<span class="ansi-green-fg">      9</span> <span style="color: rgb(95,135,135)"># Make a plot of the merged topobathy, here colour limits are set between an elevation of -5 to 5 meters</span>
-<span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">10</span> _ = sf.plot_basemap(variable=<span class="ansi-yellow-fg">&#34;dep&#34;</span>, plot_region=<span class="ansi-bold" style="color: rgb(0,135,0)">True</span>, bmap=<span class="ansi-yellow-fg">&#34;sat&#34;</span>, zoomlevel=<span class="ansi-green-fg">12</span>)
-
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/sfincs.py:685</span>, in <span class="ansi-cyan-fg">SfincsModel.plot_basemap</span><span class="ansi-blue-fg">(self, fn_out, variable, shaded, plot_bounds, plot_region, plot_geoms, bmap, zoomlevel, figsize, geom_names, geom_kwargs, grid_kwargs, legend_kwargs, model, **kwargs)</span>
-<span class="ansi-green-fg">    682</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> model == <span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">snapwave</span><span class="ansi-yellow-fg">&#34;</span> <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span style="color: rgb(0,135,0)">isinstance</span>(variable, <span style="color: rgb(0,135,0)">str</span>) <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> variable == <span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">mask</span><span class="ansi-yellow-fg">&#34;</span>:
-<span class="ansi-green-fg">    683</span>     variable = <span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">snapwave_mask</span><span class="ansi-yellow-fg">&#34;</span>
-<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">685</span> fig, ax = <span class="ansi-black-fg ansi-yellow-bg">plots</span><span class="ansi-black-fg ansi-yellow-bg">.</span><span class="ansi-black-fg ansi-yellow-bg">plot_basemap</span><span class="ansi-black-fg ansi-yellow-bg">(</span>
-<span class="ansi-green-fg">    686</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">ds</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    687</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">sg</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    688</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">model</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">model</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    689</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">variable</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">variable</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    690</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">shaded</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">shaded</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    691</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">plot_bounds</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">plot_bounds</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    692</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">plot_region</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">plot_region</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    693</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">plot_geoms</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">plot_geoms</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    694</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">bmap</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">bmap</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    695</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">zoomlevel</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">zoomlevel</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    696</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">figsize</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">figsize</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    697</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">geom_names</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">geom_names</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    698</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">geom_kwargs</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">geom_kwargs</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    699</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">grid_kwargs</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">grid_kwargs</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    700</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">legend_kwargs</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">legend_kwargs</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    701</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">logger</span><span class="ansi-black-fg ansi-yellow-bg">=</span><span class="ansi-black-fg ansi-yellow-bg">logger</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    702</span> <span class="ansi-black-fg ansi-yellow-bg">    </span><span class="ansi-black-fg ansi-yellow-bg">*</span><span class="ansi-black-fg ansi-yellow-bg">*</span><span class="ansi-black-fg ansi-yellow-bg">kwargs</span><span class="ansi-black-fg ansi-yellow-bg">,</span>
-<span class="ansi-green-fg">    703</span> <span class="ansi-black-fg ansi-yellow-bg">)</span>
-<span class="ansi-green-fg">    705</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> fn_out <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
-<span class="ansi-green-fg">    706</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> os.path.isabs(fn_out):
-
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/plots.py:401</span>, in <span class="ansi-cyan-fg">plot_basemap</span><span class="ansi-blue-fg">(ds, geoms, variable, shaded, plot_bounds, plot_region, plot_geoms, bmap, zoomlevel, figsize, geom_names, geom_kwargs, grid_kwargs, legend_kwargs, bmap_kwargs, model, logger, **kwargs)</span>
-<span class="ansi-green-fg">    399</span> <span style="color: rgb(95,135,135)"># plot mask boundaries</span>
-<span class="ansi-green-fg">    400</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> plot_bounds <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> mask_name <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> ds:
-<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">401</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">ValueError</span>(
-<span class="ansi-green-fg">    402</span>         <span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">No </span><span class="ansi-yellow-fg">&#39;</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>mask_name<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg">&#39;</span><span class="ansi-yellow-fg"> found in ds required to plot the model bounds. </span><span class="ansi-yellow-fg">&#34;</span>
-<span class="ansi-green-fg">    403</span>         <span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">Set plot_bounds=False or add the mask to ds.</span><span class="ansi-yellow-fg">&#34;</span>
-<span class="ansi-green-fg">    404</span>     )
-<span class="ansi-green-fg">    405</span> <span class="ansi-bold" style="color: rgb(0,135,0)">elif</span> plot_bounds <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> (ds[mask_name] &gt; <span class="ansi-green-fg">1</span>).any():
-<span class="ansi-green-fg">    406</span>     gdf_msk = get_bounds_vector(ds[mask_name])
-
-<span class="ansi-red-fg">ValueError</span>: No &#39;mask&#39; found in ds required to plot the model bounds. Set plot_bounds=False or add the mask to ds.
-</pre></div></div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<img alt="../_images/_examples_1_build_from_script_16_2.png" src="../_images/_examples_1_build_from_script_16_2.png" />
-</div>
-</div>
-</section>
-<section id="4.-Make-mask-of-active-and-inactive-cells:">
-<h2>4. Make mask of active and inactive cells:<a class="headerlink" href="#4.-Make-mask-of-active-and-inactive-cells:" title="Link to this heading">#</a></h2>
-<p>The next step of building a SFINCS model is to create a mask. First we generate a mask of active (msk=1) and inactive cells (msk=0), determining in which cells of your computational grid water levels will be computed.</p>
-<p>For more info about the msk-file, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html#mask-file">click here</a>.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Defining your active cells can be based on multiple criteria, here we only specify a minimum elevation of -5 meters,</span>
-<span class="c1"># meaning all cells above -5 are considered to be active. Check-out the method documentation for more options.</span>
-<span class="n">sf</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">create_active</span><span class="p">(</span><span class="n">zmin</span><span class="o">=-</span><span class="mi">5</span><span class="p">)</span>
-
-<span class="c1"># # Make a plot of the mask file</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span>
-    <span class="n">variable</span><span class="o">=</span><span class="s2">"mask"</span><span class="p">,</span> <span class="n">plot_region</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">"sat"</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span>
+    <span class="n">variable</span><span class="o">=</span><span class="s2">"dep"</span><span class="p">,</span> <span class="n">plot_region</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">"sat"</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -1061,28 +767,63 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-10-28 14:42:10,452 - hydromt.hydromt_sfincs.components.grid.mask - mask - INFO - 1 gaps outside valid elevation range &lt; 10.0 km2.
-2026-10-28 14:42:10,456 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 2 attributes in model config.
+2026-10-29 16:32:29,203 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
+2026-10-29 16:32:29,219 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_1_build_from_script_18_1.png" src="../_images/_examples_1_build_from_script_18_1.png" />
+<img alt="../_images/_examples_1a_build_from_script_20_1.png" src="../_images/_examples_1a_build_from_script_20_1.png" />
 </div>
 </div>
-<p>NOTE:</p>
-<ul class="simple">
-<li><p>The given output of HydroMT says “1 gap outside valid elevation range &lt; 10 km2”. HydroMT does some smart filtering that if small groups of inactive cells are found, surrounded by active cells, these are still included as active, in this case 1 gap. You can control the size of these gaps to filter by adding <code class="docutils literal notranslate"><span class="pre">fill_area</span> <span class="pre">=</span> <span class="pre">10</span></code> in <code class="docutils literal notranslate"><span class="pre">SfincsModel.mask.create_active()</span></code>.</p></li>
-<li><p>A similar argument exists to neglect a group of active cells surrounded by inactive cells: <code class="docutils literal notranslate"><span class="pre">drop_area</span></code></p></li>
-</ul>
 </section>
-<section id="5.-Update-mask-with-water-level-and-outflow-boundary-cells---including-use-of-polygons:">
-<h2>5. Update mask with water level and outflow boundary cells - including use of polygons:<a class="headerlink" href="#5.-Update-mask-with-water-level-and-outflow-boundary-cells---including-use-of-polygons:" title="Link to this heading">#</a></h2>
-<p>In SFINCS you can specify cells where you want to force offshore water levels (mask=2), or outflow boundaries (mask=3). To determine these cells, there are again multiple criteria to use, such as elevation or user-defined-polygons. Below we present both.</p>
+<section id="4.-Make-mask-of-active-and-inactive-cells:">
+<h1>4. Make mask of active and inactive cells:<a class="headerlink" href="#4.-Make-mask-of-active-and-inactive-cells:" title="Link to this heading">#</a></h1>
+<p>The next step of building a SFINCS model is to create a mask. First we generate a mask of active (msk=1) and inactive cells (msk=0), determining in which cells of your computational grid water levels will be computed.</p>
+<p>For more info about the msk-file, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html#mask-file">click here</a>.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Defining your active cells can be based on multiple criteria, here we only specify a minimum elevation of -5 meters,</span>
+<span class="c1"># meaning all cells above -5 are considered to be active. Check-out the method documentation for more options.</span>
+<span class="n">sf</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">create_active</span><span class="p">(</span><span class="n">zmin</span><span class="o">=-</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="c1"># # Make a plot of the mask file</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span>
+    <span class="n">variable</span><span class="o">=</span><span class="s2">"mask"</span><span class="p">,</span> <span class="n">plot_region</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bmap</span><span class="o">=</span><span class="s2">"sat"</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+2026-10-29 16:32:30,306 - hydromt.hydromt_sfincs.components.grid.mask - mask - INFO - 1 gaps outside valid elevation range &lt; 10.0 km2.
+2026-10-29 16:32:30,309 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 2 attributes in model config.
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_examples_1a_build_from_script_22_1.png" src="../_images/_examples_1a_build_from_script_22_1.png" />
+</div>
+</div>
+<div style="padding: 14px 18px; border-left: 4px solid #d99000; background: #fff7e6; border-radius: 6px; margin: 12px 1em 12px 0; width: calc(100% - 1em); box-sizing: border-box; color: #111111; "><p>⚠️ Note: Mask cleanup</p>
+<ul style="margin: 8px 0 0;"><li><p>The HydroMT output reports “1 gap outside valid elevation range &lt; 10 km2”. Small groups of inactive cells surrounded by active cells may still be included as active; in this example, one such gap was reported.</p>
+</li><li><p>Control the size of gaps to fill with fill_area = 10 in SfincsModel.mask.create_active().</p>
+</li><li><p>A similar argument, drop_area, can exclude a group of active cells surrounded by inactive cells.</p>
+</li></ul></div></section>
+<section id="5.-Update-mask-with-water-level-and-outflow-boundary-cells---including-use-of-polygons:">
+<h1>5. Update mask with water level and outflow boundary cells - including use of polygons:<a class="headerlink" href="#5.-Update-mask-with-water-level-and-outflow-boundary-cells---including-use-of-polygons:" title="Link to this heading">#</a></h1>
+<p>In SFINCS you can specify cells where you want to force offshore water levels (mask=2), or outflow boundaries (mask=3). To determine these cells, there are again multiple criteria to use, such as elevation or user-defined-polygons. Below we present both.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Here we add water level cells along the coastal boundary, for cells up to an elevation of -5 meters</span>
@@ -1099,11 +840,11 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-10-28 14:42:11,752 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
+2026-10-29 16:32:31,318 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Here we add outflow cells, only where clicked in shapefile along part of the lateral boundaries</span>
@@ -1123,12 +864,12 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-10-28 14:42:11,758 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading compound_example_outflow_boundary_polygon.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_outflow_boundary_polygon.geojson
-2026-10-28 14:42:11,789 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
+2026-10-29 16:32:31,322 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading compound_example_outflow_boundary_polygon.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_outflow_boundary_polygon.geojson
+2026-10-29 16:32:31,343 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Make a plot of the mask file</span>
@@ -1141,7 +882,7 @@
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -1153,21 +894,19 @@
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_1_build_from_script_23_1.png" src="../_images/_examples_1_build_from_script_23_1.png" />
+<img alt="../_images/_examples_1a_build_from_script_27_1.png" src="../_images/_examples_1a_build_from_script_27_1.png" />
 </div>
 </div>
-<p>NOTE:</p>
-<ul class="simple">
-<li><p>As you can see now, also msk=2 values (red line) have been added along the coastal boundary</p></li>
-<li><p>As you can see now, also msk=3 values (purple line) have been added along the lateral inland boundaries within the gdf_include shapefile</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">reset_bounds=True</span></code> means that you start without initial boundary cells (of the specified type), if <code class="docutils literal notranslate"><span class="pre">reset_bounds=False</span></code> (default) you build on the existing boundary cells (if available)</p></li>
-</ul>
-</section>
+<div style="padding: 14px 18px; border-left: 4px solid #187b8f; background: #eaf6f8; border-radius: 6px; margin: 12px 1em 12px 0; width: calc(100% - 1em); box-sizing: border-box; color: #111111; "><p>💡 Note: Boundary mask</p>
+<ul style="margin: 8px 0 0;"><li><p>As shown in the plot, msk=2 values (red line) have been added along the coastal boundary.</p>
+</li><li><p>msk=3 values (purple line) have been added along the lateral inland boundaries within the gdf_include shapefile.</p>
+</li></ul><p style="margin: 8px 0 0;"><p>reset_bounds=True means you start without existing boundary cells of that type. With reset_bounds=False (the default), you build on existing boundary cells, if available.</p>
+</p></div></section>
 <section id="6.-Add-spatially-varying-roughness-data:">
-<h2>6. Add spatially varying roughness data:<a class="headerlink" href="#6.-Add-spatially-varying-roughness-data:" title="Link to this heading">#</a></h2>
+<h1>6. Add spatially varying roughness data:<a class="headerlink" href="#6.-Add-spatially-varying-roughness-data:" title="Link to this heading">#</a></h1>
 <p>Next to the elevation, the roughness is also an important input dataset for the SFINCS model. Typically, the mannings’ n roughness coefficients are derived based on landuse/landcover data and a conversion table.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Some reclass tables are available in the hydromt_sfincs DATADIR</span>
@@ -1192,30 +931,31 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-10-28 14:42:13,067 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
-2026-10-28 14:42:13,080 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
-2026-10-28 14:42:13,084 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
-2026-10-28 14:42:13,115 - hydromt.hydromt_sfincs.components.grid.roughness - roughness - INFO - Spatially varying manning roughness set. Note that this overrules any earlier defined manning_land and manning_sea in config.
+2026-10-29 16:32:32,336 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
+2026-10-29 16:32:32,345 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
+2026-10-29 16:32:32,349 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
+2026-10-29 16:32:32,371 - hydromt.hydromt_sfincs.components.grid.roughness - roughness - INFO - Spatially varying manning roughness set. Note that this overrules any earlier defined manning_land and manning_sea in config.
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_1_build_from_script_26_1.png" src="../_images/_examples_1_build_from_script_26_1.png" />
+<img alt="../_images/_examples_1a_build_from_script_30_1.png" src="../_images/_examples_1a_build_from_script_30_1.png" />
 </div>
 </div>
 </section>
 <section id="7.-Make-subgrid-derived-tables:">
-<h2>7. Make subgrid derived tables:<a class="headerlink" href="#7.-Make-subgrid-derived-tables:" title="Link to this heading">#</a></h2>
+<h1>7. Make subgrid derived tables:<a class="headerlink" href="#7.-Make-subgrid-derived-tables:" title="Link to this heading">#</a></h1>
 <p>Subgrid derived tables are used to better capture the elevation and roughness of your domain, to either improve your results, or to allow you to run on a courser grid resolution (means faster simulation). For more info about subgrid tables, <a class="reference external" href="https://sfincs.readthedocs.io/en/latest/developments.html#recent-advancements-in-accuracy-subgrid-mode">click here</a>.</p>
 <p>You as user can specify multiple settings about how the subgrid derived tables should be made.</p>
 <p>Every single grid cell of the flux grid of the size inp.dx by inp.dy is defined into subgrid pixels (default nr_subgrid_pixels = 20). For every subgrid pixel the topobathy data is loaded, ideally this consists of high-resolution DEM datasets that you specify as user.</p>
 <p>In this example with dx=dy=50m, having nr_subgrid_pixels = 20 means we are loading data onto a 2.5 m subpixel grid However, the input data of Gebco and Merit_hydro is way coarser, therefore let’s set the ratio to 6 for now.</p>
-<div style="border-left: 4px solid #4CAF50; padding: 0.5em; background-color: #f0fff0;"><p>⚠️ Note: The subgrid tables replace the elevation and roughness data that we prepared before!</p>
-</div><p>For the subgrid tables, we again provide the elevation datasets, and roughness datasets. Additonally, we can provide river datasets that are used to burn in rivers into the elevation and roughness maps.</p>
+<div style="padding: 14px 18px; border-left: 4px solid #7655a0; background: #f3effa; border-radius: 6px; margin: 12px 1em 12px 0; width: calc(100% - 1em); box-sizing: border-box; color: #111111; "><p>⚠️ Note: Subgrid tables</p>
+<p style="margin: 8px 0 0;"><p>The subgrid tables replace the elevation and roughness data that we prepared before.</p>
+</p></div><p>For the subgrid tables, we again provide the elevation datasets, and roughness datasets. Additonally, we can provide river datasets that are used to burn in rivers into the elevation and roughness maps.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Repeat elevation and roughness sets for clarity</span>
@@ -1241,28 +981,29 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-10-28 14:42:14,374 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
-2026-10-28 14:42:14,392 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
-2026-10-28 14:42:14,408 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
-2026-10-28 14:42:14,420 - hydromt.data_catalog.data_catalog - data_catalog - WARNING - overwriting data source &#39;vito_mapping.csv&#39; with provider user and version _UNSPECIFIED_.
-2026-10-28 14:42:14,421 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
-2026-10-28 14:42:14,425 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
-2026-10-28 14:42:14,436 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of regular cells in a block : 333
-2026-10-28 14:42:14,436 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in n direction    : 1
-2026-10-28 14:42:14,437 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in m direction    : 1
-2026-10-28 14:42:14,437 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of flux grid            : dx=50.000000000000654, dy=50.00000000000095
-2026-10-28 14:42:14,438 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of subgrid pixels       : dx=8.333333333333442, dy=8.333333333333492
-2026-10-28 14:42:14,438 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - block 1/1 -- col 0:250 | row 0:107
-2026-10-28 14:42:28,004 - hydromt.hydromt_sfincs.components.grid.subgrid - cog - INFO - Building 2 overviews with average
-2026-10-28 14:42:28,037 - hydromt.hydromt_sfincs.components.grid.subgrid - cog - INFO - Building 2 overviews with average
-2026-10-28 14:42:28,057 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Subgrid tables created. Note that the subgrid tables overwrite previously defined information on elevation and roughness.
+2026-10-29 16:32:33,371 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
+2026-10-29 16:32:33,384 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
+2026-10-29 16:32:33,395 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
+2026-10-29 16:32:33,403 - hydromt.data_catalog.data_catalog - data_catalog - WARNING - overwriting data source &#39;vito_mapping.csv&#39; with provider user and version _UNSPECIFIED_.
+2026-10-29 16:32:33,403 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
+2026-10-29 16:32:33,406 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
+2026-10-29 16:32:33,414 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of regular cells in a block : 333
+2026-10-29 16:32:33,415 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in n direction    : 1
+2026-10-29 16:32:33,415 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in m direction    : 1
+2026-10-29 16:32:33,415 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of flux grid            : dx=50.000000000000654, dy=50.00000000000095
+2026-10-29 16:32:33,416 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of subgrid pixels       : dx=8.333333333333442, dy=8.333333333333492
+2026-10-29 16:32:33,416 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - block 1/1 -- col 0:250 | row 0:107
+2026-10-29 16:32:43,705 - hydromt.hydromt_sfincs.components.grid.subgrid - cog - INFO - Building 2 overviews with average
+2026-10-29 16:32:43,732 - hydromt.hydromt_sfincs.components.grid.subgrid - cog - INFO - Building 2 overviews with average
+2026-10-29 16:32:43,746 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Subgrid tables created. Note that the subgrid tables overwrite previously defined information on elevation and roughness.
 </pre></div></div>
 </div>
-<div style="border-left: 4px solid #4CAF50; padding: 0.5em; background-color: #f0fff0;"><p>⚠️ Note: If you have a very large domain with more than a millions cells, and very high-resolution datasets (e.g. 1 m), this step might take minutes to hours!!!</p>
-<p>But good news; when finished succesfully, you can very quickly run very accurate SFINCS simulations! The whole point of the subgrid functionality of SFINCS is that by derived subgrid tables based on high res elevation data, you either have more accurate results or run on a coarser grid resolution (= much faster) or both.</p>
-</div><p>Now we can see what kind of subgrid-derived variables are created:</p>
+<div style="padding: 14px 18px; border-left: 4px solid #d97706; background: #fff7ed; border-radius: 6px; margin: 12px 1em 12px 0; width: calc(100% - 1em); box-sizing: border-box; color: #111111; "><p>⚠️ Note: Subgrid processing time</p>
+<p style="margin: 8px 0 0;"><p>If you have a very large domain with more than a million cells and very high-resolution datasets (e.g. 1 m), this step might take minutes to hours.</p>
+</p><p><p>But the good news: when finished successfully, you can run very accurate SFINCS simulations quickly. The point of the subgrid functionality is that, by deriving tables from high-resolution elevation data, you can get more accurate results, run on a coarser grid (and therefore faster), or both.</p>
+</p></div><p>Now we can see what kind of subgrid-derived variables are created:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># uncomment to see the subgrid table variales</span>
@@ -1279,12 +1020,12 @@
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_1_build_from_script_33_0.png" src="../_images/_examples_1_build_from_script_33_0.png" />
+<img alt="../_images/_examples_1a_build_from_script_37_0.png" src="../_images/_examples_1a_build_from_script_37_0.png" />
 </div>
 </div>
 </section>
 <section id="8.-Add-water-level-time-series-as-forcing:">
-<h2>8. Add water level time-series as forcing:<a class="headerlink" href="#8.-Add-water-level-time-series-as-forcing:" title="Link to this heading">#</a></h2>
+<h1>8. Add water level time-series as forcing:<a class="headerlink" href="#8.-Add-water-level-time-series-as-forcing:" title="Link to this heading">#</a></h1>
 <p>There are many ways to add <strong>water level boundary conditions</strong> to the SFINCS model. We introduce one in the example below, check out the <a class="reference external" href="https://deltares.github.io/hydromt_sfincs/stable/_generated/hydromt_sfincs.components.forcing.SfincsWaterLevel.html">WaterLevel</a> component for more options:</p>
 <p><strong>🌐 Using a geodataset (presented here)</strong></p>
 <ul class="simple">
@@ -1293,7 +1034,7 @@
 <li><p>Often generated by other models, such as the <strong>GTSM model</strong>.</p></li>
 </ul>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Change period of model simulation time, specified in yyyymmdd HHMMSS, to match with the available water level data</span>
@@ -1315,16 +1056,16 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-10-28 14:42:29,364 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 3 attributes in model config.
-2026-10-28 14:42:29,418 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gtsmv3_eu_era5 GeoDataset data from /home/runner/.hydromt/artifact_data/latest/gtsmv3_eu_era5.nc
+2026-10-29 16:32:44,777 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 3 attributes in model config.
+2026-10-29 16:32:44,817 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gtsmv3_eu_era5 GeoDataset data from /home/runner/.hydromt/artifact_data/latest/gtsmv3_eu_era5.nc
 </pre></div></div>
 </div>
 </section>
 <section id="9.-Inspect-the-model-and-boundary-conditions">
-<h2>9. Inspect the model and boundary conditions<a class="headerlink" href="#9.-Inspect-the-model-and-boundary-conditions" title="Link to this heading">#</a></h2>
+<h1>9. Inspect the model and boundary conditions<a class="headerlink" href="#9.-Inspect-the-model-and-boundary-conditions" title="Link to this heading">#</a></h1>
 <p>To inspect the added boundary conditions, we can again use the plotting functionality of HydroMT-SFINCS. When the boundary conditions are related to boundary points (water levels and waves), these locations can be visualzied with <code class="docutils literal notranslate"><span class="pre">SfincsModel.plot_basemap(plot_geoms=True)</span></code>. Nonetheless, the actual timeseries of the boundary conditions can be visualized with <code class="docutils literal notranslate"><span class="pre">SfincsModel.plot_forcing()</span></code>.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot basemap, in this case boundary points should be added (and plotted because of plot_geoms=True)</span>
@@ -1335,7 +1076,7 @@
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -1348,12 +1089,12 @@
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_1_build_from_script_37_1.png" src="../_images/_examples_1_build_from_script_37_1.png" />
+<img alt="../_images/_examples_1a_build_from_script_41_1.png" src="../_images/_examples_1a_build_from_script_41_1.png" />
 </div>
 </div>
 <p>And the boundary conditions timeseries:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sf</span><span class="o">.</span><span class="n">plot_forcing</span><span class="p">()</span>
@@ -1361,7 +1102,7 @@
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -1374,15 +1115,15 @@
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_1_build_from_script_39_1.png" src="../_images/_examples_1_build_from_script_39_1.png" />
+<img alt="../_images/_examples_1a_build_from_script_43_1.png" src="../_images/_examples_1a_build_from_script_43_1.png" />
 </div>
 </div>
 </section>
 <section id="10.-Write-the-model-input-to-disk">
-<h2>10. Write the model input to disk<a class="headerlink" href="#10.-Write-the-model-input-to-disk" title="Link to this heading">#</a></h2>
+<h1>10. Write the model input to disk<a class="headerlink" href="#10.-Write-the-model-input-to-disk" title="Link to this heading">#</a></h1>
 <p>By now we have made all basic SFINCS spatial layers and added simple water level boundary conditions. We are ready to write the model to disk, and run the model.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># write all model files to disk</span>
@@ -1399,9 +1140,9 @@
 <li><p><a class="reference internal" href="2_update_forcing.html"><span class="doc">Update Forcing</span></a></p></li>
 <li><p><a class="reference internal" href="3_update_geometries.html"><span class="doc">Update Geometries</span></a></p></li>
 </ul>
-<div style="border-left: 4px solid #4CAF50; padding: 0.5em; background-color: #f0fff0;"><p>⚠️ Note: Building a model is an iterative process. Combining the different notebooks in this tutorial series allows you to build more complex models step-by-step.</p>
-</div></section>
-</section>
+<div style="padding: 14px 18px; border-left: 4px solid #4d9b70; background: #f0fff0; border-radius: 6px; margin: 12px 1em 12px 0; width: calc(100% - 1em); box-sizing: border-box; color: #111111; "><p>💡 Note: Model building is iterative</p>
+<p style="margin: 8px 0 0;"><p>Combining the different notebooks in this tutorial series allows you to build more complex models step by step.</p>
+</p></div></section>
 
 
                 </article>
@@ -1419,15 +1160,15 @@
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Build a model from CLI</p>
+        <p class="prev-next-title">1. Build your first SFINCS model:</p>
       </div>
     </a>
     <a class="right-next"
-       href="../user_guide/3_update_model/index.html"
+       href="1b_build_quadtree_from_script.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Updating a SFINCS Model</p>
+        <p class="prev-next-title">0. Initialize the logger</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -1470,17 +1211,19 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#1.-Initialize-SfincsModel-class,-set-data-library-and-output-folder:">1. Initialize SfincsModel class, set data library and output folder:</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#2.-Specify-characteristics-of-the-wanted-grid-and-generate-grid:">2. Specify characteristics of the wanted grid and generate grid:</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#3.-Add-elevation-to-the-model">3. Add elevation to the model</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#4.-Make-mask-of-active-and-inactive-cells:">4. Make mask of active and inactive cells:</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#5.-Update-mask-with-water-level-and-outflow-boundary-cells---including-use-of-polygons:">5. Update mask with water level and outflow boundary cells - including use of polygons:</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#6.-Add-spatially-varying-roughness-data:">6. Add spatially varying roughness data:</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#7.-Make-subgrid-derived-tables:">7. Make subgrid derived tables:</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#8.-Add-water-level-time-series-as-forcing:">8. Add water level time-series as forcing:</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#9.-Inspect-the-model-and-boundary-conditions">9. Inspect the model and boundary conditions</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#10.-Write-the-model-input-to-disk">10. Write the model input to disk</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">0. Initialize the logger</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#1.-Initialize-SfincsModel-class,-set-data-library-and-output-folder:">1. Initialize SfincsModel class, set data library and output folder:</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#2.-Specify-characteristics-of-the-wanted-grid-and-generate-grid:">2. Specify characteristics of the wanted grid and generate grid:</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#3.-Add-elevation-to-the-model">3. Add elevation to the model</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#4.-Make-mask-of-active-and-inactive-cells:">4. Make mask of active and inactive cells:</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#5.-Update-mask-with-water-level-and-outflow-boundary-cells---including-use-of-polygons:">5. Update mask with water level and outflow boundary cells - including use of polygons:</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#6.-Add-spatially-varying-roughness-data:">6. Add spatially varying roughness data:</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#7.-Make-subgrid-derived-tables:">7. Make subgrid derived tables:</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#8.-Add-water-level-time-series-as-forcing:">8. Add water level time-series as forcing:</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#9.-Inspect-the-model-and-boundary-conditions">9. Inspect the model and boundary conditions</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#10.-Write-the-model-input-to-disk">10. Write the model input to disk</a></li>
 </ul>
+
   </nav></div>
 
 </div></div>

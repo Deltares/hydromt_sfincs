@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Build a model from CLI &#8212; HydroMT SFINCS  documentation</title>
+    <title>1. Build your first SFINCS model: &#8212; HydroMT SFINCS  documentation</title>
   
   
   
@@ -60,7 +60,7 @@
     <link rel="icon" href="../_static/hydromt-icon.svg"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Build a model from Python" href="1_build_from_script.html" />
+    <link rel="next" title="0. Initialize the logger" href="1a_build_from_script.html" />
     <link rel="prev" title="Building a SFINCS model" href="../user_guide/2_build_model/model_build.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
@@ -403,27 +403,73 @@
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/2_build_model/model_components.html">Model Components</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/2_build_model/model_methods.html">Model Methods</a></li>
 <li class="toctree-l2 current active has-children"><a class="reference internal" href="../user_guide/2_build_model/model_build.html">Building a SFINCS model</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
-<li class="toctree-l3 current active"><a aria-current="page" class="current reference internal" href="#"> Example: Build from CLI</a></li>
-<li class="toctree-l3"><a class="reference internal" href="1_build_from_script.html"> Example: Build from script</a></li>
+<li class="toctree-l3 current active"><a aria-current="page" class="current reference internal" href="#">1. Build your first SFINCS model:</a></li>
+
+
+
+
+
+
+
+<li class="toctree-l3"><a class="reference internal" href="1a_build_from_script.html">0. Initialize the logger</a></li>
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3"><a class="reference internal" href="1b_build_quadtree_from_script.html">0. Initialize the logger</a></li>
+
+
+
+
+
+
+
+
+
+
+
 </ul>
 </details></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/3_update_model/index.html">Updating a SFINCS Model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../user_guide/3_update_model/model_update.html">Updating a SFINCS model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l3"><a class="reference internal" href="2_update_forcing.html">Example: Update Forcing</a></li>
-<li class="toctree-l3"><a class="reference internal" href="3_update_geometries.html">Example: Update Geometries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="2_update_forcing.html">1. Initialize SfincsModel class, set data library, mode and root folder:</a></li>
+
+
+
+
+<li class="toctree-l3"><a class="reference internal" href="3_update_geometries.html">1. Initialize SfincsModel class, set data library, mode and root folder:</a></li>
+
+
+
+
 </ul>
 </details></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/4_run_model/sfincs_run.html">Running a model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="4_run_model.html">Example: Running a model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="4_run_model.html">Settings</a></li>
+
+
+
+
+
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/5_postprocess_model/sfincs_analyse.html">Postprocessing and visualization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="5_plot_results_hmax.html">Example: Determine maximum waterdepth</a></li>
-<li class="toctree-l2"><a class="reference internal" href="6_make_results_animation.html">Example: Create animation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="5_plot_results_hmax.html">1. Determine maximum water depth for a regular model</a></li>
+
+<li class="toctree-l2"><a class="reference internal" href="6_make_results_animation.html">Step 1: Read model results</a></li>
+
+
+
 </ul>
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_guide/6_migration_guide/migration_hydromt.html">Migration Guide</a></li>
@@ -476,7 +522,7 @@
     
     <li class="breadcrumb-item"><a href="../user_guide/2_build_model/model_build.html" class="nav-link">Building a SFINCS model</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Build a model from CLI</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">1. Build your first SFINCS model:</span></li>
   </ul>
 </nav>
 </div>
@@ -499,9 +545,10 @@
     For an interactive online version click here:
     <a href="https://mybinder.org/v2/gh/Deltares/hydromt_sfincs/main?urlpath=lab/tree/examples/0_build_from_cli.ipynb" target="_blank" rel="noopener noreferrer"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg"></a>
 </div></div>
-<section id="Build-a-model-from-CLI">
-<h1>Build a model from CLI<a class="headerlink" href="#Build-a-model-from-CLI" title="Link to this heading">#</a></h1>
-<p>In this example a simple <strong>SFINCS</strong> compound flood model will be made, using <strong>HydroMT</strong>’s yml-file that allows for fast model configuration. The model is situated in <strong>Northern Italy</strong>, where a small selection of topography and bathymetry data has already been made available for you to try the examples.</p>
+<div style="padding: 20px 24px; border-radius: 12px; background: linear-gradient(110deg, #12304a, #187b8f); color: white; margin-bottom: 16px;"><div style="font-size: 0.78em; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.85;"><p>HydroMT-SFINCS | Example 00</p>
+</div><h1 style="color: white; margin: 8px 0 4px;"><p>Build a SFINCS model from CLI</p>
+</h1><div style="opacity: 0.95;"><p>Configure and build a SFINCS model with a HydroMT YAML workflow.</p>
+</div></div><p>In this example a simple <strong>SFINCS</strong> compound flood model will be made, using <strong>HydroMT</strong>’s yml-file that allows for fast model configuration. The model is situated in <strong>Northern Italy</strong>, where a small selection of topography and bathymetry data has already been made available for you to try the examples.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
@@ -523,7 +570,7 @@ Model plugins:
 
 </pre></div></div>
 </div>
-<p>This example shows how to build a simple SFINCS model on a regular grid, containing an elevation dep-file, offshore water level forcing and an upstream discharge input forcing. For making a more advanced model including e.g. spatially varying infiltration and roughness, see the example notebook: examples/build_from_script.ipynb</p>
+<p>This example shows how to build a simple SFINCS model on a regular grid, containing an elevation dep-file, offshore water level forcing and an upstream discharge input forcing. For making a more advanced model including e.g. spatially varying infiltration and roughness, see the example notebook: <a class="reference internal" href="1a_build_from_script.html"><span class="doc">1a_build_from_script.ipynb</span></a></p>
 <p>In case you want to adjust this example to build a SFINCS model anywhere else in the world, you will have to add your own datasets to HydroMT’s data catalog. For more info on that, check-out:</p>
 <ul class="simple">
 <li><p><a class="reference external" href="https://deltares.github.io/hydromt/latest/user_guide/data_prepare_cat.html">Prepare data catalog</a></p></li>
@@ -540,7 +587,7 @@ Model plugins:
 </li><li><p>Check what additional files have been created</p>
 </li></ol><p>Let’s get started!</p>
 <section id="1.-Build-your-first-SFINCS-model:">
-<h2>1. Build your first SFINCS model:<a class="headerlink" href="#1.-Build-your-first-SFINCS-model:" title="Link to this heading">#</a></h2>
+<h1>1. Build your first SFINCS model:<a class="headerlink" href="#1.-Build-your-first-SFINCS-model:" title="Link to this heading">#</a></h1>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
@@ -562,76 +609,76 @@ Model plugins:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-10-28 14:41:44,328 - hydromt - log - INFO - HydroMT version: 1.4.1
+2026-10-29 16:32:09,149 - hydromt - log - INFO - HydroMT version: 1.4.1
 Downloading file &#39;v1.0.0/data_catalog.yml&#39; from &#39;https://raw.githubusercontent.com/Deltares/hydromt/main/data/catalogs/artifact_data/v1.0.0/data_catalog.yml&#39; to &#39;/home/runner/.hydromt/artifact_data&#39;.
-2026-10-28 14:41:44,733 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
-2026-10-28 14:41:44,733 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
+2026-10-29 16:32:09,582 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
+2026-10-29 16:32:09,582 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
 Downloading data from &#39;https://github.com/DirkEilander/hydromt-artifacts/releases/download/v0.0.9/data.tar.gz&#39; to file &#39;/home/runner/.hydromt/artifact_data/latest/data.tar.gz&#39;.
 SHA256 hash of downloaded file: 32de5b95c171628547f303d7f65d53cbb1b9da9af4834717c8efff93fe55aad4
 Use this value as the &#39;known_hash&#39; argument of &#39;pooch.retrieve&#39; to ensure that the file hasn&#39;t changed if it is downloaded again in the future.
 Untarring contents of &#39;/home/runner/.hydromt/artifact_data/latest/data.tar.gz&#39; to &#39;/home/runner/.hydromt/artifact_data/latest&#39;
-2026-10-28 14:41:46,894 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0rc4).
-2026-10-28 14:41:46,895 - hydromt - log - INFO - HydroMT version: 1.4.1
-2026-10-28 14:41:46,895 - hydromt.model.model - model - INFO - build: config.update
-2026-10-28 14:41:46,895 - hydromt.model.model - model - INFO - config.update.dict=None
-2026-10-28 14:41:46,895 - hydromt.model.model - model - INFO - config.update.skip_validation=False
-2026-10-28 14:41:46,896 - hydromt.model.model - model - INFO - config.update.tref=20100201 000000
-2026-10-28 14:41:46,896 - hydromt.model.model - model - INFO - config.update.tstart=20100201 000000
-2026-10-28 14:41:46,896 - hydromt.model.model - model - INFO - config.update.tstop=20100202 000000
-2026-10-28 14:41:46,896 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 3 attributes in model config.
-2026-10-28 14:41:46,927 - hydromt.model.model - model - INFO - build: grid.create_from_region
-2026-10-28 14:41:46,928 - hydromt.model.model - model - INFO - grid.create_from_region.res=150
-2026-10-28 14:41:46,928 - hydromt.model.model - model - INFO - grid.create_from_region.crs=utm
-2026-10-28 14:41:46,928 - hydromt.model.model - model - INFO - grid.create_from_region.rotated=True
-2026-10-28 14:41:46,928 - hydromt.model.model - model - INFO - grid.create_from_region.hydrography_fn=None
-2026-10-28 14:41:46,928 - hydromt.model.model - model - INFO - grid.create_from_region.basin_index_fn=None
-2026-10-28 14:41:46,928 - hydromt.model.model - model - INFO - grid.create_from_region.align=True
-2026-10-28 14:41:46,928 - hydromt.model.model - model - INFO - grid.create_from_region.dec_origin=0
-2026-10-28 14:41:46,928 - hydromt.model.model - model - INFO - grid.create_from_region.dec_rotation=3
-2026-10-28 14:41:46,928 - hydromt.model.model - model - INFO - grid.create_from_region.region={&#39;geom&#39;: PosixPath(&#39;/home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson&#39;)}
-2026-10-28 14:41:46,928 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading region.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
-2026-10-28 14:41:46,943 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 9 attributes in model config.
-2026-10-28 14:41:46,954 - hydromt.model.model - model - INFO - build: elevation.create
-2026-10-28 14:41:46,954 - hydromt.model.model - model - INFO - elevation.create.buffer_cells=0
-2026-10-28 14:41:46,954 - hydromt.model.model - model - INFO - elevation.create.interp_method=linear
-2026-10-28 14:41:46,954 - hydromt.model.model - model - INFO - elevation.create.interpolate_na=True
-2026-10-28 14:41:46,954 - hydromt.model.model - model - INFO - elevation.create.elevation_list=[{&#39;elevation&#39;: &#39;merit_hydro&#39;, &#39;zmin&#39;: 0.001}, {&#39;elevation&#39;: &#39;gebco&#39;}]
-2026-10-28 14:41:46,969 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
-2026-10-28 14:41:46,989 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
-2026-10-28 14:41:47,047 - hydromt.model.model - model - INFO - build: mask.create_active
-2026-10-28 14:41:47,047 - hydromt.model.model - model - INFO - mask.create_active.zmin=None
-2026-10-28 14:41:47,047 - hydromt.model.model - model - INFO - mask.create_active.zmax=None
-2026-10-28 14:41:47,047 - hydromt.model.model - model - INFO - mask.create_active.include_polygon=/home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
-2026-10-28 14:41:47,047 - hydromt.model.model - model - INFO - mask.create_active.include_zmin=-5
-2026-10-28 14:41:47,047 - hydromt.model.model - model - INFO - mask.create_active.include_zmax=None
-2026-10-28 14:41:47,048 - hydromt.model.model - model - INFO - mask.create_active.exclude_polygon=None
-2026-10-28 14:41:47,048 - hydromt.model.model - model - INFO - mask.create_active.exclude_zmin=None
-2026-10-28 14:41:47,048 - hydromt.model.model - model - INFO - mask.create_active.exclude_zmax=None
-2026-10-28 14:41:47,048 - hydromt.model.model - model - INFO - mask.create_active.fill_area=10.0
-2026-10-28 14:41:47,048 - hydromt.model.model - model - INFO - mask.create_active.drop_area=0.0
-2026-10-28 14:41:47,048 - hydromt.model.model - model - INFO - mask.create_active.connectivity=8
-2026-10-28 14:41:47,048 - hydromt.model.model - model - INFO - mask.create_active.all_touched=True
-2026-10-28 14:41:47,048 - hydromt.model.model - model - INFO - mask.create_active.reset_mask=True
-2026-10-28 14:41:47,056 - hydromt.data_catalog.data_catalog - data_catalog - WARNING - overwriting data source &#39;region.geojson&#39; with provider user and version _UNSPECIFIED_.
-2026-10-28 14:41:47,056 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading region.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
-2026-10-28 14:41:47,069 - hydromt.hydromt_sfincs.components.grid.mask - mask - INFO - 0 gaps outside valid elevation range &lt; 10.0 km2.
-2026-10-28 14:41:47,080 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 2 attributes in model config.
-2026-10-28 14:41:47,092 - hydromt.model.model - model - INFO - build: mask.create_boundary
-2026-10-28 14:41:47,092 - hydromt.model.model - model - INFO - mask.create_boundary.btype=waterlevel
-2026-10-28 14:41:47,092 - hydromt.model.model - model - INFO - mask.create_boundary.zmin=None
-2026-10-28 14:41:47,092 - hydromt.model.model - model - INFO - mask.create_boundary.zmax=-1
-2026-10-28 14:41:47,092 - hydromt.model.model - model - INFO - mask.create_boundary.include_polygon=None
-2026-10-28 14:41:47,092 - hydromt.model.model - model - INFO - mask.create_boundary.include_zmin=None
-2026-10-28 14:41:47,092 - hydromt.model.model - model - INFO - mask.create_boundary.include_zmax=None
-2026-10-28 14:41:47,092 - hydromt.model.model - model - INFO - mask.create_boundary.include_polygon_buffer=0
-2026-10-28 14:41:47,092 - hydromt.model.model - model - INFO - mask.create_boundary.exclude_polygon=None
-2026-10-28 14:41:47,092 - hydromt.model.model - model - INFO - mask.create_boundary.exclude_zmin=None
-2026-10-28 14:41:47,092 - hydromt.model.model - model - INFO - mask.create_boundary.exclude_zmax=None
-2026-10-28 14:41:47,092 - hydromt.model.model - model - INFO - mask.create_boundary.connectivity=4
-2026-10-28 14:41:47,092 - hydromt.model.model - model - INFO - mask.create_boundary.all_touched=False
-2026-10-28 14:41:47,092 - hydromt.model.model - model - INFO - mask.create_boundary.reset_bounds=False
-2026-10-28 14:41:47,106 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
-2026-10-28 14:41:47,135 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - No subgrid table available to write.
+2026-10-29 16:32:11,913 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0rc4).
+2026-10-29 16:32:11,914 - hydromt - log - INFO - HydroMT version: 1.4.1
+2026-10-29 16:32:11,914 - hydromt.model.model - model - INFO - build: config.update
+2026-10-29 16:32:11,914 - hydromt.model.model - model - INFO - config.update.dict=None
+2026-10-29 16:32:11,914 - hydromt.model.model - model - INFO - config.update.skip_validation=False
+2026-10-29 16:32:11,914 - hydromt.model.model - model - INFO - config.update.tref=20100201 000000
+2026-10-29 16:32:11,914 - hydromt.model.model - model - INFO - config.update.tstart=20100201 000000
+2026-10-29 16:32:11,914 - hydromt.model.model - model - INFO - config.update.tstop=20100202 000000
+2026-10-29 16:32:11,914 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 3 attributes in model config.
+2026-10-29 16:32:11,937 - hydromt.model.model - model - INFO - build: grid.create_from_region
+2026-10-29 16:32:11,937 - hydromt.model.model - model - INFO - grid.create_from_region.res=150
+2026-10-29 16:32:11,937 - hydromt.model.model - model - INFO - grid.create_from_region.crs=utm
+2026-10-29 16:32:11,937 - hydromt.model.model - model - INFO - grid.create_from_region.rotated=True
+2026-10-29 16:32:11,937 - hydromt.model.model - model - INFO - grid.create_from_region.hydrography_fn=None
+2026-10-29 16:32:11,937 - hydromt.model.model - model - INFO - grid.create_from_region.basin_index_fn=None
+2026-10-29 16:32:11,937 - hydromt.model.model - model - INFO - grid.create_from_region.align=True
+2026-10-29 16:32:11,937 - hydromt.model.model - model - INFO - grid.create_from_region.dec_origin=0
+2026-10-29 16:32:11,937 - hydromt.model.model - model - INFO - grid.create_from_region.dec_rotation=3
+2026-10-29 16:32:11,937 - hydromt.model.model - model - INFO - grid.create_from_region.region={&#39;geom&#39;: PosixPath(&#39;/home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson&#39;)}
+2026-10-29 16:32:11,937 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading region.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
+2026-10-29 16:32:11,949 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 9 attributes in model config.
+2026-10-29 16:32:11,956 - hydromt.model.model - model - INFO - build: elevation.create
+2026-10-29 16:32:11,956 - hydromt.model.model - model - INFO - elevation.create.buffer_cells=0
+2026-10-29 16:32:11,956 - hydromt.model.model - model - INFO - elevation.create.interp_method=linear
+2026-10-29 16:32:11,956 - hydromt.model.model - model - INFO - elevation.create.interpolate_na=True
+2026-10-29 16:32:11,957 - hydromt.model.model - model - INFO - elevation.create.elevation_list=[{&#39;elevation&#39;: &#39;merit_hydro&#39;, &#39;zmin&#39;: 0.001}, {&#39;elevation&#39;: &#39;gebco&#39;}]
+2026-10-29 16:32:11,968 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
+2026-10-29 16:32:11,982 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
+2026-10-29 16:32:12,024 - hydromt.model.model - model - INFO - build: mask.create_active
+2026-10-29 16:32:12,024 - hydromt.model.model - model - INFO - mask.create_active.zmin=None
+2026-10-29 16:32:12,024 - hydromt.model.model - model - INFO - mask.create_active.zmax=None
+2026-10-29 16:32:12,024 - hydromt.model.model - model - INFO - mask.create_active.include_polygon=/home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
+2026-10-29 16:32:12,024 - hydromt.model.model - model - INFO - mask.create_active.include_zmin=-5
+2026-10-29 16:32:12,024 - hydromt.model.model - model - INFO - mask.create_active.include_zmax=None
+2026-10-29 16:32:12,024 - hydromt.model.model - model - INFO - mask.create_active.exclude_polygon=None
+2026-10-29 16:32:12,024 - hydromt.model.model - model - INFO - mask.create_active.exclude_zmin=None
+2026-10-29 16:32:12,024 - hydromt.model.model - model - INFO - mask.create_active.exclude_zmax=None
+2026-10-29 16:32:12,024 - hydromt.model.model - model - INFO - mask.create_active.fill_area=10.0
+2026-10-29 16:32:12,024 - hydromt.model.model - model - INFO - mask.create_active.drop_area=0.0
+2026-10-29 16:32:12,024 - hydromt.model.model - model - INFO - mask.create_active.connectivity=8
+2026-10-29 16:32:12,024 - hydromt.model.model - model - INFO - mask.create_active.all_touched=True
+2026-10-29 16:32:12,024 - hydromt.model.model - model - INFO - mask.create_active.reset_mask=True
+2026-10-29 16:32:12,030 - hydromt.data_catalog.data_catalog - data_catalog - WARNING - overwriting data source &#39;region.geojson&#39; with provider user and version _UNSPECIFIED_.
+2026-10-29 16:32:12,030 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading region.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
+2026-10-29 16:32:12,039 - hydromt.hydromt_sfincs.components.grid.mask - mask - INFO - 0 gaps outside valid elevation range &lt; 10.0 km2.
+2026-10-29 16:32:12,047 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 2 attributes in model config.
+2026-10-29 16:32:12,055 - hydromt.model.model - model - INFO - build: mask.create_boundary
+2026-10-29 16:32:12,055 - hydromt.model.model - model - INFO - mask.create_boundary.btype=waterlevel
+2026-10-29 16:32:12,055 - hydromt.model.model - model - INFO - mask.create_boundary.zmin=None
+2026-10-29 16:32:12,055 - hydromt.model.model - model - INFO - mask.create_boundary.zmax=-1
+2026-10-29 16:32:12,055 - hydromt.model.model - model - INFO - mask.create_boundary.include_polygon=None
+2026-10-29 16:32:12,055 - hydromt.model.model - model - INFO - mask.create_boundary.include_zmin=None
+2026-10-29 16:32:12,055 - hydromt.model.model - model - INFO - mask.create_boundary.include_zmax=None
+2026-10-29 16:32:12,055 - hydromt.model.model - model - INFO - mask.create_boundary.include_polygon_buffer=0
+2026-10-29 16:32:12,055 - hydromt.model.model - model - INFO - mask.create_boundary.exclude_polygon=None
+2026-10-29 16:32:12,055 - hydromt.model.model - model - INFO - mask.create_boundary.exclude_zmin=None
+2026-10-29 16:32:12,055 - hydromt.model.model - model - INFO - mask.create_boundary.exclude_zmax=None
+2026-10-29 16:32:12,055 - hydromt.model.model - model - INFO - mask.create_boundary.connectivity=4
+2026-10-29 16:32:12,055 - hydromt.model.model - model - INFO - mask.create_boundary.all_touched=False
+2026-10-29 16:32:12,055 - hydromt.model.model - model - INFO - mask.create_boundary.reset_bounds=False
+2026-10-29 16:32:12,064 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
+2026-10-29 16:32:12,085 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - No subgrid table available to write.
 
 </pre></div></div>
 </div>
@@ -645,13 +692,11 @@ Untarring contents of &#39;/home/runner/.hydromt/artifact_data/latest/data.tar.g
 <li><p><code class="docutils literal notranslate"><span class="pre">--force-overwrite</span></code> : even if there’s already an existing folder with the same name and SFINCS input files, HydroMT will overwrite it</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">-v</span></code> : add verbosity to the logger</p></li>
 </ul>
-<p><strong>NOTE:</strong></p>
-<ul class="simple">
-<li><p>instead of <code class="docutils literal notranslate"><span class="pre">--region</span></code>, you can also type <code class="docutils literal notranslate"><span class="pre">-r</span></code></p></li>
-<li><p>instead of <code class="docutils literal notranslate"><span class="pre">--force-overwrite</span></code>, you can also type <code class="docutils literal notranslate"><span class="pre">--fo</span></code></p></li>
-<li><p>for extra output information of HydroMT’s logfile command, add <code class="docutils literal notranslate"><span class="pre">-v</span></code></p></li>
-</ul>
-<div class="nbinput docutils container">
+<div style="padding: 14px 18px; border-left: 4px solid #187b8f; background: #eaf6f8; border-radius: 6px; margin: 12px 1em 12px 0; width: calc(100% - 1em); box-sizing: border-box; color: #111111;"><p>💡NOTE:</p>
+<ul style="margin: 8px 0 0;"><li><p>instead of –region, you can also type -r</p>
+</li><li><p>instead of –force-overwrite, you can also type –fo</p>
+</li><li><p>for extra output information of HydroMT’s logfile command, add -v</p>
+</li></ul></div><div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
@@ -693,7 +738,7 @@ Options:
 </div>
 </section>
 <section id="2.-Check-what-files-have-been-created:">
-<h2>2. Check what files have been created:<a class="headerlink" href="#2.-Check-what-files-have-been-created:" title="Link to this heading">#</a></h2>
+<h1>2. Check what files have been created:<a class="headerlink" href="#2.-Check-what-files-have-been-created:" title="Link to this heading">#</a></h1>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
@@ -710,12 +755,12 @@ Options:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&#39;hydromt.log&#39;, &#39;gis&#39;, &#39;sfincs.inp&#39;, &#39;sfincs.ind&#39;, &#39;sfincs.msk&#39;, &#39;sfincs.dep&#39;]
+[&#39;sfincs.dep&#39;, &#39;hydromt.log&#39;, &#39;sfincs.ind&#39;, &#39;sfincs.inp&#39;, &#39;sfincs.msk&#39;, &#39;gis&#39;]
 </pre></div></div>
 </div>
 </section>
 <section id="3.-Information-about-created-files:">
-<h2>3. Information about created files:<a class="headerlink" href="#3.-Information-about-created-files:" title="Link to this heading">#</a></h2>
+<h1>3. Information about created files:<a class="headerlink" href="#3.-Information-about-created-files:" title="Link to this heading">#</a></h1>
 <p><strong>SFINCS native input files:</strong></p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">SFINCS</span> <span class="pre">configuration</span></code>: sfincs.inp (<a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input.html#overview">Read more</a>)</p>
@@ -736,8 +781,8 @@ Options:
 </ul>
 </section>
 <section id="4.-Plot-current-base-model">
-<h2>4. Plot current base model<a class="headerlink" href="#4.-Plot-current-base-model" title="Link to this heading">#</a></h2>
-<div class="nbinput docutils container">
+<h1>4. Plot current base model<a class="headerlink" href="#4.-Plot-current-base-model" title="Link to this heading">#</a></h1>
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
@@ -748,22 +793,6 @@ Options:
 <span class="n">sf</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-/home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/components/grid/regulargrid.py:558: FutureWarning: In a future version of xarray the default value for compat will change from compat=&#39;no_conflicts&#39; to compat=&#39;override&#39;. This is likely to lead to different results when combining overlapping variables with the same name. To opt in to new defaults and get rid of these warnings now use `set_options(use_new_combine_kwarg_defaults=True) or set compat explicitly.
-  ds = xr.merge(arrays)
-/home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/components/grid/regulargrid.py:558: FutureWarning: In a future version of xarray the default value for compat will change from compat=&#39;no_conflicts&#39; to compat=&#39;override&#39;. This is likely to lead to different results when combining overlapping variables with the same name. To opt in to new defaults and get rid of these warnings now use `set_options(use_new_combine_kwarg_defaults=True) or set compat explicitly.
-  ds = xr.merge(arrays)
-manningfile not found at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/sfincs.manning
-volfile not found at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/sfincs.vol
-inifile not found at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/sfincs.ini
-File /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/sfincs_map.nc not found.
-File /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/sfincs_his.nc not found.
-</pre></div></div>
 </div>
 <p>Here in the plot you see the following:</p>
 <ul class="simple">
@@ -789,7 +818,7 @@ File /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_b
 </div>
 </section>
 <section id="5.-Explanation-of-HydroMT's-.yml-file:">
-<h2>5. Explanation of HydroMT’s .yml-file:<a class="headerlink" href="#5.-Explanation-of-HydroMT's-.yml-file:" title="Link to this heading">#</a></h2>
+<h1>5. Explanation of HydroMT’s .yml-file:<a class="headerlink" href="#5.-Explanation-of-HydroMT's-.yml-file:" title="Link to this heading">#</a></h1>
 <p>This model was made using HydroMT’s yaml-file, in this case <strong>‘sfincs_base_build.yml’</strong>, that contains:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
@@ -887,7 +916,7 @@ steps:
 <p>From here on, we’re going to extend the model with some forcing of water level and river discharge, so that actually something interesting will happen when you run the created SFINCS model later. Also, we’re adding some observations points so we can inspect this. We do this with the additional yml-file <strong>sfincs_base_update.yml</strong> containing what we want to add:</p>
 </section>
 <section id="6.-Update-the-model-to-include-forcing:">
-<h2>6. Update the model to include forcing:<a class="headerlink" href="#6.-Update-the-model-to-include-forcing:" title="Link to this heading">#</a></h2>
+<h1>6. Update the model to include forcing:<a class="headerlink" href="#6.-Update-the-model-to-include-forcing:" title="Link to this heading">#</a></h1>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
@@ -901,35 +930,35 @@ steps:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-10-28 14:41:57,183 - hydromt - log - INFO - HydroMT version: 1.4.1
-2026-10-28 14:41:57,489 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
-2026-10-28 14:41:57,489 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
-2026-10-28 14:41:58,148 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0rc4).
-2026-10-28 14:41:58,149 - hydromt - log - INFO - HydroMT version: 1.4.1
-2026-10-28 14:41:58,150 - hydromt.model.model - model - INFO - update: observation_points.create
-2026-10-28 14:41:58,150 - hydromt.model.model - model - INFO - observation_points.create.merge=True
-2026-10-28 14:41:58,150 - hydromt.model.model - model - INFO - observation_points.create.locations=/home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_observation_points.geojson
-2026-10-28 14:41:58,216 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading compound_example_observation_points.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_observation_points.geojson
-2026-10-28 14:41:58,235 - hydromt.hydromt_sfincs.components.geometries.observation_points - observation_points - INFO - Adding new observation points to existing ones.
-2026-10-28 14:41:58,246 - hydromt.model.model - model - INFO - update: water_level.create
-2026-10-28 14:41:58,246 - hydromt.model.model - model - INFO - water_level.create.geodataset=gtsmv3_eu_era5
-2026-10-28 14:41:58,246 - hydromt.model.model - model - INFO - water_level.create.timeseries=None
-2026-10-28 14:41:58,246 - hydromt.model.model - model - INFO - water_level.create.locations=None
-2026-10-28 14:41:58,246 - hydromt.model.model - model - INFO - water_level.create.offset=None
-2026-10-28 14:41:58,246 - hydromt.model.model - model - INFO - water_level.create.buffer=2000
-2026-10-28 14:41:58,246 - hydromt.model.model - model - INFO - water_level.create.merge=True
-2026-10-28 14:41:58,246 - hydromt.model.model - model - INFO - water_level.create.drop_duplicates=True
-2026-10-28 14:41:58,276 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gtsmv3_eu_era5 GeoDataset data from /home/runner/.hydromt/artifact_data/latest/gtsmv3_eu_era5.nc
-2026-10-28 14:41:58,568 - hydromt.model.model - model - INFO - update: discharge_points.create
-2026-10-28 14:41:58,568 - hydromt.model.model - model - INFO - discharge_points.create.geodataset=None
-2026-10-28 14:41:58,568 - hydromt.model.model - model - INFO - discharge_points.create.timeseries=/home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_dis_timeseries.csv
-2026-10-28 14:41:58,568 - hydromt.model.model - model - INFO - discharge_points.create.locations=/home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_src_locations.geojson
-2026-10-28 14:41:58,568 - hydromt.model.model - model - INFO - discharge_points.create.merge=True
-2026-10-28 14:41:58,568 - hydromt.model.model - model - INFO - discharge_points.create.buffer=None
-2026-10-28 14:41:58,568 - hydromt.model.model - model - INFO - discharge_points.create.drop_duplicates=True
-2026-10-28 14:41:58,578 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading compound_dis_timeseries.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_dis_timeseries.csv
-2026-10-28 14:41:58,581 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading compound_src_locations.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_src_locations.geojson
-2026-10-28 14:41:58,653 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - No subgrid table available to write.
+2026-10-29 16:32:20,007 - hydromt - log - INFO - HydroMT version: 1.4.1
+2026-10-29 16:32:20,277 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
+2026-10-29 16:32:20,277 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
+2026-10-29 16:32:20,822 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0rc4).
+2026-10-29 16:32:20,823 - hydromt - log - INFO - HydroMT version: 1.4.1
+2026-10-29 16:32:20,823 - hydromt.model.model - model - INFO - update: observation_points.create
+2026-10-29 16:32:20,823 - hydromt.model.model - model - INFO - observation_points.create.merge=True
+2026-10-29 16:32:20,823 - hydromt.model.model - model - INFO - observation_points.create.locations=/home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_observation_points.geojson
+2026-10-29 16:32:20,870 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading compound_example_observation_points.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_observation_points.geojson
+2026-10-29 16:32:20,883 - hydromt.hydromt_sfincs.components.geometries.observation_points - observation_points - INFO - Adding new observation points to existing ones.
+2026-10-29 16:32:20,891 - hydromt.model.model - model - INFO - update: water_level.create
+2026-10-29 16:32:20,891 - hydromt.model.model - model - INFO - water_level.create.geodataset=gtsmv3_eu_era5
+2026-10-29 16:32:20,891 - hydromt.model.model - model - INFO - water_level.create.timeseries=None
+2026-10-29 16:32:20,891 - hydromt.model.model - model - INFO - water_level.create.locations=None
+2026-10-29 16:32:20,891 - hydromt.model.model - model - INFO - water_level.create.offset=None
+2026-10-29 16:32:20,891 - hydromt.model.model - model - INFO - water_level.create.buffer=2000
+2026-10-29 16:32:20,891 - hydromt.model.model - model - INFO - water_level.create.merge=True
+2026-10-29 16:32:20,891 - hydromt.model.model - model - INFO - water_level.create.drop_duplicates=True
+2026-10-29 16:32:20,912 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gtsmv3_eu_era5 GeoDataset data from /home/runner/.hydromt/artifact_data/latest/gtsmv3_eu_era5.nc
+2026-10-29 16:32:21,120 - hydromt.model.model - model - INFO - update: discharge_points.create
+2026-10-29 16:32:21,121 - hydromt.model.model - model - INFO - discharge_points.create.geodataset=None
+2026-10-29 16:32:21,121 - hydromt.model.model - model - INFO - discharge_points.create.timeseries=/home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_dis_timeseries.csv
+2026-10-29 16:32:21,121 - hydromt.model.model - model - INFO - discharge_points.create.locations=/home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_src_locations.geojson
+2026-10-29 16:32:21,121 - hydromt.model.model - model - INFO - discharge_points.create.merge=True
+2026-10-29 16:32:21,121 - hydromt.model.model - model - INFO - discharge_points.create.buffer=None
+2026-10-29 16:32:21,121 - hydromt.model.model - model - INFO - discharge_points.create.drop_duplicates=True
+2026-10-29 16:32:21,128 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading compound_dis_timeseries.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_dis_timeseries.csv
+2026-10-29 16:32:21,130 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading compound_src_locations.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_src_locations.geojson
+2026-10-29 16:32:21,184 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - No subgrid table available to write.
 
 </pre></div></div>
 </div>
@@ -980,8 +1009,8 @@ steps:
 </ul>
 </section>
 <section id="7.-Plot-model-including-forcing:">
-<h2>7. Plot model including forcing:<a class="headerlink" href="#7.-Plot-model-including-forcing:" title="Link to this heading">#</a></h2>
-<div class="nbinput docutils container">
+<h1>7. Plot model including forcing:<a class="headerlink" href="#7.-Plot-model-including-forcing:" title="Link to this heading">#</a></h1>
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
@@ -992,22 +1021,6 @@ steps:
 <span class="n">sf</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-/home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/components/grid/regulargrid.py:558: FutureWarning: In a future version of xarray the default value for compat will change from compat=&#39;no_conflicts&#39; to compat=&#39;override&#39;. This is likely to lead to different results when combining overlapping variables with the same name. To opt in to new defaults and get rid of these warnings now use `set_options(use_new_combine_kwarg_defaults=True) or set compat explicitly.
-  ds = xr.merge(arrays)
-/home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/components/grid/regulargrid.py:558: FutureWarning: In a future version of xarray the default value for compat will change from compat=&#39;no_conflicts&#39; to compat=&#39;override&#39;. This is likely to lead to different results when combining overlapping variables with the same name. To opt in to new defaults and get rid of these warnings now use `set_options(use_new_combine_kwarg_defaults=True) or set compat explicitly.
-  ds = xr.merge(arrays)
-manningfile not found at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/sfincs.manning
-volfile not found at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/sfincs.vol
-inifile not found at /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/sfincs.ini
-File /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/sfincs_map.nc not found.
-File /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_base/sfincs_his.nc not found.
-</pre></div></div>
 </div>
 <p><strong>In the forcing plot you see the following:</strong></p>
 <ul class="simple">
@@ -1058,7 +1071,7 @@ File /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_b
 </div>
 </section>
 <section id="8.-Check-what-additional-files-have-been-created:">
-<h2>8. Check what additional files have been created:<a class="headerlink" href="#8.-Check-what-additional-files-have-been-created:" title="Link to this heading">#</a></h2>
+<h1>8. Check what additional files have been created:<a class="headerlink" href="#8.-Check-what-additional-files-have-been-created:" title="Link to this heading">#</a></h1>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
@@ -1073,7 +1086,7 @@ File /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_b
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&#39;sfincs.dis&#39;, &#39;sfincs_netbndbzsbzifile.nc&#39;, &#39;hydromt.log&#39;, &#39;figs&#39;, &#39;gis&#39;, &#39;sfincs.src&#39;, &#39;sfincs.obs&#39;, &#39;sfincs.inp&#39;, &#39;sfincs.ind&#39;, &#39;sfincs.msk&#39;, &#39;sfincs.dep&#39;]
+[&#39;sfincs.dep&#39;, &#39;sfincs.src&#39;, &#39;hydromt.log&#39;, &#39;sfincs.ind&#39;, &#39;sfincs.dis&#39;, &#39;sfincs_netbndbzsbzifile.nc&#39;, &#39;figs&#39;, &#39;sfincs.obs&#39;, &#39;sfincs.inp&#39;, &#39;sfincs.msk&#39;, &#39;gis&#39;]
 </pre></div></div>
 </div>
 <p><strong>SFINCS native input files:</strong></p>
@@ -1090,12 +1103,15 @@ File /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_b
 <li><p><a class="reference external" href="https://sfincs.readthedocs.io/en/latest/input_forcing.html">SFINCS manual about input forcing</a></p></li>
 </ul>
 <p>Now you have made a model, you can progress to the notebooks:</p>
-<ul><li><p>examples/run_sfincs_model.ipynb</p>
-</li><li><p>examples/analyse_sfincs_model.ipynb</p>
-</li></ul><p>This notebook provides you a simple SFINCS model on a regular grid. A more advanced example is provided in see examples/build_from_script.ipynb. In addition, an overview of all available options in HydroMT-SFINCS can be found <a class="reference external" href="https://deltares.github.io/hydromt_sfincs/latest/user_guide/sfincs.html">here</a>.</p>
-<p><strong>NOTE:</strong> HydroMT can build even more models for you, like the Hydrological model Wflow, to provide for instance upstream boundary conditions for your SFINCS model! See e.g: <a class="reference external" href="https://deltares.github.io/hydromt/latest/plugins.html">https://deltares.github.io/hydromt/latest/plugins.html</a></p>
-</section>
-</section>
+<ul class="simple">
+<li><p><a class="reference internal" href="4_run_model.html"><span class="doc">Run the model</span></a></p></li>
+<li><p><a class="reference internal" href="5_plot_results_hmax.html"><span class="doc">Plot results: maximum water depth</span></a></p></li>
+<li><p><a class="reference internal" href="6_make_results_animation.html"><span class="doc">Make an animation</span></a></p></li>
+</ul>
+<p>This notebook provides you a simple SFINCS model on a regular grid. A more advanced example is provided in <a class="reference internal" href="1a_build_from_script.html"><span class="doc">1a_build_from_script.ipynb</span></a>. In addition, an overview of all available options in HydroMT-SFINCS can be found <a class="reference external" href="https://deltares.github.io/hydromt_sfincs/latest/user_guide/sfincs.html">here</a>.</p>
+<div style="padding: 14px 18px; border-left: 4px solid #4d9b70; background: #f0fff0; border-radius: 6px; margin: 12px 1em 12px 0; width: calc(100% - 1em); box-sizing: border-box; color: #111111;"><p>💡NOTE:</p>
+<p style="margin: 8px 0 0;"><p>HydroMT can build even more models for you, like the Hydrological model Wflow, to provide for instance upstream boundary conditions for your SFINCS model!See e.g: <a class="reference external" href="https://deltares.github.io/hydromt/latest/plugins.html">https://deltares.github.io/hydromt/latest/plugins.html</a></p>
+</p></div></section>
 
 
                 </article>
@@ -1117,11 +1133,11 @@ File /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_b
       </div>
     </a>
     <a class="right-next"
-       href="1_build_from_script.html"
+       href="1a_build_from_script.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Build a model from Python</p>
+        <p class="prev-next-title">0. Initialize the logger</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -1164,15 +1180,16 @@ File /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_b
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#1.-Build-your-first-SFINCS-model:">1. Build your first SFINCS model:</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#2.-Check-what-files-have-been-created:">2. Check what files have been created:</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#3.-Information-about-created-files:">3. Information about created files:</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#4.-Plot-current-base-model">4. Plot current base model</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#5.-Explanation-of-HydroMT's-.yml-file:">5. Explanation of HydroMT’s .yml-file:</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#6.-Update-the-model-to-include-forcing:">6. Update the model to include forcing:</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#7.-Plot-model-including-forcing:">7. Plot model including forcing:</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#8.-Check-what-additional-files-have-been-created:">8. Check what additional files have been created:</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">1. Build your first SFINCS model:</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#2.-Check-what-files-have-been-created:">2. Check what files have been created:</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#3.-Information-about-created-files:">3. Information about created files:</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#4.-Plot-current-base-model">4. Plot current base model</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#5.-Explanation-of-HydroMT's-.yml-file:">5. Explanation of HydroMT’s .yml-file:</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#6.-Update-the-model-to-include-forcing:">6. Update the model to include forcing:</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#7.-Plot-model-including-forcing:">7. Plot model including forcing:</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#8.-Check-what-additional-files-have-been-created:">8. Check what additional files have been created:</a></li>
 </ul>
+
   </nav></div>
 
 </div></div>
