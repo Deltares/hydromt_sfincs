@@ -570,7 +570,7 @@ def test_structs(model_config, tmp_dir):
     nr_thin_dams = len(model_config.thin_dams.data.index)
     # write thd file only
     tmp_root = tmp_dir / "struct_test"
-    model_config.root.set(tmp_root, mode="w+")
+    model_config.root.set(tmp_root, mode="w")
     model_config.thin_dams.write()
     assert isfile(join(model_config.root.path, "sfincs.thd"))
     fn_thd_gis = join(model_config.root.path, "gis", "thd.geojson")
@@ -598,7 +598,7 @@ def test_drainage_structures(model_config, tmp_dir):
     nr_drainage_structures = len(model_config.drainage_structures.data.index)
     # write drn file only
     tmp_root = tmp_dir / "drainage_struct_test"
-    model_config.root.set(tmp_root, mode="w+")
+    model_config.root.set(tmp_root, mode="w")
     model_config.drainage_structures.write()
     assert isfile(model_config.root.path / "sfincs.drn")
     fn_drn_gis = join(model_config.root.path, "gis", "drn.geojson")
@@ -668,7 +668,7 @@ def test_storage_volume(tmp_dir, case):
     # read the sfincs model and change the root
     mod = SfincsModel(root=root, mode="r")
     mod.read()
-    mod.root.set(tmp_root, mode="w+")
+    mod.root.set(tmp_root, mode="w")
 
     # use correct storage component
     storage = get_storage_component(mod)
@@ -706,7 +706,7 @@ def test_storage_volume(tmp_dir, case):
     # now redo the tests with a rotated grid for the regular grid only
     if case == "test1":
         config = mod.config.data.model_copy()
-        mod = SfincsModel(root=tmp_root, mode="w+")
+        mod = SfincsModel(root=tmp_root, mode="w")
 
         # get the config from the first model and add a rotation
         config.__setattr__("rotation", 10)
@@ -742,7 +742,7 @@ def test_observations(model_config, tmp_dir):
     nr_observation_points = len(model_config.observation_points.data.index)
     # write obs file only
     tmp_root = tmp_dir / "observation_points_test"
-    model_config.root.set(tmp_root, mode="w+")
+    model_config.root.set(tmp_root, mode="w")
     model_config.observation_points.write()
     assert isfile(join(model_config.root.path, "sfincs.obs"))
     assert not isfile(join(model_config.root.path, "sfincs.crs"))
@@ -757,7 +757,7 @@ def test_observations(model_config, tmp_dir):
     nr_observation_lines = len(model_config.cross_sections.data.index)
     # write crs file only
     tmp_root = tmp_dir / "observation_lines_test"
-    model_config.root.set(tmp_root, mode="w+")
+    model_config.root.set(tmp_root, mode="w")
     model_config.cross_sections.write()
     assert isfile(join(model_config.root.path, "sfincs.crs"))
     assert not isfile(join(model_config.root.path, "sfincs.obs"))

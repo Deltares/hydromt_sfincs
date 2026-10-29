@@ -56,7 +56,7 @@ see example below.
     sf.read()
 
     # change the root and mode to write the updated model to a new location
-    sf.root.set("sfincs_compound_precip", mode="w+")
+    sf.root.set("sfincs_compound_precip", mode="w")
 
     # update the configuration
     sf.config.update(

@@ -398,11 +398,13 @@ def plot_basemap(
     )
     # plot mask boundaries
     if plot_bounds and mask_name not in ds:
-        raise ValueError(
-            f"No '{mask_name}' found in ds required to plot the model bounds. "
-            "Set plot_bounds=False or add the mask to ds."
+        logger.warning(
+            "No '%s' found in ds required to plot the model bounds; "
+            "skipping boundary plotting. Set plot_bounds=False or add the mask to ds.",
+            mask_name,
         )
-    elif plot_bounds and (ds[mask_name] > 1).any():
+        plot_bounds = False
+    if plot_bounds and (ds[mask_name] > 1).any():
         gdf_msk = get_bounds_vector(ds[mask_name])
         boundary_specs = {
             2: ("waves bnd", "mask2")

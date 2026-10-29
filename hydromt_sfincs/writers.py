@@ -395,6 +395,10 @@ def write_raster(
         By default, variables is ["grid", "states", "results.hmax"]
     root: Path, str, optional
         The output folder path. If None it defaults to the <model_root>/gis folder (Default)
+    mask : xr.DataArray, optional
+        Active-cell mask. When omitted for DataArray input, the full array is
+        written. For Dataset input, a `mask` variable is required and inferred
+        when this argument is omitted.
     kwargs:
         Key-word arguments passed to hydromt.RasterDataset.to_raster(driver='GTiff', compress='lzw').
     """
@@ -402,7 +406,6 @@ def write_raster(
     # check variables
     if isinstance(data, xr.Dataset):
         variables = list(data.data_vars.keys())
-        variables = [variables]
     elif isinstance(data, xr.DataArray):
         variables = [data.name]
     else:
@@ -413,10 +416,13 @@ def write_raster(
 
     # check mask
     if mask is None:
-        if "mask" in data:
-            mask = data["mask"]
-        else:
-            raise ValueError("No mask provided and no 'mask' variable found in data.")
+        if isinstance(data, xr.Dataset):
+            if "mask" in data:
+                mask = data["mask"]
+            else:
+                raise ValueError(
+                    "No mask provided and no 'mask' variable found in the Dataset."
+                )
 
     # check root
     if not os.path.isdir(root):
@@ -439,8 +445,8 @@ def write_raster(
         # If the raster type is float, set nodata to np.nan
         if da.dtype == "float32" or da.dtype == "float64":
             da.raster.set_nodata(np.nan)
-        # only write active cells to gis files
-        da = da.where(mask > 0, da.raster.nodata).raster.mask_nodata()
+        if mask is not None:
+            da = da.where(mask > 0, da.raster.nodata).raster.mask_nodata()
         if da.raster.res[1] > 0:  # make sure orientation is N->S
             da = da.raster.flipud()
         da.raster.to_raster(
