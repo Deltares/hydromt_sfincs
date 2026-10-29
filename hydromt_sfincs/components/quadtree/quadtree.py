@@ -8,7 +8,6 @@ utilities used by DelftDashboard such as map overlays and grid snapping.
 
 import logging
 import os
-from os.path import isfile
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Union
 
@@ -26,15 +25,9 @@ from hydromt.model.components import MeshComponent
 from hydromt.model.processes.grid import create_grid_from_region
 
 from hydromt_sfincs.utils import make_regular_grid
-from hydromt_sfincs.workflows.cog import make_quadtree_index_cog, make_topobathy_cog
 from hydromt_sfincs.workflows.map_overlay import MeshOverlay
-from hydromt_sfincs.workflows.tiling import (
-    create_topobathy_tiles,
-    int2png,
-    make_index_tiles,
-    tile_window,
-    write_html,
-)
+from hydromt_sfincs.workflows.cog import create_index_cog, create_topobathy_cog
+
 from .quadtree_builder import build_quadtree_xugrid, cut_inactive_cells
 
 if TYPE_CHECKING:
@@ -42,16 +35,26 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 
-_QT_MAPS = {
-    "manning": None,
-    "vol": None,
-    "zs": "inifile",
-    "infiltration": "infiltration_file",
-}
+# components declare the variables they own via a `grid_variables` property;
+# anything not claimed stays in the main quadtree file
 
 
 class SfincsQuadtreeGrid(MeshComponent):
-    """Quadtree grid component attached to an :class:`SfincsModel`."""
+    """Quadtree grid component attached to an :class:`SfincsModel`.
+
+    All layers live in the ``data`` attribute as a ``xugrid.UgridDataset``, but a
+    component may claim the layers it is responsible for through a
+    ``grid_variables`` attribute. ``write()`` keeps those out of ``sfincs.nc``
+    unless called with ``write_components=True``; the component writes them to
+    its own UGRID netcdf through :py:meth:`_write_layers`. Anything not claimed
+    stays in the main file.
+
+    Elevation, the SFINCS mask and the SnapWave mask stay in ``qtrfile``.
+    Their component ``read()`` methods ensure this grid is loaded, while their
+    ``write()`` methods are no-ops; persistence is handled here. Component
+    ``data`` properties expose their own layers with the mesh and attributes;
+    this grid remains the full dataset and the destination for ``set()`` calls.
+    """
 
     def __init__(
         self,
@@ -128,20 +131,37 @@ class SfincsQuadtreeGrid(MeshComponent):
         """
         if self.data is None:
             return gpd.GeoDataFrame()
+
+        # Cached: computing the exterior takes seconds for large grids (it is
+        # called on e.g. every model.region access). The exterior only changes
+        # with the grid topology, i.e. when a new Ugrid2d is built or read, so
+        # the identity of the grid object is a safe cache key.
+        grid_id = id(self.data.grid)
+        if getattr(self, "_exterior_cache_id", None) == grid_id:
+            return self._exterior_cache
+
         indx = self.data.grid.edge_node_connectivity[self.data.grid.exterior_edges, :]
         x = self.data.grid.node_x[indx]
         y = self.data.grid.node_y[indx]
 
-        # Make linestrings from numpy arrays x and y
-        linestrings = [
-            shapely.LineString(np.column_stack((x[i], y[i]))) for i in range(len(x))
-        ]
-        # Merge linestrings
-        merged = shapely.ops.linemerge(linestrings)
-        # Merge polygons
+        # Bulk-create one two-point linestring per exterior edge (vectorised -
+        # a Python loop of shapely.LineString objects is orders of magnitude
+        # slower for the tens of thousands of edges of a real grid)
+        coords = np.stack((x, y), axis=-1)  # (n_edges, 2 nodes, 2)
+        linestrings = shapely.linestrings(coords)
+        # Merge linestrings and build polygons
+        merged = shapely.ops.linemerge(shapely.MultiLineString(list(linestrings)))
         polygons = shapely.ops.polygonize(merged)
 
-        return gpd.GeoDataFrame(geometry=list(polygons), crs=self.crs)
+        gdf = gpd.GeoDataFrame(geometry=list(polygons), crs=self.crs)
+        self._exterior_cache = gdf
+        self._exterior_cache_id = grid_id
+        return gdf
+
+    @property
+    def region(self) -> gpd.GeoDataFrame:
+        """Return the outer boundary of the active grid as polygons"""
+        return self.exterior
 
     @property
     def empty_mask(self) -> Optional[xu.UgridDataArray]:
@@ -164,17 +184,162 @@ class SfincsQuadtreeGrid(MeshComponent):
             da_mask = self.empty_mask
         return da_mask
 
-    def read(self, filename: Union[str, Path] = None, data_vars: List[dict] = None):
+    def _add_cf_metadata(self, ds: xr.Dataset) -> xr.Dataset:
+        """Add the CF/UGRID metadata that MDAL needs to read the file in QGIS."""
+        ds.attrs["Conventions"] = "CF-1.8 UGRID-1.0 Deltares-0.10"
+
+        # xugrid writes 'mesh2d_crs' with pyproj metadata; epsg/epsg_code let
+        # MDAL auto-detect the coordinate system
+        epsg = self.crs.to_epsg()
+        if "mesh2d_crs" in ds:
+            ds["mesh2d_crs"].attrs["epsg"] = epsg
+            ds["mesh2d_crs"].attrs["epsg_code"] = f"EPSG:{epsg}"
+
+        # MDAL rejects the entire mesh when it meets int8/uint8 on the face
+        # dimension; the SFINCS kernel reads these via nf90_get_var into
+        # integer*1 arrays, and NetCDF converts int32 back transparently
+        for var in list(ds.data_vars):
+            if ds[var].dtype in (np.int8, np.uint8):
+                ds[var] = ds[var].astype(np.int32)
+
+        # xugrid's to_dataset() omits units on node coordinates
+        geo = self.crs.is_geographic
+        coord_units = {
+            "mesh2d_node_x": "degrees_east" if geo else "m",
+            "mesh2d_node_y": "degrees_north" if geo else "m",
+        }
+        crs_var_name = "mesh2d_crs" if "mesh2d_crs" in ds else "crs"
+        for coord, units in coord_units.items():
+            if coord in ds:
+                ds[coord].attrs.setdefault("units", units)
+                ds[coord].attrs["grid_mapping"] = crs_var_name
+        return ds
+
+    def _write_layers(
+        self,
+        variables: List[str],
+        config_key: str,
+        default: str,
+    ) -> None:
+        """Write face variables to a standalone UGRID netcdf file.
+
+        The config key is only set once there is data to write, so a layer that
+        was never created does not leave a dangling reference behind.
+        """
+        # TODO add a `ugrid: bool = True` option. Full UGRID keeps every node
+        # coordinate so the file opens standalone in QGIS, but that is a lot of
+        # overhead per layer. Experienced users may prefer a lean file holding
+        # only the face values.
+        missing = [v for v in variables if v not in self.data]
+        if missing:
+            fn = self.model.config.get(config_key, abs_path=True)
+            if fn is None:
+                return  # never configured, so nothing can go missing
+            if Path(fn).is_file():
+                # already on disk at the write root, so there is nothing to do
+                logger.debug(f"{missing} not loaded; leaving {Path(fn).name} as is.")
+            else:
+                logger.warning(
+                    f"'{config_key}' is set to {Path(fn).name} but {missing} are not "
+                    f"loaded and the file is not present here, so it will be missing "
+                    f"from this model. Read the component first, or use model.read()."
+                )
+            return
+        filename = Path(
+            self.model.config.get_set_file_variable(config_key, default=default)
+        )
+        filename.parent.mkdir(parents=True, exist_ok=True)
+        # node coordinates are included so the file carries its own geometry
+        ds = self.data[
+            list(variables) + ["mesh2d_node_x", "mesh2d_node_y"]
+        ].ugrid.to_dataset()
+        ds = self._add_cf_metadata(ds)
+        ds.to_netcdf(filename)
+
+    def _read_layers(self, filename: Union[str, Path]) -> None:
+        """Read face variables from a standalone UGRID netcdf file into `data`."""
+        ds = xu.load_dataset(filename)
+        grid = self.data.grid
+        try:
+            sidecar_grid = ds.grid
+            # TODO: Test attaching layers directly via MeshComponent.set()
+            # for current and supported legacy files. Remove this check only if
+            # that works and a different face ordering is still rejected.
+            self._validate_layer_grid(sidecar_grid, grid)
+
+            layers = {}
+            for name, layer in ds.data_vars.items():
+                if (
+                    name.startswith(f"{sidecar_grid.name}_")
+                    or grid.face_dimension not in layer.dims
+                ):
+                    continue
+                if layer.sizes[sidecar_grid.face_dimension] != grid.n_face:
+                    raise ValueError(
+                        f"Quadtree layer {name} does not match the main grid face count."
+                    )
+                layers[name] = xr.DataArray(
+                    layer.values, dims=layer.dims, name=name, attrs=layer.attrs
+                )
+            if layers:
+                self.set(xu.UgridDataset(xr.Dataset(layers), grid))
+        finally:
+            ds.close()
+
+    def _validate_layer_grid(self, sidecar_grid: xu.Ugrid2d, grid: xu.Ugrid2d) -> None:
+        """Verify that sidecar face values correspond to the main grid's faces.
+
+        Checks CRS, face count, connectivity, and node coordinates before values are
+        attached to the main grid. These are also the topology criteria used by this
+        component when ``MeshComponent.set`` checks for an existing grid.
+        """
+        if sidecar_grid.crs is None:
+            sidecar_grid.set_crs(grid.crs)
+        if sidecar_grid.crs != grid.crs:
+            raise ValueError("Quadtree layer file CRS does not match the main grid.")
+        if (
+            sidecar_grid.face_dimension != grid.face_dimension
+            or sidecar_grid.n_face != grid.n_face
+        ):
+            raise ValueError(
+                "Quadtree layer file face grid does not match the main grid."
+            )
+        if (
+            not np.array_equal(
+                sidecar_grid.face_node_connectivity, grid.face_node_connectivity
+            )
+            or not np.array_equal(sidecar_grid.node_x, grid.node_x)
+            or not np.array_equal(sidecar_grid.node_y, grid.node_y)
+        ):
+            raise ValueError(
+                "Quadtree layer file topology does not match the main grid."
+            )
+
+    def _grid_is_equal(self, grid_name: str, data: xu.UgridDataset) -> bool:
+        try:
+            self._validate_layer_grid(data.grid, self.mesh_grids[grid_name])
+        except ValueError:
+            return False
+        return True
+
+    def read(
+        self,
+        filename: Union[str, Path] = None,
+        read_components: bool = False,
+    ):
         """Reads a quadtree netcdf file and stores it in the QuadtreeGrid object.
+
+        Only the layers in the main file are read. Layers owned by a component
+        are read through that component, which pulls this grid in first if it is
+        not loaded yet.
 
         Parameters
         ----------
         file_name : str or Path, optional
             Path to the netcdf file to read, by default "sfincs.nc".
-        data_vars : List[dict], optional
-            List of dictionaries with variable names and file names to read additional variables,
-            by default None. Each dictionary should have keys "variable" and "file_name", e.g.:
-            data_vars = [{"variable":"vol", "file_name":"storage_volume.nc"}]
+        read_components : bool, optional
+            Also call ``read()`` on the components owning layers here, by
+            default False.
         """
 
         # check if in read mode and initialize grid
@@ -220,110 +385,48 @@ class SfincsQuadtreeGrid(MeshComponent):
         # Make sure epsg is stored in the config as well
         self.model.config.set("epsg", self.model.crs.to_epsg())
 
-        # check which seperate data variables should be read
-        if data_vars is None:
-            data_vars = _QT_MAPS
-        elif isinstance(data_vars, str):
-            data_vars = list(data_vars)
-        variables = []
-        for var in data_vars:
-            fn_var = self.model.config.get(
-                f"{var}file", fallback=f"{var}.nc", abs_path=True
-            )
-            if isfile(fn_var):
-                variables.append({"variable": var, "file_name": fn_var})
-
-        if len(variables) > 0:
-            for var in variables:
-                try:
-                    ds = xu.load_dataset(var["file_name"])
-                    ds.close()
-                    ds.grid.set_crs(self.model.crs)
-                    self.set(ds)
-                except Exception as e:
-                    logger.error(f"Error reading variable {var['variable']}: {e}")
-                    continue
+        if read_components:
+            # _data is set above, so the components will not recurse back here
+            for name in self.model._QUADTREE_GRID_NAMES:
+                component = self.model.components.get(name)
+                if component is not None and getattr(component, "grid_variables", None):
+                    component.read()
 
     def write(
-        self, filename: Union[str, Path] = "sfincs.nc", data_vars: List[dict] = None
+        self,
+        filename: Union[str, Path] = "sfincs.nc",
+        write_components: bool = False,
     ):
         """Writes a quadtree SFINCS netcdf file.
+
+        Layers claimed by a component through its ``grid_variables`` attribute are
+        kept out of this file unless ``write_components`` is True; the component
+        writes them to its own UGRID netcdf instead.
 
         Parameters
         ----------
         filename : str or Path, optional
             Path to the netcdf file to write, by default "sfincs.nc".
-        data_vars : List[dict], optional
-            List of dictionaries with variable names and file names to write additional variables,
-            by default None. Each dictionary should have keys "variable" and "file_name", e.g.:
-            data_vars = [{"variable":"vol", "file_name":"storage_volume.nc"}]
+        write_components : bool, optional
+            Also write the layers owned by other components, by calling their
+            ``write()``, by default False.
         """
-
-        # TODO do we want to cut inactive cells here? Or already when creating the mask?
+        # TODO add an option to keep everything in the qtrfile instead of
+        # splitting. That needs config support first, since several file keys
+        # would then have to resolve to the same file.
 
         attrs = self.data.attrs
         ds = self.data.ugrid.to_dataset()
-        # xugrid writes a 'mesh2d_crs' variable with full CF metadata from
-        # pyproj. Add epsg/epsg_code so MDAL can auto-detect the CRS in QGIS.
-        epsg = self.crs.to_epsg()
-        if "mesh2d_crs" in ds:
-            ds["mesh2d_crs"].attrs["epsg"] = epsg
-            ds["mesh2d_crs"].attrs["epsg_code"] = f"EPSG:{epsg}"
-
-        # certain variables are stored as individual netcdfs because they might change between scnearios;
-        # in Python we keep everything in the same object so they are splitted here
-        # check which data variables should be written separately
-        if data_vars is None:
-            data_vars = _QT_MAPS
-        elif isinstance(data_vars, str):
-            data_vars = list(data_vars)
-        variables = []
-        for var in data_vars:
-            # infiltration uses a non-standard config key ("infiltration_file");
-            # other variables follow the default "{var}file" pattern.
-            key = _QT_MAPS.get(var) or f"{var}file"
-            abs_file_path = self.model.config.get(key, abs_path=True)
-            if abs_file_path is not None:
-                abs_file_path.parent.mkdir(parents=True, exist_ok=True)
-                variables.append({"variable": var, "file_name": abs_file_path})
-
-        if len(variables) > 0:
-            for var in variables:
-                if var["variable"] == "infiltration":
-                    # determine which infiltration variables to write based on the infiltration type
-                    inftype = self.model.config.get("infiltration_type")
-                    (
-                        write_vars,
-                        remove_vars,
-                    ) = self.model.quadtree_infiltration.get_vars_by_infiltration_type(
-                        inftype
-                    )
-
-                    # Log what is being removed (only if anything to remove)
-                    if remove_vars:
-                        logger.info(
-                            f"Removing unused infiltration variables not matching type '{inftype}': {remove_vars}"
-                        )
-
-                    # Drop unwanted variables from dataset BEFORE writing
-                    ds = ds.drop_vars(remove_vars, errors="ignore")
-                else:
-                    write_vars = [var["variable"]]
-                try:
-                    # get the single variable and convert to dataset
-                    # NOTE this allows to read as a standalone file with spatial metadata
-                    ds_var = self.data[
-                        write_vars + ["mesh2d_node_x", "mesh2d_node_y"]
-                    ].ugrid.to_dataset()
-                    ds_var.to_netcdf(var["file_name"])
-                    # drop the variable from ds
-                    ds = ds.drop_vars(write_vars)
-                except Exception as e:
-                    logger.error(f"Error writing variables {write_vars}: {e}")
-                    continue
 
         # RENAME TO FORTRAN CONVENTION
         ds = ds.rename({"dep": "z"}) if "dep" in ds else ds
+
+        # certain variables are stored as individual netcdfs because they might
+        # change between scenarios; those are written by their own component
+        owned = set()
+        for component in self.model.components.values():
+            owned.update(getattr(component, "grid_variables", ()) or ())
+        ds = ds.drop_vars([v for v in owned if v in ds.data_vars], errors="ignore")
 
         # Get absolute file name and set it in config if bndfile is not None
         abs_file_path = self.model.config.get_set_file_variable(
@@ -331,38 +434,18 @@ class SfincsQuadtreeGrid(MeshComponent):
         )
         abs_file_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Make sure epsg is stored in the config as well
-        self.model.config.set("epsg", self.model.crs.to_epsg())
-
         # And write the file
-        attrs["Conventions"] = "CF-1.8 UGRID-1.0 Deltares-0.10"
         ds.attrs = attrs
-
-        # Cast all int8/uint8 variables to int32 — MDAL rejects the entire mesh
-        # when it encounters these small integer types on the face dimension.
-        # The SFINCS Fortran kernel reads them into integer*1 arrays via
-        # nf90_get_var; NetCDF auto-conversion handles int32→int8 transparently.
-        _small_int = (np.int8, np.uint8)
-        for var in list(ds.data_vars):
-            if ds[var].dtype in _small_int:
-                ds[var] = ds[var].astype(np.int32)
-
-        # xugrid's to_dataset() omits units on node coordinates; add them so
-        # MDAL can interpret the coordinate system correctly in QGIS.
-        geo = self.model.crs.is_geographic
-        coord_units = {
-            "mesh2d_node_x": "degrees_east" if geo else "m",
-            "mesh2d_node_y": "degrees_north" if geo else "m",
-        }
-        crs_var_name = "mesh2d_crs" if "mesh2d_crs" in ds else "crs"
-        for coord, units in coord_units.items():
-            if coord in ds:
-                if "units" not in ds[coord].attrs:
-                    ds[coord].attrs["units"] = units
-                ds[coord].attrs["grid_mapping"] = crs_var_name
+        ds = self._add_cf_metadata(ds)
 
         ds.to_netcdf(abs_file_path)
         ds.close()
+
+        if write_components:
+            for name in self.model._QUADTREE_GRID_NAMES:
+                component = self.model.components.get(name)
+                if component is not None and getattr(component, "grid_variables", None):
+                    component.write()
 
     @hydromt_step
     def create(
@@ -433,7 +516,7 @@ class SfincsQuadtreeGrid(MeshComponent):
                 # compute resolution at level
                 res_level = res / (2**lev)
                 elevation_list_per_level.append(
-                    self.model._parse_datasets_elevation(elevation_list, res=res_level)
+                    self.model._parse_elevation_list(elevation_list, res=res_level)
                 )
             elevation_list = elevation_list_per_level
 
@@ -759,184 +842,75 @@ class SfincsQuadtreeGrid(MeshComponent):
     def create_topobathy_cog(
         self,
         filename: Union[str, Path],
-        bathymetry_sets: List[dict],
-        bathymetry_database: Optional[object] = None,
-        dx: float = 10.0,
+        elevation_list: List[dict],
+        resolution: float = 10.0,
+        river_list: Optional[List[dict]] = None,
+        buffer_cells: int = 0,
+        z_minimum: float = -20000.0,
+        nrmax: int = 2000,
     ) -> None:
         """Write a COG raster sampling the model topobathy.
-
-        Thin wrapper around
-        :py:func:`hydromt_sfincs.workflows.cog.make_topobathy_cog`.
 
         Parameters
         ----------
         filename : str or Path
-            Output COG file path.
-        bathymetry_sets : list of dict
-            Dataset list passed through to
-            ``bathymetry_database.get_bathymetry_on_points``.
-        bathymetry_database : object, optional
-            Backing bathymetry database providing
-            ``get_bathymetry_on_points``. Required for this method to
-            produce data.
-        dx : float, optional
-            Raster resolution in model CRS units, by default ``10.0``.
+            Output COG file path (north-up raster in the model CRS, nodata NaN)
+            with the merged elevation datasets.
+        elevation_list : List[dict]
+            List of dictionaries with datasets and merge arguments to use for depth.
+        resolution : float, optional
+            Desired resolution in model CRS units, by default 10.0.
+        river_list : List[dict], optional
+            List of dictionaries with variable names and dataset names to use for river depth.
+        buffer_cells : int, optional
+            Number of buffer cells for interpolation between datasets, by default 0.
+        z_minimum : float, optional
+            Minimum elevation value to use for the output raster, by default -20000.0.
+        nrmax : int, optional
+            Maximum number of cells per block, by default 2000
+            These blocks are used to prevent memory issues while working with large datasets
         """
-        make_topobathy_cog(
-            quadtree_grid=self,
-            filename=filename,
-            bathymetry_sets=bathymetry_sets,
-            bathymetry_database=bathymetry_database,
-            dx=dx,
-        )
 
-    def create_index_tiles(
-        self,
-        root: Union[str, Path],
-        region: Optional[gpd.GeoDataFrame] = None,
-        zoom_range: Union[int, List[int]] = [0, 13],
-        fmt: str = "png",
-        write_html_viewer: bool = True,
-        max_workers: Optional[int] = None,
-        logger: logging.Logger = logger,
-    ) -> None:
-        """Create webmercator index tiles for this quadtree grid.
-
-        Thin wrapper around
-        :py:func:`hydromt_sfincs.workflows.tiling.make_index_tiles`.
-
-        Parameters
-        ----------
-        root : Union[str, Path]
-            Parent directory; tiles land in ``<root>/indices``.
-        region : gpd.GeoDataFrame, optional
-            Area for which tiles are generated. Defaults to the grid
-            exterior.
-        zoom_range : Union[int, List[int]], optional
-            Range of zoom levels, by default ``[0, 13]``.
-        fmt : str, optional
-            ``"png"`` (default) or ``"bin"`` (raw int32).
-        write_html_viewer : bool, optional
-            If True (default) and ``fmt == "png"``, also write an
-            ``index.html`` Leaflet viewer alongside the tiles.
-        max_workers : int, optional
-            Number of worker threads used to render tiles concurrently.
-            Defaults to ``os.cpu_count()``. Pass ``1`` to disable
-            parallelism.
-        """
-        make_index_tiles(
-            quadtree_grid=self,
-            root=root,
-            region=region,
-            zoom_range=zoom_range,
-            fmt=fmt,
-            write_html_viewer=write_html_viewer,
-            max_workers=max_workers,
-            logger=logger,
-        )
-
-    def create_topobathy_tiles(
-        self,
-        root: Union[str, Path],
-        elevation_list: Optional[List[dict]] = None,
-        region: Optional[gpd.GeoDataFrame] = None,
-        index_path: Optional[Union[str, Path]] = None,
-        zoom_range: Union[int, List[int]] = [0, 13],
-        z_range: List[float] = [-20000.0, 20000.0],
-        fmt: str = "bin",
-        write_html_viewer: bool = True,
-        max_workers: Optional[int] = None,
-        logger: logging.Logger = logger,
-    ) -> None:
-        """Create webmercator topobathy tiles for this quadtree grid.
-
-        Thin wrapper around
-        :py:func:`hydromt_sfincs.workflows.tiling.create_topobathy_tiles`.
-
-        Parameters
-        ----------
-        root : Union[str, Path]
-            Parent directory; tiles land in ``<root>/topobathy``.
-        elevation_list : List[dict], optional
-            Topobathy datasets. Entries may be in DDB name-only format
-            (``{"name": ..., "zmin": ..., "zmax": ...}``) or hydromt format
-            (with a ``"da"`` DataArray). DDB entries are auto-resolved via
-            the model's data catalog. If ``None``, all sources in the
-            model's data catalog are used instead.
-        region : gpd.GeoDataFrame, optional
-            Area for which tiles are generated. Defaults to the grid
-            exterior.
-        index_path : Union[str, Path], optional
-            Directory containing index tiles; if given, topobathy tiles
-            are only written where index tiles exist.
-        zoom_range : Union[int, List[int]], optional
-            Range of zoom levels, by default ``[0, 13]``.
-        z_range : List[float], optional
-            Valid elevation range; tiles entirely outside are skipped.
-        fmt : str, optional
-            ``"bin"`` (default), ``"png"``, or ``"tif"``.
-        write_html_viewer : bool, optional
-            If True (default) and ``fmt == "png"``, also write an
-            ``index.html`` Leaflet viewer alongside the tiles.
-        max_workers : int, optional
-            Number of worker threads used to render tiles concurrently.
-            Defaults to ``os.cpu_count()``. Pass ``1`` to disable
-            parallelism.
-        """
-        if region is None:
-            region = self.exterior
-
-        if isinstance(zoom_range, int):
-            zr = [0, zoom_range]
-        else:
-            zr = zoom_range
-
-        # Auto-convert DDB-format elevation_list (name-only) to hydromt format
-        if elevation_list and "da" not in elevation_list[0]:
-            res = 40075016.686 / 256 / 2 ** zr[1]
-            elevation_list = self.model._parse_datasets_elevation(
-                elevation_list, res=res
-            )
-
-        # When no elevation_list is given, the workflow falls back to the
-        # model's data catalog (if populated).
-        data_catalog = self.model.data_catalog if elevation_list is None else None
-
-        create_topobathy_tiles(
-            root=root,
-            region=region,
+        create_topobathy_cog(
+            model=self.model,
             elevation_list=elevation_list,
-            data_catalog=data_catalog,
-            index_path=index_path,
-            zoom_range=zr,
-            z_range=z_range,
-            fmt=fmt,
-            write_html_viewer=write_html_viewer,
-            max_workers=max_workers,
-            logger=logger,
+            river_list=river_list,
+            filename=filename,
+            res=resolution,
+            buffer_cells=buffer_cells,
+            z_minimum=z_minimum,
+            nrmax=nrmax,
         )
 
     def create_index_cog(
         self,
         filename: Union[str, Path],
         filename_topobathy: Union[str, Path],
+        nrmax: int = 2000,
     ) -> None:
         """Write a COG raster mapping each pixel to a quadtree cell index.
 
         Thin wrapper around
-        :py:func:`hydromt_sfincs.workflows.cog.make_quadtree_index_cog`.
+        :py:func:`hydromt_sfincs.workflows.cog.create_index_cog`.
 
         Parameters
         ----------
         filename : str or Path
-            Output COG file path.
+            Output COG file path. This uint32 raster contains the quadtree cell index for
+            each pixel, or the nodata value 2147483647 for pixels outside the active grid.
+            Note that this index file only works in combination with the topobathy COG
+            used for creation.
         filename_topobathy : str or Path
             Reference topobathy COG whose grid / CRS define the output.
+        nrmax : int, optional
+            Maximum number of cells per block, by default 2000
+            These blocks are used to prevent memory issues while working with large datasets
         """
-        make_quadtree_index_cog(
-            quadtree_grid=self,
+        create_index_cog(
+            model=self.model,
             filename=filename,
             filename_topobathy=filename_topobathy,
+            nrmax=nrmax,
         )
 
 

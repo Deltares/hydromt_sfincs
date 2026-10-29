@@ -1118,7 +1118,11 @@ class QuadtreeGrid:
         level = self.data["level"].values[:] - 1
         z = self.data["z"].values[:]
         mask = self.data["mask"].values[:]
-        swmask = self.data["snapwave_mask"].values[:]
+        swmask = (
+            self.data["snapwave_mask"].values[:]
+            if "snapwave_mask" in self.data
+            else np.zeros_like(mask)
+        )
 
         indx = np.where((mask + swmask) > 0)
 

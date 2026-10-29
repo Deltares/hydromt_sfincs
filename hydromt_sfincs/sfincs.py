@@ -83,6 +83,16 @@ __hydromt_eps__ = ["SfincsModel"]  # core entrypoints
 logger = logging.getLogger(f"hydromt.{__name__}")
 
 
+class _IgnoreMissingRegionComponentWarning(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.getMessage() != "No region component found in components."
+
+
+logging.getLogger("hydromt.model.model").addFilter(
+    _IgnoreMissingRegionComponentWarning()
+)
+
+
 # %% SfincsModel class - in V1 style:
 class SfincsModel(Model):
     """SFINCS model class."""
@@ -224,6 +234,11 @@ class SfincsModel(Model):
         return self._grid_type
 
     @property
+    def grid_component(self):
+        """Returns the grid component of the model."""
+        return self.quadtree_grid if self.grid_type == "quadtree" else self.grid
+
+    @property
     def crs(self) -> CRS | None:
         """Returns the model crs"""
         if self.grid_type == "regular":
@@ -261,9 +276,20 @@ class SfincsModel(Model):
 
     ## I/O
 
+    def _ordered_component_names(self) -> List[str]:
+        """Component names with the active grid first.
+
+        Other components depend on the grid for the mask, and on the regular
+        grid also for the cell index file, so it must be read/written first.
+        """
+        names = list(self.components)
+        grid_name = "grid" if self.grid_type == "regular" else "quadtree_grid"
+        if grid_name in names:
+            names.insert(0, names.pop(names.index(grid_name)))
+        return names
+
     def read(self) -> None:
         """Read SfincsModel from disk.
-
         This methods determines the grid type from the configuration file (sfincs.inp),
         and reads all relevant components that are described in the config accordingly.
 
@@ -273,7 +299,10 @@ class SfincsModel(Model):
         # always read config first
         self.config.read()
 
-        for name, comp in self.components.items():
+        # the grid carries the mask and cell index the other components need,
+        # so it is read before them regardless of component order
+        for name in self._ordered_component_names():
+            comp = self.components[name]
             if name == "config":
                 continue  # skip config
             elif self.grid_type == "regular" and name in self._QUADTREE_GRID_NAMES:
@@ -288,7 +317,7 @@ class SfincsModel(Model):
                 logger.warning(f"Could not read component {name}: {e}")
                 continue
 
-    def write(self, write_batch_file: bool = False):
+    def write(self, write_batch_file: bool = False, update_to_latest: bool = False):
         """Write SfincsModel to disk.
 
         This methods writes all components that actually contain data to the specified
@@ -301,6 +330,10 @@ class SfincsModel(Model):
             (``run.bat`` on Windows, ``run.sh`` elsewhere) via
             :meth:`write_batch_file`. Requires ``self.exe_path`` to be
             set. Default ``False``.
+        update_to_latest : bool, optional
+            If True, update the configuration to the latest SFINCS version before writing.
+            Default ``False``. Note this only affects the configuration file and leaves other
+            components untouched.
 
         For more information, see specific component write methods.
         """
@@ -311,7 +344,9 @@ class SfincsModel(Model):
         grid_type = self.grid_type
 
         # TODO make sure that all components are in the config (in their individual write functions?)
-        for name, comp in self.components.items():
+        # the grid writes the cell index file the other components write against
+        for name in self._ordered_component_names():
+            comp = self.components[name]
             if name == "config":
                 continue
             elif grid_type == "regular" and name in self._QUADTREE_GRID_NAMES:
@@ -321,7 +356,7 @@ class SfincsModel(Model):
             comp.write()
 
         # Write config last, since individual write methods might update config settings
-        self.config.write()
+        self.config.write(update_to_latest=update_to_latest)
 
         # Write region geometry
         if self.write_gis:
@@ -384,12 +419,26 @@ class SfincsModel(Model):
 
     def clear_spatial_components(self):
         """Clear all spatial components."""
-        # TODO if we want this, all components should have a clear method
-        return
-        # Do something like this
-        for name, comp in self.components.items():
-            if hasattr(comp, "clear"):
-                comp.clear()
+        logger.warning(
+            "clear_spatial_components is deprecated, use clear_spatial_attributes instead."
+        )
+        self.clear_spatial_attributes()
+
+    def clear_spatial_attributes(self) -> None:
+        """Reset spatial components while preserving model configuration.
+
+        Recreates every component except ``config``, clearing grids, masks,
+        geometries, and forcing while retaining settings such as numerics,
+        time frame, and coordinate system. Use this when a change, such as
+        updating the coordinate system, invalidates the existing spatial data.
+        """
+        for name, cls in self._ALL_COMPONENTS.items():
+            if name == "config":
+                continue
+            self.components[name] = cls(self)
+        # Clear the quadtree reference, then refresh grid properties from config.
+        self.config.set("qtrfile", None, skip_validation=True)
+        self.config.update_grid_from_config()
 
     ## Plotting
     def plot_forcing(self, fn_out=None, forcings="all", **kwargs):
@@ -512,6 +561,7 @@ class SfincsModel(Model):
         geom_kwargs: Dict = {},
         grid_kwargs: Dict = {},
         legend_kwargs: Dict = {},
+        model: str = "sfincs",
         **kwargs,
     ):
         """Create basemap plot.
@@ -522,14 +572,17 @@ class SfincsModel(Model):
             Path to output figure file, by default None.
             If a basename is given it is saved to <model_root>/figs/<fn_out>
             If None, no file is saved.
+        model : str, optional
+            Model setup to plot, either ``"sfincs"`` (default) or ``"snapwave"``.
         variable : str, xr.DataArray, optional
             Map of variable in ds to plot, by default 'dep'
-            Alternatively, provide a xr.DataArray
+            Alternatively, provide an xr.DataArray or use ``"output.<name>"``
+            to plot a gridded model output variable.
         shaded : bool, optional
             Add shade to variable (only for variable = 'dep' and non-rotated grids),
             by default False
         plot_bounds : bool, optional
-            Add waterlevel (mask=2) and open (mask=3) boundary conditions to plot.
+            Plot boundary cells from the selected model mask.
         plot_region : bool, optional
             If True, plot region outline.
         plot_geoms : bool, optional
@@ -560,18 +613,31 @@ class SfincsModel(Model):
         """
         import matplotlib.pyplot as plt
 
+        if model not in ("sfincs", "snapwave"):
+            raise ValueError("model must be either 'sfincs' or 'snapwave'.")
+        if model == "snapwave" and self.grid_type != "quadtree":
+            raise ValueError("SnapWave plotting is only supported for quadtree models.")
+
         _GEOMS = {
             "observation_points": "obs",
             "cross_sections": "crs",
-            "runup_gauges": "rug",
             "weirs": "weir",
             "thin_dams": "thd",
             "drainage_structures": "drn",
             "rivers": "rivers",
-            "river_boundary_points": "bdr",
-            "discharge_points": "src",
-            "water_level": "bnd",
+            "runup_gauges": "rug",
         }  # parsed to dict of geopandas.GeoDataFrame
+
+        if model == "snapwave":
+            _GEOMS.update({"snapwave_boundary_conditions": "snapwave_bnd"})
+        else:
+            _GEOMS.update(
+                {
+                    "river_boundary_points": "bdr",
+                    "discharge_points": "src",
+                    "water_level": "bnd",
+                }
+            )
 
         # combine geoms and forcing locations
         sg = {}
@@ -594,7 +660,6 @@ class SfincsModel(Model):
         if plot_region:  # and "region" not in self.geoms:
             sg.update({"region": self.region})
 
-        # make sure grid are set
         if isinstance(variable, xr.DataArray):
             ds = variable.to_dataset()
             variable = variable.name
@@ -607,20 +672,20 @@ class SfincsModel(Model):
         else:
             if self.grid_type == "regular":
                 ds = self.grid.data.copy()
-                if "mask" not in ds:
-                    ds["mask"] = self.grid.mask
                 if variable == "elevation" and "elevation" not in ds:
                     variable = "dep"
             elif self.grid_type == "quadtree":
                 ds = self.quadtree_grid.data.copy()
-                if "mask" not in ds:
-                    ds["mask"] = self.quadtree_grid.mask
                 if variable == "elevation" and "elevation" not in ds:
                     variable = "z"
+
+        if model == "snapwave" and isinstance(variable, str) and variable == "mask":
+            variable = "snapwave_mask"
 
         fig, ax = plots.plot_basemap(
             ds,
             sg,
+            model=model,
             variable=variable,
             shaded=shaded,
             plot_bounds=plot_bounds,
@@ -656,7 +721,7 @@ class SfincsModel(Model):
     # Helper Methods
     # ---------------
 
-    def _parse_datasets_elevation(self, elevation_list, res):
+    def _parse_elevation_list(self, elevation_list, res):
         """Parse filenames or paths of Datasets in list of dictionaries elevation_list
         into xr.DataArray and gdf.GeoDataFrames:
 

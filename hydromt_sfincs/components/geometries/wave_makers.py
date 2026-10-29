@@ -89,9 +89,9 @@ class SfincsWaveMakers(ModelComponent):
         # Check that read mode is on
         self.root._assert_read_mode()
 
-        # Get absolute file name and set it in config if wvmfile is not None
+        # Get absolute file name and set it in config if the wave makers file is set
         abs_file_path = self.model.config.get_set_file_variable(
-            "wvmfile", value=filename
+            "wavemaker_wvmfile", value=filename
         )
 
         # check if abs_file_path is None or does not exist
@@ -108,7 +108,7 @@ class SfincsWaveMakers(ModelComponent):
         self.set(gdf, merge=False)
 
     def write(self, filename: str | Path = None):
-        """Write SFINCS wave makers (.wvm) file, and set wvmfile in config (if it was not already set)."""
+        """Write SFINCS wave makers (.wvm) file, and set wavemaker_wvmfile in config (if it was not already set)."""
 
         # Check that data is not empty
         if self.data.empty:
@@ -117,7 +117,7 @@ class SfincsWaveMakers(ModelComponent):
 
         # Set file name and get absolute path
         abs_file_path = self.model.config.get_set_file_variable(
-            "wvmfile",
+            "wavemaker_wvmfile",
             value=filename,
             default="sfincs.wvm",
         )
@@ -233,7 +233,7 @@ class SfincsWaveMakers(ModelComponent):
         # Set the wave makers data
         self.set(gdf, merge)
         # Set config
-        self.model.config.set("wvmfile", "sfincs.wvm")
+        self.model.config.set("wavemaker_wvmfile", "sfincs.wvm")
 
     def delete(
         self,
@@ -263,14 +263,14 @@ class SfincsWaveMakers(ModelComponent):
         # Check if any wave makers are left
         if self.data.empty:
             logger.warning("All wave makers have been removed!")
-            # Set crsfile to None
-            self.model.config.set("wvmfile", None)
+            # Set wave makers file to None
+            self.model.config.set("wavemaker_wvmfile", None)
 
     def clear(self):
         """Clean GeoDataFrame with wave makers."""
         self._data = gpd.GeoDataFrame()
-        # Set crsfile to None
-        self.model.config.set("wvmfile", None)
+        # Set wave makers file to None
+        self.model.config.set("wavemaker_wvmfile", None)
 
     # %% DDB GUI focused additional functions:
     # snap_to_grid

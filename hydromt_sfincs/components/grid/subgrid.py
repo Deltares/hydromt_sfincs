@@ -658,7 +658,7 @@ class SfincsSubgridTable(ModelComponent):
                 / nr_subgrid_pixels
             )
 
-        elevation_list = self.model._parse_datasets_elevation(elevation_list, res=res)
+        elevation_list = self.model._parse_elevation_list(elevation_list, res=res)
 
         if len(roughness_list) > 0:
             # NOTE conversion from landuse/landcover to manning happens here
@@ -992,14 +992,14 @@ class SfincsSubgridTable(ModelComponent):
 
         # Create COG overviews
         if write_dep_tif:
-            utils.build_overviews(
+            workflows.cog.build_overviews(
                 fn=fn_dep_tif,
                 resample_method="average",
                 overviews="auto",
                 logger=logger,
             )
         if write_man_tif:
-            utils.build_overviews(
+            workflows.cog.build_overviews(
                 fn=fn_man_tif,
                 resample_method="average",
                 overviews="auto",

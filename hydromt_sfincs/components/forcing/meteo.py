@@ -19,7 +19,7 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 
 # dictionary of meteo variables and their corresponding SFINCS file names and renaming conventions
 _METEO = {
-    "precip": ("precip", None),
+    "precip": ("prc", None),
     "precip_2d": ("netampr", {"Precipitation": "precip_2d"}),
     "press_2d": ("netamp", {"barometric_pressure": "press_2d"}),
     "wind": ("wnd", None),
@@ -74,6 +74,7 @@ class SfincsMeteo(ModelComponent):
                 f"Variable {variable} not supported. Supported variables are 'precip', 'wind', 'press'."
             )
 
+        self._initialize(skip_read=True)
         filtered_dict = {key: value for key, value in _METEO.items() if variable in key}
 
         # Check which type of meteo for this variable is present in the model
@@ -316,7 +317,7 @@ class SfincsPrecipitation(SfincsMeteo):
         One of the following model layers will be added:
 
         * **netamprfile**: for distributed precipitation rate [mm/hr].
-        * **precipfile**: for uniform precipitation rate [mm/hr].
+        * **prcfile**: for uniform precipitation rate [mm/hr].
 
         .. note::
 
@@ -426,11 +427,11 @@ class SfincsPrecipitation(SfincsMeteo):
             self.set(precip_out, name="precip_2d")
             # update the model config
             self.model.config.set("netamprfile", "sfincs_netampr.nc")
-            if self.model.config.get("precipfile", None) is not None:
+            if self.model.config.get("prcfile", None) is not None:
                 logger.warning(
-                    "precipfile was previously set, but is now replaced by netamprfile."
+                    "prcfile was previously set, but is now replaced by netamprfile."
                 )
-                self.model.config.set("precipfile", None)
+                self.model.config.set("prcfile", None)
             # update the default filename
             self._filename = "sfincs.netampr.nc"
 
@@ -440,7 +441,7 @@ class SfincsPrecipitation(SfincsMeteo):
 
         Adds model layers:
 
-        * **precipfile** forcing: uniform precipitation [mm/hr]
+        * **prcfile** forcing: uniform precipitation [mm/hr]
 
         Parameters
         ----------
@@ -480,10 +481,10 @@ class SfincsPrecipitation(SfincsMeteo):
         df_ts.index.name = "time"
         self.set(df_ts.to_xarray(), name="precip")
         # update the model config
-        self.model.config.set("precipfile", "sfincs.precip")
+        self.model.config.set("prcfile", "sfincs.precip")
         if self.model.config.get("netamprfile", None) is not None:
             logger.warning(
-                "netamprfile was previously set, but is now replaced by precipfile."
+                "netamprfile was previously set, but is now replaced by prcfile."
             )
             self.model.config.set("netamprfile", None)
         # update the default filename

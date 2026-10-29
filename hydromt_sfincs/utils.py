@@ -7,24 +7,23 @@ import copy
 from datetime import datetime
 import logging
 import warnings
-from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
 from affine import Affine
 import geopandas as gpd
 import numpy as np
-import rasterio
 import xarray as xr
 import xugrid as xu
 from xugrid.core.wrap import UgridDataArray
 from pyproj.crs.crs import CRS
-from rasterio.enums import Resampling
-from rasterio.rio.overview import get_maximum_overview_level
 from shapely.geometry import LineString, Polygon
 
 
 __all__ = [
+    "active_cells_vector",
     "downscale_floodmap",
+    "fill_nan_in_mask",
+    "vector_to_active_cells",
     "get_bounds_vector",
     "create_boundary_points",
     "mask2gdf",
@@ -33,13 +32,79 @@ __all__ = [
     "linestring2gdf",
     "polygon2gdf",
     "rotated_grid",
-    "build_overviews",
     "find_uv_indices",
     "make_regular_grid",
     "make_regular_grid_transform",
 ]
 
 logger = logging.getLogger(f"hydromt.{__name__}")
+
+
+def active_cells_vector(data: np.ndarray, msk: np.ndarray) -> np.ndarray:
+    """Flatten active cells of a 2D map into the 1D SFINCS ordering.
+
+    NOTE: the array should be in S->N and W->E orientation, with origin in the
+    SW corner.
+    """
+    return np.asarray(data).transpose()[np.asarray(msk).transpose() > 0]
+
+
+def vector_to_active_cells(
+    values: np.ndarray,
+    ind: np.ndarray,
+    shape: Tuple[int, int],
+    mv: float = np.nan,
+    dtype: Union[str, np.dtype] = "f4",
+) -> np.ndarray:
+    """Scatter a 1D active-cell vector back onto a full 2D map.
+
+    Parameters
+    ----------
+    values : np.ndarray
+        1D array with one value per active cell, in SFINCS ordering.
+    ind : np.ndarray
+        Flat indices of the active cells.
+    shape : tuple of int
+        (nrow, ncol) shape of the output map.
+    mv : float
+        Value for cells outside the active mask.
+    """
+    nrow, ncol = shape
+    data = np.full((ncol, nrow), mv, dtype=dtype)
+    data.flat[ind] = np.asarray(values, dtype=dtype)
+    return data.transpose()
+
+
+def fill_nan_in_mask(
+    values: np.ndarray,
+    mask: np.ndarray,
+    name: str,
+    fill: float,
+) -> np.ndarray:
+    """Fill NaNs inside the active mask and warn how many cells were affected.
+
+    Parameters
+    ----------
+    values : np.ndarray
+        Layer values, may contain NaN.
+    mask : np.ndarray
+        Active cell mask; only cells > 0 are checked.
+    name : str
+        Variable name, used in the warning message.
+    fill : float
+        Value written where an active cell has no data.
+    """
+    values = np.asarray(values, dtype=np.float32)
+    missing = np.isnan(values) & (np.asarray(mask) > 0)
+    n_missing = int(missing.sum())
+    if n_missing:
+        logger.warning(
+            f"{n_missing} active cells have no '{name}' data after resampling; "
+            f"filled with {fill}. Check that the input data covers the full "
+            f"model domain."
+        )
+        values = np.where(missing, np.float32(fill), values)
+    return values
 
 
 def downscale_floodmap(*args, **kwargs):
@@ -472,63 +537,6 @@ def rotated_grid(
         nmax = int(np.ceil(axis2 / res))
 
     return x0, y0, mmax, nmax, rot
-
-
-def build_overviews(
-    fn: Union[str, Path],
-    resample_method: str = "average",
-    overviews: Union[list, str] = "auto",
-    logger=logger,
-):
-    """Build overviews for GeoTIFF file.
-
-    Overviews are reduced resolution versions of your dataset that can speed up
-    rendering when you don’t need full resolution. By precomputing the upsampled
-    pixels, rendering can be significantly faster when zoomed out.
-
-    Parameters
-    ----------
-    fn : str, Path
-        Path to GeoTIFF file.
-    method: str
-        Resampling method, by default "average". Other option is "nearest".
-    overviews: list of int, optional
-        List of overview levels, by default "auto". When set to "auto" the
-        overview levels are determined based on the size of the dataset.
-    """
-
-    # Endswith is not a method of Path so convert to str
-    if isinstance(fn, Path):
-        fn = str(fn)
-
-    # check if fn is a geotiff file
-    extensions = [".tif", ".tiff"]
-    assert any(
-        fn.endswith(ext) for ext in extensions
-    ), f"File {fn} is not a GeoTIFF file."
-
-    # open rasterio dataset
-    with rasterio.open(fn, "r+") as src:
-        # determine overviews when not provided
-        if overviews == "auto":
-            bs = src.profile.get("blockxsize", 256)
-            max_level = get_maximum_overview_level(src.width, src.height, bs)
-            overviews = [2**j for j in range(1, max_level + 1)]
-        if not isinstance(overviews, list):
-            raise ValueError("overviews should be a list of integers or 'auto'.")
-
-        resampling = getattr(Resampling, resample_method, None)
-        if resampling is None:
-            raise ValueError(f"Resampling method unknown: {resample_method}")
-
-        no = len(overviews)
-        logger.info(f"Building {no} overviews with {resample_method}")
-
-        # create new overviews, resampling with average method
-        src.build_overviews(overviews, resampling)
-
-        # update dataset tags
-        src.update_tags(ns="rio_overview", resampling=resample_method)
 
 
 def find_uv_indices(mask: xr.DataArray):

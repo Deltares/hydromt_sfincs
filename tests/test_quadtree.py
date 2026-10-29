@@ -1,5 +1,6 @@
 from datetime import datetime
 import gc
+import logging
 from os.path import join, dirname, abspath
 import numpy as np
 import os
@@ -9,8 +10,10 @@ import pytest
 import shutil
 import xarray as xr
 import xugrid as xu
+import shapely
 
 from hydromt_sfincs import SfincsModel
+from hydromt_sfincs.components.quadtree.quadtree import SfincsQuadtreeGrid
 
 TESTDATADIR = join(dirname(abspath(__file__)), "data")
 
@@ -56,52 +59,290 @@ def test_quadtree_io(tmp_dir):
     os.remove(mod1.root.path / "sfincs.nc")
 
 
-def test_quadtree_create_index_tiles(quadtree_model, tmp_dir):
-    # Zoom range has to be high enough that tile pixels resolve the
-    # ~13 x 10 km test model; keep it tight so the test stays fast.
-    zoom_range = [12, 13]
-
-    # PNG (default format)
-    root_png = tmp_dir / "tiles_png"
-    quadtree_model.quadtree_grid.create_index_tiles(
-        root=root_png, zoom_range=zoom_range
+def test_quadtree_exterior_matches_edge_polygonization():
+    mesh = xu.Ugrid2d(
+        node_x=np.array([0.0, 1.0, 2.0, 0.0, 1.0, 2.0, 0.0, 1.0, 2.0]),
+        node_y=np.array([0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0]),
+        fill_value=-1,
+        face_node_connectivity=np.array(
+            [[0, 1, 4, 3], [1, 2, 5, 4], [3, 4, 7, 6], [4, 5, 8, 7]]
+        ),
+        crs="EPSG:32631",
     )
-    png_files = list((root_png / "indices").rglob("*.png"))
-    assert len(png_files) > 0
-    # Tiles are nested as <indices>/<zoom>/<x>/<y>.png
-    zoom_levels = {int(p.parts[-3]) for p in png_files}
-    assert zoom_levels.issubset(set(range(zoom_range[0], zoom_range[1] + 1)))
-    assert max(zoom_levels) == zoom_range[1]
-    # HTML viewer is written by default alongside PNG tiles
-    html_file = root_png / "indices" / "index.html"
-    assert html_file.is_file()
-    assert "{z}/{x}/{y}.png" in html_file.read_text()
+    grid_component = object.__new__(SfincsQuadtreeGrid)
+    grid_component._data = xu.UgridDataset(xr.Dataset(), mesh)
 
-    # Binary format
-    root_bin = tmp_dir / "tiles_bin"
-    quadtree_model.quadtree_grid.create_index_tiles(
-        root=root_bin, zoom_range=zoom_range, fmt="bin"
+    edge_nodes = mesh.edge_node_connectivity[mesh.exterior_edges, :]
+    x = mesh.node_x[edge_nodes]
+    y = mesh.node_y[edge_nodes]
+    expected_lines = [
+        shapely.LineString(np.column_stack((x[i], y[i]))) for i in range(len(x))
+    ]
+    expected_merged = shapely.ops.linemerge(expected_lines)
+    expected_polygons = list(shapely.ops.polygonize(expected_merged))
+
+    exterior = grid_component.exterior
+
+    assert exterior.crs == grid_component.crs
+    assert len(exterior) == len(expected_polygons)
+    assert shapely.union_all(exterior.geometry.array).equals(
+        shapely.union_all(expected_polygons)
     )
-    dat_files = list((root_bin / "indices").rglob("*.dat"))
-    assert len(dat_files) > 0
-    # Each .dat tile should be 256*256 int32 = 262144 bytes
-    assert dat_files[0].stat().st_size == 256 * 256 * 4
-    # Indices in the .dat tile must be valid cell indices (or -999 nodata)
-    data = np.fromfile(dat_files[0], dtype=np.int32).reshape(256, 256)
-    nr_cells = len(quadtree_model.quadtree_grid.data["level"])
-    valid = data[data != -999]
-    assert valid.size > 0
-    assert valid.min() >= 0
-    assert valid.max() < nr_cells
+    assert grid_component.exterior is exterior
 
 
-def test_xu_open_dataset_delete(tmp_dir):
-    # copy the test data to the tmp_path
-    fn = join(TESTDATADIR, "sfincs_test_quadtree", "sfincs.nc")
-    fn_copy = tmp_dir.joinpath("sfincs.nc")
+def test_quadtree_component_data_contains_only_owned_layers(quadtree_model_config):
+    model = quadtree_model_config
+    grid = model.quadtree_grid
+    grid.read()
+    components = {
+        "quadtree_elevation": ("z",),
+        "quadtree_mask": ("mask",),
+        "quadtree_snapwave_mask": ("snapwave_mask",),
+        "quadtree_roughness": ("manning",),
+        "quadtree_storage_volume": ("vol",),
+        "quadtree_initial_conditions": ("zs",),
+        "quadtree_infiltration": model.quadtree_infiltration.grid_variables,
+    }
+    layer = grid.data["mask"].astype(np.float32)
+    for name in set().union(*map(set, components.values())):
+        grid.set(layer, name=name)
 
-    shutil.copy(fn, fn_copy)
+    for name, variables in components.items():
+        data = model.components[name].data
+        assert isinstance(data, xu.UgridDataset)
+        assert set(data.data_vars) == set(variables)
+        assert data.grid.n_face == grid.data.grid.n_face
 
-    ds = xu.open_dataset(fn_copy)
-    ds.close()
-    os.remove(fn_copy)
+
+def test_quadtree_elevation_uniform_updates_parent_grid(quadtree_model_config):
+    model = quadtree_model_config
+    model.quadtree_grid.read()
+    model.quadtree_elevation.create_uniform(2.0)
+    np.testing.assert_array_equal(model.quadtree_grid.data["z"].values, 2.0)
+
+
+def test_quadtree_mask_active_updates_parent_grid(quadtree_model_config):
+    model = quadtree_model_config
+    model.quadtree_grid.read()
+    elevation = model.quadtree_grid.data["z"]
+    model.quadtree_mask.create_active(zmin=0.0)
+    np.testing.assert_array_equal(
+        model.quadtree_grid.data["mask"].values > 0, elevation.values >= 0.0
+    )
+
+
+def test_snapwave_quadtree_mask_active_uses_parent_mesh(quadtree_model_config):
+    model = quadtree_model_config
+    model.quadtree_grid.read()
+    elevation = model.quadtree_grid.data["z"]
+
+    model.quadtree_mask.create_active(zmin=0.0)
+    model.quadtree_snapwave_mask.create_active(zmin=0.0)
+
+    np.testing.assert_array_equal(
+        model.quadtree_grid.data["snapwave_mask"].values > 0,
+        elevation.values >= 0.0,
+    )
+
+
+def test_snapwave_quadtree_mask_active_after_cut(quadtree_model_config):
+    from hydromt_sfincs.components.quadtree.quadtree_builder import cut_inactive_cells
+
+    model = quadtree_model_config
+    model.quadtree_grid.read()
+
+    model.quadtree_mask.create_active(zmin=0.0)
+    model.quadtree_grid._data = cut_inactive_cells(model.quadtree_grid.data)
+
+    elevation = model.quadtree_grid.data["z"]
+    model.quadtree_snapwave_mask.create_active(zmin=0.0)
+
+    np.testing.assert_array_equal(
+        model.quadtree_grid.data["snapwave_mask"].values > 0,
+        elevation.values >= 0.0,
+    )
+
+
+def test_quadtree_write_excludes_component_layers(quadtree_model):
+    # manning is owned by the roughness component, so it must not end up in sfincs.nc
+    mask = quadtree_model.quadtree_grid.data["mask"]
+    manning = mask.astype(np.float32)
+    manning.values = np.full(mask.values.shape, 0.03, dtype=np.float32)
+    quadtree_model.quadtree_grid.set(manning, name="manning")
+
+    quadtree_model.quadtree_grid.write()
+    quadtree_model.quadtree_roughness.write()
+    quadtree_model.config.write()
+
+    qtrfile = quadtree_model.root.path / "sfincs.nc"
+    manningfile = quadtree_model.config.get("manningfile", abs_path=True)
+    assert manningfile.is_file()
+
+    with xr.open_dataset(qtrfile) as ds:
+        assert "mask" in ds.data_vars
+        assert "manning" not in ds.data_vars
+    with xr.open_dataset(manningfile) as ds:
+        assert "manning" in ds.data_vars
+
+    # the component pulls the grid in itself, so no quadtree_grid.read() here
+    mod1 = SfincsModel(root=quadtree_model.root.path, mode="r")
+    mod1.config.read()
+    mod1.quadtree_roughness.read()
+    assert "manning" in mod1.quadtree_grid.data
+    assert np.allclose(mod1.quadtree_grid.data["manning"].values, 0.03)
+
+
+def test_quadtree_layer_file_is_ugrid(quadtree_model):
+    # per-layer files must stay inspectable in QGIS, which needs the UGRID
+    # topology and the CF metadata MDAL looks for
+    mask = quadtree_model.quadtree_grid.data["mask"]
+    vol = mask.astype(np.float32)
+    vol.values = np.full(mask.values.shape, 1.5, dtype=np.float32)
+    quadtree_model.quadtree_grid.set(vol, name="vol")
+
+    quadtree_model.quadtree_storage_volume.write()
+    volfile = quadtree_model.config.get("volfile", abs_path=True)
+
+    with xr.open_dataset(volfile) as ds:
+        assert "UGRID" in ds.attrs.get("Conventions", "")
+        assert "mesh2d_node_x" in ds.variables
+        assert "mesh2d_node_y" in ds.variables
+        assert ds["mesh2d_crs"].attrs["epsg_code"].startswith("EPSG:")
+
+
+@pytest.mark.parametrize(
+    "values",
+    [{"qinf": 0.25}, {"qinf": 0.25, "ks": 0.05, "smax": 10.0}],
+    ids=["one-layer", "three-layers"],
+)
+def test_quadtree_layer_read_matches_main_grid(quadtree_model, values):
+    grid = quadtree_model.quadtree_grid
+    face_dimension = grid.data.grid.face_dimension
+    layers = {
+        name: xr.DataArray(
+            np.full(grid.data.grid.n_face, value, dtype=np.float32),
+            dims=[face_dimension],
+            name=name,
+        )
+        for name, value in values.items()
+    }
+    grid.set(xu.UgridDataset(xr.Dataset(layers), grid.data.grid))
+    grid._write_layers(list(values), "inffile", "sfincs.infiltration.nc")
+    sidecar = quadtree_model.config.get("inffile", abs_path=True)
+
+    mod = SfincsModel(root=join(TESTDATADIR, "sfincs_test_quadtree"), mode="r")
+    mod.config.read()
+    mod.quadtree_grid.read()
+    mod.quadtree_grid._read_layers(sidecar)
+
+    for name, value in values.items():
+        assert np.allclose(mod.quadtree_grid.data[name].values, value)
+
+
+def test_quadtree_layer_read_rejects_different_grid(quadtree_model, tmp_path):
+    grid = quadtree_model.quadtree_grid
+    face_dimension = grid.data.grid.face_dimension
+    qinf = xr.DataArray(
+        np.full(grid.data.grid.n_face, 0.25, dtype=np.float32),
+        dims=[face_dimension],
+        name="qinf",
+    )
+    grid.set(xu.UgridDataset(xr.Dataset({"qinf": qinf}), grid.data.grid))
+    grid._write_layers(["qinf"], "inffile", "sfincs.infiltration.nc")
+    sidecar = quadtree_model.config.get("inffile", abs_path=True)
+
+    with xr.open_dataset(sidecar) as source:
+        mismatched = source.load()
+    mismatched["mesh2d_node_x"].values[0] += 1.0
+    mismatched_file = tmp_path / "mismatched_infiltration.nc"
+    mismatched.to_netcdf(mismatched_file)
+
+    mod = SfincsModel(root=join(TESTDATADIR, "sfincs_test_quadtree"), mode="r")
+    mod.config.read()
+    mod.quadtree_grid.read()
+    with pytest.raises(ValueError, match="topology does not match"):
+        mod.quadtree_grid._read_layers(mismatched_file)
+
+
+def test_quadtree_write_skips_layer_that_was_never_created(quadtree_model, caplog):
+    # a layer that was never created must not leave a reference behind, since
+    # SFINCS would then look for a file this model never writes
+    assert "vol" not in quadtree_model.quadtree_grid.data
+    assert quadtree_model.config.get("volfile") is None
+
+    caplog.clear()
+    with caplog.at_level(logging.WARNING):
+        quadtree_model.quadtree_storage_volume.write()
+
+    assert quadtree_model.config.get("volfile") is None
+    assert "will be missing" not in caplog.text
+    assert not (quadtree_model.root.path / "vol.nc").is_file()
+
+
+def test_quadtree_write_warns_when_layer_missing_in_new_root(
+    quadtree_model, tmp_dir, caplog
+):
+    # a model on disk whose manning lives in its own file
+    mask = quadtree_model.quadtree_grid.data["mask"]
+    manning = mask.astype(np.float32)
+    manning.values = np.full(mask.values.shape, 0.03, dtype=np.float32)
+    quadtree_model.quadtree_grid.set(manning, name="manning")
+    quadtree_model.quadtree_grid.write()
+    quadtree_model.quadtree_roughness.write()
+    quadtree_model.config.write()
+
+    root_a = quadtree_model.root.path
+    assert (root_a / "manning.nc").is_file()
+
+    # read only the grid, so manning is never loaded
+    mod = SfincsModel(root=root_a, mode="r+")
+    mod.config.read()
+    mod.quadtree_grid.read()
+    assert "manning" not in mod.quadtree_grid.data
+
+    # same root: the file is already correct on disk, so skipping is fine
+    caplog.clear()
+    with caplog.at_level(logging.WARNING):
+        mod.quadtree_roughness.write()
+    assert "will be missing" not in caplog.text
+    assert (root_a / "manning.nc").is_file()
+
+    # new root: the layer is neither loaded nor present, so it is lost
+    root_b = tmp_dir / "moved"
+    mod.root.set(root_b, mode="w+")
+    caplog.clear()
+    with caplog.at_level(logging.WARNING):
+        mod.quadtree_roughness.write()
+    assert "will be missing" in caplog.text
+    assert not (root_b / "manning.nc").is_file()
+
+    # the config still points at a file that is not there: a dangling
+    # reference that SFINCS would fail on, which is what the warning is for
+    mod.config.write()
+    assert mod.config.get("manningfile") == "manning.nc"
+    assert "manningfile" in (root_b / "sfincs.inp").read_text()
+
+
+def test_quadtree_initial_conditions_io(quadtree_model):
+    # zs was historically written to `inifile` but read from `zsfile`; this pins
+    # that both sides now use the same key
+    mask = quadtree_model.quadtree_grid.data["mask"]
+    zs = mask.astype(np.float32)
+    zs.values = np.full(mask.values.shape, 0.75, dtype=np.float32)
+    quadtree_model.quadtree_grid.set(zs, name="zs")
+
+    quadtree_model.quadtree_grid.write()
+    quadtree_model.quadtree_initial_conditions.write()
+    quadtree_model.config.write()
+
+    inifile = quadtree_model.config.get("inifile", abs_path=True)
+    assert inifile.is_file()
+    with xr.open_dataset(quadtree_model.root.path / "sfincs.nc") as ds:
+        assert "zs" not in ds.data_vars
+
+    mod1 = SfincsModel(root=quadtree_model.root.path, mode="r")
+    mod1.config.read()
+    mod1.quadtree_initial_conditions.read()
+    assert "zs" in mod1.quadtree_grid.data
+    assert np.allclose(mod1.quadtree_grid.data["zs"].values, 0.75)

@@ -18,6 +18,10 @@ geom_style = {
     "rivers": dict(linestyle="-", linewidth=1.0, color="darkblue"),
     "mask2": dict(linestyle="-", linewidth=1.5, color="r"),
     "mask3": dict(linestyle="-", linewidth=1.5, color="m"),
+    "mask4": dict(linestyle="-", linewidth=1.5, color="g"),
+    "mask5": dict(linestyle="-", linewidth=1.5, color="b"),
+    "mask6": dict(linestyle="-", linewidth=1.5, color="orange"),
+    "snapwave_bnd": dict(marker="^", markersize=60, c="cyan", edgecolor="k"),
     "thd": dict(linestyle="-", linewidth=1.0, color="k", annotate=False),
     "weir": dict(linestyle="--", linewidth=1.0, color="k", annotate=False),
     "bnd": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
@@ -134,6 +138,7 @@ def plot_basemap(
     grid_kwargs: Dict = {},
     legend_kwargs: Dict = {},
     bmap_kwargs: Dict = {},
+    model: str = "sfincs",
     logger=logger,
     **kwargs,
 ):
@@ -145,12 +150,14 @@ def plot_basemap(
         Dataset with model maps
     geoms : Dict of geopandas.GeoDataFrame
         Model geometries
+    model : str, optional
+        Model setup to plot, either ``"sfincs"`` (default) or ``"snapwave"``.
     variable : str, optional
         Map of variable in ds to plot, by default 'dep'
     shaded : bool, optional
         Add shade to variable (only for variable = 'dep'), by default False
     plot_bounds : bool, optional
-        Add waterlevel (mask=2) and open (mask=3) boundary conditions to plot.
+        Plot boundary cells from the selected model mask.
     plot_region : bool, optional
         If True, plot region outline.
     plot_geoms : bool, optional
@@ -183,6 +190,10 @@ def plot_basemap(
     import cartopy.io.img_tiles as cimgt
     import matplotlib.pyplot as plt
     from matplotlib import colors, patheffects
+
+    if model not in ("sfincs", "snapwave"):
+        raise ValueError("model must be either 'sfincs' or 'snapwave'.")
+    mask_name = "mask" if model == "sfincs" else "snapwave_mask"
 
     try:
         import contextily as cx
@@ -309,17 +320,23 @@ def plot_basemap(
             norm = colors.Normalize(vmin=vmin, vmax=vmax)
             cmap, norm = kwargs.pop("cmap", cmap), kwargs.pop("norm", norm)
             kwargs0.update(norm=norm, cmap=cmap)
-        elif variable == "mask" and "mask" in ds:
-            cmap = colors.LinearSegmentedColormap.from_list(
-                "Set1", ["grey", "r", "m", "g", "b"], N=5
+        elif variable in ("mask", "snapwave_mask") and variable in ds:
+            mask_values = (
+                [1, 2, 3] if variable == "snapwave_mask" else [1, 2, 3, 4, 5, 6]
             )
-            norm = colors.BoundaryNorm([0.5, 1.5, 2.5, 3.5, 4.5, 5.5], 5)
+            cmap = colors.LinearSegmentedColormap.from_list(
+                "Set1",
+                ["grey", "r", "m", "g", "b", "orange"][: len(mask_values)],
+                N=len(mask_values),
+            )
+            bounds = [value + 0.5 for value in range(len(mask_values) + 1)]
+            norm = colors.BoundaryNorm(bounds, len(mask_values))
             kwargs0.update(norm=norm, cmap=cmap)
-            kwargs0["cbar_kwargs"].update(ticks=[1, 2, 3, 4, 5])
+            kwargs0["cbar_kwargs"].update(ticks=mask_values)
     if variable in ds:
         da = ds[variable]
-        if "mask" in ds and np.any(ds["mask"] > 0):
-            da = da.where(ds["mask"] > 0)
+        if mask_name in ds and np.any(ds[mask_name] > 0):
+            da = da.where(ds[mask_name] > 0)
         if isinstance(da, xr.DataArray):
             # mask_nodata converts it to an xr.DataArray, so performed inside if-else statement
             da = da.raster.mask_nodata()
@@ -380,21 +397,33 @@ def plot_basemap(
         ],
     )
     # plot mask boundaries
-    if plot_bounds and "mask" not in ds:
+    if plot_bounds and mask_name not in ds:
         raise ValueError(
-            "No 'mask' (sfincs.mask) found in ds required to plot the model bounds "
-            "Set plot_bounds=False or add 'mask' to ds"
+            f"No '{mask_name}' found in ds required to plot the model bounds. "
+            "Set plot_bounds=False or add the mask to ds."
         )
-    elif plot_bounds and (ds["mask"] > 1).any():
-        gdf_msk = get_bounds_vector(ds["mask"])
-        gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
-        gdf_msk3 = gdf_msk[gdf_msk["value"] == 3]
-        if gdf_msk2.index.size > 0:
-            gdf_msk2.plot(
-                ax=ax, zorder=3, label="waterlevel bnd", **geom_style["mask2"]
+    elif plot_bounds and (ds[mask_name] > 1).any():
+        gdf_msk = get_bounds_vector(ds[mask_name])
+        boundary_specs = {
+            2: ("waves bnd", "mask2")
+            if model == "snapwave"
+            else ("waterlevel bnd", "mask2"),
+            3: ("Neumann bnd", "mask3")
+            if model == "snapwave"
+            else ("outflow bnd", "mask3"),
+        }
+        if model == "sfincs":
+            boundary_specs.update(
+                {
+                    4: ("wavemaker bnd", "mask4"),
+                    5: ("downstream bnd", "mask5"),
+                    6: ("Neumann bnd", "mask6"),
+                }
             )
-        if gdf_msk3.index.size > 0:
-            gdf_msk3.plot(ax=ax, zorder=3, label="outflow bnd", **geom_style["mask3"])
+        for value, (label, style) in boundary_specs.items():
+            gdf_boundary = gdf_msk[gdf_msk["value"] == value]
+            if not gdf_boundary.empty:
+                gdf_boundary.plot(ax=ax, zorder=3, label=label, **geom_style[style])
 
     # plot static geoms
     if plot_geoms:
@@ -442,7 +471,8 @@ def plot_basemap(
     ax.set_ylabel(ylab)
     ax.set_xlabel(xlab)
     variable = "base" if variable is None else variable
-    ax.set_title(f"SFINCS {variable} map")
+    model_title = "SFINCS" if model == "sfincs" else "SnapWave"
+    ax.set_title(f"{model_title} {variable} map")
     # NOTE without defined loc it takes forever to find a 'best' location
     # by default outside plot
     if geom_names or plot_bounds:
