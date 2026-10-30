@@ -10,6 +10,8 @@ on:
       - hydromt_sfincs/**
       - pyproject.toml
       - .github/workflows/docs.yml
+  release:
+    types: [published]
   pull_request:
     branches: [main]
     paths:
@@ -22,6 +24,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
 jobs:
   # Build docs on Linux
   test-docs:
@@ -29,7 +35,6 @@ jobs:
       run:
         shell: bash -e -l {0}
     env:
-      DOC_VERSION: dev
       PYDEVD_DISABLE_FILE_VALIDATION: 1
     timeout-minutes: 30
     runs-on: ubuntu-latest
@@ -65,8 +70,8 @@ jobs:
           mamba run -n hydromt-sfincs sphinx-build -M html ./docs ./docs/_build -W
           echo "DOC_VERSION=$(mamba run -n hydromt-sfincs python -c 'from hydromt_sfincs import __version__ as v; print("dev" if "dev" in v else "v"+v)')" >> $GITHUB_ENV
 
-      - name: Upload to GitHub Pages
-        if: ${{ github.event_name != 'pull_request'}}
+      - name: Deploy versioned documentation
+        if: ${{ github.event_name != 'pull_request' }}
         uses: peaceiris/actions-gh-pages@v4.0.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -74,4 +79,26 @@ jobs:
           exclude_assets: '.buildinfo,_sources/*,_examples/*.ipynb'
           destination_dir: ./${{ env.DOC_VERSION }}
           keep_files: false
-          full_commit_message: Deploy ${{ env.DOC_VERSION }} to GitHub Pages
+          full_commit_message: Deploy ${{ env.DOC_VERSION }} documentation
+
+      - name: Deploy latest documentation
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') }}
+        uses: peaceiris/actions-gh-pages@v4.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/_build/html
+          exclude_assets: '.buildinfo,_sources/*,_examples/*.ipynb'
+          destination_dir: ./latest
+          keep_files: false
+          full_commit_message: Update latest documentation
+
+      - name: Deploy stable documentation
+        if: ${{ github.event_name == 'release' && github.event.release.prerelease == false }}
+        uses: peaceiris/actions-gh-pages@v4.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/_build/html
+          exclude_assets: '.buildinfo,_sources/*,_examples/*.ipynb'
+          destination_dir: ./stable
+          keep_files: false
+          full_commit_message: Update stable documentation
