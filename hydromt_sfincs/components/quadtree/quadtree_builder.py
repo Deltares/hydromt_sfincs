@@ -227,7 +227,12 @@ class QuadtreeGrid:
         lx = self.mmax * self.dx
         ly = self.nmax * self.dy
         xcor = self.x0 + np.array(
-            [0.0, self.cosrot * lx, -self.sinrot * ly, self.cosrot * lx - self.sinrot * ly]
+            [
+                0.0,
+                self.cosrot * lx,
+                -self.sinrot * ly,
+                self.cosrot * lx - self.sinrot * ly,
+            ]
         )
         return float(xcor.min()), float(xcor.max())
 
@@ -1303,7 +1308,10 @@ def shift_polygon_to_grid(geometry, grid_xmin, grid_xmax):
     """
     if geometry.geom_type == "MultiPolygon":
         return MultiPolygon(
-            [shift_polygon_to_grid(part, grid_xmin, grid_xmax) for part in geometry.geoms]
+            [
+                shift_polygon_to_grid(part, grid_xmin, grid_xmax)
+                for part in geometry.geoms
+            ]
         )
     if geometry.geom_type != "Polygon":
         return geometry

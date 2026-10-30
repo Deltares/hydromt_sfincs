@@ -319,9 +319,7 @@ def make_mask_overlay(
     try:
         import datashader as ds
 
-        xlim, ylim = view_ranges(
-            xlim, ylim, dataframe["x"].min(), dataframe["x"].max()
-        )
+        xlim, ylim = view_ranges(xlim, ylim, dataframe["x"].min(), dataframe["x"].max())
         ratio = (ylim[1] - ylim[0]) / (xlim[1] - xlim[0])
         height = int(width * ratio)
 
