@@ -8,7 +8,8 @@ import xugrid as xu
 from matplotlib import path
 from pyproj import CRS
 from scipy.interpolate import RegularGridInterpolator
-from shapely.geometry import Polygon
+from shapely.affinity import translate
+from shapely.geometry import MultiPolygon, Polygon
 from shapely.prepared import prep
 
 from hydromt_sfincs import workflows
@@ -198,7 +199,12 @@ class QuadtreeGrid:
         self.ref_pols = []
         for irow, row in self.refinement_polygons.iterrows():
             iref = row["refinement_level"]
-            polygon = {"geometry": row["geometry"], "refinement_level": iref}
+            geometry = row["geometry"]
+            if CRS(self.crs).is_geographic:
+                # Express the polygon in the longitude convention of the grid
+                # (e.g. -178 becomes 182 for a grid that runs from 170 to 190)
+                geometry = shift_polygon_to_grid(geometry, *self.grid_lon_range())
+            polygon = {"geometry": geometry, "refinement_level": iref}
             if "zmin" in row:
                 polygon["zmin"] = row["zmin"]
             else:
@@ -216,11 +222,29 @@ class QuadtreeGrid:
 
         print("Time elapsed : " + str(time.time() - start) + " s")
 
+    def grid_lon_range(self):
+        """Return the (min, max) x coordinate of the grid outline."""
+        lx = self.mmax * self.dx
+        ly = self.nmax * self.dy
+        xcor = self.x0 + np.array(
+            [
+                0.0,
+                self.cosrot * lx,
+                -self.sinrot * ly,
+                self.cosrot * lx - self.sinrot * ly,
+            ]
+        )
+        return float(xcor.min()), float(xcor.max())
+
     def refine_in_polygon(self, polygon):
         # Finds cell to refine and calls refine_cells
 
         # Loop through refinement levels for this polygon
         for ilev in range(polygon["refinement_level"]):
+            if ilev >= self.nr_refinement_levels:
+                # No cells of this level exist (nothing was refined at the
+                # previous level), so there is nothing to refine further
+                break
             # Refine cells in refinement polygons
             # Compute grid spacing for this level
             dx = self.dx / 2**ilev
@@ -1242,3 +1266,69 @@ def grid_in_polygon(x, y, p):
     inp = inp.reshape(rows, cols)
 
     return inp
+
+
+def _unwrap_lon(coords, ref=None):
+    """Make the longitudes of a coordinate sequence continuous.
+
+    Each longitude is shifted by a multiple of 360 degrees so that it lies
+    within 180 degrees of the previous one (the first one within 180 degrees
+    of *ref*, if given). E.g. [178, -179, -178] becomes [178, 181, 182].
+    """
+    out = []
+    prev = ref
+    for coord in coords:
+        lon = coord[0]
+        if prev is not None:
+            lon = lon - 360.0 * np.round((lon - prev) / 360.0)
+        out.append((lon, *coord[1:]))
+        prev = lon
+    return out
+
+
+def shift_polygon_to_grid(geometry, grid_xmin, grid_xmax):
+    """Express a polygon in geographic coordinates in the longitude convention of a grid.
+
+    The longitudes of the polygon are first made continuous (a polygon drawn
+    across the dateline may jump from 179 to -179). The polygon is then shifted
+    by 360 degrees if that gives a larger overlap with the grid, e.g. a polygon
+    at -178 to -174 is moved to 182 to 186 for a grid that runs from 170 to 190.
+
+    Parameters
+    ----------
+    geometry : shapely.geometry.Polygon or shapely.geometry.MultiPolygon
+        Polygon in geographic coordinates (degrees).
+    grid_xmin, grid_xmax : float
+        Longitude range of the grid.
+
+    Returns
+    -------
+    shapely.geometry.Polygon or shapely.geometry.MultiPolygon
+        The polygon in the longitude convention of the grid.
+    """
+    if geometry.geom_type == "MultiPolygon":
+        return MultiPolygon(
+            [
+                shift_polygon_to_grid(part, grid_xmin, grid_xmax)
+                for part in geometry.geoms
+            ]
+        )
+    if geometry.geom_type != "Polygon":
+        return geometry
+
+    exterior = _unwrap_lon(geometry.exterior.coords)
+    interiors = [
+        _unwrap_lon(ring.coords, ref=exterior[0][0]) for ring in geometry.interiors
+    ]
+    geometry = Polygon(exterior, interiors)
+
+    # Shift by 360 degrees if that gives a larger overlap with the grid
+    xmin, _, xmax, _ = geometry.bounds
+
+    def overlap(k):
+        return min(grid_xmax, xmax + 360.0 * k) - max(grid_xmin, xmin + 360.0 * k)
+
+    k = max((-1, 0, 1), key=overlap)
+    if k != 0 and overlap(k) > overlap(0):
+        geometry = translate(geometry, xoff=360.0 * k)
+    return geometry
