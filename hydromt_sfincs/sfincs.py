@@ -698,7 +698,6 @@ class SfincsModel(Model):
             geom_kwargs=geom_kwargs,
             grid_kwargs=grid_kwargs,
             legend_kwargs=legend_kwargs,
-            logger=logger,
             **kwargs,
         )
 
