@@ -31,5 +31,6 @@ For a static (non-interactive) view of the examples follow one of the links belo
 
 **Postprocessing and visualization**
 
-*   `SFINCS results: Maximum water depth <../_examples/5_plot_results_hmax.ipynb>`_
+*   `SFINCS results: Maximum water depth from model output <../_examples/5a_plot_results_hmax.ipynb>`_
+*   `SFINCS results: Downscaled maximum water depth <../_examples/5b_plot_downscaled_results_hmax.ipynb>`_
 *   `SFINCS results: Animation <../_examples/6_make_results_animation.ipynb>`_
