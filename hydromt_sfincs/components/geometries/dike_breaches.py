@@ -136,25 +136,20 @@ class SfincsDikeBreaches(ModelComponent):
         if abs_file_path is None:
             return
         if not abs_file_path.exists():
-            raise FileNotFoundError(
-                f"Dike breach file not found: {abs_file_path}"
-            )
+            raise FileNotFoundError(f"Dike breach file not found: {abs_file_path}")
 
         try:
             with open(abs_file_path, "rb") as f:
                 doc = tomllib.load(f)
         except tomllib.TOMLDecodeError:
-            raise ValueError(
-                f"Dike breach file {abs_file_path} is not valid TOML."
-            )
+            raise ValueError(f"Dike breach file {abs_file_path} is not valid TOML.")
 
         if not isinstance(doc, dict) or "src_structure" not in doc:
             return
 
         structs = doc.get("src_structure", []) or []
         breach_entries = [
-            e for e in structs
-            if str(e.get("type", "")).lower() == "dike_breach"
+            e for e in structs if str(e.get("type", "")).lower() == "dike_breach"
         ]
 
         if not breach_entries:
@@ -178,12 +173,16 @@ class SfincsDikeBreaches(ModelComponent):
         self._set_defaults(gdf)
 
         for idx, entry in enumerate(entries):
-            gdf.at[idx, "z_crest"]   = float(entry.get("z_crest",  _DEFAULTS["z_crest"]))
-            gdf.at[idx, "z_min"]     = float(entry.get("z_min",    _DEFAULTS["z_min"]))
-            gdf.at[idx, "B0"]        = float(entry.get("B0",       _DEFAULTS["B0"]))
-            gdf.at[idx, "t_breach"]  = float(entry.get("t_breach", _DEFAULTS["t_breach"]))
-            gdf.at[idx, "t0"]        = float(entry.get("t0",       _DEFAULTS["t0"]))
-            gdf.at[idx, "dike_core"] = int(entry.get("dike_core", _DEFAULTS["dike_core"]))
+            gdf.at[idx, "z_crest"] = float(entry.get("z_crest", _DEFAULTS["z_crest"]))
+            gdf.at[idx, "z_min"] = float(entry.get("z_min", _DEFAULTS["z_min"]))
+            gdf.at[idx, "B0"] = float(entry.get("B0", _DEFAULTS["B0"]))
+            gdf.at[idx, "t_breach"] = float(
+                entry.get("t_breach", _DEFAULTS["t_breach"])
+            )
+            gdf.at[idx, "t0"] = float(entry.get("t0", _DEFAULTS["t0"]))
+            gdf.at[idx, "dike_core"] = int(
+                entry.get("dike_core", _DEFAULTS["dike_core"])
+            )
             if "obs_1" in entry:
                 gdf.at[idx, "obs_1_x"] = float(entry["obs_1"][0])
                 gdf.at[idx, "obs_1_y"] = float(entry["obs_1"][1])
@@ -204,7 +203,7 @@ class SfincsDikeBreaches(ModelComponent):
                 rule_open = str(entry.get("rules_open", "") or "")
             if not rule_close:
                 rule_close = str(entry.get("rules_close", "") or "")
-            gdf.at[idx, "rules_open"]  = rule_open
+            gdf.at[idx, "rules_open"] = rule_open
             gdf.at[idx, "rules_close"] = rule_close
 
         self.set(gdf, merge=False)
@@ -252,15 +251,15 @@ class SfincsDikeBreaches(ModelComponent):
             name = str(row.get("name", "") or f"breach_{idx + 1:03d}")
 
             entry: dict = {
-                "type":      "dike_breach",
-                "name":      name,
-                "src_1":     [x1, y1],
-                "src_2":     [x2, y2],
-                "z_crest":   float(row["z_crest"]),
-                "z_min":     float(row["z_min"]),
-                "B0":        float(row["B0"]),
-                "t_breach":  float(row["t_breach"]),
-                "t0":        float(row["t0"]),
+                "type": "dike_breach",
+                "name": name,
+                "src_1": [x1, y1],
+                "src_2": [x2, y2],
+                "z_crest": float(row["z_crest"]),
+                "z_min": float(row["z_min"]),
+                "B0": float(row["B0"]),
+                "t_breach": float(row["t_breach"]),
+                "t0": float(row["t0"]),
                 "dike_core": int(row["dike_core"]),
             }
             # obs_1 / obs_2 are optional; only written when explicitly set.
@@ -311,14 +310,20 @@ class SfincsDikeBreaches(ModelComponent):
         within = gdf.within(self.model.region.union_all())
         if within.any():
             if not within.all():
-                removed = gdf.loc[~within, "name"] if "name" in gdf.columns else gdf[~within].index
+                removed = (
+                    gdf.loc[~within, "name"]
+                    if "name" in gdf.columns
+                    else gdf[~within].index
+                )
                 logger.info(
                     "Some dike breach structures fall outside model domain and will be removed: %s",
                     list(removed),
                 )
                 gdf = gdf[within]
         else:
-            raise ValueError("None of the dike breach structures fall within the model domain.")
+            raise ValueError(
+                "None of the dike breach structures fall within the model domain."
+            )
 
         if merge and not self.data.empty:
             gdf = gpd.GeoDataFrame(
@@ -492,7 +497,7 @@ class SfincsDikeBreaches(ModelComponent):
             ``float``/``int``, or a datetime as a :class:`datetime` object
             or ISO 8601 string (``"YYYY-MM-DD HH:MM:SS"``). When a datetime
             is supplied, ``tref`` must be set in the model config.
-            By default 0.0.  
+            By default 0.0.
         t0 : float, optional
             Phase 1 duration — time for crest to lower from ``z_crest``
             to ``z_min`` (s), by default 0.0.
@@ -558,19 +563,19 @@ class SfincsDikeBreaches(ModelComponent):
         obs_2_coords = self._resolve_obs_points(obs_2, n)
 
         for idx in range(n):
-            gdf.at[idx, "z_crest"]     = float(z_crest)
-            gdf.at[idx, "z_min"]       = float(z_min)
-            gdf.at[idx, "B0"]          = float(B0)
-            gdf.at[idx, "t_breach"]    = float(t_breach_s)
-            gdf.at[idx, "t0"]          = float(t0)
-            gdf.at[idx, "dike_core"]   = int(dike_core)
+            gdf.at[idx, "z_crest"] = float(z_crest)
+            gdf.at[idx, "z_min"] = float(z_min)
+            gdf.at[idx, "B0"] = float(B0)
+            gdf.at[idx, "t_breach"] = float(t_breach_s)
+            gdf.at[idx, "t0"] = float(t0)
+            gdf.at[idx, "dike_core"] = int(dike_core)
             if obs_1_coords is not None:
                 gdf.at[idx, "obs_1_x"] = obs_1_coords[idx][0]
                 gdf.at[idx, "obs_1_y"] = obs_1_coords[idx][1]
             if obs_2_coords is not None:
                 gdf.at[idx, "obs_2_x"] = obs_2_coords[idx][0]
                 gdf.at[idx, "obs_2_y"] = obs_2_coords[idx][1]
-            gdf.at[idx, "rules_open"]  = rules_open
+            gdf.at[idx, "rules_open"] = rules_open
             gdf.at[idx, "rules_close"] = rules_close
 
         # Columns in the input GeoDataFrame override scalar kwargs.

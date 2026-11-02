@@ -182,8 +182,7 @@ class SfincsUrbanDrainageAreas(ModelComponent):
             if poly_path not in poly_cache:
                 feats = readers.read_geoms(poly_path)
                 poly_cache[poly_path] = {
-                    str(f["name"]): np.column_stack([f["x"], f["y"]])
-                    for f in feats
+                    str(f["name"]): np.column_stack([f["x"], f["y"]]) for f in feats
                 }
             polys = poly_cache[poly_path]
             if name not in polys:
@@ -234,7 +233,11 @@ class SfincsUrbanDrainageAreas(ModelComponent):
             poly_groups.setdefault(poly_path, []).append(feat)
             zone_tables.append(_row_to_toml_table(row))
 
-        fmt = "%.6f" if self.model.crs is not None and self.model.crs.is_geographic else "%.1f"
+        fmt = (
+            "%.6f"
+            if self.model.crs is not None and self.model.crs.is_geographic
+            else "%.1f"
+        )
         for poly_path, feats in poly_groups.items():
             poly_path.parent.mkdir(parents=True, exist_ok=True)
             writers.write_geoms(poly_path, feats, stype="pol", fmt=fmt)
@@ -355,9 +358,11 @@ class SfincsUrbanDrainageAreas(ModelComponent):
             if col not in gdf.columns:
                 gdf[col] = default
             elif isinstance(default, bool):
-                gdf[col] = gdf[col].map(
-                    lambda v, d=default: d if pd.isna(v) else bool(v)
-                ).astype(bool)
+                gdf[col] = (
+                    gdf[col]
+                    .map(lambda v, d=default: d if pd.isna(v) else bool(v))
+                    .astype(bool)
+                )
             else:
                 gdf[col] = gdf[col].fillna(default)
 
@@ -401,9 +406,7 @@ class SfincsUrbanDrainageAreas(ModelComponent):
                 f"from {_VALID_TYPES}."
             )
         if "name" not in gdf.columns:
-            gdf = gdf.assign(
-                name=[f"urb_{i + 1:04d}" for i in range(len(gdf))]
-            )
+            gdf = gdf.assign(name=[f"urb_{i + 1:04d}" for i in range(len(gdf))])
         if "polygon_file" not in gdf.columns:
             gdf = gdf.assign(polygon_file=polygon_file)
 

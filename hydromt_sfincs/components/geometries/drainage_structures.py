@@ -300,9 +300,7 @@ class SfincsDrainageStructures(ModelComponent):
                     entry.get("flow_coef", _DEFAULTS["flow_coef"])
                 )
             elif t == 4:
-                gdf.at[idx, "width"] = float(
-                    entry.get("width", _DEFAULTS["width"])
-                )
+                gdf.at[idx, "width"] = float(entry.get("width", _DEFAULTS["width"]))
                 gdf.at[idx, "sill_elevation"] = float(
                     entry.get("sill_elevation", _DEFAULTS["sill_elevation"])
                 )
@@ -324,12 +322,8 @@ class SfincsDrainageStructures(ModelComponent):
                 gdf.at[idx, "flow_coef"] = float(
                     entry.get("flow_coef", _DEFAULTS["flow_coef"])
                 )
-                gdf.at[idx, "width"] = float(
-                    entry.get("width", _DEFAULTS["width"])
-                )
-                gdf.at[idx, "height"] = float(
-                    entry.get("height", _DEFAULTS["height"])
-                )
+                gdf.at[idx, "width"] = float(entry.get("width", _DEFAULTS["width"]))
+                gdf.at[idx, "height"] = float(entry.get("height", _DEFAULTS["height"]))
                 gdf.at[idx, "invert_1"] = float(
                     entry.get("invert_1", _DEFAULTS["invert_1"])
                 )
@@ -416,7 +410,9 @@ class SfincsDrainageStructures(ModelComponent):
 
         except Exception as e:
             logger.warning(
-                "Failed to write TOML drainage structures file: %s", e, "continuing with legacy .drn file only."
+                "Failed to write TOML drainage structures file: %s",
+                e,
+                "continuing with legacy .drn file only.",
             )
             self.model.config.set("drnfile", drnfile_backup)
 
@@ -693,9 +689,7 @@ class SfincsDrainageStructures(ModelComponent):
             "gate": (4, ""),
         }
         if stype not in svalues:
-            raise ValueError(
-                "stype must be one of " + ", ".join(sorted(svalues)) + "."
-            )
+            raise ValueError("stype must be one of " + ", ".join(sorted(svalues)) + ".")
         t, default_direction = svalues[stype]
 
         # read, clip and reproject
