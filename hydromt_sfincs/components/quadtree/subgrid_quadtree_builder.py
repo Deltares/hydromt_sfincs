@@ -5,6 +5,7 @@ Created on Mon Mar 03 2025
 
 @author: ormondt
 """
+
 import time
 import logging
 import os
@@ -814,14 +815,14 @@ class SubgridTableQuadtree:
 
             # Create COG overviews for faster visualization
             if write_dep_tif:
-                utils.build_overviews(
+                workflows.cog.build_overviews(
                     fn=fn_dep_tif,
                     resample_method="average",
                     overviews="auto",
                     logger=logger,
                 )
             if write_man_tif:
-                utils.build_overviews(
+                workflows.cog.build_overviews(
                     fn=fn_man_tif,
                     resample_method="average",
                     overviews="auto",

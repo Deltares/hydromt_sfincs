@@ -35,6 +35,48 @@ os.environ["PYDEVD_DISABLE_FILE_VALIDATION"] = "1"
 DOCS_TITLE = "HydroMT-SFINCS Documentation"
 
 
+def _apply_notebook_toctree_titles(app, env):
+    from docutils import nodes
+    from sphinx import addnodes
+
+    titles = {}
+    for docname in env.toctree_includes:
+        doctree = env.get_doctree(docname)
+        for toctree in doctree.findall(addnodes.toctree):
+            for title, target in toctree["entries"]:
+                if title and target.startswith("_examples/"):
+                    titles[target] = title.strip()
+
+    changed = set()
+    marker = "hydromt_sfincs_toctree_title"
+    for docname, title in titles.items():
+        toc = env.tocs.get(docname)
+        if toc is None or not toc.children:
+            continue
+
+        if len(toc.children) == 1 and toc.children[0].get(marker):
+            references = list(toc.children[0].findall(nodes.reference))
+            if references and references[0].astext() != title:
+                references[0].children = [nodes.Text(title)]
+                changed.add(docname)
+            continue
+
+        reference = nodes.reference(
+            "", title, internal=True, refuri=docname, anchorname=""
+        )
+        title_item = nodes.list_item("", addnodes.compact_paragraph("", "", reference))
+        title_item[marker] = True
+        title_item += nodes.bullet_list("", *(node.deepcopy() for node in toc.children))
+        env.tocs[docname] = nodes.bullet_list("", title_item)
+        changed.add(docname)
+
+    return changed
+
+
+def setup(app):
+    app.connect("env-updated", _apply_notebook_toctree_titles)
+
+
 def cli2rst(output, fn):
     with open(fn, "w") as f:
         f.write(".. code-block:: console\n\n")
@@ -114,10 +156,11 @@ version = hydromt_sfincs.__version__
 
 # -- Copy notebooks to include in docs -------
 SKIP_DOC_EXAMPLES = bool(os.environ.get("SKIP_DOC_EXAMPLES", False))
-if os.path.isdir("_examples") and SKIP_DOC_EXAMPLES:
-    remove_dir_content("_examples")
-elif not os.path.isdir("_examples") and not SKIP_DOC_EXAMPLES:
-    os.makedirs("_examples")
+if SKIP_DOC_EXAMPLES:
+    if os.path.isdir("_examples"):
+        remove_dir_content("_examples")
+else:
+    os.makedirs("_examples", exist_ok=True)
     shutil.copytree("../examples", "_examples", dirs_exist_ok=True)
 
 # replace all links of https://deltares.github.io/hydromt/.*/.*.rst.* with ../*.html.*
@@ -164,6 +207,7 @@ extensions = [
     "IPython.sphinxext.ipython_console_highlighting",
     "nbsphinx",
     "sphinxcontrib.autodoc_pydantic",
+    "sphinxcontrib.mermaid",
 ]
 
 suppress_warnings = [

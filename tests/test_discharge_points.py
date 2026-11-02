@@ -1,7 +1,9 @@
-import pytest
-import numpy as np
-from pathlib import Path
 from os.path import isfile, join
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import pytest
 
 from hydromt_sfincs import SfincsModel
 
@@ -16,7 +18,7 @@ def test_discharge_points_io(model_config, tmp_dir):
     assert len(model_config.discharge_points.data.index) == 3
 
     # write discharge points to file
-    model_config.root.set(tmp_dir, mode="w+")
+    model_config.root.set(tmp_dir, mode="w")
     model_config.discharge_points.write()
     model_config.config.write()
     assert isfile(tmp_dir / "sfincs.src")
@@ -40,7 +42,7 @@ def test_discharge_points_io(model_config, tmp_dir):
         if isfile(file_path):
             Path(file_path).unlink()
     # write to netcdf file
-    mod.root.set(tmp_dir, mode="w+")
+    mod.root.set(tmp_dir, mode="w")
     mod.discharge_points.write()
     mod.config.write()
     assert isfile(tmp_dir / "sfincs_netsrcdisfile.nc")
@@ -109,7 +111,7 @@ def test_drop_duplicates(model_config, tmp_dir):
     assert model_config.discharge_points.nr_points == nr_points + 2
 
     # write water level to file
-    model_config.root.set(tmp_dir, mode="w+")
+    model_config.root.set(tmp_dir, mode="w")
 
     model_config.discharge_points.write()
     model_config.config.write()
@@ -164,6 +166,20 @@ def test_create_timeseries(model_config):
         assert point_data.values.max() == 10
         # but length has changed accordingly
         assert len(point_data.time) == 49
+
+
+def test_set_timeseries_updates_discharge_time_index(model_config):
+    model_config.discharge_points.read()
+    old_times = model_config.discharge_points.data.indexes["time"]
+    new_times = pd.date_range("2010-02-05 12:00", periods=2, freq="12h")
+    update = pd.DataFrame({0: [10.0, 20.0]}, index=new_times)
+
+    model_config.discharge_points.set_timeseries(update, varname="dis")
+
+    data = model_config.discharge_points.data["dis"]
+    assert data.indexes["time"].equals(old_times.union(new_times))
+    assert data.sel(index=0, time=new_times).values.tolist() == [10.0, 20.0]
+    assert not data.sel(index=0).isnull().any()
 
     # lastly add a sine timeseries for the second and third point
     model_config.discharge_points.create_timeseries(

@@ -1,23 +1,33 @@
 """Plotting functions for SFINCS model data."""
 
 import logging
-from typing import Dict, List, Tuple, Union
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 import xugrid as xu
+import matplotlib.pyplot as plt
+
+# for animations
+from matplotlib import animation
+from IPython.display import HTML
 
 from .utils import get_bounds_vector
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"hydromt.{__name__}")
 
-__all__ = ["plot_forcing", "plot_basemap"]
+__all__ = ["plot_forcing", "plot_basemap", "plot_map_timesteps", "make_animation"]
 
 geom_style = {
     "rivers": dict(linestyle="-", linewidth=1.0, color="darkblue"),
     "mask2": dict(linestyle="-", linewidth=1.5, color="r"),
     "mask3": dict(linestyle="-", linewidth=1.5, color="m"),
+    "mask4": dict(linestyle="-", linewidth=1.5, color="g"),
+    "mask5": dict(linestyle="-", linewidth=1.5, color="b"),
+    "mask6": dict(linestyle="-", linewidth=1.5, color="orange"),
+    "snapwave_bnd": dict(marker="^", markersize=60, c="cyan", edgecolor="k"),
     "thd": dict(linestyle="-", linewidth=1.0, color="k", annotate=False),
     "weir": dict(linestyle="--", linewidth=1.0, color="k", annotate=False),
     "bnd": dict(marker="^", markersize=75, c="w", edgecolor="k", annotate=True),
@@ -118,6 +128,88 @@ def plot_forcing(forcing: Dict, **kwargs):
     return fig, axes
 
 
+def plot_map_timesteps(
+    da: Union[xr.DataArray, xu.UgridDataArray],
+    col: str = "time",
+    col_wrap: int = 3,
+    time_step: int = 1,
+    figsize: Tuple[int] = None,
+    **kwargs,
+):
+    """Plot a spatial DataArray as facets along one dimension.
+
+    Supports both regular xarray and unstructured xugrid DataArrays.
+    ``time_step`` selects every Nth index along ``col``.
+    Returns the figure and a 2D array of map axes.
+    """
+    import matplotlib.pyplot as plt
+
+    if isinstance(da, xu.UgridDataArray):
+        is_ugrid = True
+    elif isinstance(da, xr.DataArray):
+        is_ugrid = False
+    else:
+        raise TypeError("da must be an xarray or xugrid DataArray.")
+
+    if col not in da.dims:
+        raise ValueError(f"'{col}' must be a dimension of da.")
+    if not isinstance(col_wrap, int) or col_wrap < 1:
+        raise ValueError("col_wrap must be a positive integer.")
+    if not isinstance(time_step, int) or time_step < 1:
+        raise ValueError("time_step must be a positive integer.")
+
+    da = da.isel({col: slice(None, None, time_step)})
+    data = da.obj if is_ugrid else da
+    n_frames = data.sizes[col]
+    if n_frames == 0:
+        raise ValueError(f"Dimension '{col}' is empty.")
+
+    ncols = min(col_wrap, n_frames)
+    nrows = (n_frames + ncols - 1) // ncols
+    fig, axes = plt.subplots(
+        nrows,
+        ncols,
+        figsize=figsize or (5 * ncols, 4 * nrows),
+        squeeze=False,
+        constrained_layout=True,
+    )
+
+    plot_kwargs = kwargs.copy()
+    add_colorbar = plot_kwargs.pop("add_colorbar", True)
+    cbar_kwargs = plot_kwargs.pop("cbar_kwargs", {})
+    if "norm" not in plot_kwargs:
+        if plot_kwargs.get("vmin") is None:
+            plot_kwargs["vmin"] = float(data.min(skipna=True).compute().item())
+        if plot_kwargs.get("vmax") is None:
+            plot_kwargs["vmax"] = float(data.max(skipna=True).compute().item())
+    plot_kwargs["add_colorbar"] = False
+
+    mappable = None
+    for i, ax in enumerate(axes.flat[:n_frames]):
+        frame = da.isel({col: i})
+        if is_ugrid:
+            mappable = frame.ugrid.plot(ax=ax, **plot_kwargs)
+        else:
+            mappable = frame.plot(ax=ax, **plot_kwargs)
+        ax.set_title(f"{col} = {data[col].values[i]}")
+
+    for ax in axes.flat[n_frames:]:
+        ax.set_visible(False)
+
+    if add_colorbar:
+        fig.colorbar(mappable, ax=axes.flat[:n_frames].tolist(), **cbar_kwargs)
+
+    return fig, axes
+
+
+def _estimate_plot_limits(
+    da: Union[xr.DataArray, xu.UgridDataArray],
+) -> Tuple[float, float]:
+    """Estimate robust color limits from the 0th and 98th percentiles."""
+    vmin, vmax = da.quantile([0.0, 0.98], skipna=True).values
+    return float(vmin), float(vmax)
+
+
 def plot_basemap(
     ds: Union[xr.Dataset, xu.UgridDataset],
     geoms: Dict,
@@ -134,7 +226,7 @@ def plot_basemap(
     grid_kwargs: Dict = {},
     legend_kwargs: Dict = {},
     bmap_kwargs: Dict = {},
-    logger=logger,
+    model: str = "sfincs",
     **kwargs,
 ):
     """Create basemap plot.
@@ -145,12 +237,14 @@ def plot_basemap(
         Dataset with model maps
     geoms : Dict of geopandas.GeoDataFrame
         Model geometries
+    model : str, optional
+        Model setup to plot, either ``"sfincs"`` (default) or ``"snapwave"``.
     variable : str, optional
         Map of variable in ds to plot, by default 'dep'
     shaded : bool, optional
         Add shade to variable (only for variable = 'dep'), by default False
     plot_bounds : bool, optional
-        Add waterlevel (mask=2) and open (mask=3) boundary conditions to plot.
+        Plot boundary cells from the selected model mask.
     plot_region : bool, optional
         If True, plot region outline.
     plot_geoms : bool, optional
@@ -183,6 +277,10 @@ def plot_basemap(
     import cartopy.io.img_tiles as cimgt
     import matplotlib.pyplot as plt
     from matplotlib import colors, patheffects
+
+    if model not in ("sfincs", "snapwave"):
+        raise ValueError("model must be either 'sfincs' or 'snapwave'.")
+    mask_name = "mask" if model == "sfincs" else "snapwave_mask"
 
     try:
         import contextily as cx
@@ -244,6 +342,7 @@ def plot_basemap(
     fig = plt.figure(figsize=figsize)
     ax = plt.subplot(projection=crs)
     ax.set_extent(extent, crs=crs)
+    bmap_has_attribution = False
     if bmap is not None:
         if zoomlevel == "auto":  # auto zoomlevel
             c = 2 * np.pi * 6378137  # Earth circumference
@@ -258,6 +357,11 @@ def plot_basemap(
         #  short names for cartopy image tiles
         bmap = {"sat": "QuadtreeTiles", "osm": "OSM"}.get(bmap, bmap)
         if has_cx and bmap in list(cx.providers.flatten()):
+            source = cx.providers.flatten()[bmap]
+            attribution = bmap_kwargs.get("attribution")
+            if attribution is None:
+                attribution = source.get("attribution")
+            bmap_has_attribution = bool(attribution)
             bmap_kwargs = dict(zoom=zoomlevel, **bmap_kwargs)
             cx.add_basemap(ax, crs=crs, source=bmap, **bmap_kwargs)
         elif hasattr(cimgt, bmap):
@@ -278,7 +382,7 @@ def plot_basemap(
         depth_vars = ["dep", "z"]
         if variable in depth_vars and variable in ds:
             # auto-determine vmin and vmax
-            vmin, vmax = ds[variable].raster.mask_nodata().quantile([0.0, 0.98]).values
+            vmin, vmax = _estimate_plot_limits(ds[variable].raster.mask_nodata())
             # overrule auto vmin and vmax with user input; keep as float for norm
             vmin = float(kwargs.pop("vmin", vmin))
             vmax = float(kwargs.pop("vmax", vmax))
@@ -303,17 +407,23 @@ def plot_basemap(
             norm = colors.Normalize(vmin=vmin, vmax=vmax)
             cmap, norm = kwargs.pop("cmap", cmap), kwargs.pop("norm", norm)
             kwargs0.update(norm=norm, cmap=cmap)
-        elif variable == "mask" and "mask" in ds:
-            cmap = colors.LinearSegmentedColormap.from_list(
-                "Set1", ["grey", "r", "m", "g", "b"], N=5
+        elif variable in ("mask", "snapwave_mask") and variable in ds:
+            mask_values = (
+                [1, 2, 3] if variable == "snapwave_mask" else [1, 2, 3, 4, 5, 6]
             )
-            norm = colors.BoundaryNorm([0.5, 1.5, 2.5, 3.5, 4.5, 5.5], 5)
+            cmap = colors.LinearSegmentedColormap.from_list(
+                "Set1",
+                ["grey", "r", "m", "g", "b", "orange"][: len(mask_values)],
+                N=len(mask_values),
+            )
+            bounds = [value + 0.5 for value in range(len(mask_values) + 1)]
+            norm = colors.BoundaryNorm(bounds, len(mask_values))
             kwargs0.update(norm=norm, cmap=cmap)
-            kwargs0["cbar_kwargs"].update(ticks=[1, 2, 3, 4, 5])
+            kwargs0["cbar_kwargs"].update(ticks=mask_values)
     if variable in ds:
         da = ds[variable]
-        if "mask" in ds and np.any(ds["mask"] > 0):
-            da = da.where(ds["mask"] > 0)
+        if mask_name in ds and np.any(ds[mask_name] > 0):
+            da = da.where(ds[mask_name] > 0)
         if isinstance(da, xr.DataArray):
             # mask_nodata converts it to an xr.DataArray, so performed inside if-else statement
             da = da.raster.mask_nodata()
@@ -374,21 +484,35 @@ def plot_basemap(
         ],
     )
     # plot mask boundaries
-    if plot_bounds and "mask" not in ds:
-        raise ValueError(
-            "No 'mask' (sfincs.mask) found in ds required to plot the model bounds "
-            "Set plot_bounds=False or add 'mask' to ds"
+    if plot_bounds and mask_name not in ds:
+        logger.warning(
+            "No '%s' found in ds required to plot the model bounds; "
+            "skipping boundary plotting. Set plot_bounds=False or add the mask to ds.",
+            mask_name,
         )
-    elif plot_bounds and (ds["mask"] > 1).any():
-        gdf_msk = get_bounds_vector(ds["mask"])
-        gdf_msk2 = gdf_msk[gdf_msk["value"] == 2]
-        gdf_msk3 = gdf_msk[gdf_msk["value"] == 3]
-        if gdf_msk2.index.size > 0:
-            gdf_msk2.plot(
-                ax=ax, zorder=3, label="waterlevel bnd", **geom_style["mask2"]
+        plot_bounds = False
+    if plot_bounds and (ds[mask_name] > 1).any():
+        gdf_msk = get_bounds_vector(ds[mask_name])
+        boundary_specs = {
+            2: ("waves bnd", "mask2")
+            if model == "snapwave"
+            else ("waterlevel bnd", "mask2"),
+            3: ("Neumann bnd", "mask3")
+            if model == "snapwave"
+            else ("outflow bnd", "mask3"),
+        }
+        if model == "sfincs":
+            boundary_specs.update(
+                {
+                    4: ("wavemaker bnd", "mask4"),
+                    5: ("downstream bnd", "mask5"),
+                    6: ("Neumann bnd", "mask6"),
+                }
             )
-        if gdf_msk3.index.size > 0:
-            gdf_msk3.plot(ax=ax, zorder=3, label="outflow bnd", **geom_style["mask3"])
+        for value, (label, style) in boundary_specs.items():
+            gdf_boundary = gdf_msk[gdf_msk["value"] == value]
+            if not gdf_boundary.empty:
+                gdf_boundary.plot(ax=ax, zorder=3, label=label, **geom_style[style])
 
     # plot static geoms
     if plot_geoms:
@@ -436,7 +560,8 @@ def plot_basemap(
     ax.set_ylabel(ylab)
     ax.set_xlabel(xlab)
     variable = "base" if variable is None else variable
-    ax.set_title(f"SFINCS {variable} map")
+    model_title = "SFINCS" if model == "sfincs" else "SnapWave"
+    ax.set_title(f"{model_title} {variable} map")
     # NOTE without defined loc it takes forever to find a 'best' location
     # by default outside plot
     if geom_names or plot_bounds:
@@ -450,8 +575,232 @@ def plot_basemap(
         legend_kwargs0.update(**legend_kwargs)
         ax.legend(**legend_kwargs0)
 
+    tile_name = "" if bmap is None else str(bmap).lower()
+    is_satellite = any(
+        keyword in tile_name for keyword in ("sat", "imagery", "aerial", "quadtree")
+    )
+    credit_x, credit_y, credit_va = (
+        (0.01, 0.99, "top") if bmap_has_attribution else (0.01, 0.01, "bottom")
+    )
+    ax.text(
+        credit_x,
+        credit_y,
+        "© Powered by HydroMT-SFINCS | Deltares",
+        transform=ax.transAxes,
+        ha="left",
+        va=credit_va,
+        fontsize=6,
+        color="white" if is_satellite else "0.25",
+        bbox=dict(
+            facecolor="0.1" if is_satellite else "white",
+            alpha=0.75,
+            edgecolor="none",
+            pad=1.5,
+        ),
+        zorder=10,
+    )
+
     return fig, ax
 
 
-# %% DDB GUI focused additional functions:
-# FIXME - GUI overlay functions?
+def make_animation(
+    data: Union[xr.DataArray, xr.Dataset, xu.UgridDataArray, xu.UgridDataset],
+    variable: Optional[str] = None,
+    geoms: Optional[Dict] = None,
+    model: str = "sfincs",
+    bmap: str = "sat",
+    zoomlevel: Union[int, str] = "auto",
+    figsize: Optional[Tuple[float, float]] = None,
+    step: int = 1,
+    fps: int = 4,
+    dpi: int = 100,
+    interval: int = 250,
+    title: Optional[str] = None,
+    save_path: Optional[Union[str, Path]] = None,
+    return_html: bool = True,
+    **plot_kwargs,
+) -> Optional[HTML]:
+    """Create an inline animation of a time-dependent spatial variable.
+
+    Regular-grid arrays are plotted using their native coordinates, including
+    two-dimensional ``xc``/``yc`` coordinates for rotated grids. Quadtree
+    arrays are plotted on their native unstructured mesh; they are not
+    rasterized or resampled. Arguments are ordered by purpose: data selection,
+    basemap options, animation styling, and output settings.
+
+    Parameters
+    ----------
+    data : xr.DataArray, xr.Dataset, xu.UgridDataArray, or xu.UgridDataset
+        Time-dependent spatial data. For a Dataset input, select the variable
+        to animate with ``variable``.
+    variable : str, optional
+        Name of the variable to animate when ``data`` is a Dataset. Not needed
+        when ``data`` is a DataArray.
+    geoms : dict, optional
+        Geometries to include in the basemap.
+    model : {"sfincs", "snapwave"}, optional
+        Model type passed to :func:`plot_basemap`, by default ``"sfincs"``.
+    bmap : str, optional
+        Background map name passed to :func:`plot_basemap`, by default ``"sat"``.
+    zoomlevel : int or str, optional
+        Background-map zoom level, by default ``"auto"``.
+    figsize : tuple of float, optional
+        Figure size in inches.
+    step : int, optional
+        Plot every ``step``-th timestep, by default 1.
+    interval : int, optional
+        Delay between animation frames in milliseconds, by default 250.
+    title : str, optional
+        Title prefix shown with each frame's timestamp. Defaults to the data's
+        ``long_name`` attribute, its variable name, or ``"Data"``.
+    fps : int, optional
+        Frames per second when saving to a file, by default 4. Ignored when
+        ``save_path`` is ``None``.
+    dpi : int, optional
+        Resolution used when saving to a file, by default 100. Ignored when
+        ``save_path`` is ``None``.
+    save_path : str or pathlib.Path, optional
+        Optional output animation path. The file extension selects the
+        Matplotlib writer. HTML output and MP4 files require the FFmpeg
+        executable.
+    return_html : bool, optional
+        Return an HTML animation for inline display, by default True. Set to
+        False to skip HTML generation; requires ``save_path``.
+    **plot_kwargs
+        Plot styling keywords passed to ``DataArray.plot`` or
+        ``UgridDataArray.ugrid.plot``. By default, ``vmin`` and ``vmax`` are
+        estimated from the full input using the 0th and 98th percentiles.
+        Override either limit by passing ``vmin=...`` or ``vmax=...``. Other
+        plot options such as ``cmap`` and ``alpha`` are also accepted. The
+        ``cbar_kwargs`` keyword is passed to ``Figure.colorbar``, and
+        ``add_colorbar=False`` disables the colorbar.
+
+    Returns
+    -------
+    IPython.display.HTML or None
+        HTML5 video for inline display, or ``None`` when ``return_html`` is
+        False. HTML generation requires FFmpeg.
+
+    Raises
+    ------
+    TypeError
+        If ``data`` is not an xarray or xugrid DataArray or Dataset.
+    ValueError
+        If a Dataset is supplied without ``variable``, the input has no
+        ``time`` dimension, ``step`` is not positive, or the number of spatial
+        dimensions is unsupported, or HTML output is disabled without a
+        ``save_path``.
+    RuntimeError
+        If HTML or MP4 output is requested but FFmpeg is unavailable.
+    """
+    if isinstance(data, (xr.Dataset, xu.UgridDataset)):
+        if variable is None:
+            raise ValueError("variable is required when data is a Dataset.")
+        if variable not in data:
+            raise KeyError(f"Variable {variable!r} is not present in data.")
+        da = data[variable]
+    elif isinstance(data, (xr.DataArray, xu.UgridDataArray)):
+        da = data
+    else:
+        raise TypeError("data must be an xarray or xugrid DataArray or Dataset.")
+    if not return_html and save_path is None:
+        raise ValueError("save_path is required when return_html is False.")
+    if "time" not in da.dims:
+        raise ValueError("data must have a 'time' dimension.")
+    if not isinstance(step, int) or step < 1:
+        raise ValueError("step must be a positive integer.")
+    if da.sizes["time"] == 0:
+        raise ValueError("data has no timesteps to animate.")
+    if save_path is not None:
+        save_path = Path(save_path)
+    needs_ffmpeg = return_html or (
+        save_path is not None and save_path.suffix.lower() == ".mp4"
+    )
+    if needs_ffmpeg and not animation.writers.is_available("ffmpeg"):
+        raise RuntimeError(
+            "Returning inline HTML or saving an MP4 requires the FFmpeg "
+            "executable. Install FFmpeg or disable HTML output when saving "
+            "to a non-MP4 format."
+        )
+
+    is_ugrid = isinstance(da, xu.UgridDataArray)
+    if is_ugrid:
+        if da.isel(time=0).ndim != 1:
+            raise ValueError("Quadtree animation data must have one spatial dimension.")
+        x_name = y_name = None
+    else:
+        if da.isel(time=0).ndim != 2:
+            raise ValueError(
+                "Regular-grid animation data must have two spatial dimensions."
+            )
+        if "xc" in da.coords and "yc" in da.coords:
+            x_name, y_name = "xc", "yc"
+        else:
+            x_name, y_name = da.raster.x_dim, da.raster.y_dim
+
+    fig, ax = plot_basemap(
+        ds=da.to_dataset(name=da.name or "data"),
+        geoms=geoms or {},
+        variable="",
+        model=model,
+        bmap=bmap,
+        plot_bounds=False,
+        zoomlevel=zoomlevel,
+        figsize=figsize,
+    )
+
+    frame0 = da.isel(time=0)
+    plot_options = plot_kwargs.copy()
+    add_colorbar = plot_options.pop("add_colorbar", True)
+    cbar_kwargs = plot_options.pop("cbar_kwargs", None)
+    if "norm" not in plot_options and (
+        plot_options.get("vmin") is None or plot_options.get("vmax") is None
+    ):
+        data_for_limits = da if is_ugrid else da.raster.mask_nodata()
+        vmin, vmax = _estimate_plot_limits(data_for_limits)
+        if plot_options.get("vmin") is None:
+            plot_options["vmin"] = vmin
+        if plot_options.get("vmax") is None:
+            plot_options["vmax"] = vmax
+    plot_options["ax"] = ax
+    plot_options["add_colorbar"] = False
+    projection = getattr(ax, "projection", None)
+    if projection is not None:
+        plot_options.setdefault("transform", projection)
+
+    if is_ugrid:
+        mappable = frame0.ugrid.plot(**plot_options)
+    else:
+        mappable = frame0.plot(
+            x=x_name,
+            y=y_name,
+            **plot_options,
+        )
+    if add_colorbar:
+        colorbar_options = {"shrink": 0.6, "anchor": (0, 0)}
+        if cbar_kwargs is not None:
+            colorbar_options.update(cbar_kwargs)
+        fig.colorbar(mappable, ax=ax, **colorbar_options)
+
+    title_prefix = title or da.attrs.get("long_name", da.name or "Data")
+
+    def update_plot(i: int):
+        frame = da.isel(time=i)
+        timestamp = pd.Timestamp(da["time"].values[i]).strftime("%d-%B-%Y %H:%M:%S")
+        ax.set_title(f"{title_prefix} {timestamp}")
+        mappable.set_array(frame.values.ravel())
+        return (mappable,)
+
+    ani = animation.FuncAnimation(
+        fig,
+        update_plot,
+        frames=np.arange(0, da.sizes["time"], step),
+        interval=interval,
+        blit=False,
+    )
+    if save_path is not None:
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        ani.save(str(save_path), fps=fps, dpi=dpi)
+    html = ani.to_html5_video() if return_html else None
+    plt.close(fig)
+    return HTML(html) if html is not None else None

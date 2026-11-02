@@ -111,7 +111,7 @@ def subgrid_q_table(
     option : int, option to use "old" or "new" method for computing conveyance depth at u/v points
     z_zmin_a : float, elevation of lowest pixel in neighboring cell A [m]
     z_zmin_b : float, elevation of lowest pixel in neighboring cell B [m]
-    weight_option : str, weight of q between sides A and B ("min" or "mean")
+    weight_option : str, weight of q between sides A and B ("min", "mean" or "all").
     roughness_type : str, "manning" or "chezy"
 
     Returns
@@ -208,7 +208,13 @@ def subgrid_q_table(
         q_min = np.minimum(q_a, q_b)
         h_min = np.minimum(h_a, h_b)
 
-        if option == 1:
+        if weight_option == "all":
+            # Average over the whole u/v box at every level, no minimum over sides A and B
+            q = q_all
+            hmean = h_all
+            pwet[ibin] = (zbin > elevation).sum() / n
+
+        elif option == 1:
             # Use old 1 option (weighted average of q_ab and q_all) option (min at bottom bin, mean at top bin)
             w = (ibin) / (
                 nlevels - 1
@@ -268,7 +274,7 @@ def subgrid_q_table(
     # mean water depth in cell as computed in SFINCS (assuming linear relation between water level and water depth above zmax)
     hfit = havg_top + zmax - zmin
     # Compute q and navg
-    if weight_option == "mean":
+    if weight_option == "mean" or weight_option == "all":
         # Use entire uv point
         h = np.maximum(zfit - elevation, 0.0)  # water depth in each pixel
         q = np.mean(h ** (5.0 / 3.0) / manning)  # combined unit discharge for cell

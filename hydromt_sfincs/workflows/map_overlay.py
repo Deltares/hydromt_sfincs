@@ -33,15 +33,91 @@ try:
 except ImportError:
     HAS_DATASHADER = False
 
+# Width of the world in EPSG:3857 (metres)
+WORLD_WIDTH = 40075016.68557849
+
+
+def to_webmercator(x, y, source_crs: CRS) -> "tuple[np.ndarray, np.ndarray]":
+    """Reproject coordinates to EPSG:3857 without wrapping at the dateline.
+
+    Webmercator x is proportional to longitude, so it is computed directly from
+    the longitude instead of letting PROJ wrap it into [-180, 180]. This keeps a
+    grid continuous across the dateline in any longitude convention (e.g. 170 to
+    190, or -190 to -170). Coordinates in a projected CRS are first converted to
+    longitudes, which are made continuous around the first point.
+
+    Parameters
+    ----------
+    x, y : array-like
+        Coordinates in ``source_crs``.
+    source_crs : pyproj.CRS
+        CRS of the coordinates.
+
+    Returns
+    -------
+    (np.ndarray, np.ndarray)
+        x and y in EPSG:3857.
+    """
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    if source_crs.is_geographic:
+        lon, lat = x, y
+    else:
+        lon, lat = Transformer.from_crs(source_crs, 4326, always_xy=True).transform(
+            x, y
+        )
+        lon = np.asarray(lon, dtype=float)
+        lat = np.asarray(lat, dtype=float)
+        finite = lon[np.isfinite(lon)]
+        if finite.size > 0:
+            ref = finite[0]
+            lon = ref + np.mod(lon - ref + 180.0, 360.0) - 180.0
+    xm = lon * (WORLD_WIDTH / 360.0)
+    _, ym = Transformer.from_crs(4326, 3857, always_xy=True).transform(
+        np.zeros_like(lat), lat
+    )
+    return xm, np.asarray(ym, dtype=float)
+
+
+def view_ranges(xlim, ylim, data_xmin: float, data_xmax: float):
+    """Return the EPSG:3857 x and y range of the map view, lined up with the data.
+
+    The view longitudes are converted without wrapping. The x range is then
+    shifted by a whole number of world widths so that it covers the same part
+    of the earth in the numbering of the data (e.g. a view at -200 to -160 and
+    a grid at 170 to 190).
+
+    Parameters
+    ----------
+    xlim, ylim : list of float
+        Lon/lat extent of the map view (EPSG:4326).
+    data_xmin, data_xmax : float
+        x range of the data in EPSG:3857.
+
+    Returns
+    -------
+    (list, list)
+        ``[xmin, xmax]`` and ``[ymin, ymax]`` in EPSG:3857.
+    """
+    x0 = xlim[0] * WORLD_WIDTH / 360.0
+    x1 = xlim[1] * WORLD_WIDTH / 360.0
+    if x1 <= x0:
+        x1 += WORLD_WIDTH
+    k = np.round((0.5 * (data_xmin + data_xmax) - 0.5 * (x0 + x1)) / WORLD_WIDTH)
+    x0 += k * WORLD_WIDTH
+    x1 += k * WORLD_WIDTH
+    _, yl = Transformer.from_crs(4326, 3857, always_xy=True).transform(
+        [0.0, 0.0], [ylim[0], ylim[1]]
+    )
+    return [x0, x1], [float(yl[0]), float(yl[1])]
+
 
 def make_edge_dataframe(ugrid, source_crs: CRS) -> pd.DataFrame:
     """Build a datashader-ready edge-coordinate DataFrame in webmercator.
 
     Produces one row per mesh edge with its two endpoints reprojected
-    from ``source_crs`` to EPSG:3857. If the source CRS is geographic
-    and any longitude exceeds 180, negative webmercator x values are
-    shifted by one world width so the line doesn't wrap back across the
-    dateline.
+    from ``source_crs`` to EPSG:3857 with :py:func:`to_webmercator`, so lines
+    never wrap back across the dateline.
 
     Parameters
     ----------
@@ -55,23 +131,17 @@ def make_edge_dataframe(ugrid, source_crs: CRS) -> pd.DataFrame:
     pd.DataFrame
         Columns ``x1, y1, x2, y2`` in EPSG:3857.
     """
-    x1 = ugrid.edge_node_coordinates[:, 0, 0]
-    x2 = ugrid.edge_node_coordinates[:, 1, 0]
-    y1 = ugrid.edge_node_coordinates[:, 0, 1]
-    y2 = ugrid.edge_node_coordinates[:, 1, 1]
-
-    cross_dateline = False
-    if source_crs.is_geographic and (np.max(x1) > 180.0 or np.max(x2) > 180.0):
-        cross_dateline = True
-
-    transformer = Transformer.from_crs(source_crs, 3857, always_xy=True)
-    x1, y1 = transformer.transform(x1, y1)
-    x2, y2 = transformer.transform(x2, y2)
-    if cross_dateline:
-        x1[x1 < 0] += 40075016.68557849
-        x2[x2 < 0] += 40075016.68557849
-
-    return pd.DataFrame(dict(x1=x1, y1=y1, x2=x2, y2=y2))
+    nodes = ugrid.edge_node_coordinates
+    nedge = nodes.shape[0]
+    # Both end points in one call, so they are made continuous together
+    xm, ym = to_webmercator(
+        np.concatenate([nodes[:, 0, 0], nodes[:, 1, 0]]),
+        np.concatenate([nodes[:, 0, 1], nodes[:, 1, 1]]),
+        source_crs,
+    )
+    return pd.DataFrame(
+        dict(x1=xm[:nedge], y1=ym[:nedge], x2=xm[nedge:], y2=ym[nedge:])
+    )
 
 
 def make_map_overlay(
@@ -117,13 +187,12 @@ def make_map_overlay(
         return False
 
     try:
-        transformer = Transformer.from_crs(4326, 3857, always_xy=True)
-        xl0, yl0 = transformer.transform(xlim[0], ylim[0])
-        xl1, yl1 = transformer.transform(xlim[1], ylim[1])
-        if xl0 > xl1:
-            xl1 += 40075016.68557849
-        xlim = [xl0, xl1]
-        ylim = [yl0, yl1]
+        xlim, ylim = view_ranges(
+            xlim,
+            ylim,
+            min(dataframe["x1"].min(), dataframe["x2"].min()),
+            max(dataframe["x1"].max(), dataframe["x2"].max()),
+        )
         ratio = (ylim[1] - ylim[0]) / (xlim[1] - xlim[0])
         height = int(width * ratio)
 
@@ -137,6 +206,33 @@ def make_map_overlay(
         return True
     except Exception:
         return False
+
+
+def _dilate_bool_agg(agg, px: int):
+    """Spread True pixels of a boolean aggregation by ``px`` pixels.
+
+    Drop-in replacement for ``tf.spread(agg, px=px)`` for boolean (``ds.any()``)
+    aggregations, using a scipy binary dilation with datashader's circular
+    footprint instead of datashader's numba-jitted spread kernel. The jitted
+    kernel is compiled per marker size, which takes minutes inside a frozen
+    (Nuitka) executable; the dilation is numba-free and operates on the small
+    aggregated image, so its cost is independent of the number of points.
+    """
+    if not px or px <= 0:
+        return agg
+    import xarray as xr
+    from scipy.ndimage import binary_dilation
+
+    # Same circular footprint as datashader's tf.spread(shape="circle"),
+    # which uses sqrt(x^2 + y^2) <= px + 0.5 (see datashader._circle_mask).
+    yy, xx = np.ogrid[-px : px + 1, -px : px + 1]
+    footprint = (xx * xx + yy * yy) <= (px + 0.5) ** 2
+
+    values = np.nan_to_num(agg.values).astype(bool)
+    dilated = binary_dilation(values, structure=footprint)
+    return xr.DataArray(
+        dilated, coords=agg.coords, dims=agg.dims, name=agg.name, attrs=agg.attrs
+    )
 
 
 def make_mask_dataframe(
@@ -172,11 +268,7 @@ def make_mask_dataframe(
     if x.size == 0:
         return pd.DataFrame()
 
-    cross_dateline = source_crs.is_geographic and np.max(x) > 180.0
-    transformer = Transformer.from_crs(source_crs, 3857, always_xy=True)
-    x, y = transformer.transform(x, y)
-    if cross_dateline:
-        x[x < 0] += 40075016.68557849
+    x, y = to_webmercator(x, y, source_crs)
 
     return pd.DataFrame(dict(x=x, y=y, mask=mask))
 
@@ -227,13 +319,7 @@ def make_mask_overlay(
     try:
         import datashader as ds
 
-        transformer = Transformer.from_crs(4326, 3857, always_xy=True)
-        xl0, yl0 = transformer.transform(xlim[0], ylim[0])
-        xl1, yl1 = transformer.transform(xlim[1], ylim[1])
-        if xl0 > xl1:
-            xl1 += 40075016.68557849
-        xlim = [xl0, xl1]
-        ylim = [yl0, yl1]
+        xlim, ylim = view_ranges(xlim, ylim, dataframe["x"].min(), dataframe["x"].max())
         ratio = (ylim[1] - ylim[0]) / (xlim[1] - xlim[0])
         height = int(width * ratio)
 
@@ -243,12 +329,14 @@ def make_mask_overlay(
         for mask_val, color in colors.items():
             df_sub = dataframe[dataframe["mask"] == mask_val]
             if len(df_sub) > 0:
-                images.append(
-                    tf.shade(
-                        tf.spread(cvs.points(df_sub, "x", "y", ds.any()), px=px),
-                        cmap=color,
-                    )
-                )
+                agg = cvs.points(df_sub, "x", "y", ds.any())
+                # Marker spreading. NOTE: deliberately NOT tf.spread - that
+                # numba-jit-compiles a kernel per marker size, which takes
+                # minutes in a frozen (Nuitka) build. The aggregation is a
+                # small boolean image here (height x width, independent of the
+                # number of points), so a scipy binary dilation with the same
+                # circular footprint is equivalent and instant.
+                images.append(tf.shade(_dilate_bool_agg(agg, px), cmap=color))
 
         if not images:
             return False
@@ -403,10 +491,7 @@ def make_elevation_trimesh(
     vy_flat = vy.ravel()
     vz_flat = np.repeat(cz, 4)
 
-    transformer = Transformer.from_crs(source_crs, 3857, always_xy=True)
-    vx_3857, vy_3857 = transformer.transform(vx_flat, vy_flat)
-    if source_crs.is_geographic and np.max(face_xy[:, 0]) > 180.0:
-        vx_3857[vx_3857 < 0] += 40075016.68557849
+    vx_3857, vy_3857 = to_webmercator(vx_flat, vy_flat, source_crs)
 
     vertices = pd.DataFrame({"x": vx_3857, "y": vy_3857, "z": vz_flat})
 
@@ -445,13 +530,9 @@ def make_elevation_overlay(
     try:
         import datashader as ds
 
-        transformer = Transformer.from_crs(4326, 3857, always_xy=True)
-        xl0, yl0 = transformer.transform(xlim[0], ylim[0])
-        xl1, yl1 = transformer.transform(xlim[1], ylim[1])
-        if xl0 > xl1:
-            xl1 += 40075016.68557849
-        x_range = (xl0, xl1)
-        y_range = (yl0, yl1)
+        x_range, y_range = view_ranges(
+            xlim, ylim, vertices["x"].min(), vertices["x"].max()
+        )
         ratio = (y_range[1] - y_range[0]) / (x_range[1] - x_range[0])
         height = int(width * ratio)
 

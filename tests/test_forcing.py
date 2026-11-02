@@ -1,7 +1,10 @@
-from datetime import datetime
-from os.path import abspath, dirname, join, isfile
 import logging
+from datetime import datetime
+from os.path import abspath, dirname, isfile, join
+
+import pandas as pd
 import pytest
+import xarray as xr
 
 from hydromt_sfincs.sfincs import SfincsModel
 
@@ -18,7 +21,7 @@ def test_meteo_io(model_config, tmp_dir):
     assert "precip_2d" in model_config.precipitation.data
 
     # now change the root of the model to a temporary directory and write the data
-    model_config.root.set(tmp_dir, mode="w+")
+    model_config.root.set(tmp_dir, mode="w")
     model_config.wind.write()
     fn = model_config.config.get("wndfile", abs_path=True)
     assert isfile(fn)
@@ -44,11 +47,29 @@ def test_create_uniform_precip(model_config):
     assert "precip" in model_config.precipitation.data
 
 
+def test_set_precip_reindexes_existing_data_to_new_time_index(model_config):
+    old_times = pd.date_range("2010-02-05", periods=2, freq="D")
+    new_times = pd.date_range("2020-02-05", periods=2, freq="D")
+
+    model_config.precipitation.set(
+        xr.DataArray([1.0, 2.0], coords={"time": old_times}, dims="time"),
+        name="precip",
+    )
+    model_config.precipitation.set(
+        xr.DataArray([3.0, 4.0], coords={"time": new_times}, dims="time"),
+        name="precip",
+    )
+
+    data = model_config.precipitation.data
+    assert data.indexes["time"].equals(new_times)
+    assert data["precip"].values.tolist() == [3.0, 4.0]
+
+
 def test_create_meteo_latlon(tmp_dir):
     region = join(TESTDATADIR, "region.geojson")
 
     # create a model instance with geographical coordinates
-    mod = SfincsModel(root=tmp_dir, mode="w+", data_libs=["artifact_data"])
+    mod = SfincsModel(root=tmp_dir, mode="w", data_libs=["artifact_data"])
     mod.grid.create_from_region(
         region={"geom": region},
         crs=4326,

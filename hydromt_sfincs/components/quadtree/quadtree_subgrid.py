@@ -48,7 +48,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
                 self.read(filename=abs_file_path)
 
     def read(self, filename: str | Path = None):
-        """Read SFINCS subgrid table (*.nc) file for Quadree grid
+        """Read SFINCS subgrid table (``*.nc``) file for Quadree grid
 
         Args:
             filename (str | Path, optional): File name to read. Defaults to None.
@@ -82,7 +82,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
         self._data = xr.load_dataset(abs_file_path)
 
     def write(self, filename: str | Path = None):
-        """Write SFINCS subgrid table (*.sbg) file for Quadree grid
+        """Write SFINCS subgrid table (``*.sbg``) file for Quadree grid
 
         Args:
             filename (str | Path, optional): File name to write. Defaults to None.
@@ -101,6 +101,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
         )
 
         # Write XArray dataset to netcdf file
+        abs_file_path.parent.mkdir(parents=True, exist_ok=True)
         self.data.to_netcdf(abs_file_path)
 
     def create(
@@ -144,7 +145,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             huthresh (float, optional): Huthresh. Defaults to 0.01.
             zmin (float, optional): Minimum elevation. Defaults to -999999.0.
             zmax (float, optional): Maximum elevation. Defaults to 999999.0.
-            weight_option (str, optional): Weight option. Defaults to "min".
+            weight_option (str, optional): Weighting of the two halves of the u/v control volume: "min", "mean", or "all". Defaults to "min".
             buffer_cells (int, optional): Number of buffer cells. Defaults to 0.
             interp_method (str, optional): Interpolation method for buffer cells. Defaults to "linear".
             quiet (bool, optional): Quiet mode. Defaults to False.
@@ -169,7 +170,7 @@ class SfincsQuadtreeSubgridTable(ModelComponent):
             res_subgrid = res_level / nr_subgrid_pixels
             # parse datasets closest to subgrid resolution
             elevation_list_per_level.append(
-                self.model._parse_datasets_elevation(elevation_list, res=res_subgrid)
+                self.model._parse_elevation_list(elevation_list, res=res_subgrid)
             )
         elevation_list = elevation_list_per_level
 

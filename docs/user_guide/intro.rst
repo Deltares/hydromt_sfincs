@@ -76,7 +76,8 @@ This plugin assists the SFINCS modeller in:
 
 .. toctree::
    :caption: Table of Contents
-   :maxdepth: 2
+   :maxdepth: 3
+   :titlesonly:
    :hidden:
 
    1_getting_started_hydromt/index.rst

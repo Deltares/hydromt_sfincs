@@ -136,7 +136,7 @@ Forcing create methods
    * - :py:meth:`rivers.create_inflow <hydromt_sfincs.components.forcing.SfincsRivers.create_inflow>`
      - This component adds discharge points (srcfile) where a river enters the model domain.
    * - :py:meth:`precipitation.create_uniform <hydromt_sfincs.components.forcing.SfincsPrecipitation.create_uniform>`
-     - This component adds spatially uniform precipitation forcing from timeseries/constants (precipfile).
+     - This component adds spatially uniform precipitation forcing from timeseries/constants (prcfile).
    * - :py:meth:`precipitation.create <hydromt_sfincs.components.forcing.SfincsPrecipitation.create>`
      - This component adds precipitation forcing from a gridded spatially varying data source (netamprfile).
    * - :py:meth:`pressure.create <hydromt_sfincs.components.forcing.SfincsPressure.create>`

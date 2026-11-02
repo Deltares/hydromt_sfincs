@@ -24,6 +24,12 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 
 
 class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
+    """Elevation stored as ``z`` in the quadtree grid.
+
+    ``data`` exposes only elevation, with its mesh and grid attributes.
+    The parent grid reads and writes elevation in ``qtrfile``.
+    """
+
     def __init__(
         self,
         model: "SfincsModel",
@@ -37,20 +43,29 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
 
     @property
     def data(self):
-        """Get the data from the quadtree grid."""
-        return self.model.quadtree_grid.data
+        """Return only elevation, retaining the mesh even before it is created."""
+        data = self.model.quadtree_grid.data
+        return data[[name for name in ("z",) if name in data]]
 
     @property
     def mask(self):
         """Get the mask from the quadtree grid."""
         return self.model.quadtree_mask.data["mask"]
 
-    def read(self):
-        # The mask elevation are read when the quadtree grid is read
-        pass
+    def read(self) -> None:
+        """Ensure the parent grid is loaded, including elevation in ``qtrfile``.
 
-    def write(self):
-        # The mask elevation are written when the quadtree grid is written
+        An already loaded grid is not reread.
+        """
+        if self.model.quadtree_grid._data is None:
+            self.model.quadtree_grid.read(read_components=False)
+
+    def write(self) -> None:
+        """Leave elevation persistence in ``qtrfile`` to the parent grid.
+
+        Call ``model.quadtree_grid.write()`` to persist it; this method does
+        not write a separate file or rewrite the shared grid.
+        """
         pass
 
     @hydromt_step
@@ -62,6 +77,7 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
         interp_method: str = "linear",
         zmin: float = -1.0e9,
         zmax: float = 1.0e9,
+        interpolate_na: bool = True,
     ):
         """Interpolate topobathy (z) data to the model grid.
 
@@ -79,10 +95,12 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
             Number of cells between datasets to ensure smooth transition of bed levels, by default 0
         interp_method : str, optional
             Interpolation method used to fill the buffer cells, by default "linear"
+        interpolate_na : bool, optional
+            Whether to interpolate (and extrapolate) missing values (NaNs) in the elevation data, by default True
         """
 
         nlev = self.data.attrs["nr_levels"]
-        n_cells = self.data.grid.n_face
+        n_cells = self.mask.grid.n_face
         zz = np.full(n_cells, np.nan)
         dx = self.data.attrs["dx"]
         dy = self.data.attrs["dy"]
@@ -94,7 +112,7 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
         # Precompute elevation sets per level
         # Add try statement here for compatibility with cht_bathymetry approach
         elevation_list_per_level = [
-            self.model._parse_datasets_elevation(elevation_list, res=res / (2**ilev))
+            self.model._parse_elevation_list(elevation_list, res=res / (2**ilev))
             for ilev in range(nlev)
         ]
 
@@ -110,10 +128,14 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
 
             # check if no nan data is present in the bed levels
             nmissing = int(np.sum(np.isnan(da_dep.values)))
-            if nmissing > 0:
+            if nmissing > 0 and interpolate_na:
                 logger.warning(f"Interpolate elevation at {nmissing} cells")
                 da_dep = da_dep.raster.interpolate_na(
                     method="rio_idw", extrapolate=True
+                )
+            elif nmissing > 0:
+                logger.info(
+                    f"Elevation has {nmissing} missing cells; leaving them as NaN"
                 )
             return da_dep
 
@@ -124,25 +146,36 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
             clip=(zmin, zmax),
         )
 
-        # Convert elevation to ugrid-dataarray and set in self.data
-        da = xr.DataArray(zz, dims=[self.data.grid.face_dimension])
-        uda = xu.UgridDataArray(da, self.data.grid)
+        # Convert elevation to ugrid-dataarray and set in parent grid.
+        grid = self.mask.grid
+        da = xr.DataArray(zz, dims=[grid.face_dimension])
+        uda = xu.UgridDataArray(da, grid)
         self.model.quadtree_grid.set(uda, name="z")
 
     @hydromt_step
     def create_uniform(self, zb):
-        self.data["z"][:] = zb
+        grid = self.mask.grid
+        self.model.quadtree_grid.set(
+            xu.UgridDataArray(
+                xr.DataArray(np.full(grid.n_face, zb), dims=[grid.face_dimension]),
+                grid,
+            ),
+            name="z",
+        )
 
     def interpolate_bathymetry(self, x, y, z, method="linear"):
         """x, y, and z are numpy arrays with coordinates and bathymetry values"""
-        xy = self.data.grid.face_coordinates
+        xy = self.mask.grid.face_coordinates
         # zz = np.full(self.nr_cells, np.nan)
         xz = xy[:, 0]
         yz = xy[:, 1]
         zz = interp2(x, y, z, xz, yz, method=method)
-        ugrid2d = self.data.grid
-        self.data["z"] = xu.UgridDataArray(
-            xr.DataArray(data=zz, dims=[ugrid2d.face_dimension]), ugrid2d
+        ugrid2d = self.mask.grid
+        self.model.quadtree_grid.set(
+            xu.UgridDataArray(
+                xr.DataArray(data=zz, dims=[ugrid2d.face_dimension]), ugrid2d
+            ),
+            name="z",
         )
 
     # ------------------------------------------------------------------
@@ -172,9 +205,9 @@ class SfincsQuadtreeElevation(SfincsQuadtreeMixin, ModelComponent):
         if self.data is None or "z" not in self.data:
             return False
         return self._overlay.render(
-            face_xy=self.data.grid.face_coordinates,
+            face_xy=self.mask.grid.face_coordinates,
             z=self.data["z"].values[:],
-            level=self.data["level"].values[:],
+            level=self.model.quadtree_grid.data["level"].values[:],
             dx0=self.data.attrs["dx"],
             dy0=self.data.attrs["dy"],
             rotation=self.data.attrs["rotation"],

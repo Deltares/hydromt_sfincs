@@ -96,7 +96,7 @@ def merge_multi_dataarrays(
             method = "bilinear"
         else:
             method = "average"
-    else:
+    elif method is None:
         method = "bilinear"
 
     if da_like is not None:  # reproject first raster to destination grid
@@ -158,9 +158,7 @@ def merge_multi_dataarrays(
                 reproj_method = "bilinear"
             else:
                 reproj_method = "average"
-        else:
-            reproj_method = "bilinear"
-        logger.debug(f"Reprojection method of dataset {str(i)} is: {method}")
+        logger.debug(f"Reprojection method of dataset {str(i)} is: {reproj_method}")
 
         da1 = merge_dataarrays(
             da1,

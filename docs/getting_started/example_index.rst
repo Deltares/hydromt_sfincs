@@ -13,22 +13,24 @@ For a static (non-interactive) view of the examples follow one of the links belo
 
 **Build and update a model (simple) using Command Line Interface (CLI)**
 
-*  `Build from CLI <../_examples/build_from_cli.ipynb>`_
+*  `Example: Build from CLI <../_examples/0_build_from_cli.ipynb>`_
 
 **Build a model (advanced) using Python scripts**
 
-*  `Build from Script <../_examples/1_build_from_script.ipynb>`_
+*  `Example: Build from Script (regular grid) <../_examples/1a_build_from_script.ipynb>`_
+*  `Example: Build from Script (quadtree grid) <../_examples/1b_build_quadtree_from_script.ipynb>`_
 
 **Update a model (advanced) using Python scripts**
 
-*  `Update Forcing <../_examples/2_update_forcing.ipynb>`_
-*  `Update Geometries <../_examples/3_update_geometries.ipynb>`_
+*  `Example: Update Forcing <../_examples/2_update_forcing.ipynb>`_
+*  `Example: Update Geometries <../_examples/3_update_geometries.ipynb>`_
 
 **Run a SFINCS model:**
 
-*   `Run a SFINCS model <../_examples/4_run_model.ipynb>`_
+*   `Example: Run a SFINCS model <../_examples/4_run_model.ipynb>`_
 
 **Postprocessing and visualization**
 
-*   `SFINCS results: Maximum water depth <../_examples/5_plot_results_hmax.ipynb>`_
-*   `SFINCS results: Animation <../_examples/6_make_results_animation.ipynb>`_
+*   `Example: SFINCS results: Maximum water depth from model output <../_examples/5a_plot_results_hmax.ipynb>`_
+*   `Example: SFINCS results: Downscaled maximum water depth <../_examples/5b_plot_downscaled_results_hmax.ipynb>`_
+*   `Example: SFINCS results: Animation <../_examples/6_make_results_animation.ipynb>`_

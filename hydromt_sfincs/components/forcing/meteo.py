@@ -19,7 +19,7 @@ logger = logging.getLogger(f"hydromt.{__name__}")
 
 # dictionary of meteo variables and their corresponding SFINCS file names and renaming conventions
 _METEO = {
-    "precip": ("precip", None),
+    "precip": ("prc", None),
     "precip_2d": ("netampr", {"Precipitation": "precip_2d"}),
     "press_2d": ("netamp", {"barometric_pressure": "press_2d"}),
     "wind": ("wnd", None),
@@ -47,7 +47,6 @@ class SfincsMeteo(ModelComponent):
         if self._data is None:
             self._initialize()
 
-        assert self._data is not None
         return self._data
 
     def _initialize(self, skip_read=False) -> None:
@@ -66,12 +65,16 @@ class SfincsMeteo(ModelComponent):
         # check that read mode is on
         self.root._assert_read_mode()
 
-        assert variable in [
+        if variable not in [
             "precip",
             "wind",
             "press",
-        ], f"Variable {variable} not supported. Supported variables are 'precip', 'wind', 'press'."
+        ]:
+            raise ValueError(
+                f"Variable {variable} not supported. Supported variables are 'precip', 'wind', 'press'."
+            )
 
+        self._initialize(skip_read=True)
         filtered_dict = {key: value for key, value in _METEO.items() if variable in key}
 
         # Check which type of meteo for this variable is present in the model
@@ -137,11 +140,14 @@ class SfincsMeteo(ModelComponent):
         # check that write mode is on
         self.root._assert_write_mode()
 
-        assert variable in [
+        if variable not in [
             "precip",
             "wind",
             "press",
-        ], f"Variable {variable} not supported. Supported variables are 'precip', 'wind', 'press'."
+        ]:
+            raise ValueError(
+                f"Variable {variable} not supported. Supported variables are 'precip', 'wind', 'press'."
+            )
         filtered_dict = {key: value for key, value in _METEO.items() if variable in key}
 
         for name in filtered_dict:
@@ -217,9 +223,6 @@ class SfincsMeteo(ModelComponent):
             Name of new map layer, this is used to overwrite the name of a DataArray
             and ignored if data is a Dataset
         """
-        self._initialize()
-        assert self._data is not None
-
         name_required = isinstance(data, np.ndarray) or (
             isinstance(data, xr.DataArray) and data.name is None
         )
@@ -230,7 +233,7 @@ class SfincsMeteo(ModelComponent):
                 data.name = name
             data = data.to_dataset()
         elif not isinstance(data, xr.Dataset):
-            raise ValueError(f"cannot set data of type {type(data).__name__}")
+            raise TypeError(f"cannot set data of type {type(data).__name__}")
 
         # Check if the time coordinates of the data match the model
         model_start, model_end = self.model.get_model_time()
@@ -244,15 +247,10 @@ class SfincsMeteo(ModelComponent):
                 f"from {time_start} to {time_end}."
             )
 
-        # TODO: don't we always want to reset the data when setting new data?
-        # that would mean that you can never have 1D and 2D data at the same time
-        if len(self._data) == 0:  # empty grid
-            self._data = data
-        else:
-            for dvar in data.data_vars:
-                if dvar in self._data and self.root.is_reading_mode():
-                    logger.warning(f"Replacing grid map: {dvar}")
-                self._data[dvar] = data[dvar]
+        if len(self.data) > 0:
+            existng_vars = list(self._data.data_vars)
+            logger.warning("Replacing existing data: {}".format(existng_vars))
+        self._data = data
 
     def clear(self):
         """Clear the data attribute."""
@@ -319,7 +317,7 @@ class SfincsPrecipitation(SfincsMeteo):
         One of the following model layers will be added:
 
         * **netamprfile**: for distributed precipitation rate [mm/hr].
-        * **precipfile**: for uniform precipitation rate [mm/hr].
+        * **prcfile**: for uniform precipitation rate [mm/hr].
 
         .. note::
 
@@ -429,11 +427,11 @@ class SfincsPrecipitation(SfincsMeteo):
             self.set(precip_out, name="precip_2d")
             # update the model config
             self.model.config.set("netamprfile", "sfincs_netampr.nc")
-            if self.model.config.get("precipfile", None) is not None:
+            if self.model.config.get("prcfile", None) is not None:
                 logger.warning(
-                    "precipfile was previously set, but is now replaced by netamprfile."
+                    "prcfile was previously set, but is now replaced by netamprfile."
                 )
-                self.model.config.set("precipfile", None)
+                self.model.config.set("prcfile", None)
             # update the default filename
             self._filename = "sfincs.netampr.nc"
 
@@ -443,7 +441,7 @@ class SfincsPrecipitation(SfincsMeteo):
 
         Adds model layers:
 
-        * **precipfile** forcing: uniform precipitation [mm/hr]
+        * **prcfile** forcing: uniform precipitation [mm/hr]
 
         Parameters
         ----------
@@ -483,10 +481,10 @@ class SfincsPrecipitation(SfincsMeteo):
         df_ts.index.name = "time"
         self.set(df_ts.to_xarray(), name="precip")
         # update the model config
-        self.model.config.set("precipfile", "sfincs.precip")
+        self.model.config.set("prcfile", "sfincs.precip")
         if self.model.config.get("netamprfile", None) is not None:
             logger.warning(
-                "netamprfile was previously set, but is now replaced by precipfile."
+                "netamprfile was previously set, but is now replaced by prcfile."
             )
             self.model.config.set("netamprfile", None)
         # update the default filename

@@ -25,13 +25,14 @@ class SfincsQuadtreeMixin:
             (min, max) values to clip output, by default None.
         """
 
-        nlev = self.data.attrs["nr_levels"]
-        xy = self.data.grid.face_coordinates
-        dx, dy = self.data.attrs["dx"], self.data.attrs["dy"]
+        data = self.model.quadtree_grid.data
+        nlev = data.attrs["nr_levels"]
+        xy = data.grid.face_coordinates
+        dx, dy = data.attrs["dx"], data.attrs["dy"]
 
-        level = self.data["level"].values - 1
-        n = self.data["n"].values - 1
-        m = self.data["m"].values - 1
+        level = data["level"].values - 1
+        n = data["n"].values - 1
+        m = data["m"].values - 1
         level_indices = [np.where(level == ilev)[0] for ilev in range(nlev)]
 
         func_name = getattr(compute_chunk, "__name__", repr(compute_chunk))
@@ -81,13 +82,13 @@ class SfincsQuadtreeMixin:
 
                     # Make a regular grid for this chunk
                     da_like = make_regular_grid(
-                        x0=self.data.attrs["x0"],
-                        y0=self.data.attrs["y0"],
+                        x0=data.attrs["x0"],
+                        y0=data.attrs["y0"],
                         dx=dxmin,
                         dy=dymin,
                         mmax=m_level[in_chunk].max() + 1,
                         nmax=n_level[in_chunk].max() + 1,
-                        rotation=self.data.attrs["rotation"],
+                        rotation=data.attrs["rotation"],
                         crs=self.model.crs,
                         mmin=m_level[in_chunk].min(),
                         nmin=n_level[in_chunk].min(),
