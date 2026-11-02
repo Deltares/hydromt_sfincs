@@ -49,7 +49,7 @@
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.23.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -62,7 +62,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.0.0" />
+  <meta name="docsearch:version" content="2.0.0.dev0" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -512,8 +512,34 @@ on that commit:</p>
 <li><p>Create a GitHub release from the final tag and publish it as a regular
 release, not a pre-release. This triggers the package upload to PyPI.
 The documentation workflow publishes the versioned documentation and
-updates the <code class="docutils literal notranslate"><span class="pre">stable</span></code> alias after a successful build. Check the Actions
-run, the published package on PyPI, and the <code class="docutils literal notranslate"><span class="pre">stable</span></code> documentation.</p></li>
+attempts to update the <code class="docutils literal notranslate"><span class="pre">stable</span></code> alias. It does not update the version
+switcher. After the documentation build succeeds, add the new version to
+the root <code class="docutils literal notranslate"><span class="pre">switcher.json</span></code> on the <code class="docutils literal notranslate"><span class="pre">gh-pages</span></code> branch. For example:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"v2.0.0"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"v2.0.0"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://deltares.github.io/hydromt_sfincs/v2.0.0/"</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Preserve the existing entries and valid JSON syntax. To update the
+<code class="docutils literal notranslate"><span class="pre">gh-pages</span></code> branch locally:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">git fetch origin</span>
+<span class="go">git switch gh-pages</span>
+<span class="gp"># </span>edit<span class="w"> </span>switcher.json
+<span class="go">git add switcher.json</span>
+<span class="go">git commit -m "Add v2.0.0 to docs version switcher"</span>
+<span class="go">git push origin gh-pages</span>
+</pre></div>
+</div>
+<p>Use the actual release version in the entry and commit message. If branch
+protection prevents a direct push, make the change through a pull request.
+Check the versioned documentation, the switcher, and the <code class="docutils literal notranslate"><span class="pre">stable</span></code> alias;
+a successful Actions run alone does not confirm that the alias points to
+the new release. The current deployment uses <code class="docutils literal notranslate"><span class="pre">destination_dir:</span> <span class="pre">stable</span></code>.
+When <code class="docutils literal notranslate"><span class="pre">stable</span></code> is a symlink on <code class="docutils literal notranslate"><span class="pre">gh-pages</span></code>, verify that the deployment
+has advanced its target rather than writing through the existing symlink.</p>
+</li>
 <li><p>This repository does not have HydroMT core’s automated
 <a class="reference external" href="https://deltares.github.io/hydromt/latest/dev/core_dev/release.html">record-release workflow</a>.
 After the final release, create a pull request from the release branch back
@@ -524,8 +550,9 @@ the next development version, using a <code class="docutils literal notranslate"
 <code class="docutils literal notranslate"><span class="pre">Added</span></code>, <code class="docutils literal notranslate"><span class="pre">Changed</span></code>, <code class="docutils literal notranslate"><span class="pre">Fixed</span></code>, <code class="docutils literal notranslate"><span class="pre">Deprecated</span></code>, and <code class="docutils literal notranslate"><span class="pre">Removed</span></code>
 subsections.</p></li>
 <li><p>Successful documentation builds from <code class="docutils literal notranslate"><span class="pre">main</span></code> update the <code class="docutils literal notranslate"><span class="pre">latest</span></code> alias.
-The <code class="docutils literal notranslate"><span class="pre">stable</span></code> alias is only updated by a published, non-prerelease GitHub
-release.</p></li>
+The stable deployment runs only for a published, non-prerelease GitHub
+release. Verify that <code class="docutils literal notranslate"><span class="pre">stable</span></code> points to the latest final version and
+that the historical version directories remain intact.</p></li>
 </ol>
 </section>
 </section>
