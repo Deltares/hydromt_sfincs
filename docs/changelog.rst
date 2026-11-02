@@ -8,6 +8,39 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
+v2.0.0 (02-11-2026)
+===================
+**v2.0.0 is a major step forward from v1.2.2, with a more modular,
+component-based architecture, substantial new functionality, and expanded
+support for quadtree models.**
+
+The model API has breaking changes, although existing v1.x models can still be
+read, written, and updated. Review the
+:doc:`migration guide <user_guide/6_migration_guide/migration_hydromt>` before
+upgrading your workflows.
+
+Added
+-----
+- Extend quadtree support beyond reading and writing existing models, with
+  additional grid, roughness, infiltration, boundary, and plotting workflows.
+- Add Green-Ampt and Horton infiltration methods, alongside expanded Curve
+  Number workflows.
+- Add new model utilities for plotting, output handling, and preprocessing and
+  postprocessing.
+
+Changed
+-------
+- Restructure the model around dedicated components for configuration, grid,
+  geometries, forcing, and output. Data access and common create/read/write
+  operations now use these components.
+- Update grid I/O and configuration handling to better align with HydroMT and
+  the SFINCS kernel.
+
+Removed
+-------
+- Replace legacy workflow modules and helpers with component APIs and dedicated
+  workflows, including the reorganized infiltration and tiling functionality.
+
 v2.0.0-rc4 (28-10-2026)
 =============================
 **This release includes changes to grid I/O, infiltration, and configuration, alongside bug fixes and improvements since v2.0.0-rc3.**

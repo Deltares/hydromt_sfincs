@@ -88,7 +88,10 @@ class SfincsOutput(ModelComponent):
                 **kwargs,
             )
         else:
-            logger.warning(f"File {fn_map} not found.")
+            logger.info(
+                "SFINCS result file %s is not present yet; run the model to generate it.",
+                fn_map,
+            )
 
         if not isabs(fn_his):
             fn_his = self.model.root.path / fn_his
@@ -100,7 +103,10 @@ class SfincsOutput(ModelComponent):
             )
             self.set(ds_his, split_dataset=True)
         else:
-            logger.warning(f"File {fn_his} not found.")
+            logger.info(
+                "SFINCS result file %s is not present yet; run the model to generate it.",
+                fn_his,
+            )
 
     def write(self):
         """Writing results to sfincs_map.nc and sfincs_his.nc files is not part of

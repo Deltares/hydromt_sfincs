@@ -547,15 +547,20 @@ class SfincsGrid(GridComponent):
             if name == "mask":
                 config_key = "mskfile"
                 fn = self.model.config.get_set_file_variable(config_key, "sfincs.msk")
-            else:
+            elif name == "dep":
                 fn = self.model.config.get(config_key, fallback=fallback, abs_path=True)
+            else:
+                # Component-owned maps are optional unless configured explicitly.
+                fn = self.model.config.get(config_key, abs_path=True)
+                if fn is None:
+                    continue
             if not isfile(fn):
                 logger.warning(f"{config_key} not found at {fn}")
                 continue
             dtype, nodata = ("u1", 0) if name == "mask" else ("f4", np.nan)
             arrays.append(self.read_map(fn, self._indices, dtype, nodata, name=name))
         if arrays:
-            ds = xr.merge(arrays)
+            ds = xr.merge(arrays, compat="no_conflicts")
             epsg = self.model.config.get("epsg", None)
             if epsg is not None:
                 ds.raster.set_crs(epsg)

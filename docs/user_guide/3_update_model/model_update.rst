@@ -56,7 +56,7 @@ see example below.
     sf.read()
 
     # change the root and mode to write the updated model to a new location
-    sf.root.set("sfincs_compound_precip", mode="w+")
+    sf.root.set("sfincs_compound_precip", mode="w")
 
     # update the configuration
     sf.config.update(
@@ -77,7 +77,7 @@ Examples
 For examples of how to update a SFINCS model using HydroMT-SFINCS, see:
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
     :titlesonly:
 
     Example: Update Forcing <../../_examples/2_update_forcing.ipynb>

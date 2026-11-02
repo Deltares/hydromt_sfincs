@@ -17,6 +17,7 @@ or updated using specific methods (see :ref:`model_methods`), which is demenstra
 .. toctree::
    :hidden:
    :maxdepth: 2
+   :titlesonly:
 
    model_components.rst
    model_methods.rst

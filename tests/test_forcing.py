@@ -21,7 +21,7 @@ def test_meteo_io(model_config, tmp_dir):
     assert "precip_2d" in model_config.precipitation.data
 
     # now change the root of the model to a temporary directory and write the data
-    model_config.root.set(tmp_dir, mode="w+")
+    model_config.root.set(tmp_dir, mode="w")
     model_config.wind.write()
     fn = model_config.config.get("wndfile", abs_path=True)
     assert isfile(fn)
@@ -69,7 +69,7 @@ def test_create_meteo_latlon(tmp_dir):
     region = join(TESTDATADIR, "region.geojson")
 
     # create a model instance with geographical coordinates
-    mod = SfincsModel(root=tmp_dir, mode="w+", data_libs=["artifact_data"])
+    mod = SfincsModel(root=tmp_dir, mode="w", data_libs=["artifact_data"])
     mod.grid.create_from_region(
         region={"geom": region},
         crs=4326,

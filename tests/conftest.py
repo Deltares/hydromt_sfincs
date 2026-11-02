@@ -37,7 +37,7 @@ def data_catalog():
 # initialize a model instance in write mode in a temporary directory
 @pytest.fixture
 def model_init(tmp_path):
-    mod = SfincsModel(root=tmp_path, mode="w+", data_libs=["artifact_data"])
+    mod = SfincsModel(root=tmp_path, mode="w", data_libs=["artifact_data"])
     return mod
 
 

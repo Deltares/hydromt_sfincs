@@ -37,7 +37,7 @@ def test_quadtree_io(tmp_dir):
     assert crs == CRS.from_epsg(32633)
 
     # now write the quadtree to a new location
-    mod0.root.set(tmp_dir, mode="w+")
+    mod0.root.set(tmp_dir, mode="w")
     mod0.quadtree_grid.write()
     mod0.config.write()
 
@@ -310,7 +310,7 @@ def test_quadtree_write_warns_when_layer_missing_in_new_root(
 
     # new root: the layer is neither loaded nor present, so it is lost
     root_b = tmp_dir / "moved"
-    mod.root.set(root_b, mode="w+")
+    mod.root.set(root_b, mode="w")
     caplog.clear()
     with caplog.at_level(logging.WARNING):
         mod.quadtree_roughness.write()

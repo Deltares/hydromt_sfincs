@@ -21,7 +21,7 @@ def test_snapwave_boundary_io(quadtree_model_config, tmp_dir):
     assert len(mod.snapwave_boundary_conditions.data.index) == 2
 
     # write snapwave to file
-    mod.root.set(tmp_dir, mode="w+")
+    mod.root.set(tmp_dir, mode="w")
     mod.write()
 
     assert isfile(tmp_dir / "snapwave.bnd")
@@ -62,7 +62,7 @@ def test_snapwave_boundary_io(quadtree_model_config, tmp_dir):
             Path(file_path).unlink()
 
     # write to netcdf file
-    mod.root.set(tmp_dir, mode="w+")
+    mod.root.set(tmp_dir, mode="w")
     mod.snapwave_boundary_conditions.write()
     mod.config.write()
     assert isfile(tmp_dir / "snapwave.nc")

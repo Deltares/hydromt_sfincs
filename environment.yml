@@ -9,10 +9,9 @@ dependencies:
   - cartopy>=0.20                 # to run examples
   - descartes                     # to run examples
   - ffmpeg                        # to run examples (animation)
+  - hydromt-sfincs==2.0.0
   # - git
   - jupyterlab                    # to run examples
   - matplotlib                    # to run examples
   - python=3.11                   # fixing python version for binder
   - pip                           # ensure pip itself is installed
-  - pip:
-    - hydromt-sfincs==2.0.0rc3

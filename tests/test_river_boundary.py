@@ -22,7 +22,7 @@ def test_river_boundary_io(model_config_inland, tmp_dir):
     assert len(model_config_inland.river_boundary_points.data.index) == 1
 
     # write river boundary points to file
-    model_config_inland.root.set(tmp_dir, mode="w+")
+    model_config_inland.root.set(tmp_dir, mode="w")
     model_config_inland.river_boundary_points.write()
     model_config_inland.quadtree_grid.write()  # Should not be needed?
     model_config_inland.config.write()
@@ -50,7 +50,7 @@ def test_river_boundary_io(model_config_inland, tmp_dir):
         if isfile(file_path):
             Path(file_path).unlink()
     # write to netcdf file
-    mod.root.set(tmp_dir, mode="w+")
+    mod.root.set(tmp_dir, mode="w")
     mod.river_boundary_points.write()
     mod.quadtree_grid.write()  # Should not be needed?
     mod.config.write()

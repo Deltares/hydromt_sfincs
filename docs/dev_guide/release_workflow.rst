@@ -38,7 +38,8 @@ Release candidate
 4. To make the candidate available as a GitHub pre-release, create and publish
    a pre-release using that tag. Note that publishing any GitHub release,
    including a pre-release, also triggers the workflow to upload the package
-   to PyPI.
+   to PyPI. The documentation workflow also publishes the versioned candidate
+   documentation, but does not change the ``latest`` or ``stable`` aliases.
 5. Test the candidate and make any required fixes on the release branch.
    Merge those fixes into ``main`` as well, or merge the release branch back
    into ``main`` after the final release.
@@ -63,7 +64,9 @@ Final release
    Pushing the tag builds and checks the package and uploads it to TestPyPI.
 4. Create a GitHub release from the final tag and publish it as a regular
    release, not a pre-release. This triggers the package upload to PyPI.
-   Check the Actions run and the published package on PyPI.
+   The documentation workflow publishes the versioned documentation and
+   updates the ``stable`` alias after a successful build. Check the Actions
+   run, the published package on PyPI, and the ``stable`` documentation.
 5. This repository does not have HydroMT core's automated
    `record-release workflow <https://deltares.github.io/hydromt/latest/dev/core_dev/release.html>`_.
    After the final release, create a pull request from the release branch back
@@ -73,3 +76,6 @@ Final release
    ``2.1.0.dev0``). Add a fresh unreleased section to the changelog with
    ``Added``, ``Changed``, ``Fixed``, ``Deprecated``, and ``Removed``
    subsections.
+6. Successful documentation builds from ``main`` update the ``latest`` alias.
+   The ``stable`` alias is only updated by a published, non-prerelease GitHub
+   release.

@@ -21,6 +21,7 @@ dev-install-pre-commit = "mamba run -n hydromt-sfincs-dev pre-commit install"
 lint = "pre-commit run --all"
 
 # docs
+# Run documentation tasks with `pixi run -e docs <task>`.
 docs = "sphinx-build -M html docs docs/_build"
 docs-skip-examples = "export SKIP_DOC_EXAMPLES=1; sphinx-build -M html docs docs/_build"
 docs-clean = "python docs/clean.py; sphinx-build -M html docs docs/_build"
@@ -34,3 +35,9 @@ python = "3.13.*"
 
 [pypi-dependencies]
 hydromt_sfincs = { path = ".", editable = true, extras = ["full"] }
+
+[feature.docs.dependencies]
+pandoc = "*"
+
+[environments]
+docs = ["docs"]

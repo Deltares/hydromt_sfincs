@@ -93,7 +93,7 @@ latest SFINCS version, write the config with ``update_to_latest=True``:
 
     model = SfincsModel(root="old_model", mode="r")
     model.read()
-    model.root.set("updated_model", mode="w+")
+    model.root.set("updated_model", mode="w")
     model.write()
     model.config.write(update_to_latest=True)
 
