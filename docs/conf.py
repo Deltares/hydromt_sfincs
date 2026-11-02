@@ -35,6 +35,48 @@ os.environ["PYDEVD_DISABLE_FILE_VALIDATION"] = "1"
 DOCS_TITLE = "HydroMT-SFINCS Documentation"
 
 
+def _apply_notebook_toctree_titles(app, env):
+    from docutils import nodes
+    from sphinx import addnodes
+
+    titles = {}
+    for docname in env.toctree_includes:
+        doctree = env.get_doctree(docname)
+        for toctree in doctree.findall(addnodes.toctree):
+            for title, target in toctree["entries"]:
+                if title and target.startswith("_examples/"):
+                    titles[target] = title.strip()
+
+    changed = set()
+    marker = "hydromt_sfincs_toctree_title"
+    for docname, title in titles.items():
+        toc = env.tocs.get(docname)
+        if toc is None or not toc.children:
+            continue
+
+        if len(toc.children) == 1 and toc.children[0].get(marker):
+            references = list(toc.children[0].findall(nodes.reference))
+            if references and references[0].astext() != title:
+                references[0].children = [nodes.Text(title)]
+                changed.add(docname)
+            continue
+
+        reference = nodes.reference(
+            "", title, internal=True, refuri=docname, anchorname=""
+        )
+        title_item = nodes.list_item("", addnodes.compact_paragraph("", "", reference))
+        title_item[marker] = True
+        title_item += nodes.bullet_list("", *(node.deepcopy() for node in toc.children))
+        env.tocs[docname] = nodes.bullet_list("", title_item)
+        changed.add(docname)
+
+    return changed
+
+
+def setup(app):
+    app.connect("env-updated", _apply_notebook_toctree_titles)
+
+
 def cli2rst(output, fn):
     with open(fn, "w") as f:
         f.write(".. code-block:: console\n\n")
