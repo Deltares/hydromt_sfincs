@@ -1,17 +1,19 @@
-# This environment installs the latests released version of hydromt-sfincs,
-# including some dependencies to run the examples
-name: hydromt-sfincs-test
+# This environment installs HydroMT-SFINCS 2.0.0 with example and quadtree
+# dependencies.
+name: hydromt-sfincs
 
 channels:
   - conda-forge
 
 dependencies:
   - cartopy>=0.20                 # to run examples
+  - datashader                    # to run quadtree workflows
   - descartes                     # to run examples
   - ffmpeg                        # to run examples (animation)
-  - hydromt-sfincs==2.0.0
+  - hydromt-sfincs=2.0.0
   # - git
   - jupyterlab                    # to run examples
   - matplotlib                    # to run examples
+  - numba_celltree>=0.4.2         # to run quadtree workflows
   - python=3.11                   # fixing python version for binder
   - pip                           # ensure pip itself is installed
