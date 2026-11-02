@@ -29,3 +29,14 @@ html[data-theme="light"] {
 img.icon-link-image {
     height: 2.5em !important;
 }
+
+.sd-text-icon.blue-icon {
+    color: #080c80;
+}
+
+/* allow breaking long words in tables */
+td {
+    white-space: pre-wrap;    /* respect \n line breaks */
+    word-break: normal;       /* normal wrapping behavior */
+    overflow-wrap: anywhere;  /* fallback for very long words */
+}
