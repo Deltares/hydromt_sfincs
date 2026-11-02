@@ -911,7 +911,7 @@ window.runMermaid = runMermaid;</script>
         <span class="c1"># Precompute elevation sets per level</span>
         <span class="c1"># Add try statement here for compatibility with cht_bathymetry approach</span>
         <span class="n">elevation_list_per_level</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_parse_datasets_elevation</span><span class="p">(</span><span class="n">elevation_list</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="n">res</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">ilev</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_parse_elevation_list</span><span class="p">(</span><span class="n">elevation_list</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="n">res</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">ilev</span><span class="p">))</span>
             <span class="k">for</span> <span class="n">ilev</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nlev</span><span class="p">)</span>
         <span class="p">]</span>
 

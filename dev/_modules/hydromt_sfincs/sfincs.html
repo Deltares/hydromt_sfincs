@@ -1427,15 +1427,11 @@ window.runMermaid = runMermaid;</script>
             <span class="s2">"thin_dams"</span><span class="p">:</span> <span class="s2">"thd"</span><span class="p">,</span>
             <span class="s2">"drainage_structures"</span><span class="p">:</span> <span class="s2">"drn"</span><span class="p">,</span>
             <span class="s2">"rivers"</span><span class="p">:</span> <span class="s2">"rivers"</span><span class="p">,</span>
+            <span class="s2">"runup_gauges"</span><span class="p">:</span> <span class="s2">"rug"</span><span class="p">,</span>
         <span class="p">}</span>  <span class="c1"># parsed to dict of geopandas.GeoDataFrame</span>
 
         <span class="k">if</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">"snapwave"</span><span class="p">:</span>
-            <span class="n">_GEOMS</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
-                <span class="p">{</span>
-                    <span class="s2">"snapwave_boundary_conditions"</span><span class="p">:</span> <span class="s2">"snapwave_bnd"</span><span class="p">,</span>
-                    <span class="s2">"runup_gauges"</span><span class="p">:</span> <span class="s2">"rug"</span><span class="p">,</span>
-                <span class="p">}</span>
-            <span class="p">)</span>
+            <span class="n">_GEOMS</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"snapwave_boundary_conditions"</span><span class="p">:</span> <span class="s2">"snapwave_bnd"</span><span class="p">})</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">_GEOMS</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
                 <span class="p">{</span>
@@ -1504,7 +1500,6 @@ window.runMermaid = runMermaid;</script>
             <span class="n">geom_kwargs</span><span class="o">=</span><span class="n">geom_kwargs</span><span class="p">,</span>
             <span class="n">grid_kwargs</span><span class="o">=</span><span class="n">grid_kwargs</span><span class="p">,</span>
             <span class="n">legend_kwargs</span><span class="o">=</span><span class="n">legend_kwargs</span><span class="p">,</span>
-            <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -1528,7 +1523,7 @@ window.runMermaid = runMermaid;</script>
     <span class="c1"># Helper Methods</span>
     <span class="c1"># ---------------</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_datasets_elevation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elevation_list</span><span class="p">,</span> <span class="n">res</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_elevation_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elevation_list</span><span class="p">,</span> <span class="n">res</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Parse filenames or paths of Datasets in list of dictionaries elevation_list</span>
 <span class="sd">        into xr.DataArray and gdf.GeoDataFrames:</span>
 

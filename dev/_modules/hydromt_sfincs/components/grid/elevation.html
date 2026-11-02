@@ -897,7 +897,7 @@ window.runMermaid = runMermaid;</script>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="mf">111111.0</span>
 
-        <span class="n">elevation_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_parse_datasets_elevation</span><span class="p">(</span><span class="n">elevation_list</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="n">res</span><span class="p">)</span>
+        <span class="n">elevation_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_parse_elevation_list</span><span class="p">(</span><span class="n">elevation_list</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="n">res</span><span class="p">)</span>
 
         <span class="n">da_dep</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">merge_multi_dataarrays</span><span class="p">(</span>
             <span class="n">da_list</span><span class="o">=</span><span class="n">elevation_list</span><span class="p">,</span>
