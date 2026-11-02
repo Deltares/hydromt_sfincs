@@ -567,7 +567,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 10:02:09,841 - hydromt - log - INFO - HydroMT version: 1.4.1
+2026-11-02 10:20:26,277 - hydromt - log - INFO - HydroMT version: 1.4.1
 </pre></div></div>
 </div>
 </section>
@@ -593,9 +593,9 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 10:02:09,890 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
-2026-11-02 10:02:09,890 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
-2026-11-02 10:02:10,556 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0).
+2026-11-02 10:20:26,377 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
+2026-11-02 10:20:26,377 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
+2026-11-02 10:20:27,048 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0).
 </pre></div></div>
 </div>
 </section>
@@ -629,8 +629,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 10:02:10,563 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading region.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
-2026-11-02 10:02:10,574 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading osm_coastlines GeoDataFrame data from /home/runner/.hydromt/artifact_data/latest/osm_coastlines.gpkg
+2026-11-02 10:20:27,055 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading region.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
+2026-11-02 10:20:27,067 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading osm_coastlines GeoDataFrame data from /home/runner/.hydromt/artifact_data/latest/osm_coastlines.gpkg
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -652,19 +652,19 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 10:02:10,630 - hydromt.data_catalog.data_catalog - data_catalog - WARNING - overwriting data source &#39;region.geojson&#39; with provider user and version _UNSPECIFIED_.
-2026-11-02 10:02:10,632 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading region.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
+2026-11-02 10:20:27,125 - hydromt.data_catalog.data_catalog - data_catalog - WARNING - overwriting data source &#39;region.geojson&#39; with provider user and version _UNSPECIFIED_.
+2026-11-02 10:20:27,126 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading region.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
 Refining ...
-Time elapsed : 0.42046618461608887 s
+Time elapsed : 0.424560546875 s
 Finding neighbors ...
-Time elapsed : 0.004598855972290039 s
+Time elapsed : 0.004439592361450195 s
 Setting neighbors left and below ...
-Time elapsed : 0.03877377510070801 s
+Time elapsed : 0.0388181209564209 s
 Getting uv points ...
-Time elapsed : 0.030204296112060547 s
+Time elapsed : 0.0300595760345459 s
 Making XUGrid ...
-Got rid of duplicates in 0.1382 seconds
-Made XUGrid in 0.0004 seconds
+Got rid of duplicates in 0.1389 seconds
+Made XUGrid in 0.0005 seconds
 </pre></div></div>
 </div>
 <p>The resulting quadtree grid and refinement-level layer are available on the model.</p>
@@ -727,13 +727,13 @@ Made XUGrid in 0.0004 seconds
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 10:02:14,541 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
-2026-11-02 10:02:14,583 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
-2026-11-02 10:02:14,621 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
-2026-11-02 10:02:14,659 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
-2026-11-02 10:02:14,730 - hydromt.hydromt_sfincs.components.quadtree.quadtree_elevation - quadtree_elevation - WARNING - Interpolate elevation at 2 cells
-2026-11-02 10:02:14,786 - hydromt.hydromt_sfincs.components.quadtree.quadtree_elevation - quadtree_elevation - WARNING - Interpolate elevation at 1 cells
-2026-11-02 10:02:14,828 - hydromt.model.components.mesh - mesh - WARNING - Replacing mesh parameter: z
+2026-11-02 10:20:31,015 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
+2026-11-02 10:20:31,058 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
+2026-11-02 10:20:31,096 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
+2026-11-02 10:20:31,135 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
+2026-11-02 10:20:31,205 - hydromt.hydromt_sfincs.components.quadtree.quadtree_elevation - quadtree_elevation - WARNING - Interpolate elevation at 2 cells
+2026-11-02 10:20:31,260 - hydromt.hydromt_sfincs.components.quadtree.quadtree_elevation - quadtree_elevation - WARNING - Interpolate elevation at 1 cells
+2026-11-02 10:20:31,302 - hydromt.model.components.mesh - mesh - WARNING - Replacing mesh parameter: z
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -768,9 +768,9 @@ Made XUGrid in 0.0004 seconds
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 10:02:17,841 - hydromt.hydromt_sfincs.components.quadtree.quadtree_mask - quadtree_mask - INFO - Building mask ...
-2026-11-02 10:02:17,841 - hydromt.hydromt_sfincs.components.quadtree.quadtree_mask - quadtree_mask - INFO - Build new mask for: sfincs ...
-2026-11-02 10:02:17,905 - hydromt.model.components.mesh - mesh - WARNING - Replacing mesh parameter: mask
+2026-11-02 10:20:34,321 - hydromt.hydromt_sfincs.components.quadtree.quadtree_mask - quadtree_mask - INFO - Building mask ...
+2026-11-02 10:20:34,322 - hydromt.hydromt_sfincs.components.quadtree.quadtree_mask - quadtree_mask - INFO - Build new mask for: sfincs ...
+2026-11-02 10:20:34,385 - hydromt.model.components.mesh - mesh - WARNING - Replacing mesh parameter: mask
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -808,7 +808,7 @@ Made XUGrid in 0.0004 seconds
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 10:02:20,504 - hydromt.model.components.mesh - mesh - WARNING - Replacing mesh parameter: mask
+2026-11-02 10:20:36,964 - hydromt.model.components.mesh - mesh - WARNING - Replacing mesh parameter: mask
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -842,13 +842,13 @@ Made XUGrid in 0.0004 seconds
 <div class="highlight"><pre>
 Removing inactive cells ...
 Finding neighbors ...
-Time elapsed : 0.0036199092864990234 s
+Time elapsed : 0.0036482810974121094 s
 Setting neighbors left and below ...
-Time elapsed : 0.030078887939453125 s
+Time elapsed : 0.030602693557739258 s
 Getting uv points ...
-Time elapsed : 0.024691104888916016 s
+Time elapsed : 0.025599956512451172 s
 Making XUGrid ...
-Got rid of duplicates in 0.1057 seconds
+Got rid of duplicates in 0.1040 seconds
 Made XUGrid in 0.0003 seconds
 </pre></div></div>
 </div>
@@ -882,10 +882,10 @@ Made XUGrid in 0.0003 seconds
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 10:02:23,189 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
-2026-11-02 10:02:23,202 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
-2026-11-02 10:02:23,206 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
-2026-11-02 10:02:23,241 - hydromt.hydromt_sfincs.components.quadtree.quadtree_roughness - quadtree_roughness - INFO - Filled 0 remaining cells in manning with depth-based roughness.
+2026-11-02 10:20:39,633 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
+2026-11-02 10:20:39,646 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
+2026-11-02 10:20:39,650 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
+2026-11-02 10:20:39,685 - hydromt.hydromt_sfincs.components.quadtree.quadtree_roughness - quadtree_roughness - INFO - Filled 0 remaining cells in manning with depth-based roughness.
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -932,115 +932,115 @@ Made XUGrid in 0.0003 seconds
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 10:02:25,694 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
-2026-11-02 10:02:25,729 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
-2026-11-02 10:02:25,763 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
-2026-11-02 10:02:25,798 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
-2026-11-02 10:02:25,832 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
-2026-11-02 10:02:25,845 - hydromt.data_catalog.data_catalog - data_catalog - WARNING - overwriting data source &#39;vito_mapping.csv&#39; with provider user and version _UNSPECIFIED_.
-2026-11-02 10:02:25,845 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
-2026-11-02 10:02:25,849 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
-2026-11-02 10:02:25,853 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-11-02 10:20:42,250 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
+2026-11-02 10:20:42,285 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
+2026-11-02 10:20:42,318 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
+2026-11-02 10:20:42,353 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
+2026-11-02 10:20:42,386 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
+2026-11-02 10:20:42,399 - hydromt.data_catalog.data_catalog - data_catalog - WARNING - overwriting data source &#39;vito_mapping.csv&#39; with provider user and version _UNSPECIFIED_.
+2026-11-02 10:20:42,399 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
+2026-11-02 10:20:42,403 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
+2026-11-02 10:20:42,407 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-2026-11-02 10:02:25,853 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Building subgrid tables for SFINCS Quadtree model ...
+2026-11-02 10:20:42,407 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Building subgrid tables for SFINCS Quadtree model ...
 Building subgrid tables for SFINCS Quadtree model ...
-2026-11-02 10:02:25,909 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-11-02 10:20:42,464 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-2026-11-02 10:02:25,909 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing level 1 of 2 ...
+2026-11-02 10:20:42,464 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing level 1 of 2 ...
 Processing level 1 of 2 ...
-2026-11-02 10:02:25,910 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of regular cells in a block : 333
+2026-11-02 10:20:42,465 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of regular cells in a block : 333
 Number of regular cells in a block : 333
-2026-11-02 10:02:25,911 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of blocks in n direction    : 1
+2026-11-02 10:20:42,466 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of blocks in n direction    : 1
 Number of blocks in n direction    : 1
-2026-11-02 10:02:25,911 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of blocks in m direction    : 1
+2026-11-02 10:20:42,466 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of blocks in m direction    : 1
 Number of blocks in m direction    : 1
-2026-11-02 10:02:25,912 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Grid size of flux grid             : dx= 50.000000000000654, dy= 50.00000000000095
+2026-11-02 10:20:42,466 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Grid size of flux grid             : dx= 50.000000000000654, dy= 50.00000000000095
 Grid size of flux grid             : dx= 50.000000000000654, dy= 50.00000000000095
-2026-11-02 10:02:25,913 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Grid size of subgrid pixels        : dx= 8.333333333333442, dy= 8.333333333333492
+2026-11-02 10:20:42,467 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Grid size of subgrid pixels        : dx= 8.333333333333442, dy= 8.333333333333492
 Grid size of subgrid pixels        : dx= 8.333333333333442, dy= 8.333333333333492
-2026-11-02 10:02:25,913 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - --------------------------------------------------------------
+2026-11-02 10:20:42,467 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - --------------------------------------------------------------
 --------------------------------------------------------------
-2026-11-02 10:02:25,914 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing block 1 of 1 ...
+2026-11-02 10:20:42,468 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing block 1 of 1 ...
 Processing block 1 of 1 ...
-2026-11-02 10:02:25,924 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of cells in this block      : 18314
+2026-11-02 10:20:42,478 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of cells in this block      : 18314
 Number of cells in this block      : 18314
-2026-11-02 10:02:25,925 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Getting bathy/topo ...
+2026-11-02 10:20:42,479 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Getting bathy/topo ...
 Getting bathy/topo ...
-2026-11-02 10:02:26,064 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing cells ...
+2026-11-02 10:20:42,617 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing cells ...
 Processing cells ...
-2026-11-02 10:02:33,434 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - --------------------------------------------------------------
+2026-11-02 10:20:50,012 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - --------------------------------------------------------------
 --------------------------------------------------------------
-2026-11-02 10:02:33,435 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing U/V points in block 1 of 1 ...
+2026-11-02 10:20:50,013 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing U/V points in block 1 of 1 ...
 Processing U/V points in block 1 of 1 ...
-2026-11-02 10:02:33,500 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of U/V points in this block: 35994
+2026-11-02 10:20:50,078 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of U/V points in this block: 35994
 Number of U/V points in this block: 35994
-2026-11-02 10:02:33,500 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Getting bathy/topo ...
+2026-11-02 10:20:50,079 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Getting bathy/topo ...
 Getting bathy/topo ...
-2026-11-02 10:02:33,778 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing U/V points ...
+2026-11-02 10:20:50,362 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing U/V points ...
 Processing U/V points ...
-2026-11-02 10:02:38,639 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - cog - INFO - Building 2 overviews with average
-2026-11-02 10:02:38,672 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - cog - INFO - Building 2 overviews with average
-2026-11-02 10:02:38,692 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-11-02 10:20:55,254 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - cog - INFO - Building 2 overviews with average
+2026-11-02 10:20:55,286 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - cog - INFO - Building 2 overviews with average
+2026-11-02 10:20:55,306 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-2026-11-02 10:02:38,692 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing level 2 of 2 ...
+2026-11-02 10:20:55,307 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing level 2 of 2 ...
 Processing level 2 of 2 ...
-2026-11-02 10:02:38,693 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of regular cells in a block : 333
+2026-11-02 10:20:55,307 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of regular cells in a block : 333
 Number of regular cells in a block : 333
-2026-11-02 10:02:38,693 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of blocks in n direction    : 1
+2026-11-02 10:20:55,308 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of blocks in n direction    : 1
 Number of blocks in n direction    : 1
-2026-11-02 10:02:38,694 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of blocks in m direction    : 2
+2026-11-02 10:20:55,309 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of blocks in m direction    : 2
 Number of blocks in m direction    : 2
-2026-11-02 10:02:38,694 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Grid size of flux grid             : dx= 25.000000000000327, dy= 25.000000000000476
+2026-11-02 10:20:55,309 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Grid size of flux grid             : dx= 25.000000000000327, dy= 25.000000000000476
 Grid size of flux grid             : dx= 25.000000000000327, dy= 25.000000000000476
-2026-11-02 10:02:38,694 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Grid size of subgrid pixels        : dx= 4.166666666666721, dy= 4.166666666666746
+2026-11-02 10:20:55,309 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Grid size of subgrid pixels        : dx= 4.166666666666721, dy= 4.166666666666746
 Grid size of subgrid pixels        : dx= 4.166666666666721, dy= 4.166666666666746
-2026-11-02 10:02:38,695 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - --------------------------------------------------------------
+2026-11-02 10:20:55,310 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - --------------------------------------------------------------
 --------------------------------------------------------------
-2026-11-02 10:02:38,695 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing block 1 of 2 ...
+2026-11-02 10:20:55,310 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing block 1 of 2 ...
 Processing block 1 of 2 ...
-2026-11-02 10:02:38,702 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of cells in this block      : 6371
+2026-11-02 10:20:55,315 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of cells in this block      : 6371
 Number of cells in this block      : 6371
-2026-11-02 10:02:38,702 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Getting bathy/topo ...
+2026-11-02 10:20:55,316 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Getting bathy/topo ...
 Getting bathy/topo ...
-2026-11-02 10:02:38,805 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing cells ...
+2026-11-02 10:20:55,421 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing cells ...
 Processing cells ...
-2026-11-02 10:02:38,821 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - --------------------------------------------------------------
+2026-11-02 10:20:55,436 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - --------------------------------------------------------------
 --------------------------------------------------------------
-2026-11-02 10:02:38,822 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing block 2 of 2 ...
+2026-11-02 10:20:55,437 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing block 2 of 2 ...
 Processing block 2 of 2 ...
-2026-11-02 10:02:38,826 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of cells in this block      : 3112
+2026-11-02 10:20:55,441 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of cells in this block      : 3112
 Number of cells in this block      : 3112
-2026-11-02 10:02:38,827 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Getting bathy/topo ...
+2026-11-02 10:20:55,442 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Getting bathy/topo ...
 Getting bathy/topo ...
-2026-11-02 10:02:38,892 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing cells ...
+2026-11-02 10:20:55,507 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing cells ...
 Processing cells ...
-2026-11-02 10:02:38,905 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - --------------------------------------------------------------
+2026-11-02 10:20:55,520 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - --------------------------------------------------------------
 --------------------------------------------------------------
-2026-11-02 10:02:38,905 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing U/V points in block 1 of 2 ...
+2026-11-02 10:20:55,520 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing U/V points in block 1 of 2 ...
 Processing U/V points in block 1 of 2 ...
-2026-11-02 10:02:38,937 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of U/V points in this block: 13117
+2026-11-02 10:20:55,554 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of U/V points in this block: 13117
 Number of U/V points in this block: 13117
-2026-11-02 10:02:38,938 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Getting bathy/topo ...
+2026-11-02 10:20:55,554 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Getting bathy/topo ...
 Getting bathy/topo ...
-2026-11-02 10:02:39,140 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing U/V points ...
+2026-11-02 10:20:55,757 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing U/V points ...
 Processing U/V points ...
-2026-11-02 10:02:39,333 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - --------------------------------------------------------------
+2026-11-02 10:20:55,950 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - --------------------------------------------------------------
 --------------------------------------------------------------
-2026-11-02 10:02:39,334 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing U/V points in block 2 of 2 ...
+2026-11-02 10:20:55,951 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing U/V points in block 2 of 2 ...
 Processing U/V points in block 2 of 2 ...
-2026-11-02 10:02:39,358 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of U/V points in this block: 6395
+2026-11-02 10:20:55,975 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Number of U/V points in this block: 6395
 Number of U/V points in this block: 6395
-2026-11-02 10:02:39,358 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Getting bathy/topo ...
+2026-11-02 10:20:55,976 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Getting bathy/topo ...
 Getting bathy/topo ...
-2026-11-02 10:02:39,480 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing U/V points ...
+2026-11-02 10:20:56,100 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Processing U/V points ...
 Processing U/V points ...
-2026-11-02 10:02:39,575 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - cog - INFO - Building 3 overviews with average
-2026-11-02 10:02:39,633 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - cog - INFO - Building 3 overviews with average
-2026-11-02 10:02:39,688 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-11-02 10:20:56,194 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - cog - INFO - Building 3 overviews with average
+2026-11-02 10:20:56,254 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - cog - INFO - Building 3 overviews with average
+2026-11-02 10:20:56,308 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-2026-11-02 10:02:39,688 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Time elapsed: 13.8 seconds
-Time elapsed: 13.8 seconds
-2026-11-02 10:02:39,689 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-11-02 10:20:56,309 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - Time elapsed: 13.9 seconds
+Time elapsed: 13.9 seconds
+2026-11-02 10:20:56,309 - hydromt.hydromt_sfincs.components.quadtree.quadtree_subgrid - subgrid_quadtree_builder - INFO - ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 </pre></div></div>
 </div>
@@ -1080,8 +1080,8 @@ Time elapsed: 13.8 seconds
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 10:02:39,694 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 3 attributes in model config.
-2026-11-02 10:02:39,727 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gtsmv3_eu_era5 GeoDataset data from /home/runner/.hydromt/artifact_data/latest/gtsmv3_eu_era5.nc
+2026-11-02 10:20:56,315 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 3 attributes in model config.
+2026-11-02 10:20:56,347 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gtsmv3_eu_era5 GeoDataset data from /home/runner/.hydromt/artifact_data/latest/gtsmv3_eu_era5.nc
 </pre></div></div>
 </div>
 </section>
