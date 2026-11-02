@@ -128,7 +128,7 @@ Example
 See examples below for more detailed examples:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :titlesonly:
 
     Example: Build from CLI <../../_examples/0_build_from_cli.ipynb>

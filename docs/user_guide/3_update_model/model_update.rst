@@ -77,7 +77,7 @@ Examples
 For examples of how to update a SFINCS model using HydroMT-SFINCS, see:
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
     :titlesonly:
 
     Example: Update Forcing <../../_examples/2_update_forcing.ipynb>

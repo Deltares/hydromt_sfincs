@@ -19,5 +19,7 @@ If you want to read more about running SFINCS on different platforms, please rea
 
 .. toctree::
     :hidden:
+    :maxdepth: 1
+    :titlesonly:
 
     Example: Running a model <../../_examples/4_run_model.ipynb>
