@@ -8,6 +8,22 @@ Distinction is made between new methods (Added), changes to existing methods (Ch
 The format is based on `Keep a Changelog`_, and this project adheres to
 `Semantic Versioning`_.
 
+Unreleased
+==========
+
+Added
+-----
+
+Changed
+-------
+
+Fixed
+-----
+
+Deprecated
+----------
+
+
 v2.0.0 (02-11-2026)
 ===================
 **v2.0.0 is a major step forward from v1.2.2, with a more modular,

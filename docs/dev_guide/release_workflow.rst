@@ -65,8 +65,37 @@ Final release
 4. Create a GitHub release from the final tag and publish it as a regular
    release, not a pre-release. This triggers the package upload to PyPI.
    The documentation workflow publishes the versioned documentation and
-   updates the ``stable`` alias after a successful build. Check the Actions
-   run, the published package on PyPI, and the ``stable`` documentation.
+   attempts to update the ``stable`` alias. It does not update the version
+   switcher. After the documentation build succeeds, add the new version to
+   the root ``switcher.json`` on the ``gh-pages`` branch. For example:
+
+   .. code-block:: json
+
+      {
+        "name": "v2.0.0",
+        "version": "v2.0.0",
+        "url": "https://deltares.github.io/hydromt_sfincs/v2.0.0/"
+      }
+
+   Preserve the existing entries and valid JSON syntax. To update the
+   ``gh-pages`` branch locally:
+
+   .. code-block:: console
+
+      git fetch origin
+      git switch gh-pages
+      # edit switcher.json
+      git add switcher.json
+      git commit -m "Add v2.0.0 to docs version switcher"
+      git push origin gh-pages
+
+   Use the actual release version in the entry and commit message. If branch
+   protection prevents a direct push, make the change through a pull request.
+   Check the versioned documentation, the switcher, and the ``stable`` alias;
+   a successful Actions run alone does not confirm that the alias points to
+   the new release. The current deployment uses ``destination_dir: stable``.
+   When ``stable`` is a symlink on ``gh-pages``, verify that the deployment
+   has advanced its target rather than writing through the existing symlink.
 5. This repository does not have HydroMT core's automated
    `record-release workflow <https://deltares.github.io/hydromt/latest/dev/core_dev/release.html>`_.
    After the final release, create a pull request from the release branch back
@@ -77,5 +106,6 @@ Final release
    ``Added``, ``Changed``, ``Fixed``, ``Deprecated``, and ``Removed``
    subsections.
 6. Successful documentation builds from ``main`` update the ``latest`` alias.
-   The ``stable`` alias is only updated by a published, non-prerelease GitHub
-   release.
+   The stable deployment runs only for a published, non-prerelease GitHub
+   release. Verify that ``stable`` points to the latest final version and
+   that the historical version directories remain intact.
