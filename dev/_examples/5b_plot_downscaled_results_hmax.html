@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Downscale maximum water depth for models with subgrid tables &#8212; HydroMT SFINCS  documentation</title>
+    <title>Steps &#8212; HydroMT SFINCS  documentation</title>
   
   
   
@@ -52,7 +52,7 @@
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.23.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0-rc';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -61,11 +61,11 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Step 1: Read model results" href="6_make_results_animation.html" />
-    <link rel="prev" title="Determine maximum water depth directly from SFINCS output" href="5a_plot_results_hmax.html" />
+    <link rel="prev" title="Steps" href="5a_plot_results_hmax.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.0.0-rc4dev" />
+  <meta name="docsearch:version" content="2.0.0" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -403,73 +403,29 @@
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/2_build_model/model_components.html">Model Components</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/2_build_model/model_methods.html">Model Methods</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../user_guide/2_build_model/model_build.html">Building a SFINCS model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l3"><a class="reference internal" href="0_build_from_cli.html">1. Build your first SFINCS model:</a></li>
-
-
-
-
-
-
-
-<li class="toctree-l3"><a class="reference internal" href="1a_build_from_script.html">0. Initialize the logger</a></li>
-
-
-
-
-
-
-
-
-
-
-<li class="toctree-l3"><a class="reference internal" href="1b_build_quadtree_from_script.html">0. Initialize the logger</a></li>
-
-
-
-
-
-
-
-
-
-
-
+<li class="toctree-l3"><a class="reference internal" href="0_build_from_cli.html"> Example: Build from CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="1a_build_from_script.html"> Example: Build from script (regular grid)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="1b_build_quadtree_from_script.html"> Example: Build from script (quadtree grid)</a></li>
 </ul>
 </details></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/3_update_model/index.html">Updating a SFINCS Model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../user_guide/3_update_model/model_update.html">Updating a SFINCS model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l3"><a class="reference internal" href="2_update_forcing.html">1. Initialize SfincsModel class, set data library, mode and root folder:</a></li>
-
-
-
-
-<li class="toctree-l3"><a class="reference internal" href="3_update_geometries.html">1. Initialize SfincsModel class, set data library, mode and root folder:</a></li>
-
-
-
-
+<li class="toctree-l3"><a class="reference internal" href="2_update_forcing.html">Example: Update Forcing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3_update_geometries.html">Example: Update Geometries</a></li>
 </ul>
 </details></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/4_run_model/sfincs_run.html">Running a model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="4_run_model.html">Settings</a></li>
-
-
-
-
-
+<li class="toctree-l2"><a class="reference internal" href="4_run_model.html">Example: Running a model</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../user_guide/5_postprocess_model/sfincs_analyse.html">Postprocessing and visualization</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="5a_plot_results_hmax.html">Example: Plot maximum water depth</a></li>
 <li class="toctree-l2 current active"><a aria-current="page" class="current reference internal" href="#">Example: Plot downscaled maximum water depth</a></li>
-<li class="toctree-l2"><a class="reference internal" href="6_make_results_animation.html">Step 1: Read model results</a></li>
-
-
-
+<li class="toctree-l2"><a class="reference internal" href="6_make_results_animation.html">Example: Create animation</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_guide/6_migration_guide/migration_hydromt.html">Migration Guide</a></li>
@@ -519,7 +475,7 @@
     
     <li class="breadcrumb-item"><a href="../user_guide/5_postprocess_model/sfincs_analyse.html" class="nav-link">Postprocessing and visualization</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Downscale maximum water depth for models with subgrid tables</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Steps</span></li>
   </ul>
 </nav>
 </div>
@@ -543,7 +499,7 @@
     <a href="https://mybinder.org/v2/gh/Deltares/hydromt_sfincs/main?urlpath=lab/tree/examples/5b_plot_downscaled_results_hmax.ipynb" target="_blank" rel="noopener noreferrer"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg"></a>
 </div></div>
 <div style="padding: 20px 24px; border-radius: 12px; background: linear-gradient(110deg, #12304a, #187b8f); color: white; margin-bottom: 16px;"><div style="font-size: 0.78em; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.85;"><p>HydroMT-SFINCS | Example 05B</p>
-</div><h1 style="color: white; margin: 8px 0 4px;"><p>SFINCS results: downscale maximum water depth</p>
+</div><h1 style="color: white; margin: 8px 0 4px;"><p>Example: downscale maximum water depth</p>
 </h1><div style="opacity: 0.95;"><p>Create high-resolution flood-depth maps from maximum water levels.</p>
 </div></div><p>This notebook demonstrates flood-depth downscaling for models with subgrid tables. When subgrid tables are used, the bed elevation (<code class="docutils literal notranslate"><span class="pre">zb</span></code>) in the SFINCS output represents the minimum bed level within each computational cell. Subtracting it from maximum water levels can overestimate flood extent. Instead, interpolate <code class="docutils literal notranslate"><span class="pre">zsmax</span></code> onto a high-resolution DEM and subtract that DEM to obtain flood depth.</p>
 <p><code class="docutils literal notranslate"><span class="pre">downscale_floodmap</span></code> supports both regular-grid and quadtree result fields. For quadtree models, <code class="docutils literal notranslate"><span class="pre">zsmax</span></code> is an unstructured <code class="docutils literal notranslate"><span class="pre">UgridDataArray</span></code>; the workflow handles it directly. Supply a high-resolution DEM covering the model region. The OSM polygon mask below is optional.</p>
@@ -559,10 +515,8 @@
 </pre></div>
 </div>
 </div>
-<section id="Downscale-maximum-water-depth-for-models-with-subgrid-tables">
-<h1>Downscale maximum water depth for models with subgrid tables<a class="headerlink" href="#Downscale-maximum-water-depth-for-models-with-subgrid-tables" title="Link to this heading">#</a></h1>
 <section id="Steps">
-<h2>Steps<a class="headerlink" href="#Steps" title="Link to this heading">#</a></h2>
+<h1>Steps<a class="headerlink" href="#Steps" title="Link to this heading">#</a></h1>
 <ol class="arabic simple">
 <li><p>Read model results and select a high-resolution elevation dataset.</p></li>
 <li><p>Retrieve maximum water levels (<code class="docutils literal notranslate"><span class="pre">zsmax</span></code>).</p></li>
@@ -582,7 +536,7 @@
 </div>
 </section>
 <section id="Step-1:-Select-the-high-resolution-elevation-dataset">
-<h2>Step 1: Select the high-resolution elevation dataset<a class="headerlink" href="#Step-1:-Select-the-high-resolution-elevation-dataset" title="Link to this heading">#</a></h2>
+<h1>Step 1: Select the high-resolution elevation dataset<a class="headerlink" href="#Step-1:-Select-the-high-resolution-elevation-dataset" title="Link to this heading">#</a></h1>
 <p>The DEM should be finer than the computational grid and cover the whole model region. The bundled regular-grid example uses <code class="docutils literal notranslate"><span class="pre">gis/dep.tif</span></code>. For quadtree models, set <code class="docutils literal notranslate"><span class="pre">depfile</span></code> to a single full-coverage high-resolution DEM source; generated per-level subgrid rasters should not be used individually as the domain-wide DEM.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
@@ -606,7 +560,7 @@
 </div>
 </section>
 <section id="Step-2:-Retrieve-maximum-water-levels-from-the-model">
-<h2>Step 2: Retrieve maximum water levels from the model<a class="headerlink" href="#Step-2:-Retrieve-maximum-water-levels-from-the-model" title="Link to this heading">#</a></h2>
+<h1>Step 2: Retrieve maximum water levels from the model<a class="headerlink" href="#Step-2:-Retrieve-maximum-water-levels-from-the-model" title="Link to this heading">#</a></h1>
 <p>For subgrid models use <code class="docutils literal notranslate"><span class="pre">zsmax</span></code>, not <code class="docutils literal notranslate"><span class="pre">hmax</span></code>. The downscaler accepts regular-grid and quadtree result arrays.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
@@ -621,7 +575,7 @@
 </div>
 </section>
 <section id="Step-3:-Choose-an-optional-mask-and-minimum-flood-depth">
-<h2>Step 3: Choose an optional mask and minimum flood depth<a class="headerlink" href="#Step-3:-Choose-an-optional-mask-and-minimum-flood-depth" title="Link to this heading">#</a></h2>
+<h1>Step 3: Choose an optional mask and minimum flood depth<a class="headerlink" href="#Step-3:-Choose-an-optional-mask-and-minimum-flood-depth" title="Link to this heading">#</a></h1>
 <p>A polygon layer such as OpenStreetMap land areas can optionally mask water bodies. A minimum depth threshold removes very shallow flooding. Change or omit the mask as appropriate for your region.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
@@ -636,7 +590,7 @@
 <div style="padding: 14px 18px; border-left: 4px solid #187b8f; background: #eaf6f8; border-radius: 6px; margin: 12px 1em 12px 0; width: calc(100% - 1em); box-sizing: border-box; color: #111111;"><p>NOTE: small rivers may not be masked with this geodataframe.</p>
 </div></section>
 <section id="Step-4:-Downscale-the-flood-map">
-<h2>Step 4: Downscale the flood map<a class="headerlink" href="#Step-4:-Downscale-the-flood-map" title="Link to this heading">#</a></h2>
+<h1>Step 4: Downscale the flood map<a class="headerlink" href="#Step-4:-Downscale-the-flood-map" title="Link to this heading">#</a></h1>
 <p>Interpolate the maximum water level onto the high-resolution DEM and subtract the DEM to calculate maximum flood depth.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
@@ -654,7 +608,7 @@
 </div>
 </section>
 <section id="Step-5:-Plot-the-downscaled-flood-map">
-<h2>Step 5: Plot the downscaled flood map<a class="headerlink" href="#Step-5:-Plot-the-downscaled-flood-map" title="Link to this heading">#</a></h2>
+<h1>Step 5: Plot the downscaled flood map<a class="headerlink" href="#Step-5:-Plot-the-downscaled-flood-map" title="Link to this heading">#</a></h1>
 <p>The output is a high-resolution raster, which can be plotted with the model basemap or opened in GIS.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
@@ -698,10 +652,9 @@ Text(0.5, 1.0, &#39;SFINCS maximum water depth&#39;)
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_examples_5b_plot_downscaled_results_hmax_16_2.png" src="../_images/_examples_5b_plot_downscaled_results_hmax_16_2.png" />
+<img alt="../_images/_examples_5b_plot_downscaled_results_hmax_15_2.png" src="../_images/_examples_5b_plot_downscaled_results_hmax_15_2.png" />
 </div>
 </div>
-</section>
 </section>
 
 
@@ -720,7 +673,7 @@ Text(0.5, 1.0, &#39;SFINCS maximum water depth&#39;)
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Determine maximum water depth directly from SFINCS output</p>
+        <p class="prev-next-title">Steps</p>
       </div>
     </a>
     <a class="right-next"
@@ -771,7 +724,7 @@ Text(0.5, 1.0, &#39;SFINCS maximum water depth&#39;)
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Steps">Steps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#">Steps</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Step-1:-Select-the-high-resolution-elevation-dataset">Step 1: Select the high-resolution elevation dataset</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Step-2:-Retrieve-maximum-water-levels-from-the-model">Step 2: Retrieve maximum water levels from the model</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Step-3:-Choose-an-optional-mask-and-minimum-flood-depth">Step 3: Choose an optional mask and minimum flood depth</a></li>

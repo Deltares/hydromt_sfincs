@@ -49,7 +49,7 @@
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.23.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0-rc';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -62,7 +62,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.0.0-rc4dev" />
+  <meta name="docsearch:version" content="2.0.0" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -400,73 +400,29 @@
 <li class="toctree-l2"><a class="reference internal" href="model_components.html">Model Components</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model_methods.html">Model Methods</a></li>
 <li class="toctree-l2 current active has-children"><a aria-current="page" class="current reference internal" href="#">Building a SFINCS model</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../_examples/0_build_from_cli.html">1. Build your first SFINCS model:</a></li>
-
-
-
-
-
-
-
-<li class="toctree-l3"><a class="reference internal" href="../../_examples/1a_build_from_script.html">0. Initialize the logger</a></li>
-
-
-
-
-
-
-
-
-
-
-<li class="toctree-l3"><a class="reference internal" href="../../_examples/1b_build_quadtree_from_script.html">0. Initialize the logger</a></li>
-
-
-
-
-
-
-
-
-
-
-
+<li class="toctree-l3"><a class="reference internal" href="../../_examples/0_build_from_cli.html"> Example: Build from CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_examples/1a_build_from_script.html"> Example: Build from script (regular grid)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_examples/1b_build_quadtree_from_script.html"> Example: Build from script (quadtree grid)</a></li>
 </ul>
 </details></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../3_update_model/index.html">Updating a SFINCS Model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../3_update_model/model_update.html">Updating a SFINCS model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../_examples/2_update_forcing.html">1. Initialize SfincsModel class, set data library, mode and root folder:</a></li>
-
-
-
-
-<li class="toctree-l3"><a class="reference internal" href="../../_examples/3_update_geometries.html">1. Initialize SfincsModel class, set data library, mode and root folder:</a></li>
-
-
-
-
+<li class="toctree-l3"><a class="reference internal" href="../../_examples/2_update_forcing.html">Example: Update Forcing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_examples/3_update_geometries.html">Example: Update Geometries</a></li>
 </ul>
 </details></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../4_run_model/sfincs_run.html">Running a model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../_examples/4_run_model.html">Settings</a></li>
-
-
-
-
-
+<li class="toctree-l2"><a class="reference internal" href="../../_examples/4_run_model.html">Example: Running a model</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../5_postprocess_model/sfincs_analyse.html">Postprocessing and visualization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../_examples/5a_plot_results_hmax.html">Example: Plot maximum water depth</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../_examples/5b_plot_downscaled_results_hmax.html">Example: Plot downscaled maximum water depth</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../_examples/6_make_results_animation.html">Step 1: Read model results</a></li>
-
-
-
+<li class="toctree-l2"><a class="reference internal" href="../../_examples/6_make_results_animation.html">Example: Create animation</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="../6_migration_guide/migration_hydromt.html">Migration Guide</a></li>
@@ -647,37 +603,9 @@ The main advantage of this approach is that you can work with in-memory datasets
 <p>See examples below for more detailed examples:</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/0_build_from_cli.html">1. Build your first SFINCS model:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/0_build_from_cli.html#2.-Check-what-files-have-been-created:">2. Check what files have been created:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/0_build_from_cli.html#3.-Information-about-created-files:">3. Information about created files:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/0_build_from_cli.html#4.-Plot-current-base-model">4. Plot current base model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/0_build_from_cli.html#5.-Explanation-of-HydroMT's-.yml-file:">5. Explanation of HydroMT’s .yml-file:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/0_build_from_cli.html#6.-Update-the-model-to-include-forcing:">6. Update the model to include forcing:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/0_build_from_cli.html#7.-Plot-model-including-forcing:">7. Plot model including forcing:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/0_build_from_cli.html#8.-Check-what-additional-files-have-been-created:">8. Check what additional files have been created:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1a_build_from_script.html">0. Initialize the logger</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1a_build_from_script.html#1.-Initialize-SfincsModel-class,-set-data-library-and-output-folder:">1. Initialize SfincsModel class, set data library and output folder:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1a_build_from_script.html#2.-Specify-characteristics-of-the-wanted-grid-and-generate-grid:">2. Specify characteristics of the wanted grid and generate grid:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1a_build_from_script.html#3.-Add-elevation-to-the-model">3. Add elevation to the model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1a_build_from_script.html#4.-Make-mask-of-active-and-inactive-cells:">4. Make mask of active and inactive cells:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1a_build_from_script.html#5.-Update-mask-with-water-level-and-outflow-boundary-cells---including-use-of-polygons:">5. Update mask with water level and outflow boundary cells - including use of polygons:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1a_build_from_script.html#6.-Add-spatially-varying-roughness-data:">6. Add spatially varying roughness data:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1a_build_from_script.html#7.-Make-subgrid-derived-tables:">7. Make subgrid derived tables:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1a_build_from_script.html#8.-Add-water-level-time-series-as-forcing:">8. Add water level time-series as forcing:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1a_build_from_script.html#9.-Inspect-the-model-and-boundary-conditions">9. Inspect the model and boundary conditions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1a_build_from_script.html#10.-Write-the-model-input-to-disk">10. Write the model input to disk</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1b_build_quadtree_from_script.html">0. Initialize the logger</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1b_build_quadtree_from_script.html#1.-Initialize-SfincsModel-class,-set-data-library-and-output-folder:">1. Initialize SfincsModel class, set data library and output folder:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1b_build_quadtree_from_script.html#2.-Create-a-quadtree-grid-with-coastline-refinement">2. Create a quadtree grid with coastline refinement</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1b_build_quadtree_from_script.html#3.-Add-elevation-to-the-quadtree-grid">3. Add elevation to the quadtree grid</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1b_build_quadtree_from_script.html#4.-Make-mask-of-active-and-inactive-quadtree-cells:">4. Make mask of active and inactive quadtree cells:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1b_build_quadtree_from_script.html#5.-Update-mask-with-water-level-boundary-cells---including-use-of-polygons:">5. Update mask with water level boundary cells - including use of polygons:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1b_build_quadtree_from_script.html#6.-Cut-inactive-cells-from-the-quadtree-grid">6. Cut inactive cells from the quadtree grid</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1b_build_quadtree_from_script.html#7.-Add-spatially-varying-roughness-data:">7. Add spatially varying roughness data:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1b_build_quadtree_from_script.html#8.-Make-quadtree-subgrid-derived-tables:">8. Make quadtree subgrid-derived tables:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1b_build_quadtree_from_script.html#9.-Add-water-level-time-series-as-forcing:">9. Add water level time-series as forcing:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1b_build_quadtree_from_script.html#10.-Inspect-the-model-and-boundary-conditions">10. Inspect the model and boundary conditions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_examples/1b_build_quadtree_from_script.html#11.-Write-the-quadtree-model-input-to-disk">11. Write the quadtree model input to disk</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_examples/0_build_from_cli.html"> Example: Build from CLI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_examples/1a_build_from_script.html"> Example: Build from script (regular grid)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_examples/1b_build_quadtree_from_script.html"> Example: Build from script (quadtree grid)</a></li>
 </ul>
 </div>
 </section>

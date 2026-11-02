@@ -52,7 +52,7 @@
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.23.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0-rc';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.0.0-rc4dev" />
+  <meta name="docsearch:version" content="2.0.0" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -403,73 +403,29 @@
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/2_build_model/model_components.html">Model Components</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/2_build_model/model_methods.html">Model Methods</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../user_guide/2_build_model/model_build.html">Building a SFINCS model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l3"><a class="reference internal" href="0_build_from_cli.html">1. Build your first SFINCS model:</a></li>
-
-
-
-
-
-
-
-<li class="toctree-l3"><a class="reference internal" href="1a_build_from_script.html">0. Initialize the logger</a></li>
-
-
-
-
-
-
-
-
-
-
-<li class="toctree-l3"><a class="reference internal" href="1b_build_quadtree_from_script.html">0. Initialize the logger</a></li>
-
-
-
-
-
-
-
-
-
-
-
+<li class="toctree-l3"><a class="reference internal" href="0_build_from_cli.html"> Example: Build from CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="1a_build_from_script.html"> Example: Build from script (regular grid)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="1b_build_quadtree_from_script.html"> Example: Build from script (quadtree grid)</a></li>
 </ul>
 </details></li>
 </ul>
 </details></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../user_guide/3_update_model/index.html">Updating a SFINCS Model</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2 current active has-children"><a class="reference internal" href="../user_guide/3_update_model/model_update.html">Updating a SFINCS model</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
-<li class="toctree-l3 current active"><a aria-current="page" class="current reference internal" href="#">1. Initialize SfincsModel class, set data library, mode and root folder:</a></li>
-
-
-
-
-<li class="toctree-l3"><a class="reference internal" href="3_update_geometries.html">1. Initialize SfincsModel class, set data library, mode and root folder:</a></li>
-
-
-
-
+<li class="toctree-l3 current active"><a aria-current="page" class="current reference internal" href="#">Example: Update Forcing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3_update_geometries.html">Example: Update Geometries</a></li>
 </ul>
 </details></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/4_run_model/sfincs_run.html">Running a model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="4_run_model.html">Settings</a></li>
-
-
-
-
-
+<li class="toctree-l2"><a class="reference internal" href="4_run_model.html">Example: Running a model</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/5_postprocess_model/sfincs_analyse.html">Postprocessing and visualization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="5a_plot_results_hmax.html">Example: Plot maximum water depth</a></li>
 <li class="toctree-l2"><a class="reference internal" href="5b_plot_downscaled_results_hmax.html">Example: Plot downscaled maximum water depth</a></li>
-<li class="toctree-l2"><a class="reference internal" href="6_make_results_animation.html">Step 1: Read model results</a></li>
-
-
-
+<li class="toctree-l2"><a class="reference internal" href="6_make_results_animation.html">Example: Create animation</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_guide/6_migration_guide/migration_hydromt.html">Migration Guide</a></li>
@@ -546,7 +502,7 @@
     <a href="https://mybinder.org/v2/gh/Deltares/hydromt_sfincs/main?urlpath=lab/tree/examples/2_update_forcing.ipynb" target="_blank" rel="noopener noreferrer"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg"></a>
 </div></div>
 <div style="padding: 20px 24px; border-radius: 12px; background: linear-gradient(110deg, #12304a, #187b8f); color: white; margin-bottom: 16px;"><div style="font-size: 0.78em; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.85;"><p>HydroMT-SFINCS | Example 02</p>
-</div><h1 style="color: white; margin: 8px 0 4px;"><p>Update forcing conditions of a SFINCS model</p>
+</div><h1 style="color: white; margin: 8px 0 4px;"><p>Example: Update forcing conditions of a SFINCS model</p>
 </h1><div style="opacity: 0.95;"><p>Extend an existing SFINCS model with boundary conditions and forcing.</p>
 </div></div><p>In this example, the previously made <strong>SFINCS</strong> compound flood model will be updated with more boundary conditions..</p>
 <p>The model is situated in <strong>Northern Italy</strong>, where a small selection of topography and bathymetry data has already been made available for you to try the examples.</p>
@@ -602,10 +558,10 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 08:10:32,805 - hydromt - log - INFO - HydroMT version: 1.4.1
-2026-11-02 08:10:32,840 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
-2026-11-02 08:10:32,841 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
-2026-11-02 08:10:33,515 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0rc4.dev0).
+2026-11-02 10:02:47,531 - hydromt - log - INFO - HydroMT version: 1.4.1
+2026-11-02 10:02:47,576 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
+2026-11-02 10:02:47,577 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
+2026-11-02 10:02:48,240 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0).
 </pre></div></div>
 </div>
 </section>
@@ -684,7 +640,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 08:10:35,839 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading era5_hourly RasterDataset data from /home/runner/.hydromt/artifact_data/latest/era5_hourly.nc
+2026-11-02 10:02:50,539 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading era5_hourly RasterDataset data from /home/runner/.hydromt/artifact_data/latest/era5_hourly.nc
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -729,8 +685,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 08:10:36,719 - hydromt.hydromt_sfincs.components.grid.infiltration - infiltration - INFO - Creating curve number values for SFINCS with antecedent moisture condition: avg.
-2026-11-02 08:10:36,724 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gcn250 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gcn250/{variable}.tif
+2026-11-02 10:02:51,398 - hydromt.hydromt_sfincs.components.grid.infiltration - infiltration - INFO - Creating curve number values for SFINCS with antecedent moisture condition: avg.
+2026-11-02 10:02:51,404 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gcn250 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gcn250/{variable}.tif
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -756,7 +712,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 08:10:38,959 - hydromt.hydromt_sfincs.writers - writers - INFO - No changes detected; skipping write to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_compound/sfincs_netbndbzsbzifile.nc
+2026-11-02 10:02:53,698 - hydromt.hydromt_sfincs.writers - writers - INFO - No changes detected; skipping write to /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/tmp_sfincs_compound/sfincs_netbndbzsbzifile.nc
 </pre></div></div>
 </div>
 <p>Now your model has new boundary conditions, you can progress (or run again) to the notebook: <a class="reference internal" href="4_run_model.html"><span class="doc">Run SFINCS model</span></a>. In case you want to add some geometries and structures to your model first, continue with notebook <a class="reference internal" href="3_update_geometries.html"><span class="doc">Update Geometries</span></a></p>
@@ -829,13 +785,12 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">1. Initialize SfincsModel class, set data library, mode and root folder:</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#2.-Add-an-upstream-discharge-time-series-as-forcing:">2. Add an upstream discharge time-series as forcing:</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#3.-Add-spatially-varying-rainfall-data:">3. Add spatially varying rainfall data:</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#4.-Add-spatially-varying-infiltration-data:">4. Add spatially varying infiltration data:</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#5.-Write-all-files">5. Write all files</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#">1. Initialize SfincsModel class, set data library, mode and root folder:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#2.-Add-an-upstream-discharge-time-series-as-forcing:">2. Add an upstream discharge time-series as forcing:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#3.-Add-spatially-varying-rainfall-data:">3. Add spatially varying rainfall data:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#4.-Add-spatially-varying-infiltration-data:">4. Add spatially varying infiltration data:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#5.-Write-all-files">5. Write all files</a></li>
 </ul>
-
   </nav></div>
 
 </div></div>

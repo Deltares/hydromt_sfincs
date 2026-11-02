@@ -52,7 +52,7 @@
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.23.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0-rc';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.0.0-rc4dev" />
+  <meta name="docsearch:version" content="2.0.0" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -403,73 +403,29 @@
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/2_build_model/model_components.html">Model Components</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/2_build_model/model_methods.html">Model Methods</a></li>
 <li class="toctree-l2 current active has-children"><a class="reference internal" href="../user_guide/2_build_model/model_build.html">Building a SFINCS model</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="0_build_from_cli.html">1. Build your first SFINCS model:</a></li>
-
-
-
-
-
-
-
-<li class="toctree-l3 current active"><a aria-current="page" class="current reference internal" href="#">0. Initialize the logger</a></li>
-
-
-
-
-
-
-
-
-
-
-<li class="toctree-l3"><a class="reference internal" href="1b_build_quadtree_from_script.html">0. Initialize the logger</a></li>
-
-
-
-
-
-
-
-
-
-
-
+<li class="toctree-l3"><a class="reference internal" href="0_build_from_cli.html"> Example: Build from CLI</a></li>
+<li class="toctree-l3 current active"><a aria-current="page" class="current reference internal" href="#"> Example: Build from script (regular grid)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="1b_build_quadtree_from_script.html"> Example: Build from script (quadtree grid)</a></li>
 </ul>
 </details></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/3_update_model/index.html">Updating a SFINCS Model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../user_guide/3_update_model/model_update.html">Updating a SFINCS model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l3"><a class="reference internal" href="2_update_forcing.html">1. Initialize SfincsModel class, set data library, mode and root folder:</a></li>
-
-
-
-
-<li class="toctree-l3"><a class="reference internal" href="3_update_geometries.html">1. Initialize SfincsModel class, set data library, mode and root folder:</a></li>
-
-
-
-
+<li class="toctree-l3"><a class="reference internal" href="2_update_forcing.html">Example: Update Forcing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3_update_geometries.html">Example: Update Geometries</a></li>
 </ul>
 </details></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/4_run_model/sfincs_run.html">Running a model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="4_run_model.html">Settings</a></li>
-
-
-
-
-
+<li class="toctree-l2"><a class="reference internal" href="4_run_model.html">Example: Running a model</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/5_postprocess_model/sfincs_analyse.html">Postprocessing and visualization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="5a_plot_results_hmax.html">Example: Plot maximum water depth</a></li>
 <li class="toctree-l2"><a class="reference internal" href="5b_plot_downscaled_results_hmax.html">Example: Plot downscaled maximum water depth</a></li>
-<li class="toctree-l2"><a class="reference internal" href="6_make_results_animation.html">Step 1: Read model results</a></li>
-
-
-
+<li class="toctree-l2"><a class="reference internal" href="6_make_results_animation.html">Example: Create animation</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_guide/6_migration_guide/migration_hydromt.html">Migration Guide</a></li>
@@ -546,7 +502,7 @@
     <a href="https://mybinder.org/v2/gh/Deltares/hydromt_sfincs/main?urlpath=lab/tree/examples/1a_build_from_script.ipynb" target="_blank" rel="noopener noreferrer"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg"></a>
 </div></div>
 <div style="padding: 18px 22px; border-radius: 12px; background: linear-gradient(110deg, #12304a, #187b8f); color: white; margin-bottom: 16px;"><div style="font-size: 0.78em; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.85;"><p>HydroMT-SFINCS | Example 01A</p>
-</div><h1 style="color: white; margin: 8px 0 4px;"><p>Build a SFINCS model from Python</p>
+</div><h1 style="color: white; margin: 8px 0 4px;"><p>Example: Build a SFINCS model from Python</p>
 </h1><div style="opacity: 0.95;"><p>Regular-grid workflow: create a model with elevation, boundaries, roughness, subgrid tables and forcing.</p>
 </div></div><p>In this example a simple <strong>SFINCS</strong> compound flood model will be made, using the underlying Python functions of <strong>HydroMT-SFINCS</strong> to build a model.</p>
 <p>The model is situated in <strong>Northern Italy</strong>, where a small selection of topography and bathymetry data has already been made available for you to try the examples.</p>
@@ -609,7 +565,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 08:09:25,833 - hydromt - log - INFO - HydroMT version: 1.4.1
+2026-11-02 10:01:41,374 - hydromt - log - INFO - HydroMT version: 1.4.1
 </pre></div></div>
 </div>
 </section>
@@ -635,9 +591,9 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 08:09:25,872 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
-2026-11-02 08:09:25,873 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
-2026-11-02 08:09:26,539 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0rc4.dev0).
+2026-11-02 10:01:41,422 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
+2026-11-02 10:01:41,423 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
+2026-11-02 10:01:42,089 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0).
 </pre></div></div>
 </div>
 </section>
@@ -663,8 +619,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 08:09:26,546 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading region.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
-2026-11-02 08:09:26,562 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 9 attributes in model config.
+2026-11-02 10:01:42,095 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading region.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
+2026-11-02 10:01:42,112 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 9 attributes in model config.
 </pre></div></div>
 </div>
 <p>The grid that we just created is described in the SFINCS configuration with x0, y0, dx, dy, mmax, nmax, rotation and epsg. In case you would have known these parameters before, you can also create a grid using <code class="docutils literal notranslate"><span class="pre">SfincsModel.grid.create()</span></code>.</p>
@@ -767,8 +723,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 08:09:28,166 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
-2026-11-02 08:09:28,188 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
+2026-11-02 10:01:43,696 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
+2026-11-02 10:01:43,718 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -803,8 +759,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 08:09:29,594 - hydromt.hydromt_sfincs.components.grid.mask - mask - INFO - 1 gaps outside valid elevation range &lt; 10.0 km2.
-2026-11-02 08:09:29,598 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 2 attributes in model config.
+2026-11-02 10:01:45,083 - hydromt.hydromt_sfincs.components.grid.mask - mask - INFO - 1 gaps outside valid elevation range &lt; 10.0 km2.
+2026-11-02 10:01:45,087 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 2 attributes in model config.
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -840,7 +796,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 08:09:30,880 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
+2026-11-02 10:01:46,328 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -864,8 +820,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 08:09:30,886 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading compound_example_outflow_boundary_polygon.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_outflow_boundary_polygon.geojson
-2026-11-02 08:09:30,922 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
+2026-11-02 10:01:46,334 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading compound_example_outflow_boundary_polygon.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_outflow_boundary_polygon.geojson
+2026-11-02 10:01:46,364 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -931,10 +887,10 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 08:09:32,194 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
-2026-11-02 08:09:32,206 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
-2026-11-02 08:09:32,211 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
-2026-11-02 08:09:32,242 - hydromt.hydromt_sfincs.components.grid.roughness - roughness - INFO - Spatially varying manning roughness set. Note that this overrules any earlier defined manning_land and manning_sea in config.
+2026-11-02 10:01:47,595 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
+2026-11-02 10:01:47,608 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
+2026-11-02 10:01:47,612 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
+2026-11-02 10:01:47,643 - hydromt.hydromt_sfincs.components.grid.roughness - roughness - INFO - Spatially varying manning roughness set. Note that this overrules any earlier defined manning_land and manning_sea in config.
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -981,21 +937,21 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 08:09:33,474 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
-2026-11-02 08:09:33,491 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
-2026-11-02 08:09:33,507 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
-2026-11-02 08:09:33,519 - hydromt.data_catalog.data_catalog - data_catalog - WARNING - overwriting data source &#39;vito_mapping.csv&#39; with provider user and version _UNSPECIFIED_.
-2026-11-02 08:09:33,519 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
-2026-11-02 08:09:33,524 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
-2026-11-02 08:09:33,535 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of regular cells in a block : 333
-2026-11-02 08:09:33,535 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in n direction    : 1
-2026-11-02 08:09:33,536 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in m direction    : 1
-2026-11-02 08:09:33,536 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of flux grid            : dx=50.000000000000654, dy=50.00000000000095
-2026-11-02 08:09:33,536 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of subgrid pixels       : dx=8.333333333333442, dy=8.333333333333492
-2026-11-02 08:09:33,537 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - block 1/1 -- col 0:250 | row 0:107
-2026-11-02 08:09:46,886 - hydromt.hydromt_sfincs.components.grid.subgrid - cog - INFO - Building 2 overviews with average
-2026-11-02 08:09:46,918 - hydromt.hydromt_sfincs.components.grid.subgrid - cog - INFO - Building 2 overviews with average
-2026-11-02 08:09:46,937 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Subgrid tables created. Note that the subgrid tables overwrite previously defined information on elevation and roughness.
+2026-11-02 10:01:48,857 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
+2026-11-02 10:01:48,874 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
+2026-11-02 10:01:48,890 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
+2026-11-02 10:01:48,901 - hydromt.data_catalog.data_catalog - data_catalog - WARNING - overwriting data source &#39;vito_mapping.csv&#39; with provider user and version _UNSPECIFIED_.
+2026-11-02 10:01:48,902 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
+2026-11-02 10:01:48,906 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
+2026-11-02 10:01:48,917 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of regular cells in a block : 333
+2026-11-02 10:01:48,917 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in n direction    : 1
+2026-11-02 10:01:48,918 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in m direction    : 1
+2026-11-02 10:01:48,918 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of flux grid            : dx=50.000000000000654, dy=50.00000000000095
+2026-11-02 10:01:48,919 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of subgrid pixels       : dx=8.333333333333442, dy=8.333333333333492
+2026-11-02 10:01:48,919 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - block 1/1 -- col 0:250 | row 0:107
+2026-11-02 10:02:01,980 - hydromt.hydromt_sfincs.components.grid.subgrid - cog - INFO - Building 2 overviews with average
+2026-11-02 10:02:02,012 - hydromt.hydromt_sfincs.components.grid.subgrid - cog - INFO - Building 2 overviews with average
+2026-11-02 10:02:02,031 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Subgrid tables created. Note that the subgrid tables overwrite previously defined information on elevation and roughness.
 </pre></div></div>
 </div>
 <div style="padding: 14px 18px; border-left: 4px solid #d97706; background: #fff7ed; border-radius: 6px; margin: 12px 1em 12px 0; width: calc(100% - 1em); box-sizing: border-box; color: #111111; "><p>⚠️ Note: Subgrid processing time</p>
@@ -1056,8 +1012,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 08:09:48,157 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 3 attributes in model config.
-2026-11-02 08:09:48,211 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gtsmv3_eu_era5 GeoDataset data from /home/runner/.hydromt/artifact_data/latest/gtsmv3_eu_era5.nc
+2026-11-02 10:02:03,268 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 3 attributes in model config.
+2026-11-02 10:02:03,321 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gtsmv3_eu_era5 GeoDataset data from /home/runner/.hydromt/artifact_data/latest/gtsmv3_eu_era5.nc
 </pre></div></div>
 </div>
 </section>
@@ -1211,19 +1167,18 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">0. Initialize the logger</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#1.-Initialize-SfincsModel-class,-set-data-library-and-output-folder:">1. Initialize SfincsModel class, set data library and output folder:</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#2.-Specify-characteristics-of-the-wanted-grid-and-generate-grid:">2. Specify characteristics of the wanted grid and generate grid:</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#3.-Add-elevation-to-the-model">3. Add elevation to the model</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#4.-Make-mask-of-active-and-inactive-cells:">4. Make mask of active and inactive cells:</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#5.-Update-mask-with-water-level-and-outflow-boundary-cells---including-use-of-polygons:">5. Update mask with water level and outflow boundary cells - including use of polygons:</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#6.-Add-spatially-varying-roughness-data:">6. Add spatially varying roughness data:</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#7.-Make-subgrid-derived-tables:">7. Make subgrid derived tables:</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#8.-Add-water-level-time-series-as-forcing:">8. Add water level time-series as forcing:</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#9.-Inspect-the-model-and-boundary-conditions">9. Inspect the model and boundary conditions</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#10.-Write-the-model-input-to-disk">10. Write the model input to disk</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#">0. Initialize the logger</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#1.-Initialize-SfincsModel-class,-set-data-library-and-output-folder:">1. Initialize SfincsModel class, set data library and output folder:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#2.-Specify-characteristics-of-the-wanted-grid-and-generate-grid:">2. Specify characteristics of the wanted grid and generate grid:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#3.-Add-elevation-to-the-model">3. Add elevation to the model</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#4.-Make-mask-of-active-and-inactive-cells:">4. Make mask of active and inactive cells:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#5.-Update-mask-with-water-level-and-outflow-boundary-cells---including-use-of-polygons:">5. Update mask with water level and outflow boundary cells - including use of polygons:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#6.-Add-spatially-varying-roughness-data:">6. Add spatially varying roughness data:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#7.-Make-subgrid-derived-tables:">7. Make subgrid derived tables:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#8.-Add-water-level-time-series-as-forcing:">8. Add water level time-series as forcing:</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#9.-Inspect-the-model-and-boundary-conditions">9. Inspect the model and boundary conditions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#10.-Write-the-model-input-to-disk">10. Write the model input to disk</a></li>
 </ul>
-
   </nav></div>
 
 </div></div>
