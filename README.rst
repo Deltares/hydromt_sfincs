@@ -74,6 +74,7 @@ Acknowledgments
 -------------------------------------------------------
 SFINCS is developed and maintained by Deltares, with contributions from the wider open-source community. We thank all contributors and users for their support and engagement with SFINCS.
 In particular, we want to thank our special collaborators and user contributions by:
+
 - Danish Coastal Authority
 - USGS
 - ONR
@@ -90,6 +91,7 @@ In particular, we want to thank our special collaborators and user contributions
 (We try to acknowledge all contributors, but apologize if anyone is missing - please let us know.)
 
 Also, we want to thank our TKI Joint Industry project partners for their valuable contributions and collaboration:
+
 - Svasek - HKV
 - CDR
 - Fathom
