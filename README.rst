@@ -48,6 +48,18 @@ The following paper presents a real-world application of HydroMT-SFINCS:
     Eilander, D., Couasnon, A., Leijnse, T., Ikeuchi, H., Yamazaki, D., Muis, S., Dullaart, J., Haag, A., Winsemius, H. C., and Ward, P. J.:
     A globally applicable framework for compound flood hazard modeling, Nat. Hazards Earth Syst. Sci., 23, 823–846, https://doi.org/10.5194/nhess-23-823-2023, 2023.
 
+Acknowledge our efforts when using SFINCS and HydroMT for your own work
+-----------------------------------------------------------
+When using SFINCS in your research or projects, please cite the relevant papers and the DOI of the release you used, and acknowledge Deltares, HydroMT-SFINCS, SFINCS and its open-source community.
+SFINCS is brought to you by the collaborative efforts of the Deltares team and the wider SFINCS and HydroMT-SFINCS open-source, open-access community.
+Developing excellent software takes significant time and effort, and funding, from Deltares and partners.
+
+We greatly appreciate any acknowledgment and support from the community when using SFINCS in your work.
+By doing research and projects together, involving us in papers and research proposals, getting help through SFINCS service contracts, following trainings, sharing bugfixes and improvements - we all benefit and contribute to the continued development and success of SFINCS.
+We thank all contributors and users for their support and engagement with SFINCS, and we are very busy fulfilling our ambition:
+
+**Making the best, fit-for-purpose, fast open-source compound flood model – in the world!**
+
 How to contribute?
 -------------------
 If you find any issues in the code or documentation feel free to leave an issue on the `github issue tracker. <https://github.com/Deltares/hydromt_sfincs/issues>`_
@@ -57,6 +69,49 @@ HydroMT seeks active contribution from the (hydro) geoscientific community.
 So far, it has been developed and tested with a range of `Deltares <https://www.deltares.nl/en/>`_ models, but
 we believe it is applicable to a much wider set of geoscientific models and are
 happy to discuss how it can be implemented for your model.
+
+Acknowledgments
+-------------------------------------------------------
+SFINCS is developed and maintained by Deltares, with contributions from the wider open-source community. We thank all contributors and users for their support and engagement with SFINCS.
+In particular, we want to thank our special collaborators and user contributions by:
+- Danish Coastal Authority
+- USGS
+- ONR
+- CDR
+- UCSC
+- University of Cantabria
+- IHE Cantabria
+- Institute for Environmental Studies (IVM) of VU Amsterdam
+- Rutgers University
+- IHE Delft
+- TU Delft
+- IMDC
+
+(We try to acknowledge all contributors, but apologize if anyone is missing - please let us know.)
+
+Also, we want to thank our TKI Joint Industry project partners for their valuable contributions and collaboration:
+- Svasek - HKV
+- CDR
+- Fathom
+- IHE Delft
+- UC Santa Cruz
+- Guy Carpenter - Marsh RE
+- IMDC
+- Kystdirektoratet (Danish Coastal Authority)
+- AON
+- Covea
+- Shelf Models
+- CBCL
+- The Water Institute
+- Deltares
+
+This project is part of the TKI subsidy program of the Dutch Ministry of Economic Affairs.
+For more info see:
+https://publicwiki.deltares.nl/spaces/TKIP/pages/343966166/DEL194+-+TKI+SFINCS+-+DROMOS
+
+.. figure:: https://user-images.githubusercontent.com/28528822/200898347-d4016571-f3c7-4257-b59c-86aa1e97a699.png
+   :width: 800px
+   :align: center
 
 .. _Hydromt: https://deltares.github.io/hydromt/latest/
 .. _SFINCS: https://sfincs.readthedocs.io/en/latest/
