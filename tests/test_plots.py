@@ -1,3 +1,8 @@
+import subprocess
+import sys
+import textwrap
+from pathlib import Path
+
 import matplotlib
 
 matplotlib.use("Agg")
@@ -11,6 +16,68 @@ import xugrid as xu
 from hydromt_sfincs import plots
 
 import matplotlib.pyplot as plt
+
+
+def test_import_and_save_animation_without_ipython():
+    script = textwrap.dedent(
+        """
+        import builtins
+
+        original_import = builtins.__import__
+
+        def block_ipython(name, *args, **kwargs):
+            if name == "IPython" or name.startswith("IPython."):
+                raise ModuleNotFoundError("No module named 'IPython'")
+            return original_import(name, *args, **kwargs)
+
+        builtins.__import__ = block_ipython
+
+        import matplotlib
+        matplotlib.use("Agg")
+
+        import hydromt_sfincs
+        from hydromt_sfincs import plots
+        import matplotlib.pyplot as plt
+        import numpy as np
+        import pandas as pd
+        import xarray as xr
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+
+        class MockAnimation:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def save(self, *args, **kwargs):
+                pass
+
+        fig, ax = plt.subplots()
+        plots.plot_basemap = lambda **kwargs: (fig, ax)
+        plots.animation.FuncAnimation = MockAnimation
+        data = xr.DataArray(
+            np.ones((1, 2, 2)),
+            dims=("time", "y", "x"),
+            coords={"time": pd.date_range("2020-01-01", periods=1)},
+        )
+
+        with TemporaryDirectory() as tmpdir:
+            result = plots.make_animation(
+                data,
+                save_path=Path(tmpdir) / "animation.gif",
+                return_html=False,
+                vmin=0,
+                vmax=1,
+            )
+        assert hydromt_sfincs.__version__
+        assert result is None
+        plt.close(fig)
+        """
+    )
+    subprocess.run(
+        [sys.executable, "-c", script],
+        check=True,
+        cwd=Path(__file__).resolve().parents[1],
+    )
 
 
 def test_plot_map_timesteps_ugrid():
