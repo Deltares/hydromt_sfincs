@@ -49,7 +49,7 @@ The following paper presents a real-world application of HydroMT-SFINCS:
     A globally applicable framework for compound flood hazard modeling, Nat. Hazards Earth Syst. Sci., 23, 823–846, https://doi.org/10.5194/nhess-23-823-2023, 2023.
 
 Acknowledge our efforts when using SFINCS and HydroMT for your own work
------------------------------------------------------------
+-----------------------------------------------------------------------
 When using SFINCS in your research or projects, please cite the relevant papers and the DOI of the release you used, and acknowledge Deltares, HydroMT-SFINCS, SFINCS and its open-source community.
 SFINCS is brought to you by the collaborative efforts of the Deltares team and the wider SFINCS and HydroMT-SFINCS open-source, open-access community.
 Developing excellent software takes significant time and effort, and funding, from Deltares and partners.

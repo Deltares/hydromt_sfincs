@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -12,9 +12,11 @@ import matplotlib.pyplot as plt
 
 # for animations
 from matplotlib import animation
-from IPython.display import HTML
 
 from .utils import get_bounds_vector
+
+if TYPE_CHECKING:
+    from IPython.display import HTML
 
 logger = logging.getLogger(f"hydromt.{__name__}")
 
@@ -619,7 +621,7 @@ def make_animation(
     save_path: Optional[Union[str, Path]] = None,
     return_html: bool = True,
     **plot_kwargs,
-) -> Optional[HTML]:
+) -> Optional["HTML"]:
     """Create an inline animation of a time-dependent spatial variable.
 
     Regular-grid arrays are plotted using their native coordinates, including
@@ -803,4 +805,9 @@ def make_animation(
         ani.save(str(save_path), fps=fps, dpi=dpi)
     html = ani.to_html5_video() if return_html else None
     plt.close(fig)
-    return HTML(html) if html is not None else None
+    if html is None:
+        return None
+    # IPython is only needed for the inline display, not for the package
+    from IPython.display import HTML
+
+    return HTML(html)
