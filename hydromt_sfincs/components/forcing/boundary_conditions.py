@@ -96,7 +96,7 @@ class SfincsBoundaryBase(ModelComponent):
             # Ensure "name" column exists for display purposes (not saved to file, just for display in list)
             g = self.gdf.copy()
             if "name" not in g.columns:
-                g["name"] = [f"Point {i+1:03d}" for i in g.index]
+                g["name"] = [f"Point_{i+1:03d}" for i in g.index]
             return g["name"].tolist()
         return []
 

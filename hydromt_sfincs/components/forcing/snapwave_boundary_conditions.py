@@ -40,7 +40,7 @@ class SnapWaveBoundaryConditions(SfincsBoundaryBase):
             return []
         # The SnapWave boundary points do not really have names,
         # but we can use the index and turn into strings
-        names = [f"Point {str(i + 1)}" for i in range(self.nr_points)]
+        names = [f"Point_{i + 1:03d}" for i in range(self.nr_points)]
         return names
 
     def read(self, format: str = None):

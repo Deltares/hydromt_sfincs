@@ -40,13 +40,13 @@ class SfincsDischargePoints(SfincsBoundaryBase):
         g = self.data.vector.to_gdf().copy()
 
         if "name" not in g.columns:
-            g["name"] = [f"Point {i+1:03d}" for i in range(len(g))]
+            g["name"] = [f"Point_{i+1:03d}" for i in range(len(g))]
 
         # enforce no missing names
         if g["name"].isna().any():
             missing = g["name"].isna()
             g.loc[missing, "name"] = [
-                f"Point {i+1:03d}" for i in missing[missing].index
+                f"Point_{i+1:03d}" for i in missing[missing].index
             ]
         return g
 
