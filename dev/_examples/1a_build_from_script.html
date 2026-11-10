@@ -26,8 +26,8 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/autodoc_pydantic.css" />
@@ -36,10 +36,10 @@
     <link rel="stylesheet" type="text/css" href="../_static/theme-deltares.css?v=a3fd7a5a" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="../_static/scripts/fontawesome.js?digest=18bd87630a240e9c25be"></script>
+  <script defer src="../_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
     <script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
@@ -50,7 +50,7 @@
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_examples/1a_build_from_script';</script>
     <script>
-        DOCUMENTATION_OPTIONS.theme_version = '0.23.0';
+        DOCUMENTATION_OPTIONS.theme_version = '0.24.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/Deltares/hydromt_sfincs/gh-pages/switcher.json';
         DOCUMENTATION_OPTIONS.theme_switcher_version_match = '2.0.0';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
@@ -113,7 +113,7 @@
   
     <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
-  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
     <span class="fa-solid fa-bars"></span>
   </button>
   
@@ -259,7 +259,7 @@
   
 
   
-    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page" aria-expanded="false" aria-controls="pst-secondary-sidebar-modal">
       <span class="fa-solid fa-outdent"></span>
     </button>
   
@@ -273,7 +273,7 @@
       
       
       
-      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
       <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
         
 
@@ -466,7 +466,7 @@
     
     <li class="breadcrumb-item breadcrumb-home">
       <a href="../index.html" class="nav-link" aria-label="Home">
-        <i class="fa-solid fa-home"></i>
+        <i class="fa-solid fa-house"></i>
       </a>
     </li>
     
@@ -565,7 +565,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 12:54:43,155 - hydromt - log - INFO - HydroMT version: 1.4.1
+2026-11-10 14:06:36,086 - hydromt - log - INFO - HydroMT version: 1.4.1
 </pre></div></div>
 </div>
 </section>
@@ -591,9 +591,9 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 12:54:43,219 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
-2026-11-02 12:54:43,219 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
-2026-11-02 12:54:43,680 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0.dev0).
+2026-11-10 14:06:36,155 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Reading data catalog artifact_data latest
+2026-11-10 14:06:36,155 - hydromt.data_catalog.data_catalog - data_catalog - INFO - Parsing data catalog from /home/runner/.hydromt/artifact_data/v1.0.0/data_catalog.yml
+2026-11-10 14:06:36,710 - hydromt.model.model - model - INFO - Initializing sfincs model from hydromt_sfincs (v2.0.0.dev0).
 </pre></div></div>
 </div>
 </section>
@@ -619,8 +619,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 12:54:43,684 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading region.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
-2026-11-02 12:54:43,696 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 9 attributes in model config.
+2026-11-10 14:06:36,715 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading region.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/region.geojson
+2026-11-10 14:06:36,729 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 9 attributes in model config.
 </pre></div></div>
 </div>
 <p>The grid that we just created is described in the SFINCS configuration with x0, y0, dx, dy, mmax, nmax, rotation and epsg. In case you would have known these parameters before, you can also create a grid using <code class="docutils literal notranslate"><span class="pre">SfincsModel.grid.create()</span></code>.</p>
@@ -646,9 +646,9 @@
  &#39;x0&#39;: 318650.0,
  &#39;y0&#39;: 5040000.0,
  &#39;rotation&#39;: 27.0,
- &#39;tref&#39;: &#39;20261102 000000&#39;,
- &#39;tstart&#39;: &#39;20261102 000000&#39;,
- &#39;tstop&#39;: &#39;20261103 000000&#39;,
+ &#39;tref&#39;: &#39;20261110 000000&#39;,
+ &#39;tstart&#39;: &#39;20261110 000000&#39;,
+ &#39;tstop&#39;: &#39;20261111 000000&#39;,
  &#39;tspinup&#39;: 0.0,
  &#39;dthisout&#39;: 600.0,
  &#39;dtmapout&#39;: 3600.0,
@@ -723,8 +723,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 12:54:44,800 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
-2026-11-02 12:54:44,815 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
+2026-11-10 14:06:38,028 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
+2026-11-10 14:06:38,045 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -759,8 +759,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 12:54:45,692 - hydromt.hydromt_sfincs.components.grid.mask - mask - INFO - 1 gaps outside valid elevation range &lt; 10.0 km2.
-2026-11-02 12:54:45,695 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 2 attributes in model config.
+2026-11-10 14:06:39,138 - hydromt.hydromt_sfincs.components.grid.mask - mask - INFO - 1 gaps outside valid elevation range &lt; 10.0 km2.
+2026-11-10 14:06:39,141 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 2 attributes in model config.
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -796,7 +796,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 12:54:46,516 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
+2026-11-10 14:06:40,133 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -820,8 +820,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 12:54:46,520 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading compound_example_outflow_boundary_polygon.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_outflow_boundary_polygon.geojson
-2026-11-02 12:54:46,538 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
+2026-11-10 14:06:40,137 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading compound_example_outflow_boundary_polygon.geojson GeoDataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/docs/_examples/data/compound_example_outflow_boundary_polygon.geojson
+2026-11-10 14:06:40,160 - hydromt.model.components.grid - grid - WARNING - Replacing grid map: mask
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -887,10 +887,10 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 12:54:47,356 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
-2026-11-02 12:54:47,365 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
-2026-11-02 12:54:47,368 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
-2026-11-02 12:54:47,385 - hydromt.hydromt_sfincs.components.grid.roughness - roughness - INFO - Spatially varying manning roughness set. Note that this overrules any earlier defined manning_land and manning_sea in config.
+2026-11-10 14:06:41,153 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
+2026-11-10 14:06:41,163 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
+2026-11-10 14:06:41,166 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
+2026-11-10 14:06:41,189 - hydromt.hydromt_sfincs.components.grid.roughness - roughness - INFO - Spatially varying manning roughness set. Note that this overrules any earlier defined manning_land and manning_sea in config.
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -937,21 +937,21 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 12:54:48,197 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
-2026-11-02 12:54:48,208 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
-2026-11-02 12:54:48,217 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
-2026-11-02 12:54:48,224 - hydromt.data_catalog.data_catalog - data_catalog - WARNING - overwriting data source &#39;vito_mapping.csv&#39; with provider user and version _UNSPECIFIED_.
-2026-11-02 12:54:48,224 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
-2026-11-02 12:54:48,227 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
-2026-11-02 12:54:48,234 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of regular cells in a block : 333
-2026-11-02 12:54:48,234 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in n direction    : 1
-2026-11-02 12:54:48,234 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in m direction    : 1
-2026-11-02 12:54:48,235 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of flux grid            : dx=50.000000000000654, dy=50.00000000000095
-2026-11-02 12:54:48,235 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of subgrid pixels       : dx=8.333333333333442, dy=8.333333333333492
-2026-11-02 12:54:48,235 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - block 1/1 -- col 0:250 | row 0:107
-2026-11-02 12:54:57,706 - hydromt.hydromt_sfincs.components.grid.subgrid - cog - INFO - Building 2 overviews with average
-2026-11-02 12:54:57,728 - hydromt.hydromt_sfincs.components.grid.subgrid - cog - INFO - Building 2 overviews with average
-2026-11-02 12:54:57,740 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Subgrid tables created. Note that the subgrid tables overwrite previously defined information on elevation and roughness.
+2026-11-10 14:06:42,246 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading merit_hydro RasterDataset data from /home/runner/.hydromt/artifact_data/latest/merit_hydro/{variable}.tif
+2026-11-10 14:06:42,259 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gebco RasterDataset data from /home/runner/.hydromt/artifact_data/latest/gebco.tif
+2026-11-10 14:06:42,271 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_2015 RasterDataset data from /home/runner/.hydromt/artifact_data/latest/vito.tif
+2026-11-10 14:06:42,279 - hydromt.data_catalog.data_catalog - data_catalog - WARNING - overwriting data source &#39;vito_mapping.csv&#39; with provider user and version _UNSPECIFIED_.
+2026-11-10 14:06:42,280 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading vito_mapping.csv DataFrame data from /home/runner/work/hydromt_sfincs/hydromt_sfincs/hydromt_sfincs/data/lulc/vito_mapping.csv
+2026-11-10 14:06:42,283 - hydromt.gis.raster - raster - WARNING - The nodata value None is not in the reclass table.None will be used for the params.
+2026-11-10 14:06:42,291 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of regular cells in a block : 333
+2026-11-10 14:06:42,291 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in n direction    : 1
+2026-11-10 14:06:42,291 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Number of blocks in m direction    : 1
+2026-11-10 14:06:42,292 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of flux grid            : dx=50.000000000000654, dy=50.00000000000095
+2026-11-10 14:06:42,292 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Grid size of subgrid pixels       : dx=8.333333333333442, dy=8.333333333333492
+2026-11-10 14:06:42,292 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - block 1/1 -- col 0:250 | row 0:107
+2026-11-10 14:06:52,507 - hydromt.hydromt_sfincs.components.grid.subgrid - cog - INFO - Building 2 overviews with average
+2026-11-10 14:06:52,534 - hydromt.hydromt_sfincs.components.grid.subgrid - cog - INFO - Building 2 overviews with average
+2026-11-10 14:06:52,550 - hydromt.hydromt_sfincs.components.grid.subgrid - subgrid - INFO - Subgrid tables created. Note that the subgrid tables overwrite previously defined information on elevation and roughness.
 </pre></div></div>
 </div>
 <div style="padding: 14px 18px; border-left: 4px solid #d97706; background: #fff7ed; border-radius: 6px; margin: 12px 1em 12px 0; width: calc(100% - 1em); box-sizing: border-box; color: #111111; "><p>⚠️ Note: Subgrid processing time</p>
@@ -1012,8 +1012,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-2026-11-02 12:54:58,553 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 3 attributes in model config.
-2026-11-02 12:54:58,586 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gtsmv3_eu_era5 GeoDataset data from /home/runner/.hydromt/artifact_data/latest/gtsmv3_eu_era5.nc
+2026-11-10 14:06:53,554 - hydromt.hydromt_sfincs.components.config.config - config - INFO - Updating 3 attributes in model config.
+2026-11-10 14:06:53,597 - hydromt.data_catalog.sources.data_source - data_source - INFO - Reading gtsmv3_eu_era5 GeoDataset data from /home/runner/.hydromt/artifact_data/latest/gtsmv3_eu_era5.nc
 </pre></div></div>
 </div>
 </section>
@@ -1135,7 +1135,7 @@
             
             
               
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <dialog id="pst-secondary-sidebar-modal" tabindex="-1"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
 
@@ -1194,8 +1194,8 @@
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1228,7 +1228,7 @@
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.23.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.24.0.
 </p></div>
       
     </div>
