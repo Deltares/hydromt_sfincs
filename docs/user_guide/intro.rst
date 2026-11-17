@@ -17,8 +17,10 @@ The user guide is structured in the following way:
         :link-type: doc
 
         :octicon:`rocket;5em;sd-text-icon blue-icon`
-        +++
-        Getting started with HydroMT
+
+        .. card-footer::
+
+            Getting started with HydroMT
 
     .. grid-item-card::
         :text-align: center
@@ -26,8 +28,10 @@ The user guide is structured in the following way:
         :link-type: doc
 
         :octicon:`container;5em;sd-text-icon blue-icon`
-        +++
-        Building a SFINCS model
+
+        .. card-footer::
+
+            Building a SFINCS model
 
     .. grid-item-card::
         :text-align: center
@@ -35,8 +39,10 @@ The user guide is structured in the following way:
         :link-type: doc
 
         :octicon:`pencil;5em;sd-text-icon blue-icon`
-        +++
-        Updating a SFINCS model
+
+        .. card-footer::
+
+            Updating a SFINCS model
 
     .. grid-item-card::
         :text-align: center
@@ -44,8 +50,10 @@ The user guide is structured in the following way:
         :link-type: doc
 
         :octicon:`gear;5em;sd-text-icon blue-icon`
-        +++
-        Running a SFINCS model
+
+        .. card-footer::
+
+            Running a SFINCS model
 
     .. grid-item-card::
         :text-align: center
@@ -53,8 +61,10 @@ The user guide is structured in the following way:
         :link-type: doc
 
         :octicon:`graph;5em;sd-text-icon blue-icon`
-        +++
-        Processing and Visualization
+
+        .. card-footer::
+
+            Processing and Visualization
 
     .. grid-item-card::
         :text-align: center
@@ -62,8 +72,10 @@ The user guide is structured in the following way:
         :link-type: doc
 
         :octicon:`arrow-switch;5em;sd-text-icon blue-icon`
-        +++
-        Migration Guide
+
+        .. card-footer::
+
+            Migration Guide
 
 This plugin assists the SFINCS modeller in:
 
