@@ -8,17 +8,19 @@ import xarray as xr
 import dask.array as da
 import rasterio
 
-from shapely.geometry import Point
+from shapely.geometry import Point, LineString
 
 from hydromt_sfincs.readers import (
     read_binary_map,
     read_binary_map_index,
+    read_bdr,
     read_geoms,
     read_xyn,
 )
 from hydromt_sfincs.writers import (
     write_binary_map,
     write_binary_map_index,
+    write_bdr,
     write_geoms,
     write_raster,
     write_xyn,
@@ -146,3 +148,19 @@ def test_write_raster_dataset_uses_mask_variable(tmp_path):
     write_raster(xr.Dataset({"hmax": hmax, "mask": mask}), tmp_path)
 
     assert (tmp_path / "hmax.tif").is_file()
+
+
+def test_write_bdr_width_format_not_quoted(tmp_path):
+    # width formats pad with spaces; these must not end up as quoted CSV fields
+    gdf = gpd.GeoDataFrame(
+        {"slope": [0.003259], "distance": [5000.0]},
+        geometry=[LineString([(282749.5, 5079803.4), (279491.0, 5081814.6)])],
+        crs=32633,
+    )
+    fn = tmp_path / "sfincs.bdr"
+    write_bdr(fn, gdf, fmt="%11.1f")
+
+    assert '"' not in fn.read_text()
+    gdf_rt = read_bdr(fn, crs=32633)
+    np.testing.assert_allclose(gdf_rt.geometry[0].coords[:], gdf.geometry[0].coords[:])
+    np.testing.assert_allclose(gdf_rt[["slope", "distance"]], [[0.003259, 5000.0]])
