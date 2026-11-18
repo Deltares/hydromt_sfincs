@@ -239,15 +239,20 @@ def write_bdr(fn: Union[str, Path], gdf_bdr: gpd.GeoDataFrame, fmt="%.1f") -> No
     # order columns as SFINCS expects
     gdf = gdf[["xbdr", "ybdr", "x_bdr_in", "y_bdr_in", "slope", "distance"]]
 
-    # format coords
-    for col in ["xbdr", "ybdr", "x_bdr_in", "y_bdr_in"]:
-        gdf[col] = gdf[col].apply(lambda x: fmt % float(x))
-
-    gdf["slope"] = gdf["slope"].apply(lambda x: f"{float(x):.6f}")
-    gdf["distance"] = gdf["distance"].apply(lambda x: f"{float(x):.3f}")
+    # write to file with proper formatting
+    if fmt[0] == "%":
+        fmt_str = fmt[1:]
+    else:
+        fmt_str = fmt
 
     Path(fn).parent.mkdir(parents=True, exist_ok=True)
-    gdf.to_csv(fn, sep=" ", index=False, header=False)
+    with open(fn, "w") as f:
+        for _, row in gdf.iterrows():
+            f.write(
+                f"{float(row.xbdr):{fmt_str}} {float(row.ybdr):{fmt_str}} "
+                f"{float(row.x_bdr_in):{fmt_str}} {float(row.y_bdr_in):{fmt_str}} "
+                f"{float(row.slope):.6f} {float(row.distance):.3f}\n"
+            )
 
 
 def write_drn(fn: Union[str, Path], gdf_drainage: gpd.GeoDataFrame, fmt="%.1f") -> None:

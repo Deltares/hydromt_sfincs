@@ -546,7 +546,9 @@ class SfincsGrid(GridComponent):
             )
             if name == "mask":
                 config_key = "mskfile"
-                fn = self.model.config.get_set_file_variable(config_key, "sfincs.msk")
+                fn = self.model.config.get_set_file_variable(
+                    config_key, default="sfincs.msk"
+                )
             elif name == "dep":
                 fn = self.model.config.get(config_key, fallback=fallback, abs_path=True)
             else:
