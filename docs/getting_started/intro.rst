@@ -10,8 +10,10 @@ Getting started
         :link-type: ref
 
         :octicon:`gear;5em;sd-text-icon blue-icon`
-        +++
-        Installation guide
+
+        .. card-footer::
+
+            Installation guide
 
     .. grid-item-card::
         :text-align: center
@@ -19,8 +21,10 @@ Getting started
         :link-type: ref
 
         :octicon:`book;5em;sd-text-icon blue-icon`
-        +++
-        User guide
+
+        .. card-footer::
+
+            User guide
 
     .. grid-item-card::
         :text-align: center
@@ -28,8 +32,10 @@ Getting started
         :link-type: ref
 
         :octicon:`list-unordered;5em;sd-text-icon blue-icon`
-        +++
-        API Reference
+
+        .. card-footer::
+
+            API Reference
 
     .. grid-item-card::
         :text-align: center
@@ -37,8 +43,10 @@ Getting started
         :link-type: ref
 
         :octicon:`graph;5em;sd-text-icon blue-icon`
-        +++
-        Examples
+
+        .. card-footer::
+
+            Examples
 
 
 .. toctree::

@@ -16,9 +16,11 @@ For the users of the HydroMT-SFINCS plugin, the data catalog and model region co
         :link-type: ref
 
         :octicon:`database;5em;sd-text-icon blue-icon`
-        +++
-        Data Catalog
-        Understand how HydroMT manages data sources and integrates external datasets.
+
+        .. card-footer::
+
+            Data Catalog
+            Understand how HydroMT manages data sources and integrates external datasets.
 
     .. grid-item-card::
         :text-align: center
@@ -26,9 +28,11 @@ For the users of the HydroMT-SFINCS plugin, the data catalog and model region co
         :link-type: url
 
         :octicon:`globe;5em;sd-text-icon blue-icon`
-        +++
-        Model Region
-        Learn how to define, configure, and manage model regions within HydroMT.
+
+        .. card-footer::
+
+            Model Region
+            Learn how to define, configure, and manage model regions within HydroMT.
 
 .. toctree::
    :hidden:
