@@ -71,7 +71,7 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
         self,
         zsini: Union[str, Path],
         fill_value: float = -9999.0,
-        reproj_method="average",
+        reproj_method="mean",
     ):
         """Setup spatially varying initial water level (ncinifile).
 
@@ -86,8 +86,9 @@ class SfincsQuadtreeInitialConditions(ModelComponent):
         fill_value: float, optional
             Fill value for areas outside the polygon, by default -9999.0.
         reproj_method : str, optional
-            Resampling method for reprojecting the initial water level data to the model grid.
-            By default 'average'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`
+            Method for regridding the initial water level data to the mesh, by
+            default 'mean'. Any method of :py:class:`xugrid.OverlapRegridder`
+            (e.g. 'mean', 'median', 'max_overlap').
 
         """
 
