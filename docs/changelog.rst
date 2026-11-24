@@ -19,6 +19,7 @@ Changed
 
 Fixed
 -----
+- ``SfincsQuadtreeInitialConditions.create`` failed with its default ``reproj_method='average'``, which xugrid does not accept; the default is now ``'mean'``.
 
 Deprecated
 ----------
