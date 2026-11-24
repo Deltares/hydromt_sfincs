@@ -870,7 +870,7 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">zsini</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
         <span class="n">fill_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">9999.0</span><span class="p">,</span>
-        <span class="n">reproj_method</span><span class="o">=</span><span class="s2">"average"</span><span class="p">,</span>
+        <span class="n">reproj_method</span><span class="o">=</span><span class="s2">"mean"</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Setup spatially varying initial water level (ncinifile).</span>
 
@@ -885,8 +885,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        fill_value: float, optional</span>
 <span class="sd">            Fill value for areas outside the polygon, by default -9999.0.</span>
 <span class="sd">        reproj_method : str, optional</span>
-<span class="sd">            Resampling method for reprojecting the initial water level data to the model grid.</span>
-<span class="sd">            By default 'average'. For more information see, :py:meth:`hydromt.raster.RasterDataArray.reproject_like`</span>
+<span class="sd">            Method for regridding the initial water level data to the mesh, by</span>
+<span class="sd">            default 'mean'. Any method of :py:class:`xugrid.OverlapRegridder`</span>
+<span class="sd">            (e.g. 'mean', 'median', 'max_overlap').</span>
 
 <span class="sd">        """</span>
 
