@@ -314,6 +314,9 @@ class SfincsPrecipitation(SfincsMeteo):
         using a NetCDF file. In that case, data is reprojected to the model CRS (and to
         ``dst_res`` if provided).
 
+        Time selection retains the nearest available samples at or outside the
+        model start and end times.
+
         One of the following model layers will be added:
 
         * **netamprfile**: for distributed precipitation rate [mm/hr].
@@ -352,12 +355,13 @@ class SfincsPrecipitation(SfincsMeteo):
             aggregation is used, if False (default) the data is not aggregated and
             spatially distributed precipitation is returned.
         """
-        # get data for model domain and config time range
+        # Retain samples bracketing the model period.
+        tstart, tstop = self.model.get_model_time()
         precip = self.data_catalog.get_rasterdataset(
             precip,
             bbox=self.model.bbox,
             buffer=2,
-            time_range=self.model.get_model_time(),
+            time_range={"start": tstart, "end": tstop, "inclusive": True},
             variables=["precip"],
         )
 
@@ -450,6 +454,8 @@ class SfincsPrecipitation(SfincsMeteo):
             and location IDs in the first row,
             see :py:meth:`hydromt.open_timeseries_from_table`, for details.
             Note: tabulated timeseries files cannot yet be set through the data_catalog yml file.
+            The nearest available samples at or outside the model start and
+            end times are retained.
         magnitude: float
             Precipitation magnitude [mm/hr] to use if no timeseries is provided.
         """
@@ -457,7 +463,7 @@ class SfincsPrecipitation(SfincsMeteo):
         if timeseries is not None:
             df_ts = self.data_catalog.get_dataframe(
                 timeseries,
-                time_range=(tstart, tstop),
+                time_range={"start": tstart, "end": tstop, "inclusive": True},
                 source_kwargs={
                     "driver": {
                         "name": "pandas",

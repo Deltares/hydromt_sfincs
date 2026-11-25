@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 from os.path import abspath, dirname, isfile, join
 
+import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
@@ -63,6 +64,55 @@ def test_set_precip_reindexes_existing_data_to_new_time_index(model_config):
     data = model_config.precipitation.data
     assert data.indexes["time"].equals(new_times)
     assert data["precip"].values.tolist() == [3.0, 4.0]
+
+
+@pytest.mark.parametrize("aggregate", [False, True])
+@pytest.mark.parametrize("offset_minutes", [0, 30])
+def test_create_precip_preserves_time_brackets(
+    model_config, tmp_path, aggregate, offset_minutes
+):
+    model_config.grid.read()
+    model_config.root.set(tmp_path, mode="w")
+    tstart, tstop = model_config.get_model_time()
+    offset = pd.Timedelta(minutes=offset_minutes)
+    times = pd.date_range(
+        tstart - pd.Timedelta(hours=2) + offset,
+        tstop + pd.Timedelta(hours=2) + offset,
+        freq="h",
+    )
+    expected_times = pd.date_range(tstart - offset, tstop + offset, freq="h")
+    rates = pd.Series(np.arange(1, len(times) + 1, dtype=float), index=times)
+    xmin, ymin, xmax, ymax = model_config.bbox
+    rain = xr.DataArray(
+        np.broadcast_to(rates.values[:, None, None], (len(times), 6, 6)).copy(),
+        dims=("time", "latitude", "longitude"),
+        coords={
+            "time": times,
+            "latitude": np.linspace(ymax + 0.05, ymin - 0.05, 6),
+            "longitude": np.linspace(xmin - 0.05, xmax + 0.05, 6),
+        },
+        name="precip",
+        attrs={"units": "mm/hr"},
+    )
+    rain.raster.set_crs(4326)
+
+    model_config.precipitation.create(
+        precip=rain, cumulative_input=False, aggregate=aggregate
+    )
+
+    result = model_config.precipitation.data
+    assert result.indexes["time"].equals(expected_times)
+    if aggregate:
+        actual_rates = result["precip"]
+    else:
+        assert result.raster.crs == model_config.crs
+        assert result.raster.crs != rain.raster.crs
+        assert result.raster.dims == ("y", "x")
+        center = (
+            model_config.region.to_crs(model_config.crs).geometry.union_all().centroid
+        )
+        actual_rates = result["precip_2d"].sel(x=center.x, y=center.y, method="nearest")
+    np.testing.assert_allclose(actual_rates.values, rates.loc[expected_times].values)
 
 
 def test_create_meteo_latlon(tmp_dir):
