@@ -324,6 +324,26 @@ def test_quadtree_write_warns_when_layer_missing_in_new_root(
     assert "manningfile" in (root_b / "sfincs.inp").read_text()
 
 
+def test_quadtree_initial_conditions_create(quadtree_model):
+    # create() regrids a raster to the mesh with xugrid; its default method
+    # must be one xugrid accepts ('average' is a rasterio name and failed)
+    xmin, ymin, xmax, ymax = quadtree_model.quadtree_grid.exterior.total_bounds
+    x = np.linspace(xmin - 100.0, xmax + 100.0, 50)
+    y = np.linspace(ymax + 100.0, ymin - 100.0, 40)
+    ds = xr.Dataset(
+        {"zs": (("y", "x"), np.full((y.size, x.size), 0.75, dtype=np.float32))},
+        coords={"x": x, "y": y},
+    )
+    ds.raster.set_crs(quadtree_model.crs)
+
+    quadtree_model.quadtree_initial_conditions.create(zsini=ds)
+
+    assert quadtree_model.config.get("inifile") == "sfincs_ini.nc"
+    zs = quadtree_model.quadtree_grid.data["zs"].values
+    active = quadtree_model.quadtree_grid.data["mask"].values > 0
+    assert np.allclose(zs[active], 0.75)
+
+
 def test_quadtree_initial_conditions_io(quadtree_model):
     # zs was historically written to `inifile` but read from `zsfile`; this pins
     # that both sides now use the same key

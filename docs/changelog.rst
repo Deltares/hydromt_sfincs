@@ -21,7 +21,7 @@ Fixed
 -----
 - Use underscores in default point names ("Point_001") since kernel crashes on spaces. (#439)
 - Preserve (relative) paths set for the mskfile variable. (#446)
-- Fix default regrid method of quadtree initial conditions. (#451)
+- ``SfincsQuadtreeInitialConditions.create`` failed with its default ``reproj_method='average'``, which xugrid does not accept; the default is now ``'mean'``. (#451)
 - Fixed temporal clip of spatially varying meteo data to retain data needed to cover the full simulation period. (#452)
 
 Deprecated
