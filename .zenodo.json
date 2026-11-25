@@ -10,23 +10,24 @@
         },
         {
             "affiliation": "Deltares",
-            "name": "Leijnse, Tim",
-            "orcid": "0000-0003-1873-3387"
-        },
-        {
-            "affiliation": "Deltares",
             "name": "Eilander, Dirk",
             "orcid": "0000-0002-0951-8418"
-        },
+        },        
         {
             "affiliation": "Deltares",
-            "name": "van Asselt, Koen",
+            "name": "Leijnse, Tim",
+            "orcid": "0000-0003-1873-3387"
         },
         {
             "affiliation": "Deltares-USA",
             "name": "Nederhoff, Kees",
             "orcid": "0000-0003-0552-3428"
         },
+        {
+            "affiliation": "Deltares",
+            "name": "van Asselt, Koen",
+            "orcid": "0009-0002-1304-7521"
+        },      
         {
             "affiliation": "Deltares",
             "name": "van Ormondt, Maarten",
